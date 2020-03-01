@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display number of issues, requests and more from a GitLab project.
 
 A token is required. See https://gitlab.com/profile/personal_access_tokens
@@ -75,7 +74,7 @@ class Py3status:
     button_refresh = 2
     cache_timeout = 900
     format = (
-        "[{name} ][[{open_issues_count}][\?soft /]" "[{open_merge_requests_count}]]"
+        r"[{name} ][[{open_issues_count}][\?soft /]" "[{open_merge_requests_count}]]"
     )
     project = "gitlab-org/gitlab-ce"
     thresholds = []

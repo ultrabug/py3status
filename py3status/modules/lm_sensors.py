@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display temperatures, voltages, fans, and more from hardware sensors.
 
 Configuration parameters:
@@ -177,7 +176,7 @@ class Py3status:
     format = "{format_chip}"
     format_chip = "{name} {format_sensor}"
     format_chip_separator = " "
-    format_sensor = "[\?color=darkgray {name}] [\?color=auto.input&show {input}]"
+    format_sensor = r"[\?color=darkgray {name}] [\?color=auto.input&show {input}]"
     format_sensor_separator = " "
     sensors = []
     thresholds = {"auto.input": True}

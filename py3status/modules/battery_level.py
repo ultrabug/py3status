@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display battery information.
 
@@ -80,24 +79,23 @@ discharging
 {'color': '#FF0000', 'full_text': u'\u2340'}
 """
 
-from __future__ import division  # python2 compatibility
 from re import findall
 from glob import iglob
 
 import math
 import os
 
-BLOCKS = u"_▁▂▃▄▅▆▇█"
-CHARGING_CHARACTER = u"⚡"
-EMPTY_BLOCK_CHARGING = u"|"
-EMPTY_BLOCK_DISCHARGING = u"⍀"
-FULL_BLOCK = u"█"
-FORMAT = u"{icon}"
-FORMAT_NOTIFY_CHARGING = u"Charging ({percent}%)"
-FORMAT_NOTIFY_DISCHARGING = u"{time_remaining}"
-SYS_BATTERY_PATH = u"/sys/class/power_supply/"
+BLOCKS = "_▁▂▃▄▅▆▇█"
+CHARGING_CHARACTER = "⚡"
+EMPTY_BLOCK_CHARGING = "|"
+EMPTY_BLOCK_DISCHARGING = "⍀"
+FULL_BLOCK = "█"
+FORMAT = "{icon}"
+FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
+FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+SYS_BATTERY_PATH = "/sys/class/power_supply/"
 MEASUREMENT_MODE = None
-FULLY_CHARGED = u"?"
+FULLY_CHARGED = "?"
 
 
 class Py3status:
@@ -232,11 +230,11 @@ class Py3status:
         def _parse_battery_info(acpi_battery_lines):
             battery = {}
             battery["percent_charged"] = int(
-                findall("(?<= )(\d+)(?=%)", acpi_battery_lines[0])[0]
+                findall(r"(?<= )(\d+)(?=%)", acpi_battery_lines[0])[0]
             )
             battery["charging"] = "Charging" in acpi_battery_lines[0]
             battery["capacity"] = int(
-                findall("(?<= )(\d+)(?= mAh)", acpi_battery_lines[1])[1]
+                findall(r"(?<= )(\d+)(?= mAh)", acpi_battery_lines[1])[1]
             )
 
             # ACPI only shows time remaining if battery is discharging or
@@ -244,8 +242,8 @@ class Py3status:
             try:
                 battery["time_remaining"] = "".join(
                     findall(
-                        "(?<=, )(\d+:\d+:\d+)(?= remaining)|"
-                        "(?<=, )(\d+:\d+:\d+)(?= until)",
+                        r"(?<=, )(\d+:\d+:\d+)(?= remaining)|"
+                        r"(?<=, )(\d+:\d+:\d+)(?= until)",
                         acpi_battery_lines[0],
                     )[0]
                 )
@@ -281,7 +279,7 @@ class Py3status:
             int if necessary
             """
             raw_values = {}
-            with open(os.path.join(sys_path, u"uevent")) as f:
+            with open(os.path.join(sys_path, "uevent")) as f:
                 for var in f.read().splitlines():
                     k, v = var.split("=")
                     try:

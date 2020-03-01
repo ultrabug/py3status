@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import os
 
 try:
@@ -60,7 +58,7 @@ class Storage:
                 except TypeError:
                     # python2
                     self.data = load(f)
-        except IOError:
+        except OSError:
             pass
 
         self.py3_wrapper.log("storage_path: {}".format(self.storage_path))

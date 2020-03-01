@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display if a Twitch channel is currently streaming or not.
 

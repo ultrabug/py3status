@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Take screenshots and upload them to a given server.
 
 Configuration parameters:
@@ -49,7 +48,7 @@ class Py3status:
 
     # available configuration parameters
     file_length = 4
-    format = "\?color=good [{basename}|\?show SHOT]"
+    format = r"\?color=good [{basename}|\?show SHOT]"
     save_path = "~/Pictures"
     screenshot_command = "gnome-screenshot -f"
     upload_path = None

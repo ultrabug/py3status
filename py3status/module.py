@@ -81,7 +81,7 @@ class Module:
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
-                u"{}: Import Error, {}".format(self.module_nice_name, str(e)),
+                "{}: Import Error, {}".format(self.module_nice_name, str(e)),
             ]
             self.error_output(self.error_messages[0])
             # log the error
@@ -148,7 +148,7 @@ class Module:
 
                 self.error_messages = [
                     self.module_nice_name,
-                    u"{}: {}".format(
+                    "{}: {}".format(
                         self.module_nice_name, str(e) or e.__class__.__name__
                     ),
                 ]
@@ -173,7 +173,7 @@ class Module:
         # only show first line of error
         msg = msg.splitlines()[0]
 
-        errors = [self.module_nice_name, u"{}: {}".format(self.module_nice_name, msg)]
+        errors = [self.module_nice_name, "{}: {}".format(self.module_nice_name, msg)]
 
         # if we have shown this error then keep in the same state
         if self.error_messages != errors:
@@ -251,7 +251,7 @@ class Module:
         self.disabled = True
         # purge from any container modules
         self._py3_wrapper.purge_module(self.module_full_name)
-        self.error_output(u"")
+        self.error_output("")
         self._py3_wrapper.log("disabling module `%s`" % self.module_full_name)
 
     def wake(self):

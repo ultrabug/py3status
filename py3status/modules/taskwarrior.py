@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display tasks currently running in taskwarrior.
 

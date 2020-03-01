@@ -112,7 +112,7 @@ class Events(Thread):
         index = event.get("index")
         module_info = self.py3_wrapper.output_modules.get(module_name)
         output = module_info["module"].get_latest()
-        full_text = u"".join([out["full_text"] for out in output])
+        full_text = "".join([out["full_text"] for out in output])
 
         partial = None
         if index is not None:

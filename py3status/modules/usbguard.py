@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Allow or Reject newly plugged USB devices using USBGuard.
 
 Configuration parameters:
@@ -58,8 +57,8 @@ class Py3status:
 
     # available configuration parameters
     format = "{format_device}"
-    format_button_allow = "\[Allow\]"
-    format_button_reject = "\[Reject\]"
+    format_button_allow = r"\[Allow\]"
+    format_button_reject = r"\[Reject\]"
     format_device = "{format_button_reject} [{name}|{usb_id}] {format_button_allow}"
     format_device_separator = " "
 

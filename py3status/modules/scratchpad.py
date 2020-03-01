@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Display number of scratchpad windows and urgency hints.
 
 Configuration parameters:
     cache_timeout: refresh interval for i3-msg or swaymsg (default 5)
     format: display format for this module
-        (default "\u232b [\?color=scratchpad {scratchpad}]")
+        (default "\u232b [\\?color=scratchpad {scratchpad}]")
     thresholds: specify color thresholds to use
         (default [(0, "darkgray"), (1, "violet")])
 
@@ -23,12 +22,12 @@ Examples:
 ```
 # hide zero scratchpad
 scratchpad {
-    format = '[\?not_zero \u232b [\?color=scratchpad {scratchpad}]]'
+    format = '[\\?not_zero \u232b [\\?color=scratchpad {scratchpad}]]'
 }
 
 # hide non-urgent scratchpad
 scratchpad {
-    format = '[\?not_zero \u232b {urgent}]'
+    format = '[\\?not_zero \u232b {urgent}]'
 }
 
 # bring up scratchpads on clicks
@@ -147,7 +146,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = "\u232b [\?color=scratchpad {scratchpad}]"
+    format = "\u232b [\\?color=scratchpad {scratchpad}]"
     thresholds = [(0, "darkgray"), (1, "violet")]
 
     def post_config_hook(self):
@@ -194,5 +193,5 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    config = {"format": "\[{ipc}\] [\?color=scratchpad {scratchpad}]"}
+    config = {"format": r"\[{ipc}\] [\?color=scratchpad {scratchpad}]"}
     module_test(Py3status, config=config)

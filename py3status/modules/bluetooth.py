@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display bluetooth status.
 
 Configuration parameters:
@@ -61,16 +60,16 @@ class Py3status:
     cache_timeout = 10
     format = DEFAULT_FORMAT
     format_device = "{name}"
-    format_separator = "\|"
+    format_separator = r"\|"
 
     class Meta:
         def deprecate_function(config):
             if not config.get("format_separator") and config.get("device_separator"):
                 sep = config.get("device_separator")
                 sep = sep.replace("\\", "\\\\")
-                sep = sep.replace("[", "\[")
-                sep = sep.replace("]", "\]")
-                sep = sep.replace("|", "\|")
+                sep = sep.replace("[", r"\[")
+                sep = sep.replace("]", r"\]")
+                sep = sep.replace("|", r"\|")
 
                 return {"format_separator": sep}
             else:
@@ -93,7 +92,7 @@ class Py3status:
         format_no_conn_prefix = getattr(self, "format_no_conn_prefix", None)
 
         placeholders = set(self.py3.get_placeholders_list(self.format))
-        if set(["name", "mac"]) & placeholders:
+        if {"name", "mac"} & placeholders:
             # this is an old format so should be format_device
             self.format_device = self.format
             self.format = DEFAULT_FORMAT
@@ -108,7 +107,7 @@ class Py3status:
 
         if format_prefix or format_no_conn_prefix or format_no_conn:
             # create a format that will give the expected output
-            self.format = u"[\?if=format_device {}{{format_device}}|{}{}]".format(
+            self.format = r"[\?if=format_device {}{{format_device}}|{}{}]".format(
                 format_prefix or "BT: ",
                 format_no_conn_prefix or "BT: ",
                 format_no_conn or "OFF",

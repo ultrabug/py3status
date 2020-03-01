@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display song/video and control MPRIS compatible players.
 
@@ -139,15 +138,15 @@ class Py3status:
     button_toggle = 1
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
-    icon_next = u"\u25b9"
-    icon_pause = u"\u25eb"
-    icon_play = u"\u25b7"
-    icon_previous = u"\u25c3"
-    icon_stop = u"\u25a1"
+    icon_next = "\u25b9"
+    icon_pause = "\u25eb"
+    icon_play = "\u25b7"
+    icon_previous = "\u25c3"
+    icon_stop = "\u25a1"
     player_priority = []
-    state_pause = u"\u25eb"
-    state_play = u"\u25b7"
-    state_stop = u"\u25a1"
+    state_pause = "\u25eb"
+    state_play = "\u25b7"
+    state_stop = "\u25a1"
 
     def post_config_hook(self):
         if self.py3.is_gevent():
@@ -407,7 +406,7 @@ class Py3status:
             for p in self._mpris_players.values():
                 if not p["name"] and p["identity"] in self._mpris_names:
                     p["name"] = self._mpris_names[p["identity"]]
-                    p["full_name"] = u"{} {}".format(p["name"], p["index"])
+                    p["full_name"] = "{} {}".format(p["name"], p["index"])
 
         identity = player.Identity
         name = self._mpris_names.get(identity)
@@ -439,7 +438,7 @@ class Py3status:
             "index": index,
             "identity": identity,
             "name": name,
-            "full_name": u"{} {}".format(name, index),
+            "full_name": "{} {}".format(name, index),
             "status": status,
             "subscription": subscription,
         }

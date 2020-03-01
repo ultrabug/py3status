@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Turn on and off desktop notifications.
 
 Configuration parameters:
@@ -138,7 +137,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 30
-    format = "{name} [\?color=state&show DND]"
+    format = r"{name} [\?color=state&show DND]"
     pause = False
     server = None
     state = "last"

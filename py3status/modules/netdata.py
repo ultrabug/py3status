@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display network speed and bandwidth usage.
 
 Configuration parameters:
@@ -33,7 +32,6 @@ SAMPLE OUTPUT
 ]
 """
 
-from __future__ import division  # python2 compatibility
 from time import time
 
 
@@ -44,8 +42,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 2
     format = (
-        u"{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] "
-        u"[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]"
+        r"{nic} [\?color=down LAN(Kb): {down}↓ {up}↑] "
+        r"[\?color=total T(Mb): {download}↓ {upload}↑ {total}↕]"
     )
     nic = None
     thresholds = {

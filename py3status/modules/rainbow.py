@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Add color cycling fun to your i3bar.
 
@@ -66,7 +65,6 @@ SAMPLE OUTPUT
 ]
 """
 
-from __future__ import division
 import re
 import math
 from time import time

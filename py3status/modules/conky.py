@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display Conky objects/variables on the bar.
 
 Configuration parameters:

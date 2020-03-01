@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display song currently playing in moc.
 
 MOC (music on console) is a console audio player for Linux/Unix designed to be
@@ -73,7 +72,6 @@ stopped
 {'color': '#FF0000', 'full_text': '[] moc'}
 """
 
-from __future__ import division
 
 
 STRING_NOT_INSTALLED = "not installed"
@@ -90,8 +88,8 @@ class Py3status:
     button_stop = 3
     cache_timeout = 5
     format = (
-        "\?if=is_started [\?if=is_stopped \[\] moc|"
-        "[\?if=is_paused \|\|][\?if=is_playing >] {title}]"
+        r"\?if=is_started [\?if=is_stopped \[\] moc|"
+        r"[\?if=is_paused \|\|][\?if=is_playing >] {title}]"
     )
     sleep_timeout = 20
 

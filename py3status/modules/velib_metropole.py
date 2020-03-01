@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display information about Velib Métropole stations.
 
 Vélib' Métropole, https://en.wikipedia.org/wiki/Vélib'_Métropole, is a large-
@@ -95,9 +94,9 @@ class Py3status:
     cache_timeout = 60
     format = "{format_station}|No Velib"
     format_station = (
-        "{name} [\?if=state=Closed&color=state {state} ]"
-        "[\?color=greenyellow {bike}/{free_dock} ]"
-        "[\?color=deepskyblue {ebike}/{free_edock}]"
+        r"{name} [\?if=state=Closed&color=state {state} ]"
+        r"[\?color=greenyellow {bike}/{free_dock} ]"
+        r"[\?color=deepskyblue {ebike}/{free_edock}]"
     )
     stations = [20043, 11014, 20012, 20014, 10042]
     thresholds = [("Operative", "good"), ("Closed", "bad")]

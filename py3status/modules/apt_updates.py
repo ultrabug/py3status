@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display number of pending updates for Debian based Distros.
 
 Thanks to Iain Tatch <iain.tatch@gmail.com> for the script that this is based on.
@@ -36,7 +35,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 600
-    format = "UPD[\?not_zero : {apt}]"
+    format = r"UPD[\?not_zero : {apt}]"
 
     def post_config_hook(self):
         if not self.py3.check_commands("apt"):

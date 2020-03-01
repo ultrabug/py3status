@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-
 import os
 import pkg_resources
 import sys
@@ -325,7 +322,7 @@ class Py3statusWrapper:
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
-                self.timeout_queue[cache_time] = set([module])
+                self.timeout_queue[cache_time] = {module}
                 self.timeout_keys.append(cache_time)
                 # sort keys so earliest is first
                 self.timeout_keys.sort()
@@ -551,13 +548,13 @@ class Py3statusWrapper:
             # we do this by looking in the .git directory
             git_path = os.path.join(os.path.dirname(__file__), "..", ".git")
             # branch
-            with open(os.path.join(git_path, "HEAD"), "r") as f:
+            with open(os.path.join(git_path, "HEAD")) as f:
                 out = f.readline()
             branch = "/".join(out.strip().split("/")[2:])
             self.log("git branch: {}".format(branch))
             # last commit
             log_path = os.path.join(git_path, "logs", "refs", "heads", branch)
-            with open(log_path, "r") as f:
+            with open(log_path) as f:
                 out = f.readlines()[-1]
             sha = out.split(" ")[1][:7]
             msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
@@ -678,14 +675,14 @@ class Py3statusWrapper:
         dbus = self.config.get("dbus_notify")
         if dbus:
             # force msg, icon, title to be a string
-            title = u"{}".format(title)
-            msg = u"{}".format(msg)
+            title = "{}".format(title)
+            msg = "{}".format(msg)
             if icon:
-                icon = u"{}".format(icon)
+                icon = "{}".format(icon)
         else:
-            msg = u"py3status: {}".format(msg)
+            msg = "py3status: {}".format(msg)
         if level != "info" and module_name == "":
-            fix_msg = u"{} Please try to fix this and reload i3wm (Mod+Shift+R)"
+            fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
             msg = fix_msg.format(msg)
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
@@ -701,11 +698,11 @@ class Py3statusWrapper:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash(u"{}#{}#{}#{}".format(module_name, limit_key, msg, title))
+        msg_hash = hash("{}#{}#{}#{}".format(module_name, limit_key, msg, title))
         if msg_hash in self.notified_messages:
             return
         elif module_name:
-            log_msg = 'Module `%s` sent a notification. "%s: %s"' % (
+            log_msg = 'Module `{}` sent a notification. "{}: {}"'.format(
                 module_name,
                 title,
                 msg,
@@ -865,7 +862,7 @@ class Py3statusWrapper:
         if not self.config.get("log_file"):
             # If level was given as a str then convert to actual level
             level = LOG_LEVELS.get(level, level)
-            syslog(level, u"{}".format(msg))
+            syslog(level, "{}".format(msg))
         else:
             # Binary mode so fs encoding setting is not an issue
             with open(self.config["log_file"], "ab") as f:
@@ -876,8 +873,8 @@ class Py3statusWrapper:
                     # if multiline then start the data output on a fresh line
                     # to aid readability.
                     if "\n" in msg:
-                        msg = u"\n" + msg
-                out = u"{} {} {}\n".format(log_time, level.upper(), msg)
+                        msg = "\n" + msg
+                out = "{} {} {}\n".format(log_time, level.upper(), msg)
                 try:
                     # Encode unicode strings to bytes
                     f.write(out.encode("utf-8"))

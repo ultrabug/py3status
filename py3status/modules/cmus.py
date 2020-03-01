@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display song currently playing in cmus.
 
 cmus (C* Music Player) is a small, fast and powerful console audio player
@@ -84,7 +83,6 @@ waiting
 {'color': '#FF0000', 'full_text': '.. cmus: waiting for user input'}
 """
 
-from __future__ import division
 
 
 STRING_NOT_INSTALLED = "not installed"
@@ -101,9 +99,9 @@ class Py3status:
     button_stop = 3
     cache_timeout = 5
     format = (
-        "[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]"
-        "[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]"
-        "|\?show cmus: waiting for user input]]"
+        r"[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]"
+        r"[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]"
+        r"|\?show cmus: waiting for user input]]"
     )
     sleep_timeout = 20
 
@@ -146,7 +144,7 @@ class Py3status:
         for key, value in data.items():
             # seconds to time
             if key in ("duration", "position"):
-                new_key = "%s%s" % (key, "time")
+                new_key = "{}{}".format(key, "time")
                 temporary[new_key] = self._seconds_to_time(value)
                 temporary[key] = value
             # values to boolean

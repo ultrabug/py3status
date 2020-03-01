@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display network transfer rate.
 
 Configuration parameters:
@@ -53,7 +52,6 @@ SAMPLE OUTPUT
 {'full_text': 'eno1:  852.2 KiB/s'}
 """
 
-from __future__ import division  # python2 compatibility
 from time import time
 
 
@@ -67,7 +65,7 @@ class Py3status:
     devfile = "/proc/net/dev"
     format = "{interface}: {total}"
     format_no_connection = ""
-    format_value = "[\?min_length=11 {value:.1f} {unit}]"
+    format_value = r"[\?min_length=11 {value:.1f} {unit}]"
     hide_if_zero = False
     interfaces = []
     interfaces_blacklist = "lo"
@@ -81,7 +79,7 @@ class Py3status:
             # support old thresholds
             precision = config.get("precision", 1)
             padding = 3 + 1 + precision + 1 + 5
-            format_value = "[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
+            format_value = r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
                 padding=padding, precision=precision
             )
             return {"format_value": format_value}

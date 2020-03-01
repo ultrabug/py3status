@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display foreign exchange rates.
 
@@ -27,7 +26,7 @@ class Py3status:
     # available configuration parameters
     base = "EUR"
     cache_timeout = 600
-    format = u"${USD} £{GBP} ¥{JPY}"
+    format = "${USD} £{GBP} ¥{JPY}"
 
     def post_config_hook(self):
         self.url = "https://api.exchangeratesapi.io/latest?base=" + self.base

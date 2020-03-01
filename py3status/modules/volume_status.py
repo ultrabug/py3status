@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Volume control.
 
@@ -19,9 +18,9 @@ Configuration parameters:
     device: Device to use. Defaults value is backend dependent
         (default None)
     format: Format of the output.
-        (default '[\?if=is_input 😮|♪]: {percentage}%')
+        (default '[\\?if=is_input 😮|♪]: {percentage}%')
     format_muted: Format of the output when the volume is muted.
-        (default '[\?if=is_input 😶|♪]: muted')
+        (default '[\\?if=is_input 😶|♪]: muted')
     is_input: Is this an input device or an output device?
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
@@ -298,7 +297,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    blocks = u"_▁▂▃▄▅▆▇█"
+    blocks = "_▁▂▃▄▅▆▇█"
     button_down = 5
     button_mute = 1
     button_up = 4
@@ -307,8 +306,8 @@ class Py3status:
     channel = None
     command = None
     device = None
-    format = u"[\?if=is_input 😮|♪]: {percentage}%"
-    format_muted = u"[\?if=is_input 😶|♪]: muted"
+    format = r"[\?if=is_input 😮|♪]: {percentage}%"
+    format_muted = r"[\?if=is_input 😶|♪]: muted"
     is_input = False
     max_volume = 120
     thresholds = [(0, "bad"), (20, "degraded"), (50, "good")]

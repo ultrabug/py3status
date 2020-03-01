@@ -1,5 +1,3 @@
-from __future__ import division
-
 import os
 import sys
 import shlex
@@ -315,7 +313,7 @@ class Py3:
             d = dict(enumerate(d))
         for k, v in d.items():
             if parent_key:
-                k = u"{}{}{}".format(parent_key, delimiter, k)
+                k = "{}{}{}".format(parent_key, delimiter, k)
             if intermediates:
                 items.append((k, v))
             if isinstance(v, list):
@@ -875,7 +873,7 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception(u"Invalid format `{}`".format(format_string))
+            self._report_exception("Invalid format `{}`".format(format_string))
             return "invalid format"
 
     def build_composite(
@@ -911,7 +909,7 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception(u"Invalid format `{}`".format(format_string))
+            self._report_exception("Invalid format `{}`".format(format_string))
             return [{"full_text": "invalid format"}]
 
     def composite_update(self, item, update_dict, soft=False):

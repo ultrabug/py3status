@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display song currently playing in mpd.
 
 Configuration parameters:
@@ -152,7 +151,7 @@ class Py3status:
                 if self.use_idle and self.idle_timeout:
                     self.client.idletimeout = self.idle_timeout
             return self.client
-        except (socket.error, ConnectionError, CommandError) as e:
+        except (OSError, ConnectionError, CommandError) as e:
             self.client = None
             raise e
 
@@ -183,7 +182,7 @@ class Py3status:
             (text, state) = self.current_status
 
         if len(text) > self.max_width:
-            text = u"{}...".format(text[: self.max_width - 3])
+            text = "{}...".format(text[: self.max_width - 3])
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
@@ -244,7 +243,7 @@ class Py3status:
                 else:
                     return
 
-            except (ValueError, socket.error, ConnectionError, CommandError) as e:
+            except (ValueError, OSError, ConnectionError, CommandError) as e:
                 # ValueError can happen when status.get(...) returns None; e.g.
                 # during reversal of playlist
                 if isinstance(e, ValueError):

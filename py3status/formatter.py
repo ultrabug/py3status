@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 import sys
 
@@ -133,7 +132,7 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group("key") in placeholders:
                 output.append(
-                    "{%s%s}" % (placeholders[token.group("key")], token.group("format"))
+                    "{{{}{}}}".format(placeholders[token.group("key")], token.group("format"))
                 )
                 continue
             elif token.group("command"):
@@ -172,7 +171,7 @@ class Formatter:
                     continue
             value = token.group(0)
             output.append(value)
-        return u"".join(output)
+        return "".join(output)
 
     def update_placeholder_formats(self, format_string, placeholder_formats):
         """
@@ -193,7 +192,7 @@ class Formatter:
                 continue
             value = token.group(0)
             output.append(value)
-        return u"".join(output)
+        return "".join(output)
 
     def build_block(self, format_string):
         """
@@ -293,7 +292,7 @@ class Formatter:
                 if param.text():
                     param = param.copy()
                 else:
-                    param = u""
+                    param = ""
             elif python2 and isinstance(param, str):
                 param = param.decode("utf-8")
             return param
@@ -347,13 +346,13 @@ class Placeholder:
                         value = float(value)
                     if "d" in self.format:
                         value = int(float(value))
-                    output = u"{[%s]%s}" % (self.key, self.format)
+                    output = "{{[{}]{}}}".format(self.key, self.format)
                     value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
             elif self.format.startswith("!"):
-                output = u"{%s%s}" % (self.key, self.format)
+                output = "{{{}{}}}".format(self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
@@ -375,7 +374,7 @@ class Placeholder:
 
     def repr(self):
         if self.format:
-            value = "%s%s" % (self.key, self.format)
+            value = "{}{}".format(self.key, self.format)
         else:
             value = self.key
         return "{%s}" % value
@@ -649,7 +648,7 @@ class Block:
             if color == "hidden":
                 return False, []
 
-        text = u""
+        text = ""
         out = []
         if isinstance(output, str):
             output = [output]
@@ -680,7 +679,7 @@ class Block:
                     if color:
                         part["color"] = color
                     out.append(part)
-                text = u""
+                text = ""
             if isinstance(item, Composite):
                 if color:
                     item.composite_update(item, {"color": color}, soft=True)
@@ -720,7 +719,7 @@ class Block:
                 if min_length:
                     min_length -= len(item["full_text"])
             if min_length > 0:
-                out[0]["full_text"] = u" " * min_length + out[0]["full_text"]
+                out[0]["full_text"] = " " * min_length + out[0]["full_text"]
                 min_length = 0
 
         return valid, out

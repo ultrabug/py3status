@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Turn on and off DPMS and screen saver blanking.
 

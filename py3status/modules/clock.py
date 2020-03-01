@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display date and time.
 
@@ -87,7 +86,6 @@ SAMPLE OUTPUT
 london
 {'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
-from __future__ import division
 
 import re
 from datetime import datetime
@@ -96,7 +94,7 @@ from time import time
 import pytz
 import tzlocal
 
-CLOCK_BLOCKS = u"🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
+CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
 
 
 class Py3status:
