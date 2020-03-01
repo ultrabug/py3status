@@ -132,7 +132,9 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group("key") in placeholders:
                 output.append(
-                    "{{{}{}}}".format(placeholders[token.group("key")], token.group("format"))
+                    "{{{}{}}}".format(
+                        placeholders[token.group("key")], token.group("format")
+                    )
                 )
                 continue
             elif token.group("command"):

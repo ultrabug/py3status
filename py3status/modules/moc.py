@@ -73,7 +73,6 @@ stopped
 """
 
 
-
 STRING_NOT_INSTALLED = "not installed"
 
 

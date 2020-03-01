@@ -703,9 +703,7 @@ class Py3statusWrapper:
             return
         elif module_name:
             log_msg = 'Module `{}` sent a notification. "{}: {}"'.format(
-                module_name,
-                title,
-                msg,
+                module_name, title, msg,
             )
             self.log(log_msg, level)
         else:

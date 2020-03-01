@@ -209,7 +209,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = (
-        r"Loadavg [\?color=1avg {1min}] " r"[\?color=5avg {5min}] [\?color=15avg {15min}]"
+        r"Loadavg [\?color=1avg {1min}] "
+        r"[\?color=5avg {5min}] [\?color=15avg {15min}]"
     )
     thresholds = [
         (0, "#9dd7fb"),
