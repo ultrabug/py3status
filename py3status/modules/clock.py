@@ -38,6 +38,9 @@ Configuration parameters:
         a list.  The one used can be changed by button click.
         *(default ['[{name_unclear} ]%c', '[{name_unclear} ]%x %X',
         '[{name_unclear} ]%a %H:%M', '[{name_unclear} ]{icon}'])*
+    locale: Override the system locale. Examples:
+        when set to 'fr_FR' %a on Tuesday is 'mar.'.
+        (default None)
     round_to_nearest_block: defines how a block icon is chosen. Examples:
         when set to True,  '13:14' is '🕐', '13:16' is '🕜' and '13:31' is '🕜';
         when set to False, '13:14' is '🕐', '13:16' is '🕐' and '13:31' is '🕜'.
@@ -89,6 +92,7 @@ london
 """
 from __future__ import division
 
+import locale
 import re
 from datetime import datetime
 from time import time
@@ -117,9 +121,13 @@ class Py3status:
         "[{name_unclear} ]%a %H:%M",
         "[{name_unclear} ]{icon}",
     ]
+    locale = None
     round_to_nearest_block = True
 
     def post_config_hook(self):
+        if self.locale is not None:
+            locale.setlocale(locale.LC_TIME, self.locale)
+
         # Multiple clocks are possible that can be cycled through
         if not isinstance(self.format, list):
             self.format = [self.format]
