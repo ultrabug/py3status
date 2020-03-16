@@ -165,7 +165,6 @@ class Py3status:
                         current_ap[key.replace(used_ap + "_", "ap_")] = device[key]
                 device.update(current_ap)
 
-
             for x in self.thresholds_init:
                 if x in device:
                     self.py3.threshold_get_color(device[x], x)
