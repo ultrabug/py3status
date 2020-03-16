@@ -8,7 +8,7 @@ Configuration parameters:
     format: display format for this module (default '{format_device}')
     format_device: format for devices
         *(default "[\?if=general_connection {general_device}[\?soft  ]"
-        "[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        "[\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
         "[\?color=good {ip4_address1}]]")*
     format_device_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
@@ -80,7 +80,7 @@ class Py3status:
     format = "{format_device}"
     format_device = (
         "[\?if=general_connection {general_device}[\?soft  ]"
-        "[\?color=ap1_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
+        "[\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
         "[\?color=good {ip4_address1}]]"
     )
     format_device_separator = " "
