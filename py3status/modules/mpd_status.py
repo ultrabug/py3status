@@ -15,7 +15,7 @@ Configuration parameters:
         mixer: changes in volume
         options: e.g. repeat mode
         See the MPD protocol documentation for additional events.
-        (default ['player', 'mixer', 'options'])
+        (default ['player', 'playlist', 'mixer', 'options'])
     idle_timeout: force idle to reset every n seconds (default 3600)
     max_width: maximum status length (default 120)
     password: mpd password (default None)
@@ -112,7 +112,7 @@ class Py3status:
     hide_when_paused = False
     hide_when_stopped = True
     host = "localhost"
-    idle_subsystems = ["player", "mixer", "options"]
+    idle_subsystems = ["player", "playlist", "mixer", "options"]
     idle_timeout = 3600
     max_width = 120
     password = None
@@ -217,7 +217,7 @@ class Py3status:
                 else:
                     playlist_info = self._get_mpd().playlistinfo()
                     try:
-                        song = playlist_info[song]
+                        song = self._get_mpd().currentsong() or playlist_info[song]
                     except IndexError:
                         song = {}
                     try:
