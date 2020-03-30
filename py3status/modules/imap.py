@@ -16,7 +16,8 @@ Configuration parameters:
     degraded_when_stale: color as degraded when updating failed (default True)
     format: display format for this module (default 'Mail: {unseen}')
     hide_if_zero: hide this module when no new mail (default False)
-    mailbox: name of the mailbox to check (default 'INBOX')
+    mailbox: name of the mailbox to check. can handle `%` and `*` wildcards
+        (default 'INBOX')
     password: login password (default None)
     port: number to use (default '993')
     read_timeout: timeout for read(2) syscalls (default 5)
@@ -246,7 +247,7 @@ class Py3status:
         finally:
             self.connection = None
 
-    def _idle(self):
+    def _idle(self, directories=["INBOX"]):
         """
         since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
         """
@@ -258,7 +259,6 @@ class Py3status:
             command_tag = b"X" + bytes(str(self.command_tag).zfill(3), "ascii")
 
             # make sure we have selected anything before idling:
-            directories = self.mailbox.split(",")
             self.connection.select(directories[0])
 
             socket = self.connection.socket()
@@ -333,8 +333,30 @@ class Py3status:
                 tmp_mail_count = 0
                 directories = self.mailbox.split(",")
 
+                # parse wildcards:
                 for directory in directories:
-                    self.connection.select(directory)
+                    if '*' in directory or '%' in directory:
+                        import csv
+                        ok, wildcard_dirs = self.connection.list(directory)
+                        if ok != "OK":
+                            raise imaplib.IMAP4.error("mailbox contains bad wildcard")
+                        # LIST returns an awful data structure (see RFC3501 §6.3.8 for
+                        # an example): It starts with a bunch of attributes (listed at
+                        # §7.2.2) in parenthesis, followed by a path delimeter string,
+                        # and a (quoted) mailbox path. We need to filter mailboxes with
+                        # the attribute \Noselect, or we'd blow up when trying to SELECT
+                        # it.
+                        directories.extend([
+                            next(csv.reader([dir.decode()], delimiter=' ', quotechar='"'))[-1]
+                            for dir in wildcard_dirs
+                            if rb'\Noselect' not in dir
+                        ])
+                        directories.remove(directory)
+
+                for directory in directories:
+                    ok, _ = self.connection.select('"{}"'.format(directory))
+                    if ok != "OK":
+                        raise imaplib.IMAP4.error("cannot select {}".format(directory))
                     unseen_response = self.connection.search(None, self.criterion)
                     mails = unseen_response[1][0].split()
                     tmp_mail_count += len(mails)
@@ -344,7 +366,7 @@ class Py3status:
 
                 if self.use_idle:
                     self.py3.update()
-                    self._idle()
+                    self._idle(directories)
                     retry_counter = 0
                 else:
                     return
