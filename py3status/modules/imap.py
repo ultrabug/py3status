@@ -14,6 +14,23 @@ Configuration parameters:
     criterion: status of emails to check for (default 'UNSEEN')
     debug: log warnings (default False)
     degraded_when_stale: color as degraded when updating failed (default True)
+    filter: You can specify a list of filters to decide which folders to search.
+        By default, we search only the INBOX folder (ie: `['^INBOX$']`). We
+        can use regular expressions, so if you use more than one, it would be
+        joined by a logical operator `or`.
+
+        `'.*'` will match all folders.
+        `'pattern'` will match folders containing `pattern`.
+        `'^pattern'` will match folders beginning with `pattern`.
+        `'pattern$'` will match folders ending with `pattern`.
+        `'^((?![Ss][Pp][Aa][Mm]).)*$'` will match all folders
+        except for every possible case of `spam` folders.
+
+        For more documentation, see https://docs.python.org/3/library/re.html
+        and/or any regex builder on the web. Don't forget to escape characters.
+
+        The filters will only be used if the mailbox configuration value is
+        set to an empty value.
     format: display format for this module (default 'Mail: {unseen}')
     hide_if_zero: hide this module when no new mail (default False)
     mailbox: name of the mailbox to check (default 'INBOX')
@@ -64,12 +81,15 @@ SAMPLE OUTPUT
 """
 import imaplib
 import os
+import re
+from csv import reader
 from threading import Thread
 from time import sleep
 from ssl import create_default_context
 from socket import setdefaulttimeout, error as socket_error
 
 STRING_UNAVAILABLE = "N/A"
+STRING_INVALID_FILTER = "invalid imap filters `{}`"
 NO_DATA_YET = -1
 
 
@@ -86,6 +106,7 @@ class Py3status:
     criterion = "UNSEEN"
     debug = False
     degraded_when_stale = True
+    filter = ["^INBOX$"]
     format = "Mail: {unseen}"
     hide_if_zero = False
     mailbox = "INBOX"
@@ -130,6 +151,8 @@ class Py3status:
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
+        if not isinstance(self.filter, list):
+            raise Exception(STRING_INVALID_FILTER.format(filter))
 
     def imap(self):
         # I -- acquire mail_count
@@ -331,13 +354,50 @@ class Py3status:
                         self.connection.login(self.user, self.password)
 
                 tmp_mail_count = 0
-                directories = self.mailbox.split(",")
+                if self.mailbox:
+                    directories = self.mailbox.split(",")
+                else:
+                    try:
+                        directories
+                    except:
+                        directories = []
+                        filters = "|".join(self.filter)
+                        objs = [x.decode() for x in self.connection.list()[1]]
+                        folders = [x[-1] for x in reader(objs, delimiter=" ")]
+                        lines = ["===== IMAP ====="]
+                        for name in folders:
+                            subscribed = " "
+                            try:
+                                if re.search(filters, name):
+                                    subscribed = "x"
+                                    folder = name.replace("\\", "\\\\")
+                                    folder = folder.replace(r'"', r"\"")
+                                    folder = '"{}"'.format(folder)
+                                    directories.append(folder)
+                            except re.error:
+                                directories = []
+                                break
+                            lines.append("[{}] {}".format(subscribed, name))
+                        if not directories:
+                            self.py3.error(
+                                STRING_INVALID_FILTER.format(filters),
+                                self.py3.CACHE_FOREVER,
+                            )
+                        for line in lines:
+                            self.py3.log(line)
 
                 for directory in directories:
-                    self.connection.select(directory)
-                    unseen_response = self.connection.search(None, self.criterion)
-                    mails = unseen_response[1][0].split()
-                    tmp_mail_count += len(mails)
+                    if (
+                        self.connection.select(directory, readonly=True)[0]
+                        == "OK"
+                    ):
+                        unseen_response = self.connection.search(
+                            None, self.criterion
+                        )
+                        mails = unseen_response[1][0].split()
+                        tmp_mail_count += len(mails)
+                    else:
+                        directories.remove(directory)
 
                 self.mail_count = tmp_mail_count
                 self.network_error = None
