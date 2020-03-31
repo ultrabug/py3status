@@ -383,17 +383,13 @@ class Py3status:
                                 STRING_INVALID_FILTER.format(filters),
                                 self.py3.CACHE_FOREVER,
                             )
-                        for line in lines:
-                            self.py3.log(line)
+                        if self.debug:
+                            for line in lines:
+                                self.py3.log(line)
 
                 for directory in directories:
-                    if (
-                        self.connection.select(directory, readonly=True)[0]
-                        == "OK"
-                    ):
-                        unseen_response = self.connection.search(
-                            None, self.criterion
-                        )
+                    if self.connection.select(directory, readonly=True)[0] == "OK":
+                        unseen_response = self.connection.search(None, self.criterion)
                         mails = unseen_response[1][0].split()
                         tmp_mail_count += len(mails)
                     else:
