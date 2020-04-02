@@ -119,20 +119,20 @@ class Amixer(Audio):
         self.cmd = [
             "amixer",
             "-q",
-            "-D",
-            self.device,
             "-c",
             self.card,
+            "-D",
+            self.device,
             "sset",
             self.channel,
         ]
         self.get_volume_cmd = [
             "amixer",
             "-M",
-            "-D",
-            self.device,
             "-c",
             self.card,
+            "-D",
+            self.device,
             "sget",
             self.channel,
         ]
