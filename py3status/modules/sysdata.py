@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display system RAM, SWAP and CPU utilization.
 
 Configuration parameters:
@@ -99,7 +98,6 @@ SAMPLE OUTPUT
 ]
 """
 
-from __future__ import division
 from fnmatch import fnmatch
 from os import getloadavg
 
@@ -115,15 +113,15 @@ class Py3status:
     cpu_freq_unit = "GHz"
     cpus = ["cpu?*"]
     format = (
-        "[\?color=cpu_used_percent CPU: {cpu_used_percent}%], "
-        "[\?color=mem_used_percent Mem: {mem_used}/{mem_total} "
+        r"[\?color=cpu_used_percent CPU: {cpu_used_percent}%], "
+        r"[\?color=mem_used_percent Mem: {mem_used}/{mem_total} "
         "{mem_total_unit} ({mem_used_percent}%)]"
     )
-    format_cpu = "\?color=used_percent {used_percent}%"
+    format_cpu = r"\?color=used_percent {used_percent}%"
     format_cpu_separator = " "
     mem_unit = "GiB"
     swap_unit = "GiB"
-    temp_unit = u"°C"
+    temp_unit = "°C"
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
 
@@ -212,10 +210,10 @@ class Py3status:
     def post_config_hook(self):
         self.first_run = True
         temp_unit = self.temp_unit.upper()
-        if temp_unit in ["C", u"°C"]:
-            temp_unit = u"°C"
-        elif temp_unit in ["F", u"°F"]:
-            temp_unit = u"°F"
+        if temp_unit in ["C", "°C"]:
+            temp_unit = "°C"
+        elif temp_unit in ["F", "°F"]:
+            temp_unit = "°F"
         elif not temp_unit == "K":
             temp_unit = "unknown unit"
         self.temp_unit = temp_unit
@@ -376,7 +374,7 @@ class Py3status:
                 pass
         if not sensors:
             sensors = self.py3.command_output(command)
-        m = re.search("(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        m = re.search(r"(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
         else:
@@ -390,7 +388,7 @@ class Py3status:
                 with open(zone) as f:
                     cpu_temp = f.readline()
                     cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
-            except (OSError, IOError, ValueError):
+            except (OSError, ValueError):
                 # FileNotFoundError does not exist on Python < 3.3, so we catch OSError instead
                 # ValueError can be thrown if zone was a file that didn't have a float
                 # if zone was not a file, it might be a sensor!
@@ -400,7 +398,7 @@ class Py3status:
             cpu_temp = self._get_cputemp_with_lmsensors()
 
         if cpu_temp is float:
-            if unit == u"°F":
+            if unit == "°F":
                 cpu_temp = cpu_temp * (9.0 / 5.0) + 32
             elif unit == "K":
                 cpu_temp += 273.15

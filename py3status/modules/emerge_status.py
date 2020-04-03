@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display information about the currently running emerge process.
 
 Configuration parameters:
@@ -62,7 +61,7 @@ class Py3status:
     cache_timeout = 30
     emerge_log_file = "/var/log/emerge.log"
     format = (
-        "{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total}"
+        r"{prefix}[\?if=is_running : [\?if=!total=0 [{current}/{total}"
         " {action} {category}/{pkg}]|calculating...]|: stopped 0/0]"
     )
     prefix = "emrg"
@@ -110,9 +109,9 @@ class Py3status:
                 break
             else:
                 status_re = re.compile(
-                    "\((?P<cu>[\d]+) of (?P<t>[\d]+)\) "
-                    "(?P<a>[a-zA-Z\/]+( [a-zA-Z]+)?) "
-                    "\((?P<ca>[\w\-]+)\/(?P<p>[\w\.]+)"
+                    r"\((?P<cu>[\d]+) of (?P<t>[\d]+)\) "
+                    r"(?P<a>[a-zA-Z\/]+( [a-zA-Z]+)?) "
+                    r"\((?P<ca>[\w\-]+)\/(?P<p>[\w\.]+)"
                 )
                 res = status_re.search(line)
                 if res is not None:

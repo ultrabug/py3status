@@ -2,34 +2,16 @@ import base64
 import json
 import socket
 
-try:
-    # Python 3
-    from urllib.error import URLError, HTTPError
-    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
-    from urllib.request import (
-        urlopen,
-        Request,
-        build_opener,
-        install_opener,
-        HTTPCookieProcessor,
-    )
+from urllib.error import URLError, HTTPError
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+from urllib.request import (
+    urlopen,
+    Request,
+    build_opener,
+    install_opener,
+    HTTPCookieProcessor,
+)
 
-    IS_PYTHON_3 = True
-except ImportError:
-    # Python 2
-    from urllib import urlencode
-    from urllib2 import (
-        urlopen,
-        Request,
-        URLError,
-        HTTPError,
-        build_opener,
-        install_opener,
-        HTTPCookieProcessor,
-    )
-    from urlparse import urlsplit, urlunsplit, parse_qsl
-
-    IS_PYTHON_3 = False
 
 from py3status.exceptions import RequestTimeout, RequestURLError, RequestInvalidJSON
 
@@ -108,10 +90,7 @@ class HttpResponse:
         try:
             return self._text
         except AttributeError:
-            if IS_PYTHON_3:
-                encoding = self._response.headers.get_content_charset("utf-8")
-            else:
-                encoding = self._response.headers.getparam("charset")
+            encoding = self._response.headers.get_content_charset("utf-8")
             self._text = self._response.read().decode(encoding or "utf-8")
         return self._text
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display bill for Amazon Web Services.
 

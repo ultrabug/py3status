@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display NumLock, CapsLock, and ScrLock keys.
 
 Configuration parameters:
@@ -44,9 +43,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 1
     format = (
-        "[\?if=num_lock&color=good NUM|\?color=bad NUM] "
-        "[\?if=caps_lock&color=good CAPS|\?color=bad CAPS] "
-        "[\?if=scroll_lock&color=good SCR|\?color=bad SCR]"
+        r"[\?if=num_lock&color=good NUM|\?color=bad NUM] "
+        r"[\?if=caps_lock&color=good CAPS|\?color=bad CAPS] "
+        r"[\?if=scroll_lock&color=good SCR|\?color=bad SCR]"
     )
 
     def post_config_hook(self):

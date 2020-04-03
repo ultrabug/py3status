@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Shift color temperature on the screen.
 
@@ -10,8 +9,8 @@ Configuration parameters:
         (default None)
     delta: specify interval value to change color temperature (default 100)
     format: display format for this module
-        *(default '{name} [\?if=enabled&color=darkgray disabled'
-        '|[\?color=color_temperature {color_temperature}K]]')*
+        *(default '{name} [\\?if=enabled&color=darkgray disabled'
+        '|[\\?color=color_temperature {color_temperature}K]]')*
     maximum: specify maximum color temperature to use (default 25000)
     minimum: specify minimum color temperature to use (default 1000)
     thresholds: specify color thresholds to use
@@ -46,7 +45,7 @@ Examples:
 ```
 # different theme
 hueshift {
-    format = '\?color=color_temperature \u263c {color_temperature}K'
+    format = '\\?color=color_temperature \u263c {color_temperature}K'
 }
 
 # for best results, add some limitations
@@ -84,8 +83,8 @@ class Py3status:
     command = None
     delta = 100
     format = (
-        "{name} [\?if=enabled&color=darkgray disabled"
-        "|[\?color=color_temperature {color_temperature}K]]"
+        r"{name} [\?if=enabled&color=darkgray disabled"
+        r"|[\?color=color_temperature {color_temperature}K]]"
     )
     maximum = 25000
     minimum = 1000

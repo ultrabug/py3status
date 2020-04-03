@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display response times of the configured Pingdom checks.
 

@@ -77,12 +77,6 @@ def docstring_params(docstring):
                 if match.group("value"):
                     try:
                         value = eval(match.group("value"))
-                        if isinstance(value, str):
-                            try:
-                                value = value.decode("utf-8")
-                            except AttributeError:
-                                # python3
-                                pass
                         try:
                             value = value.replace("&amp;", "&")
                             value = value.replace("&lt;", "<")
@@ -151,7 +145,7 @@ def get_module_attributes(path):
                     if op == "USub":
                         attr_value = -attr_value
                     else:
-                        attr_value = "UNKNOWN %s UnaryOp %s" % (class_name, op)
+                        attr_value = "UNKNOWN {} UnaryOp {}".format(class_name, op)
                 elif class_name == "BinOp":
                     left = get_value(value.left)
                     right = get_value(value.right)
@@ -162,7 +156,7 @@ def get_module_attributes(path):
                         elif op == "Mult":
                             attr_value = left * right
                         else:
-                            attr_value = "UNKNOWN %s BinOp %s" % (class_name, op)
+                            attr_value = "UNKNOWN {} BinOp {}".format(class_name, op)
                     except Exception:
                         attr_value = "UNKNOWN %s BinOp error" % class_name
                 else:

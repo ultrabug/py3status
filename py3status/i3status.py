@@ -354,7 +354,7 @@ class I3status(Thread):
                         continue
                 if isinstance(value, bool):
                     value = "{}".format(value).lower()
-                self.write_in_tmpfile('    %s = "%s"\n' % (key, value), tmpfile)
+                self.write_in_tmpfile('    {} = "{}"\n'.format(key, value), tmpfile)
             self.write_in_tmpfile("}\n\n", tmpfile)
         tmpfile.flush()
 
@@ -435,8 +435,8 @@ class I3status(Thread):
                                     msg += " and said: {}".format(err)
                                 else:
                                     msg += " with code {}".format(code)
-                                raise IOError(msg)
-                except IOError:
+                                raise OSError(msg)
+                except OSError:
                     err = sys.exc_info()[1]
                     self.error = err
                     self.py3_wrapper.log(err, "error")

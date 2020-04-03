@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display date and time.
 
@@ -90,7 +89,6 @@ SAMPLE OUTPUT
 london
 {'full_text': 'Thursday Feb 23 1:42 AM London'}
 """
-from __future__ import division
 
 import locale
 import re
@@ -100,7 +98,7 @@ from time import time
 import pytz
 import tzlocal
 
-CLOCK_BLOCKS = u"🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
+CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
 
 
 class Py3status:
@@ -190,26 +188,6 @@ class Py3status:
 
         # reset the cycle time
         self._cycle_time = time() + self.cycle
-
-        # set our _fmt_strftime function depending on python version
-        if self.py3.is_python_2():
-            self._fmt_strftime = self._fmt_strftime_py2
-        else:
-            self._fmt_strftime = self._fmt_strftime_py3
-
-    @staticmethod
-    def _fmt_strftime_py2(fmt, t):
-        """
-        strftime for python 2
-        """
-        return t.strftime(fmt.encode("utf-8"))
-
-    @staticmethod
-    def _fmt_strftime_py3(fmt, t):
-        """
-        strftime for python 3
-        """
-        return t.strftime(fmt)
 
     def _get_timezone(self, tz):
         """
@@ -312,9 +290,9 @@ class Py3status:
 
                 if self.py3.is_composite(format_time):
                     for item in format_time:
-                        item["full_text"] = self._fmt_strftime(item["full_text"], t)
+                        item["full_text"] = t.strftime(item["full_text"])
                 else:
-                    format_time = self._fmt_strftime(format_time, t)
+                    format_time = t.strftime(format_time)
                 times[name] = format_time
 
         # work out when we need to update

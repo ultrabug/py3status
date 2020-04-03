@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display upcoming Google Calendar events.
 
@@ -29,25 +28,25 @@ Configuration parameters:
     force_lowercase: Sets whether to force all event output to lower case.
         (default False)
     format: The format for module output.
-        (default '{events}|\?color=event \u2687')
+        (default '{events}|\\?color=event \u2687')
     format_date: The format for date related format placeholders.
         May be any Python strftime directives for dates.
         (default '%a %d-%m')
     format_event: The format for each event. The information can be toggled
         with 'button_toggle' based on the value of 'is_toggled'.
-        *(default '[\?color=event {summary}][\?if=is_toggled  ({start_time}'
+        *(default '[\\?color=event {summary}][\\?if=is_toggled  ({start_time}'
         ' - {end_time}, {start_date})|[ ({location})][ {format_timer}]]')*
     format_notification: The format for event warning notifications.
         (default '{summary} {start_time} - {end_time}')
     format_separator: The string used to separate individual events.
-        (default ' \| ')
+        (default ' \\| ')
     format_time: The format for time-related placeholders except `{format_timer}`.
         May use any Python strftime directives for times.
         (default '%I:%M %p')
     format_timer: The format used for the {format_timer} placeholder to display
         time until an event starts or time until an event in progress is over.
-        *(default '\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]'
-        '[\?if=minutes {minutes}m])[\?if=is_current  left]')*
+        *(default '\\?color=time ([\\?if=days {days}d ][\\?if=hours {hours}h ]'
+        '[\\?if=minutes {minutes}m])[\\?if=is_current  left]')*
     ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
@@ -167,18 +166,18 @@ class Py3status:
     client_secret = "~/.config/py3status/google_calendar.client_secret"
     events_within_hours = 12
     force_lowercase = False
-    format = "{events}|\?color=event \u2687"
+    format = "{events}|\\?color=event \u2687"
     format_date = "%a %d-%m"
     format_event = (
-        "[\?color=event {summary}][\?if=is_toggled  ({start_time}"
+        r"[\?color=event {summary}][\?if=is_toggled  ({start_time}"
         " - {end_time}, {start_date})|[ ({location})][ {format_timer}]]"
     )
     format_notification = "{summary} {start_time} - {end_time}"
-    format_separator = " \| "
+    format_separator = r" \| "
     format_time = "%I:%M %p"
     format_timer = (
-        "\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]"
-        "[\?if=minutes {minutes}m])[\?if=is_current  left]"
+        r"\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]"
+        r"[\?if=minutes {minutes}m])[\?if=is_current  left]"
     )
     ignore_all_day_events = False
     num_events = 3

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display song currently playing in Google Play Music Desktop Player.
 
@@ -38,7 +37,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = u"♫ {info}"
+    format = "♫ {info}"
 
     def gpmdp(self):
         def _run_cmd(cmd):
@@ -59,7 +58,7 @@ class Py3status:
             ]
             data = {}
             for cmd in cmds:
-                if self.py3.format_contains(self.format, "{0}".format(cmd)):
+                if self.py3.format_contains(self.format, "{}".format(cmd)):
                     data[cmd] = _run_cmd(cmd)
             full_text = self.py3.safe_format(self.format, data)
 

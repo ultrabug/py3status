@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display WWANs, IP addresses, signals, properties and sms.
 
 Configuration parameters:
@@ -179,17 +178,17 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = (
-        "\?color=state WW: [\?if=state_name=connected "
+        r"\?color=state WW: [\?if=state_name=connected "
         "({signal_quality_0}% at {m3gpp_operator_name}) "
-        "[{format_ipv4}[\?soft  ]{format_ipv6}]"
+        r"[{format_ipv4}[\?soft  ]{format_ipv6}]"
         "|{state_name}][ SMS {messages} [{format_message}]]"
     )
-    format_ipv4 = u"[{address}]"
-    format_ipv6 = u"[{address}]"
-    format_message = u"\?if=index<2 {number} [\?max_length=10 {text}...]"
-    format_message_separator = u" "
+    format_ipv4 = "[{address}]"
+    format_ipv6 = "[{address}]"
+    format_message = r"\?if=index<2 {number} [\?max_length=10 {text}...]"
+    format_message_separator = " "
     format_notification = None
-    format_stats = u"{duration_hms}"
+    format_stats = "{duration_hms}"
     modem = None
     thresholds = [(0, "bad"), (11, "good")]
 
@@ -198,7 +197,7 @@ class Py3status:
         network_manager = ["NetworkManager", "/usr/sbin/NetworkManager"]
         for command in (modem_manager, network_manager):
             if not self.py3.check_commands(command):
-                raise Exception("%s %s" % (command[0], STRING_NOT_INSTALLED))
+                raise Exception("{} {}".format(command[0], STRING_NOT_INSTALLED))
 
         # search: modemmanager flags and enumerations
         # enum 1: #MMModemState
@@ -455,7 +454,7 @@ class Py3status:
             if isinstance(value, (list, tuple)):
                 if len(value) > 1:
                     for i, v in enumerate(value):
-                        new_data["%s_%s" % (key, i)] = v
+                        new_data["{}_{}".format(key, i)] = v
                 elif len(value) == 1:
                     new_data[key] = value[0]
                 else:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # FIXME color_index param
 """
 Display bitcoin using bitcoincharts.com.
@@ -71,9 +70,9 @@ class Py3status:
             if not config.get("format_separator") and config.get("bitcoin_separator"):
                 sep = config.get("bitcoin_separator")
                 sep = sep.replace("\\", "\\\\")
-                sep = sep.replace("[", "\[")
-                sep = sep.replace("]", "\]")
-                sep = sep.replace("|", "\|")
+                sep = sep.replace("[", r"\[")
+                sep = sep.replace("]", r"\]")
+                sep = sep.replace("|", r"\|")
 
                 return {"format_separator": sep}
             else:

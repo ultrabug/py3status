@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display window properties (i.e. title, class, instance).
 
@@ -50,7 +49,7 @@ class Ipc:
         if self.parent.max_width:
             title = window_properties["title"]
             if len(title or "") > self.parent.max_width:
-                window_properties["title"] = title[: self.parent.max_width - 1] + u"…"
+                window_properties["title"] = title[: self.parent.max_width - 1] + "…"
 
         return window_properties
 
@@ -213,5 +212,5 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    config = {"format": "\[{ipc}\] [\?color=pink {title}]"}
+    config = {"format": r"\[{ipc}\] [\?color=pink {title}]"}
     module_test(Py3status, config=config)

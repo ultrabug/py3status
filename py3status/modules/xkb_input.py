@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Switch inputs.
 
 Configuration parameters:
@@ -217,7 +216,7 @@ class Xkb:
                             )
                             self.reverse_name_mapping[name] = (symbol, variant)
                             self.variant_mapping.append((variant, symbol, name))
-        except IOError as err:
+        except OSError as err:
             self.parent.error = err
 
     def setup(self, parent):
@@ -396,7 +395,7 @@ class Py3status:
     button_prev = 5
     cache_timeout = 10
     format = "{format_input}"
-    format_input = "[{alias}][\?soft  ][\?color=s {s}[ {v}]]"
+    format_input = r"[{alias}][\?soft  ][\?color=s {s}[ {v}]]"
     format_input_separator = " "
     inputs = []
     switcher = None

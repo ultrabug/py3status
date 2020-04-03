@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display ultimately customizable weather.
 
 This module allows you to specify an icon for nearly every weather scenario
@@ -287,10 +286,10 @@ OWM_WEATHER_ICON = "//weather:0/id"
 OWM_WIND = "//wind"
 
 # Units constants
-RAIN_UNITS = set(["cm", "ft", "in", "mm", "m", "yd"])
+RAIN_UNITS = {"cm", "ft", "in", "mm", "m", "yd"}
 SNOW_UNITS = RAIN_UNITS
-TEMP_UNITS = set(["c", "f", "k"])
-WIND_UNITS = set(["fsec", "msec", "mph", "kmh"])
+TEMP_UNITS = {"c", "f", "k"}
+WIND_UNITS = {"fsec", "msec", "mph", "kmh"}
 
 # Conversion factors
 FT_FROM_METER = 3.28084
@@ -300,7 +299,7 @@ MPH_FROM_MSEC = 2.23694
 
 # Thresholds options
 THRESHOLDS_ALL = "all"
-THRESHOLDS_NAMES = set([THRESHOLDS_ALL, "current", "min", "max"])
+THRESHOLDS_NAMES = {THRESHOLDS_ALL, "current", "min", "max"}
 
 # Thresholds defaults
 THRESHOLDS = {"all": [(-100, "#0FF"), (0, "#00F"), (50, "#0F0"), (150, "#FF0")]}
@@ -323,25 +322,25 @@ class Py3status:
     format_forecast_separator = " "
     format_humidity = "{icon} {humidity}%"
     format_pressure = "{icon} {pressure} hPa"
-    format_rain = "[\?if=amount {icon} {amount:.0f} {unit}]"
-    format_snow = "[\?if=amount {icon} {amount:.0f} {unit}]"
+    format_rain = r"[\?if=amount {icon} {amount:.0f} {unit}]"
+    format_snow = r"[\?if=amount {icon} {amount:.0f} {unit}]"
     format_sunrise = "{icon} %-I:%M %p"
     format_sunset = "{icon} %-I:%M %p"
-    format_temperature = u"{icon} [\?color=all {current:.0f}°{unit}]"
-    format_wind = "[\?if=speed {icon} {speed:.0f} {unit}]"
-    icon_atmosphere = u"🌫"
-    icon_cloud = u"☁"
-    icon_extreme = u"⚠"
-    icon_humidity = u"●"
-    icon_pressure = u"◌"
-    icon_rain = u"🌧"
-    icon_snow = u"❄"
-    icon_sun = u"☼"
-    icon_sunrise = u"⇑"
-    icon_sunset = u"⇓"
-    icon_temperature = u"○"
-    icon_thunderstorm = u"⛈"
-    icon_wind = u"☴"
+    format_temperature = r"{icon} [\?color=all {current:.0f}°{unit}]"
+    format_wind = r"[\?if=speed {icon} {speed:.0f} {unit}]"
+    icon_atmosphere = "🌫"
+    icon_cloud = "☁"
+    icon_extreme = "⚠"
+    icon_humidity = "●"
+    icon_pressure = "◌"
+    icon_rain = "🌧"
+    icon_snow = "❄"
+    icon_sun = "☼"
+    icon_sunrise = "⇑"
+    icon_sunset = "⇓"
+    icon_temperature = "○"
+    icon_thunderstorm = "⛈"
+    icon_wind = "☴"
     icons = None
     lang = "en"
     location = None
@@ -430,7 +429,7 @@ class Py3status:
 
         # Copy thresholds if available
         if THRESHOLDS_ALL in self.thresholds:
-            for name in THRESHOLDS_NAMES - set([THRESHOLDS_ALL]):
+            for name in THRESHOLDS_NAMES - {THRESHOLDS_ALL}:
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
@@ -688,7 +687,7 @@ class Py3status:
         choice["unit"] = self.unit_temperature
 
         # Calculate thresholds
-        for name in THRESHOLDS_NAMES - set([THRESHOLDS_ALL]):
+        for name in THRESHOLDS_NAMES - {THRESHOLDS_ALL}:
             # Try to apply the specific threshold
             if name in self.thresholds:
                 self.py3.threshold_get_color(choice[name], name)
@@ -817,9 +816,9 @@ if __name__ == "__main__":
             "format_rain": "{icon} {amount:.0f} in",
             "format_snow": "{icon} {amount:.0f} in",
             "format_temperature": (
-                "{icon}: max: [\?color=max {max:.0f}°F], "
-                "min: [\?color=min {min:.0f}°F], "
-                "current: [\?color=current {current:.0f}°F]"
+                r"{icon}: max: [\?color=max {max:.0f}°F], "
+                r"min: [\?color=min {min:.0f}°F], "
+                r"current: [\?color=current {current:.0f}°F]"
             ),
             "format_wind": (
                 "{icon} {degree}°, gust: {gust:.0f} mph, " "speed: {speed:.0f} mph"

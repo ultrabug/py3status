@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 import re
-import sys
 
 from math import ceil
 from numbers import Number
@@ -8,13 +6,7 @@ from numbers import Number
 from py3status.composite import Composite
 from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
 
-try:
-    from urllib.parse import parse_qsl
-except ImportError:
-    from urlparse import parse_qsl
-
-
-python2 = sys.version_info < (3, 0)
+from urllib.parse import parse_qsl
 
 
 def expand_color(color, default=None, passthrough=False, block=None):
@@ -69,8 +61,6 @@ class Formatter:
         Tokenizing is resource intensive so we only do it once and cache it
         """
         if format_string not in self.format_string_cache:
-            if python2 and isinstance(format_string, str):
-                format_string = format_string.decode("utf-8")
             tokens = list(re.finditer(self.reg_ex, format_string))
             self.format_string_cache[format_string] = tokens
         return self.format_string_cache[format_string]
@@ -133,7 +123,9 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group("key") in placeholders:
                 output.append(
-                    "{%s%s}" % (placeholders[token.group("key")], token.group("format"))
+                    "{{{}{}}}".format(
+                        placeholders[token.group("key")], token.group("format")
+                    )
                 )
                 continue
             elif token.group("command"):
@@ -172,7 +164,7 @@ class Formatter:
                     continue
             value = token.group(0)
             output.append(value)
-        return u"".join(output)
+        return "".join(output)
 
     def update_placeholder_formats(self, format_string, placeholder_formats):
         """
@@ -193,7 +185,7 @@ class Formatter:
                 continue
             value = token.group(0)
             output.append(value)
-        return u"".join(output)
+        return "".join(output)
 
     def build_block(self, format_string):
         """
@@ -256,10 +248,6 @@ class Formatter:
         param_dict, attributes of the supplied module, or provided via calls to
         the attr_getter function.
         """
-        # fix python 2 unicode issues
-        if python2 and isinstance(format_string, str):
-            format_string = format_string.decode("utf-8")
-
         if param_dict is None:
             param_dict = {}
 
@@ -293,9 +281,7 @@ class Formatter:
                 if param.text():
                     param = param.copy()
                 else:
-                    param = u""
-            elif python2 and isinstance(param, str):
-                param = param.decode("utf-8")
+                    param = ""
             return param
 
         # render our processed format
@@ -347,13 +333,13 @@ class Placeholder:
                         value = float(value)
                     if "d" in self.format:
                         value = int(float(value))
-                    output = u"{[%s]%s}" % (self.key, self.format)
+                    output = "{{[{}]{}}}".format(self.key, self.format)
                     value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
             elif self.format.startswith("!"):
-                output = u"{%s%s}" % (self.key, self.format)
+                output = "{{{}{}}}".format(self.key, self.format)
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
@@ -375,7 +361,7 @@ class Placeholder:
 
     def repr(self):
         if self.format:
-            value = "%s%s" % (self.key, self.format)
+            value = "{}{}".format(self.key, self.format)
         else:
             value = self.key
         return "{%s}" % value
@@ -649,28 +635,20 @@ class Block:
             if color == "hidden":
                 return False, []
 
-        text = u""
+        text = ""
         out = []
         if isinstance(output, str):
             output = [output]
 
         # merge as much output as we can.
-        # we need to convert values to unicode for concatenation.
-        if python2:
-            conversion = unicode  # noqa
-            convertibles = (str, bool, int, float, unicode)  # noqa
-        else:
-            conversion = str
-            convertibles = (str, bool, int, float, bytes)
-
         first = True
         last_block = None
         for index, item in enumerate(output):
             is_block = isinstance(item, Block)
             if not is_block and item:
                 last_block = None
-            if isinstance(item, convertibles) or item is None:
-                text += conversion(item)
+            if isinstance(item, (str, bool, int, float, bytes)) or item is None:
+                text += str(item)
                 continue
             elif text:
                 if not first and (text == "" or out and out[-1].get("color") == color):
@@ -680,7 +658,7 @@ class Block:
                     if color:
                         part["color"] = color
                     out.append(part)
-                text = u""
+                text = ""
             if isinstance(item, Composite):
                 if color:
                     item.composite_update(item, {"color": color}, soft=True)
@@ -720,7 +698,7 @@ class Block:
                 if min_length:
                     min_length -= len(item["full_text"])
             if min_length > 0:
-                out[0]["full_text"] = u" " * min_length + out[0]["full_text"]
+                out[0]["full_text"] = " " * min_length + out[0]["full_text"]
                 min_length = 0
 
         return valid, out

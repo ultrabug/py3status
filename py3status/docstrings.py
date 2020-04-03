@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import ast
 import re
 import os.path
@@ -436,4 +435,4 @@ def show_modules(config, modules_list):
             for description in module:
                 print(description[:-1])
         else:
-            print("%-22s %s" % (name, desc))
+            print("{:<22} {}".format(name, desc))

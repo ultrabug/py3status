@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display hard drive temperatures.
 
 hddtemp is a small utility with daemon that gives the hard drive temperature
@@ -119,7 +118,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "{format_hdd}"
-    format_hdd = u"{name} [\?color=temperature {temperature}°{unit}]"
+    format_hdd = r"{name} [\?color=temperature {temperature}°{unit}]"
     format_separator = " "
     thresholds = [
         (19, "skyblue"),
