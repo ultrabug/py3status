@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # This is an example module to be used as a template.
 # See https://github.com/ultrabug/py3status/wiki/Write-your-own-modules
 # for more details.

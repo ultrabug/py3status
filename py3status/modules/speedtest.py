@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Perform a bandwidth test with speedtest-cli.
 
 Use middle-click to start the speed test.
@@ -141,9 +140,9 @@ class Py3status:
     # available configuration parameters
     button_share = None
     format = (
-        u"speedtest[\?if=elapsed&color=elapsed_time  "
-        u"{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
-        u"[\?color=upload ↑{upload}Mbps]]"
+        r"speedtest[\?if=elapsed&color=elapsed_time  "
+        r"{elapsed_time}s][ [\?color=download ↓{download}Mbps] "
+        r"[\?color=upload ↑{upload}Mbps]]"
     )
     thresholds = {
         "download": [(0, "cyan")],

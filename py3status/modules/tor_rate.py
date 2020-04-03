@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display transfer rates of a tor instance.
 
@@ -14,7 +13,7 @@ Configuration parameters:
     format: A string describing the output format for the module
         (default "↑ {up} ↓ {down}")
     format_value: A string describing how to format the transfer rates
-        (default "[\?min_length=12 {rate:.1f} {unit}]")
+        (default "[\\?min_length=12 {rate:.1f} {unit}]")
     hide_socket_errors: Hide errors connecting to Tor control socket
         (default False)
     rate_unit: The unit to use for the transfer rates
@@ -69,8 +68,8 @@ class Py3status:
     control_address = "127.0.0.1"
     control_password = None
     control_port = 9051
-    format = u"↑ {up} ↓ {down}"
-    format_value = "[\?min_length=12 {rate:.1f} {unit}]"
+    format = "↑ {up} ↓ {down}"
+    format_value = r"[\?min_length=12 {rate:.1f} {unit}]"
     hide_socket_errors = False
     rate_unit = "B/s"
     si_units = False

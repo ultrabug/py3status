@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display keyboard layout.
 
@@ -113,10 +112,10 @@ class Py3status:
         }
 
         if self.colors and not self.colors_dict:
-            self.colors_dict = dict(
-                (k.strip(), v.strip())
+            self.colors_dict = {
+                k.strip(): v.strip()
                 for k, v in (layout.split("=") for layout in self.colors.split(","))
-            )
+            }
 
         # colorize languages containing spaces and/or dashes too
         language = lang.upper()

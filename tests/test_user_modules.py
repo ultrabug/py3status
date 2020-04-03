@@ -29,7 +29,7 @@ def test__get_path_based_modules(status_wrapper):
 
 def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
     def return_fake_entry_points(*_):
-        class FakePy3status(object):
+        class FakePy3status:
             Py3status = "I am a fake class"
 
             def __init__(self, name):

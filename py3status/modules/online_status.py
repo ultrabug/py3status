@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Determine if you have an Internet Connection.
 
@@ -28,10 +27,7 @@ off
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-try:
-    from urllib.request import urlopen, URLError  # py3
-except ImportError:
-    from urllib2 import urlopen, URLError  # py2
+from urllib.request import urlopen, URLError
 
 
 class Py3status:
@@ -41,8 +37,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     format = "{icon}"
-    icon_off = u"■"
-    icon_on = u"●"
+    icon_off = "■"
+    icon_on = "●"
     timeout = 2
     url = "https://www.google.com"
 

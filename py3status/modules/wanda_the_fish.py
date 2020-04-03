@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display a fortune-telling, swimming fish.
 
@@ -25,8 +24,8 @@ Examples:
 ```
 # disable motions when not in use
 wanda_the_fish {
-    format = '[\?if=fortune {nomotion}][{fortune} ]'
-    format += '{wanda}[\?if=fortune {motion}]'
+    format = '[\\?if=fortune {nomotion}][{fortune} ]'
+    format += '{wanda}[\\?if=fortune {motion}]'
 }
 
 # no updates, no motions, yes fortunes, you click
@@ -92,10 +91,10 @@ class Py3status:
 
     def post_config_hook(self):
         body = (
-            "[\?color=orange&show <"
-            "[\?color=lightblue&show º]"
-            "[\?color=darkorange&show ,]))"
-            "[\?color=darkorange&show ))>%s]]"
+            r"[\?color=orange&show <"
+            r"[\?color=lightblue&show º]"
+            r"[\?color=darkorange&show ,]))"
+            r"[\?color=darkorange&show ))>%s]]"
         )
         wanda = [body % fin for fin in ("<", ">", "<", "3")]
         self.wanda = [self.py3.safe_format(x) for x in wanda]

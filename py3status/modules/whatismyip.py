@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display public IP address and online status.
 
@@ -65,8 +64,8 @@ class Py3status:
     expected = None
     format = "{ip}"
     hide_when_offline = False
-    icon_off = u"■"
-    icon_on = u"●"
+    icon_off = "■"
+    icon_on = "●"
     mode = "ip"
     url_geo = URL_GEO_NEW_DEFAULT
 

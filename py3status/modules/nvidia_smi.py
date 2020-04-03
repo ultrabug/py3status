@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display NVIDIA properties currently exhibiting in the NVIDIA GPUs.
 
 nvidia-smi, short for NVIDIA System Management Interface program, is a cross
@@ -86,8 +85,8 @@ class Py3status:
     cache_timeout = 10
     format = "{format_gpu}"
     format_gpu = (
-        u"{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] "
-        "[\?color=memory.used_percent {memory.used_percent}%]"
+        r"{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] "
+        r"[\?color=memory.used_percent {memory.used_percent}%]"
     )
     format_gpu_separator = " "
     memory_unit = None
@@ -105,7 +104,7 @@ class Py3status:
         )
 
         new_memory_properties = set()
-        new_properties = set(["memory.used", "memory.total"])
+        new_properties = {"memory.used", "memory.total"}
         for name in properties:
             if "used_percent" in name:
                 continue

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display number of messages in various mailbox formats.
 This module supports Maildir, mbox, MH, Babyl, MMDF, and IMAP.
 
@@ -174,7 +173,7 @@ class Py3status:
     # available configuration parameters
     accounts = {}
     cache_timeout = 60
-    format = "\?not_zero Mail {mail}|No Mail"
+    format = r"\?not_zero Mail {mail}|No Mail"
     thresholds = []
 
     def post_config_hook(self):
@@ -287,7 +286,7 @@ class Py3status:
                     mail_data[account["name"]] = count_mail
                 if account["urgent"] and count_mail:
                     mail_data["urgent"] = True
-                mail_data["%s_%s" % (k, i)] = count_mail
+                mail_data["{}_{}".format(k, i)] = count_mail
                 mail_data["mail"] += count_mail
                 mail_data[k] += count_mail
 

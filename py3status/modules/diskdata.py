@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display disk information.
 
 Configuration parameters:
@@ -56,7 +55,6 @@ SAMPLE OUTPUT
 {'full_text': 'all:  34.4% ( 82.0 KiB/s)'}
 """
 
-from __future__ import division  # python2 compatibility
 from time import time
 
 
@@ -68,8 +66,8 @@ class Py3status:
     cache_timeout = 10
     disk = None
     format = "{disk}: {used_percent}% ({total})"
-    format_rate = "[\?min_length=11 {value:.1f} {unit}]"
-    format_space = "[\?min_length=5 {value:.1f}]"
+    format_rate = r"[\?min_length=11 {value:.1f} {unit}]"
+    format_space = r"[\?min_length=5 {value:.1f}]"
     sector_size = 512
     si_units = False
     thresholds = {

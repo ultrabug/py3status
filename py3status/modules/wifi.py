@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display WiFi bit rate, quality, signal and SSID using iw.
 
@@ -72,7 +71,7 @@ class Py3status:
     # available configuration parameters
     bitrate_bad = 26
     bitrate_degraded = 53
-    blocks = u"_▁▂▃▄▅▆▇█"
+    blocks = "_▁▂▃▄▅▆▇█"
     cache_timeout = 10
     device = None
     down_color = "bad"
@@ -140,7 +139,7 @@ class Py3status:
             return
 
         if format_up or format_down:
-            self.format = u"{}|{}".format(
+            self.format = "{}|{}".format(
                 format_up or "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}",
                 format_down or "W: down",
             )

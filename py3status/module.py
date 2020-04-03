@@ -8,15 +8,9 @@ from random import randint
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, POSITIONS
-from py3status.py3 import Py3, PY3_CACHE_FOREVER, ModuleErrorException
+from py3status.py3 import Py3, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
-
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 class Module:
@@ -81,7 +75,7 @@ class Module:
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
-                u"{}: Import Error, {}".format(self.module_nice_name, str(e)),
+                "{}: Import Error, {}".format(self.module_nice_name, str(e)),
             ]
             self.error_output(self.error_messages[0])
             # log the error
@@ -148,7 +142,7 @@ class Module:
 
                 self.error_messages = [
                     self.module_nice_name,
-                    u"{}: {}".format(
+                    "{}: {}".format(
                         self.module_nice_name, str(e) or e.__class__.__name__
                     ),
                 ]
@@ -173,7 +167,7 @@ class Module:
         # only show first line of error
         msg = msg.splitlines()[0]
 
-        errors = [self.module_nice_name, u"{}: {}".format(self.module_nice_name, msg)]
+        errors = [self.module_nice_name, "{}: {}".format(self.module_nice_name, msg)]
 
         # if we have shown this error then keep in the same state
         if self.error_messages != errors:
@@ -251,7 +245,7 @@ class Module:
         self.disabled = True
         # purge from any container modules
         self._py3_wrapper.purge_module(self.module_full_name)
-        self.error_output(u"")
+        self.error_output("")
         self._py3_wrapper.log("disabling module `%s`" % self.module_full_name)
 
     def wake(self):
@@ -262,7 +256,7 @@ class Module:
         if self.cache_time is None:
             return
         # new style modules can signal they want to cache forever
-        if self.cache_time == PY3_CACHE_FOREVER:
+        if self.cache_time == Py3.CACHE_FOREVER:
             return
         # restart
         self._py3_wrapper.timeout_queue_add(self, self.cache_time)
@@ -1028,8 +1022,8 @@ class Module:
                     # module has indicated that it has an error
                     self.runtime_error(e.msg, meth)
                     if e.timeout:
-                        if e.timeout is PY3_CACHE_FOREVER:
-                            cache_time = PY3_CACHE_FOREVER
+                        if e.timeout is Py3.CACHE_FOREVER:
+                            cache_time = Py3.CACHE_FOREVER
                         else:
                             cache_time = time() + e.timeout
                     else:
@@ -1054,7 +1048,7 @@ class Module:
                 cache_time = time() + self.config["cache_timeout"]
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
-            if cache_time == PY3_CACHE_FOREVER:
+            if cache_time == Py3.CACHE_FOREVER:
                 return
             # don't be hasty mate
             # set timeout to do update next time one is needed
@@ -1087,4 +1081,4 @@ class Module:
         if self._py3_wrapper.udev_monitor.subscribe(self, trigger_action, subsystem):
             if trigger_action == "refresh_and_freeze":
                 # FIXME: we may want to disable refresh instead of using cache_timeout
-                self.module_class.cache_timeout = PY3_CACHE_FOREVER
+                self.module_class.cache_timeout = Py3.CACHE_FOREVER

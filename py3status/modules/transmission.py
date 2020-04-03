@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display number of torrents and more.
 
 Configuration parameters:
@@ -157,7 +156,7 @@ class Py3status:
     cache_timeout = 20
     format = "{format_torrent}"
     format_separator = " "
-    format_torrent = "[\?if=is_focused&color=bad X] {status} {id} {name} {done}%"
+    format_torrent = r"[\?if=is_focused&color=bad X] {status} {id} {name} {done}%"
     thresholds = []
 
     def post_config_hook(self):
@@ -165,7 +164,7 @@ class Py3status:
         if not self.py3.check_commands(self.command):
             raise Exception(STRING_NOT_INSTALLED)
         if self.arguments:
-            self.command = "%s %s" % (self.command, self.arguments)
+            self.command = "{} {}".format(self.command, self.arguments)
         self.init_summary = self.py3.format_contains(
             self.format, ["up", "down", "have"]
         )
@@ -297,7 +296,7 @@ class Py3status:
         elif self.id:
             for x in self.button_run:
                 if button == x[0]:
-                    cmd = "transmission-remote -t %s %s" % (self.id, x[1])
+                    cmd = "transmission-remote -t {} {}".format(self.id, x[1])
                     self.py3.command_run(cmd)
                     time.sleep(0.75)
                     break

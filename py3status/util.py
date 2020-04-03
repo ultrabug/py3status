@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-
 import re
 from colorsys import rgb_to_hsv, hsv_to_rgb
 from math import modf

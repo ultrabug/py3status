@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display status of a service on your system.
 
 Configuration parameters:
@@ -61,7 +60,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 5
-    format = "\?if=!hide {unit}: {status}"
+    format = r"\?if=!hide {unit}: {status}"
     hide_extension = False
     hide_if_default = "off"
     unit = "dbus.service"

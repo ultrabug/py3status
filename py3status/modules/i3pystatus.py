@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Support i3pystatus modules in py3status.
 
@@ -104,7 +103,7 @@ def get_backends():
             dirs = next(os.walk(os.path.join(i3pystatus_dir, subdir)))[2]
             backends.update(
                 {
-                    x[:-3]: "i3pystatus.%s.%s" % (subdir, x[:-3])
+                    x[:-3]: "i3pystatus.{}.{}".format(subdir, x[:-3])
                     for x in dirs
                     if not x.startswith("_") and x.endswith(".py")
                 }
@@ -233,9 +232,7 @@ class Py3status:
     module = None
 
     def post_config_hook(self):
-        if self.py3.is_python_2():
-            raise Exception(STRING_NOT_SUPPORTED)
-        elif not i3pystatus:
+        if not i3pystatus:
             raise Exception(STRING_NOT_INSTALLED)
         elif not self.module:
             raise Exception(STRING_MISSING_MODULE)

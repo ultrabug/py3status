@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Turn on and off systemd suspend inhibitor.
 
 Configuration parameters:
@@ -40,7 +39,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    format = "[\?color=state SUSPEND [\?if=state OFF|ON]]"
+    format = r"[\?color=state SUSPEND [\?if=state OFF|ON]]"
     lock_types = ["handle-lid-switch", "idle", "sleep"]
     thresholds = [(True, "bad"), (False, "good")]
 

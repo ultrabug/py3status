@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display cryptocurrency coins.
 
 The site offer various types of data such as name, symbol, price, volume,
@@ -123,7 +122,7 @@ class Py3status:
     cache_timeout = 600
     format = "{format_coin}"
     format_coin = (
-        "{name} ${price_usd:.2f} [\?color=percent_change_24h {percent_change_24h}%]"
+        r"{name} ${price_usd:.2f} [\?color=percent_change_24h {percent_change_24h}%]"
     )
     format_datetime = {}
     format_separator = " "

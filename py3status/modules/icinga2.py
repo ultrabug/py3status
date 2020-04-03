@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display service status for Icinga2.
 

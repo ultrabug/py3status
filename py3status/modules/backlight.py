@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Adjust screen backlight brightness.
 
@@ -45,7 +44,6 @@ SAMPLE OUTPUT
 {'full_text': u'\u263c: 100%'}
 """
 
-from __future__ import division
 import os
 
 try:
@@ -90,7 +88,7 @@ class Py3status:
     cache_timeout = 10
     command = "xbacklight"
     device = None
-    format = u"☼: {level}%"
+    format = "☼: {level}%"
     hide_when_unavailable = False
     low_tune_threshold = 0
 

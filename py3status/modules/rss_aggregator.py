@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display unread feeds in your favorite RSS aggregator.
 
