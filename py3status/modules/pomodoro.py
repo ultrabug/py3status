@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Use Pomodoro technique to get things done easily.
 
@@ -63,7 +62,7 @@ from math import ceil
 from threading import Timer
 from time import time
 
-PROGRESS_BAR_ITEMS = u"▏▎▍▌▋▊▉"
+PROGRESS_BAR_ITEMS = "▏▎▍▌▋▊▉"
 
 
 class Py3status:
@@ -72,12 +71,12 @@ class Py3status:
 
     # available configuration parameters
     display_bar = False
-    format = u"{ss}"
-    format_active = u"Pomodoro [{format}]"
-    format_break = u"Break #{breakno} [{format}]"
-    format_break_stopped = u"Break #{breakno} ({format})"
-    format_separator = u":"
-    format_stopped = u"Pomodoro ({format})"
+    format = "{ss}"
+    format_active = "Pomodoro [{format}]"
+    format_break = "Break #{breakno} [{format}]"
+    format_break_stopped = "Break #{breakno} ({format})"
+    format_separator = ":"
+    format_stopped = "Pomodoro ({format})"
     num_progress_bars = 5
     pomodoros = 4
     sound_break_end = None
@@ -111,7 +110,7 @@ class Py3status:
         self._end_time = None
         self._alert = False
         if self.display_bar is True:
-            self.format = u"{bar}"
+            self.format = "{bar}"
         self._initialized = True
 
     def _time_up(self):
@@ -190,7 +189,7 @@ class Py3status:
         """
         Setup the process bar.
         """
-        bar = u""
+        bar = ""
         items_cnt = len(PROGRESS_BAR_ITEMS)
         bar_val = float(self._time_left) / self._section_time * self.num_progress_bars
         while bar_val > 0:
@@ -223,7 +222,7 @@ class Py3status:
             mins, seconds = divmod(rest, 60)
 
             if hours:
-                vals["mmss"] = u"%d%s%02d%s%02d" % (
+                vals["mmss"] = "%d%s%02d%s%02d" % (
                     hours,
                     self.format_separator,
                     mins,
@@ -231,7 +230,7 @@ class Py3status:
                     seconds,
                 )
             else:
-                vals["mmss"] = u"%d%s%02d" % (mins, self.format_separator, seconds)
+                vals["mmss"] = "%d%s%02d" % (mins, self.format_separator, seconds)
 
         if self.py3.format_contains(self.format, "bar"):
             vals["bar"] = self._setup_bar()

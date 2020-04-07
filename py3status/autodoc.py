@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import ast
 import inspect
 import os.path
@@ -143,8 +141,8 @@ def screenshots(screenshots_data, module_name):
     for shot in file_sort(shots):
         if not os.path.exists("../doc/screenshots/%s.png" % shot):
             continue
-        out.append(u"\n.. image:: screenshots/{}.png\n\n".format(shot))
-    return u"".join(out)
+        out.append("\n.. image:: screenshots/{}.png\n\n".format(shot))
+    return "".join(out)
 
 
 def create_module_docs():
@@ -214,7 +212,7 @@ def get_variable_docstrings(filename):
                 key = None
         return docstrings, values
 
-    with open(filename, "r") as f:
+    with open(filename) as f:
         source = f.read()
     return walk_node(ast.parse(source))
 
@@ -232,7 +230,7 @@ def get_py3_info():
     constants = [(k, v) for k, v in sorted(constants.items())]
 
     # filter values as we only care about values defined in Py3
-    values = dict([(v, k[4:]) for k, v in values.items() if k.startswith("Py3.")])
+    values = {v: k[4:] for k, v in values.items() if k.startswith("Py3.")}
 
     def make_value(attr, arg, default):
         """
@@ -263,11 +261,11 @@ def get_py3_info():
                 # default values set?
                 if len_args - index <= len_defaults:
                     default = defaults[len_defaults - len_args + index]
-                    sig.append("%s=%s" % (arg, make_value(attr, arg, default)))
+                    sig.append("{}={}".format(arg, make_value(attr, arg, default)))
                 else:
                     sig.append(arg)
 
-            definition = "%s(%s)" % (attr, ", ".join(sig))
+            definition = "{}({})".format(attr, ", ".join(sig))
             methods.append((definition, item.__doc__))
             continue
         try:
@@ -310,7 +308,7 @@ def create_py3_docs():
             output.append("")
             output.append(".. _%s:" % name)  # reference for linking
             output.append("")
-            output.append(".. py:%s:: %s" % (trans[k], name))
+            output.append(".. py:{}:: {}".format(trans[k], name))
             output.append("")
             output.extend(auto_undent(desc))
         with open("../doc/py3-%s-info.inc" % k, "w") as f:

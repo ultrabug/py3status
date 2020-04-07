@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display DNS resolution success on a configured domain.
 

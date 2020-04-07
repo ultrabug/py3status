@@ -36,7 +36,7 @@ Philosophy
 * easily allow interactivity with the i3bar
 * add some built-in enhancement/transformation of basic i3status
   modules output
-* support python 2.7 and python 3.x
+* support Python 3
 
 We apply the :ref:`zen` to improve this project and encourage everyone to read it!
 

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Track your time with Timewarrior.
 
 Timewarrior is a time tracking utility that offers simple stopwatch features
@@ -158,10 +157,10 @@ class Py3status:
     filter = "1day"
     format = "[Timew {format_time}]|No Timew"
     format_datetime = {}
-    format_duration = "\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}"
-    format_tag = "\?color=state_tag {name}"
+    format_duration = r"\?not_zero [{days}d ][{hours}:]{minutes}:{seconds}"
+    format_tag = r"\?color=state_tag {name}"
     format_tag_separator = " "
-    format_time = "[\?color=state_time [{format_tag} ]{format_duration}]"
+    format_time = r"[\?color=state_time [{format_tag} ]{format_duration}]"
     format_time_separator = " "
     thresholds = {
         "state_tag": [(0, "darkgray"), (1, "darkgray")],

@@ -1,10 +1,3 @@
-# basestring does not exist in python3
-try:
-    basestring
-except NameError:
-    basestring = str
-
-
 class Composite:
     """
     Helper class to identify a composite and store its content
@@ -19,14 +12,14 @@ class Composite:
             content = content.get_content()[:]
         elif isinstance(content, dict):
             content = [content]
-        elif isinstance(content, basestring):
+        elif isinstance(content, str):
             content = [{"full_text": content}]
 
         assert isinstance(content, list)
         self._content = content
 
     def __repr__(self):
-        return u"<Composite {}>".format(self._content)
+        return "<Composite {}>".format(self._content)
 
     def __len__(self):
         return len(self._content)
@@ -65,7 +58,7 @@ class Composite:
             self._content += item
         elif isinstance(item, dict):
             self._content.append(item)
-        elif isinstance(item, basestring):
+        elif isinstance(item, str):
             self._content.append({"full_text": item})
         else:
             msg = "{!r} not suitable to append to Composite"

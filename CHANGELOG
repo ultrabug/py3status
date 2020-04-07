@@ -1,3 +1,9 @@
+version 3.27 (2020-03-01)
+* i3status: support read_file module (#1909), by @lasers thx to @dohseven
+
+version 3.26 (2020-02-23)
+* IMPORTANT: drop support for EOL Python 2.6-3.4 (#1904), by Hugo van Kemenade
+
 version 3.25 (2020-02-09)
 * core: fix collections.abc imports for Python 3.9 (#1889), by Hugo van Kemenade
 * qa: fix black formatting
@@ -7,7 +13,8 @@ version 3.25 (2020-02-09)
 * imap module: fix idle for courier (#1899), by Alexander Görtz
 * imap module: handle OAuth TransportError (#1886), by Justyn Butler
 * imap module: implement degraded_when_stale (#1885), by girst
-* imap module: implement retry logic (works around badly configured mail servers) (#1881), by girst* mpd_status module: use idle feature (major cpu savings) (#1884), by girst
+* imap module: implement retry logic (works around badly configured mail servers) (#1881), by girst
+* mpd_status module: use idle feature (major cpu savings) (#1884), by girst
 * mpd_status module: clean up idle code (#1890), by girst
 * mpd_status module: properly terminate idling thread (#1895), by girst
 * mpd_status: fix color output (#1893), by L0ric0

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file is used for the generation of screenshots for py3status
 documentation.
@@ -11,7 +10,6 @@ outside of pythons standard library there are the following requirements:
 PIL may work if installed but is not supported.
 """
 
-from __future__ import division
 
 import ast
 import os
@@ -106,16 +104,11 @@ def contains_bad_glyph(glyph_data, data):
 
     for part in data:
         text = part.get("full_text", "")
-        try:
-            # for python 2
-            text = text.decode("utf8")
-        except AttributeError:
-            pass
 
         for char in text:
             if not check_glyph(ord(char)):
                 # we have not found a character in the font
-                print(u"%s (%s) missing" % (char, ord(char)))
+                print("{} ({}) missing".format(char, ord(char)))
                 return True
     return False
 
@@ -220,7 +213,7 @@ def get_samples():
         if file.endswith(".py") and file != "__init__.py":
             #  remove .py
             module_name = file[:-3]
-            with open(os.path.join(module_dir, file), "r") as f:
+            with open(os.path.join(module_dir, file)) as f:
                 try:
                     module = ast.parse(f.read())
                 except SyntaxError:
@@ -259,7 +252,7 @@ def process(name, path, data, module=True):
         data = [data]
 
     if contains_bad_glyph(glyph_data, data):
-        print("** %s has characters not in %s **" % (name, font.getname()[0]))
+        print("** {} has characters not in {} **".format(name, font.getname()[0]))
     else:
         create_screenshot(name, data, path, font=font, is_module=module)
 

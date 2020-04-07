@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display Graphite metrics.
 
@@ -78,14 +77,14 @@ def format_value(num, value_round=True):
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
         if abs(num) < 1000.0:
             if value_round:
-                return "%1.0f%s" % (num, unit)
+                return "{:1.0f}{}".format(num, unit)
             else:
-                return "%3.1f%s" % (num, unit)
+                return "{:3.1f}{}".format(num, unit)
         num /= 1000.0
     if value_round:
-        return "%.0f%s" % (num, "Y")
+        return "{:.0f}{}".format(num, "Y")
     else:
-        return "%.1f%s" % (num, "Y")
+        return "{:.1f}{}".format(num, "Y")
 
 
 class Py3status:

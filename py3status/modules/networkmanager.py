@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display NetworkManager fields via nmcli, a command-line tool.
 
 Configuration parameters:
@@ -79,9 +78,9 @@ class Py3status:
     devices = ["[e|w]*"]
     format = "{format_device}"
     format_device = (
-        "[\?if=general_connection {general_device}[\?soft  ]"
-        "[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
-        "[\?color=good {ip4_address1}]]"
+        r"[\?if=general_connection {general_device}[\?soft  ]"
+        r"[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        r"[\?color=good {ip4_address1}]]"
     )
     format_device_separator = " "
     thresholds = [(0, "bad"), (30, "degraded"), (65, "good")]

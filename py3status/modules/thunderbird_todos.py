@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display number of todos and more for Thunderbird.
 
@@ -8,7 +7,7 @@ Configuration parameters:
     format_datetime: specify strftime formatting to use (default {})
     format_separator: show separator if more than one (default ' ')
     format_todo: display format for todos
-        (default '\?if=!todo_completed {title}')
+        (default '\\?if=!todo_completed {title}')
     profile: specify a profile path, otherwise first available profile
         eg '~/.thunderbird/abcd1234.default' (default None)
     sort: specify a tuple, eg ('placeholder_name', reverse_boolean)
@@ -68,7 +67,7 @@ thunderbird_todos {
 
 # show rainbow number of incompleted titles
 thunderbird_todos {
-    format = '\?color=todo_incompleted {todo_incompleted} todos'
+    format = '\\?color=todo_incompleted {todo_incompleted} todos'
     thresholds = [
         (1, '#bababa'), (2, '#ffb3ba'), (3, '#ffdfba'), (4, '#ffffba'),
         (5, '#baefba'), (6, '#baffc9'), (7, '#bae1ff'), (8, '#bab3ff')
@@ -77,7 +76,7 @@ thunderbird_todos {
 
 # show rainbow incompleted titles
 thunderbird_todos {
-    format_todo = '\?if=!todo_completed&color=index_incompleted {title}'
+    format_todo = '\\?if=!todo_completed&color=index_incompleted {title}'
     thresholds = [
         (1, '#bababa'), (2, '#ffb3ba'), (3, '#ffdfba'), (4, '#ffffba'),
         (5, '#baefba'), (6, '#baffc9'), (7, '#bae1ff'), (8, '#bab3ff')
@@ -86,9 +85,9 @@ thunderbird_todos {
 
 # show incompleted titles with last modified time
 thunderbird_todos {
-    format_todo = '\?if=!todo_completed {title} {last_modified}'
+    format_todo = '\\?if=!todo_completed {title} {last_modified}'
     format_datetime = {
-        'last_modified': '\?color=degraded last modified %-I:%M%P'
+        'last_modified': '\\?color=degraded last modified %-I:%M%P'
     }
 }
 
@@ -99,24 +98,24 @@ thunderbird_todos {
 
 # show completed titles and incompleted titles
 thunderbird_todos {
-    format_todo = '\?if=todo_completed&color=good {title}|\?color=bad {title}'
+    format_todo = '\\?if=todo_completed&color=good {title}|\\?color=bad {title}'
 }
 
 # make todo blocks
 thunderbird_todos {
     format = 'TODO {format_todo}'
-    format_todo = '\?if=todo_completed&color=good \u25b0|\?color=bad \u25b0'
+    format_todo = '\\?if=todo_completed&color=good \u25b0|\\?color=bad \u25b0'
     format_separator = ''
 }
 
 # display incompleted titles with any priority
 thunderbird_todos {
-    format_todo = '\?if=!todo_completed [\?if=priority>0 {title}]'
+    format_todo = '\\?if=!todo_completed [\\?if=priority>0 {title}]'
 }
 
 # colorize titles based on priorities
 thunderbird_todos {
-    format_todo = '\?if=!todo_completed [\?color=priority {title}]'
+    format_todo = '\\?if=!todo_completed [\\?color=priority {title}]'
     thresholds = [(0, None), (1, 'red'), (5, None), (9, 'deepskyblue')]
 }
 
@@ -156,7 +155,7 @@ class Py3status:
     format = "{format_todo}"
     format_datetime = {}
     format_separator = " "
-    format_todo = "\?if=!todo_completed {title}"
+    format_todo = r"\?if=!todo_completed {title}"
     profile = None
     sort = ()
     thresholds = []

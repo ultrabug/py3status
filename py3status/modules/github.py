@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display Github notifications and issue/pull requests for a repo.
 
@@ -83,10 +82,7 @@ notification
 {'full_text': 'py3status 34/24 N3', 'urgent': True}
 """
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+import urllib.parse as urlparse
 
 
 class Py3status:

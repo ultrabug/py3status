@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display air quality polluting in a given location.
 
 An air quality index (AQI) is a number used by government agencies to communicate
@@ -121,7 +120,7 @@ class Py3status:
     # available configuration parameters
     auth_token = "demo"
     cache_timeout = 3600
-    format = "[\?color=aqi {city_name}: {aqi} {category}]"
+    format = r"[\?color=aqi {city_name}: {aqi} {category}]"
     format_datetime = {}
     location = "Shanghai"
     quality_thresholds = [

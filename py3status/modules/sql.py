@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Display data stored in MariaDB, MySQL, sqlite3, and hopefully more.
 
 Configuration parameters:

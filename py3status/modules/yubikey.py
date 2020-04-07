@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
+r"""
 Show an indicator when YubiKey is waiting for a touch.
 
 Configuration parameters:
@@ -34,7 +33,7 @@ class YubiKeyTouchDetectorListener(threading.Thread):
     """
 
     def __init__(self, parent):
-        super(YubiKeyTouchDetectorListener, self).__init__()
+        super().__init__()
         self.parent = parent
 
     def _connect_socket(self):
@@ -79,7 +78,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    format = "[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]"
+    format = r"[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]"
     socket_path = "$XDG_RUNTIME_DIR/yubikey-touch-detector.socket"
 
     def post_config_hook(self):

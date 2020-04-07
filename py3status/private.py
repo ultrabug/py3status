@@ -2,7 +2,7 @@ import base64
 import inspect
 
 
-class Private(object):
+class Private:
     """
     This class attempts to keep private information.
 
@@ -21,8 +21,8 @@ class Private(object):
         self._decoded = False
         self._encoded = encoded
         self._module_name = module_name.split(" ")[0]
-        self._private = u"***"  # this is used when the user is untrusted
-        self._value = u"encrypted"
+        self._private = "***"  # this is used when the user is untrusted
+        self._value = "encrypted"
 
         # Try to decrypt data if possible
         self._decrypt()
@@ -81,7 +81,7 @@ def catch_factory(attr):
                 return getattr(value, attr)(*args, **kw)
             else:
                 # upper, lower etc
-                return getattr(u"".__class__, attr)(value, *args, **kw)
+                return getattr("".__class__, attr)(value, *args, **kw)
 
         stack = inspect.stack()
         mod = inspect.getmodule(stack[1][0])
@@ -129,10 +129,10 @@ EXCLUDE = [
     "__setattr__",
     "__init_subclass__",
 ]
-for attr in dir(u""):
+for attr in dir(""):
     if attr.startswith("__") and attr in EXCLUDE:
         continue
-    if "__call__" in dir(getattr(u"", attr)):
+    if "__call__" in dir(getattr("", attr)):
         setattr(Private, attr, catch_factory(attr))
 
 

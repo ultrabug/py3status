@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Display SELinux state.
 
@@ -39,7 +38,6 @@ disabled
 {'full_text': 'SELinux: disabled', 'color': '#FF0000'}
 """
 
-from __future__ import absolute_import
 import selinux
 
 
