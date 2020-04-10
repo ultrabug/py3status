@@ -24,6 +24,9 @@ Configuration parameters:
     zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
         If None try to guess CPU temperature
         (default None)
+    zone_sensor: Regular expression for capturing specific lm_sensors thermal zone sensor value.
+        Must have only one capturing group.
+        (default r"(?:Core 0|CPU Temp).+\+(.+).+\(.+" )
 
 Format placeholders:
     {cpu_freq_avg} average CPU frequency across all cores
@@ -124,6 +127,7 @@ class Py3status:
     temp_unit = "°C"
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
     zone = None
+    zone_sensor = r"(?:Core 0|CPU Temp).+\+(.+).+\(.+"
 
     class Meta:
         def update_deprecated_placeholder_format(config):
@@ -260,6 +264,9 @@ class Py3status:
         if self.init["stat"]:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
 
+        if self.init["cpu_temp"]:
+            self.zone_sensor = re.compile(self.zone_sensor)
+
     def _get_cpuinfo(self):
         with open("/proc/cpuinfo") as f:
             return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
@@ -374,9 +381,9 @@ class Py3status:
                 pass
         if not sensors:
             sensors = self.py3.command_output(command)
-        m = re.search(r"(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        m = re.search(self.zone_sensor, sensors)
         if m:
-            cpu_temp = float(m.groups()[1].strip()[:-2])
+            cpu_temp = float(m.groups()[0].strip())
         else:
             cpu_temp = "?"
 
