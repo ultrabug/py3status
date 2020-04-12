@@ -4,6 +4,7 @@ Volume control.
 Configuration parameters:
     blocks: a string, where each character represents a volume level
             (default "_▁▂▃▄▅▆▇█")
+    button_custom: button to run "custom_command" (default 3)
     button_down: button to decrease volume (default 5)
     button_mute: button to toggle mute (default 1)
     button_up: button to increase volume (default 4)
@@ -15,6 +16,7 @@ Configuration parameters:
     command: Choose between "amixer", "pamixer" or "pactl".
         If None, try to guess based on available commands.
         (default None)
+    custom_command: Command to run on "button_custom" (default None)
     device: Device to use. Defaults value is backend dependent
         (default None)
     format: Format of the output.
@@ -298,6 +300,7 @@ class Py3status:
 
     # available configuration parameters
     blocks = "_▁▂▃▄▅▆▇█"
+    button_custom = 3
     button_down = 5
     button_mute = 1
     button_up = 4
@@ -305,6 +308,7 @@ class Py3status:
     card = None
     channel = None
     command = None
+    custom_command = None
     device = None
     format = r"[\?if=is_input 😮|♪]: {percentage}%"
     format_muted = r"[\?if=is_input 😶|♪]: muted"
@@ -400,6 +404,12 @@ class Py3status:
             self.backend.volume_down(self.volume_delta)
         elif button == self.button_mute:
             self.backend.toggle_mute()
+        elif button == self.button_custom:
+            self._run_custom_command()
+
+    def _run_custom_command(self):
+        if self.custom_command is not None:
+            self.py3.command_run(self.custom_command)
 
 
 if __name__ == "__main__":
