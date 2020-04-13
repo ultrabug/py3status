@@ -7,7 +7,7 @@ Configuration parameters:
     format: display format for this module (default '{format_device}')
     format_device: format for devices
         *(default "[\?if=general_connection {general_device}[\?soft  ]"
-        "[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        "[\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
         "[\?color=good {ip4_address1}]]")*
     format_device_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
@@ -20,13 +20,13 @@ Format_device placeholders:
     {general_connection} eg Py3status, Wired Connection 1
     {general_device}     eg wlp3s0b1, enp2s0
     {general_type}       eg wifi, ethernet
-    {ap1_bars}           signal strength in bars, eg ▂▄▆_
-    {ap1_chan}           wifi channel, eg 6
-    {ap1_mode}           network mode, eg Adhoc or Infra
-    {ap1_rate}           bitrate, eg 54 Mbit/s
-    {ap1_security}       signal security, eg WPA2
-    {ap1_signal}         signal strength in percentage, eg 63
-    {ap1_ssid}           ssid name, eg Py3status
+    {ap_bars}            signal strength in bars, eg ▂▄▆_
+    {ap_chan}            wifi channel, eg 6
+    {ap_mode}            network mode, eg Adhoc or Infra
+    {ap_rate}            bitrate, eg 54 Mbit/s
+    {ap_security}        signal security, eg WPA2
+    {ap_signal}          signal strength in percentage, eg 63
+    {ap_ssid}            ssid name, eg Py3status
     {ip4_address1}       eg 192.168.1.108
     {ip6_address1}       eg 0000::0000:0000:0000:0000
 
@@ -79,7 +79,7 @@ class Py3status:
     format = "{format_device}"
     format_device = (
         r"[\?if=general_connection {general_device}[\?soft  ]"
-        r"[\?color=ap1_signal {ap1_ssid} {ap1_bars} {ap1_signal}%][\?soft  ]"
+        r"[\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
         r"[\?color=good {ip4_address1}]]"
     )
     format_device_separator = " "
@@ -104,7 +104,6 @@ class Py3status:
         ).split()
         self.caches = {"lines": {}, "devices": {}}
         self.devices = {"list": [], "devices": self.devices}
-
         self.thresholds_init = self.py3.get_color_names_list(self.format_device)
 
     def _update_key(self, key):
@@ -115,6 +114,7 @@ class Py3status:
     def networkmanager(self):
         nm_data = self.py3.command_output(self.nmcli_command, localized=True)
         new_device = []
+        used_ap = None
 
         for chunk in nm_data.split("\n\n"):
             lines = chunk.splitlines()
@@ -136,7 +136,6 @@ class Py3status:
                 key = self.caches["devices"][key]
 
             device = {key: value}
-
             for line in lines[1:]:
                 try:
                     key, value = self.caches["lines"][line]
@@ -153,7 +152,17 @@ class Py3status:
 
                     self.caches["lines"][line] = (key, value)
 
+                if "ap" in key and "in_use" in key and value == "*":
+                    used_ap = key.split("_")[0]
                 device[key] = value
+
+            # Add specific extra entries for the AP currently used by the device.
+            if used_ap != None:
+                current_ap = {}
+                for key in device:
+                    if key.startswith(used_ap + "_"):
+                        current_ap[key.replace(used_ap + "_", "ap_")] = device[key]
+                device.update(current_ap)
 
             for x in self.thresholds_init:
                 if x in device:
