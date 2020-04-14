@@ -109,12 +109,12 @@ class Py3status:
         self.toggled = False
         self.idle_time = 0
 
-    def _get_my_ip_info(self):
+    def _get_ip_data(self):
         try:
-            info = self.py3.request(self.url_geo).json()
+            ip_data = self.py3.request(self.url_geo).json()
             for old, new in self.substitutions.items():
-                info[old] = info.get(new)
-            return info
+                ip_data[old] = ip_data.get(new)
+            return ip_data
         except self.py3.RequestException:
             return None
 
@@ -133,23 +133,23 @@ class Py3status:
         # button
         if self.toggled and not refresh:
             self.toggled = False
-            info = self.ip_data
+            ip_data = self.ip_data
         else:
-            info = self.ip_data = self._get_my_ip_info()
+            ip_data = self.ip_data = self._get_ip_data()
 
         response = {"cached_until": self.py3.time_in(cached_until)}
 
-        if info is None and self.hide_when_offline:
+        if ip_data is None and self.hide_when_offline:
             response["full_text"] = ""
-        elif info is not None:
-            info["icon"] = self.icon_on
+        elif ip_data is not None:
+            ip_data["icon"] = self.icon_on
             response["color"] = self.py3.COLOR_GOOD
             for key, val in self.expected.items():
-                if val != info.get(key):
+                if val != ip_data.get(key):
                     response["color"] = self.py3.COLOR_DEGRADED
                     break
             if self.mode == "ip":
-                response["full_text"] = self.py3.safe_format(self.format, info)
+                response["full_text"] = self.py3.safe_format(self.format, ip_data)
             else:
                 response["full_text"] = self.icon_on
         else:
