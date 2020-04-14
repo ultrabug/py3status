@@ -8,8 +8,8 @@ Configuration parameters:
     expected: define expected values for format placeholders,
         and use `color_degraded` to show the output of this module
         if any of them does not match the actual value.
-        This should be a dict eg {'country': 'France'}
-        (default None)
+        This should be a list of dicts eg [{'country': 'France'}]
+        (default [])
     format: available placeholders are {ip} and {country},
         as well as any other key in JSON fetched from `url_geo`
         (default '{ip}')
@@ -48,9 +48,11 @@ mode
 """
 
 from time import time
+from fnmatch import fnmatch
 
 URL_GEO_OLD_DEFAULT = "http://ip-api.com/json"
 URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
+STRING_INVALID_EXPECTED = "invalid expected"
 
 
 class Py3status:
@@ -61,7 +63,7 @@ class Py3status:
     button_refresh = 2
     button_toggle = 1
     cache_timeout = 60
-    expected = None
+    expected = []
     format = "{ip}"
     hide_when_offline = False
     icon_off = "■"
@@ -95,8 +97,11 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if self.expected is None:
-            self.expected = {}
+        if not isinstance(self.expected, list):
+            self.expected = [self.expected]
+        for expected in self.expected:
+            if not isinstance(expected, dict):
+                self.py3.error(STRING_INVALID_EXPECTED)
 
         # Backwards compatibility
         self.substitutions = {}
@@ -111,7 +116,7 @@ class Py3status:
 
     def _get_ip_data(self):
         try:
-            ip_data = self.py3.request(self.url_geo).json()
+            ip_data = self.py3.request(self.url_geo).json() or {}
             for old, new in self.substitutions.items():
                 ip_data[old] = ip_data.get(new)
             return ip_data
@@ -144,10 +149,19 @@ class Py3status:
         elif ip_data is not None:
             ip_data["icon"] = self.icon_on
             response["color"] = self.py3.COLOR_GOOD
-            for key, val in self.expected.items():
-                if val != ip_data.get(key):
-                    response["color"] = self.py3.COLOR_DEGRADED
-                    break
+
+            if self.expected:
+                response["color"] = self.py3.COLOR_DEGRADED
+                for _filter in self.expected:
+                    for key, value in _filter.items():
+                        if key not in ip_data:
+                            continue
+                        if not fnmatch(ip_data[key], value):
+                            break
+                    else:
+                        response["color"] = self.py3.COLOR_GOOD
+                        break
+
             if self.mode == "ip":
                 response["full_text"] = self.py3.safe_format(self.format, ip_data)
             else:
