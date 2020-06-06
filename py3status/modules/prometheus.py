@@ -126,7 +126,7 @@ class Py3status:
         self._next_reset = now + self._NEVER
         self._next_rotate = now + self.rotate_interval
 
-    def promestatus(self):
+    def prometheus(self):
         now = time.time()
         if now > self._next_reset:
             self._next_reset = now + self._NEVER
