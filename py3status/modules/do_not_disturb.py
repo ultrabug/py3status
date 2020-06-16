@@ -138,7 +138,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = r"{name} [\?color=state&show DND]"
-    pause = False
+    pause = True
     server = None
     state = "last"
     thresholds = [(0, "bad"), (1, "good")]
