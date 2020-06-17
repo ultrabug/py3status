@@ -58,6 +58,7 @@ Format placeholders:
         as defined by the 'blocks' and 'charging_character' parameters
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
+    {power} - the current power consumption in Watts. Not working with acpi.
 
 Color options:
     color_bad: Battery level is below threshold_bad
@@ -250,6 +251,9 @@ class Py3status:
             except IndexError:
                 battery["time_remaining"] = FULLY_CHARGED
 
+            # TODO: Not implemented yet
+            battery["power"] = 0.0
+
             return battery
 
         acpi_list = self.py3.command_output(["acpi", "-b", "-i"]).splitlines()
@@ -302,6 +306,8 @@ class Py3status:
             remaining_energy = r.get(
                 "POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW")
             )
+            current_now = r.get("POWER_SUPPLY_CURRENT_NOW", 0)
+            voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
 
             battery = {}
             battery["capacity"] = capacity
@@ -318,6 +324,8 @@ class Py3status:
             except ZeroDivisionError:
                 # Battery is either full charged or is not discharging
                 battery["time_remaining"] = FULLY_CHARGED
+
+            battery["power"] = current_now * voltage_now / 1e12
 
             battery_list.append(battery)
         return battery_list
@@ -337,6 +345,7 @@ class Py3status:
             self.percent_charged = battery["percent_charged"]
             self.charging = battery["charging"]
             self.time_remaining = battery["time_remaining"]
+            self.power_now = battery["power"]
 
         elif self.battery_id == "all":
             total_capacity = sum([battery["capacity"] for battery in battery_list])
@@ -403,6 +412,8 @@ class Py3status:
             else:
                 self.time_remaining = None
 
+            self.power_now = sum([battery["power"] for battery in battery_list])
+
         if self.time_remaining and self.hide_seconds:
             self.time_remaining = self.time_remaining[:-3]
 
@@ -436,6 +447,7 @@ class Py3status:
                 icon=self.icon,
                 percent=self.percent_charged,
                 time_remaining=self.time_remaining,
+                power=self.power_now,
             ),
         )
 
