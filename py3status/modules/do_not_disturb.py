@@ -8,7 +8,7 @@ Configuration parameters:
         (default '{name} [\?color=state&show DND]')
     pause: specify whether to pause or kill processes; for dunst
         see `Dunst Miscellaneous` section for more information
-        (default False)
+        (default True)
     server: specify server to use, eg mako, dunst or xfce4-notifyd, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last

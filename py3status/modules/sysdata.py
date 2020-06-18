@@ -355,7 +355,16 @@ class Py3status:
         (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
         (used, used_unit) = self.py3.format_units(used_mem_kib * 1024, unit)
         (free, free_unit) = self.py3.format_units(free_mem_kib * 1024, unit)
-        return total, total_unit, used, used_unit, used_percent, free, free_unit, free_percent
+        return (
+            total,
+            total_unit,
+            used,
+            used_unit,
+            used_percent,
+            free,
+            free_unit,
+            free_percent,
+        )
 
     def _get_meminfo(self, head=24):
         with open("/proc/meminfo") as f:
