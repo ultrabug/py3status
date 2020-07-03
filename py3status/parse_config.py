@@ -1,9 +1,9 @@
 import codecs
-import imp
 import os
 import re
 
 from collections import OrderedDict
+from importlib import util
 from string import Template
 from subprocess import check_output, CalledProcessError
 
@@ -185,22 +185,10 @@ class ConfigParser:
             return
         root = os.path.dirname(os.path.realpath(__file__))
         module_path = os.path.join(root, "modules")
-        try:
-            info = imp.find_module(name, [module_path])
-        except ImportError:
-            return
+        info = util.find_spec(name, [module_path])
         if not info:
             return
-        (file, pathname, description) = info
-        try:
-            py_mod = imp.load_module(name, file, pathname, description)
-        except Exception:
-            # We cannot load the module!  We could error out here but then the
-            # user gets informed that the problem is with their config.  This
-            # is not correct.  Better to say that all is well and then the
-            # config can get parsed and py3status loads.  The error about the
-            # failing module load is better handled at that point, and will be.
-            return
+        py_mod = util.exec_module(info)
         try:
             container = py_mod.Py3status.Meta.container
         except AttributeError:

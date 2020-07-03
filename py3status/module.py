@@ -1,8 +1,8 @@
 import os
-import imp
 import inspect
 
 from collections import OrderedDict
+from importlib.machinery import SourceFileLoader
 from time import time
 from random import randint
 
@@ -104,7 +104,7 @@ class Module:
         class_inst = None
         module_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
         if file_ext.lower() == ".py":
-            py_mod = imp.load_source(module_name, filepath)
+            py_mod = SourceFileLoader(module_name, filepath).load_module()
             if hasattr(py_mod, cls.EXPECTED_CLASS):
                 class_inst = py_mod.Py3status()
         return class_inst
