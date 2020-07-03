@@ -81,9 +81,7 @@ class Py3status:
                         response["color"] = self.py3.COLOR_DEGRADED
                 else:
                     response["color"] = self.py3.COLOR_BAD
-                    pingdom += "{}: DOWN".format(
-                        check["name"], check["lastresponsetime"]
-                    )
+                    pingdom += "{}: DOWN".format(check["name"])
             pingdom = pingdom.strip(", ")
             response["full_text"] = self.py3.safe_format(
                 self.format, {"pingdom": pingdom}
