@@ -274,6 +274,15 @@ class Py3status:
         if self.init["stat"]:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
 
+        if self.init["cpu_temp"]:
+            if self.zone is None:
+                output = self.py3.command_output("sensors")
+
+                for sensor in ["coretemp-isa-0000", "k10temp-pci-00c3"]:
+                    if sensor in output:
+                        self.zone = sensor
+                        break
+
     def _get_cpuinfo(self):
         with open("/proc/cpuinfo") as f:
             return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
