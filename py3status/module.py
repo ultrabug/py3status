@@ -567,7 +567,7 @@ class Module:
         # on_click method has extra events parameter
         if method_name == "on_click":
             arg_count = 2
-        args, vargs, kw, defaults = inspect.getargspec(method)
+        args, vargs, kw, defaults, _, _, _ = inspect.getfullargspec(method)
         if len(args) == arg_count and not vargs and not kw:
             return self.PARAMS_NEW
         else:
