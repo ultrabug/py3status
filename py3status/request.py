@@ -63,7 +63,7 @@ class HttpResponse:
                 # we return an HttpResponse but have no response
                 # so create some 'fake' response data.
                 self._text = ""
-                self._json = None
+                self._json = {}
                 self._headers = []
             else:
                 # unknown exception, so just raise it
