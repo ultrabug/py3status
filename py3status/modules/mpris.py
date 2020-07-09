@@ -137,21 +137,22 @@ class BrokenDBusMpris:
             def combined_function(*args):
                 callback(*self.filter_messages(*args))
 
-            self._subscription = self._dbus\
-                .subscribe(signal_fired=combined_function)
+            self._subscription = self._dbus.subscribe(signal_fired=combined_function)
 
         def disconnect(self):
             self._subscription.disconnect()
 
         # For some reason the dbus subscribe filtering doesn't work
         def filter_messages(self, *args):
-            dbus_params = ['/org/mpris/MediaPlayer2',
-                           'org.freedesktop.DBus.Properties',
-                           'PropertiesChanged']
+            dbus_params = [
+                "/org/mpris/MediaPlayer2",
+                "org.freedesktop.DBus.Properties",
+                "PropertiesChanged",
+            ]
 
             for i in range(1, 3):
                 if args[i] != dbus_params[i - 1]:
-                    return ('', {}, [])
+                    return ("", {}, [])
             # The 6th is a tuple, where the actual data is in the 2nd field
             msg = args[4][1]
 
@@ -161,8 +162,9 @@ class BrokenDBusMpris:
                         self._parent.PlaybackStatus = msg["PlaybackStatus"]
                     if "Metadata" in msg:
                         self._parent.Metadata = msg["Metadata"]
-                        self._parent.Metadata['xesam:artist'] = \
-                            ", ".join(msg['Metadata']["xesam:artist"])
+                        self._parent.Metadata["xesam:artist"] = ", ".join(
+                            msg["Metadata"]["xesam:artist"]
+                        )
 
                 except KeyError:
                     pass
@@ -173,16 +175,10 @@ class BrokenDBusMpris:
         self.Identity = identity
         self.PlaybackStatus = playback_status
         self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, dbus)
-        self.Metadata = {
-            'xesam:album': None,
-            'xesam:artist': None,
-            'xesam:title': None
-        }
+        self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
 
     def get(self, key):
-        data = {
-            'subscription': self.PropertiesChanged._subscription
-        }
+        data = {"subscription": self.PropertiesChanged._subscription}
         return data[key]
 
 
@@ -229,10 +225,7 @@ class Py3status:
                 "clickable": "CanPause",
                 "icon": self.icon_pause,
             },
-            "play": {
-                "action": "Play",
-                "clickable": "CanPlay",
-                "icon": self.icon_play},
+            "play": {"action": "Play", "clickable": "CanPlay", "icon": self.icon_play},
             "stop": {
                 "action": "Stop",
                 "clickable": "True",  # The MPRIS API lacks 'CanStop' function.
@@ -414,8 +407,7 @@ class Py3status:
                 if priority is not None:
                     p["_priority"] = priority
             if p.get("_priority") is not None:
-                players.append((p["_state_priority"], p["_priority"],
-                                p["index"], name))
+                players.append((p["_state_priority"], p["_priority"], p["index"], name))
         if players:
             top_player = self._mpris_players.get(sorted(players)[0][3])
         else:
@@ -466,8 +458,8 @@ class Py3status:
         try:
             player = self._dbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
-            if 'chromium' in player_id:
-                player = BrokenDBusMpris(self._dbus, 'Chromium', 'Stopped')
+            if "chromium" in player_id:
+                player = BrokenDBusMpris(self._dbus, "Chromium", "Stopped")
             else:
                 return False
 
@@ -580,8 +572,7 @@ class Py3status:
 
         if is_stream and self._data.get("title"):
             # delete the file extension
-            self._data["title"] = re.sub(r"\....$", "",
-                                         self._data.get("title"))
+            self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
             self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def kill(self):
@@ -607,8 +598,7 @@ class Py3status:
             (text, color, cached_until) = self._get_text()
             self._control_states = self._get_control_states()
             buttons = self._get_response_buttons()
-            composite = self.py3.safe_format(self.format,
-                                             dict(text, **buttons))
+            composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
         if self._data.get(
             "error_occurred"
@@ -622,8 +612,7 @@ class Py3status:
                 return self.mpris()
             # Max retries hit we need to output something
             composite = [
-                {"full_text": "Something went wrong",
-                 "color": self.py3.COLOR_BAD}
+                {"full_text": "Something went wrong", "color": self.py3.COLOR_BAD}
             ]
             cached_until = self.py3.time_in(1)
 
