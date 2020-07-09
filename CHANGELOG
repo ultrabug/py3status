@@ -1,3 +1,11 @@
+version 3.28 (2020-04-13)
+* IMPORTANT: drop support for EOL Python 2.6-3.4 (#1896), by Hugo van Kemenade
+* clock module: add "locale" config parameter to change time representation (#1910), by inemajo
+* docs: update debian instructions fix #1916
+* mpd_status module: use currentsong command if possible (#1924), by girst
+* networkmanager module: allow using the currently active AP in formats (#1921), by Benoît Dardenne
+* volume_status module: change amixer flag ordering fix #1914 (#1920)
+
 version 3.27 (2020-03-01)
 * i3status: support read_file module (#1909), by @lasers thx to @dohseven
 

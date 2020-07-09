@@ -15,7 +15,8 @@ Configuration parameters:
     command: Choose between "amixer", "pamixer" or "pactl".
         If None, try to guess based on available commands.
         (default None)
-    device: Device to use. Defaults value is backend dependent
+    device: Device to use. Defaults value is backend dependent.
+        "aplay -L", "pactl list sinks short", "pamixer --list-sinks"
         (default None)
     format: Format of the output.
         (default '[\\?if=is_input 😮|♪]: {percentage}%')

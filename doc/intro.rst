@@ -53,6 +53,12 @@ Installation
 |**Debian & Ubuntu**|``$ apt-get install py3status``|Stable updates.                      |
 |                   |                               |In testing and unstable, and soon in |
 |                   |                               |stable backports.                    |
+|                   |                               |                                     |
+|                   |``$ pip3 install py3status``   |Buster users might want to check out |
+|                   |                               |issue #1916 and use pip3 instead or  |
+|                   |                               |the alternative method proposed until|
+|                   |                               |https://bugs.debian.org/890329 is    |
+|                   |                               |handled and stable.                  |
 +-------------------+-------------------------------+-------------------------------------+
 |**Fedora**         |``$ dnf install py3status``    |                                     |
 +-------------------+-------------------------------+-------------------------------------+
