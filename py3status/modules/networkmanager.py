@@ -157,7 +157,7 @@ class Py3status:
                 device[key] = value
 
             # Add specific extra entries for the AP currently used by the device.
-            if used_ap != None:
+            if used_ap is not None:
                 current_ap = {}
                 for key in device:
                     if key.startswith(used_ap + "_"):
