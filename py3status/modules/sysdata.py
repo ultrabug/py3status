@@ -40,11 +40,17 @@ Format placeholders:
     {mem_used} used memory
     {mem_used_unit} memory used unit, eg GiB
     {mem_used_percent} used memory percentage
+    {mem_free} free memory
+    {mem_free_unit} free memory unit, eg GiB
+    {mem_free_percent} free memory percentage
     {swap_total} total swap
     {swap_total_unit} swap total memory unit, eg GiB
     {swap_used} used swap
     {swap_used_unit} swap used memory unit, eg GiB
     {swap_used_percent} used swap percentage
+    {swap_free} free swap
+    {swap_free_unit} free swap unit, eg GiB
+    {swap_free_percent} free swap percentage
     {temp_unit} temperature unit
 
 format_cpu placeholders:
@@ -144,9 +150,13 @@ class Py3status:
                 "mem_total": format_vals,
                 "mem_used": format_vals,
                 "mem_used_percent": format_vals,
+                "mem_free": format_vals,
+                "mem_free_percent": format_vals,
                 "swap_total": format_vals,
                 "swap_used": format_vals,
                 "swap_used_percent": format_vals,
+                "swap_free": format_vals,
+                "swap_free_percent": format_vals,
             }
 
         deprecated = {
@@ -194,9 +204,13 @@ class Py3status:
                         "mem_total": ":.2f",
                         "mem_used": ":.2f",
                         "mem_used_percent": ":.2f",
+                        "mem_free": ":.2f",
+                        "mem_free_percent": ":.2f",
                         "swap_total": ":.2f",
                         "swap_used": ":.2f",
                         "swap_used_percent": ":.2f",
+                        "swap_free": ":.2f",
+                        "swap_free_percent": ":.2f",
                     },
                     "format_strings": ["format"],
                 },
@@ -259,6 +273,15 @@ class Py3status:
 
         if self.init["stat"]:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
+
+        if self.init["cpu_temp"]:
+            if self.zone is None:
+                output = self.py3.command_output("sensors")
+
+                for sensor in ["coretemp-isa-0000", "k10temp-pci-00c3"]:
+                    if sensor in output:
+                        self.zone = sensor
+                        break
 
     def _get_cpuinfo(self):
         with open("/proc/cpuinfo") as f:
@@ -324,19 +347,33 @@ class Py3status:
                     + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
                 )
             )
+            free_mem_kib = total_mem_kib - used_mem_kib
         else:
             total_mem_kib = meminfo["SwapTotal:"]
-            used_mem_kib = total_mem_kib - meminfo["SwapFree:"]
+            free_mem_kib = meminfo["SwapFree:"]
+            used_mem_kib = total_mem_kib - free_mem_kib
 
         if total_mem_kib == 0:
             used_percent = 0
+            free_percent = 100
         else:
             used_percent = 100 * used_mem_kib / total_mem_kib
+            free_percent = 100 - used_percent
 
         unit = "B" if unit == "dynamic" else unit
         (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
         (used, used_unit) = self.py3.format_units(used_mem_kib * 1024, unit)
-        return total, total_unit, used, used_unit, used_percent
+        (free, free_unit) = self.py3.format_units(free_mem_kib * 1024, unit)
+        return (
+            total,
+            total_unit,
+            used,
+            used_unit,
+            used_percent,
+            free,
+            free_unit,
+            free_percent,
+        )
 
     def _get_meminfo(self, head=24):
         with open("/proc/meminfo") as f:
@@ -454,6 +491,9 @@ class Py3status:
                     "mem_used",
                     "mem_used_unit",
                     "mem_used_percent",
+                    "mem_free",
+                    "mem_free_unit",
+                    "mem_free_percent",
                 ]
                 sys.update(zip(mem_keys, mem))
 
@@ -465,6 +505,9 @@ class Py3status:
                     "swap_used",
                     "swap_used_unit",
                     "swap_used_percent",
+                    "swap_free",
+                    "swap_free_unit",
+                    "swap_free_percent",
                 ]
                 sys.update(zip(swap_keys, swap))
 

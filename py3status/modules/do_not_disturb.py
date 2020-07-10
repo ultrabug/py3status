@@ -8,7 +8,7 @@ Configuration parameters:
         (default '{name} [\?color=state&show DND]')
     pause: specify whether to pause or kill processes; for dunst
         see `Dunst Miscellaneous` section for more information
-        (default False)
+        (default True)
     server: specify server to use, eg mako, dunst or xfce4-notifyd, otherwise auto
         (default None)
     state: specify state to use on startup, otherwise last
@@ -138,7 +138,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 30
     format = r"{name} [\?color=state&show DND]"
-    pause = False
+    pause = True
     server = None
     state = "last"
     thresholds = [(0, "bad"), (1, "good")]
