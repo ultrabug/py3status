@@ -13,7 +13,7 @@ from urllib.request import (
 )
 
 
-from py3status.exceptions import RequestTimeout, RequestURLError, RequestInvalidJSON
+from py3status.exceptions import RequestHttpError, RequestTimeout, RequestURLError, RequestInvalidJSON
 
 
 class HttpResponse:
@@ -58,13 +58,7 @@ class HttpResponse:
             if isinstance(reason, socket.timeout):
                 raise RequestTimeout("request timed out")
             elif isinstance(e, HTTPError):
-                self._status_code = e.code
-                self._error_message = reason
-                # we return an HttpResponse but have no response
-                # so create some 'fake' response data.
-                self._text = ""
-                self._json = {}
-                self._headers = []
+                raise RequestHttpError(reason)
             else:
                 # unknown exception, so just raise it
                 raise RequestURLError(reason)

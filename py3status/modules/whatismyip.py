@@ -60,7 +60,7 @@ class Py3status:
     # available configuration parameters
     button_refresh = 2
     button_toggle = 1
-    cache_timeout = 60
+    cache_timeout = 10
     expected = None
     format = "{ip}"
     hide_when_offline = False
@@ -68,6 +68,7 @@ class Py3status:
     icon_on = "●"
     mode = "ip"
     url_geo = URL_GEO_NEW_DEFAULT
+    info = None
 
     class Meta:
         deprecated = {
@@ -110,13 +111,16 @@ class Py3status:
         self.idle_time = 0
 
     def _get_my_ip_info(self):
-        try:
-            info = self.py3.request(self.url_geo).json()
-            for old, new in self.substitutions.items():
-                info[old] = info.get(new)
-            return info
-        except self.py3.RequestException:
-            return None
+        self.py3.log("ip info")
+        info = self.py3.request(self.url_geo, headers=self.info or {}).json()
+        for old, new in self.substitutions.items():
+            info[old] = info.get(new)
+        self.py3.log("ip info %s" % info)
+        if self.info is None:
+            from random import choice
+            c = ["status", "py3status/3.x"]
+            self.info = {"User-Agent": choice(c)}
+        return info
 
     def whatismyip(self):
         # refresh

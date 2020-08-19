@@ -8,6 +8,7 @@ from random import randint
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, POSITIONS
+from py3status.exceptions import RequestHttpError
 from py3status.py3 import Py3, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
@@ -935,15 +936,31 @@ class Module:
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    if my_method["call_type"] == self.PARAMS_NEW:
-                        # new style modules
-                        response = method()
-                    else:
-                        # legacy modules had parameters passed
-                        response = method(
-                            self.i3status_thread.json_list,
-                            self.config["py3_config"]["general"],
-                        )
+                    try:
+                        if my_method["call_type"] == self.PARAMS_NEW:
+                            # new style modules
+                            response = method()
+                        else:
+                            # legacy modules had parameters passed
+                            response = method(
+                                self.i3status_thread.json_list,
+                                self.config["py3_config"]["general"],
+                            )
+                    except RequestHttpError:
+                        if not my_method["last_output"]:
+                            raise
+                        color_fn = self._py3_wrapper.get_config_attribute
+                        color = color_fn(self.module_full_name, "color_degraded")
+                        if isinstance(my_method["last_output"], list):
+                            for response in my_method["last_output"]:
+                                response["color"] = color
+                        else:
+#                            self._py3_wrapper.log("updating response %s" % response)
+                            response = my_method["last_output"]
+                            response["color"] = color
+                        self._py3_wrapper.log("updated output %s" % my_method["last_output"])
+                        self._py3_wrapper.notify_update(self.module_full_name, False)
+                        return
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response

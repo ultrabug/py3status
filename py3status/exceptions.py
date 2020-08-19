@@ -48,3 +48,9 @@ class RequestURLError(RequestException):
     """
     A URL related error has occurred during a request made via Py3.request().
     """
+
+
+class RequestHttpError(RequestException):
+    """
+    The request returned a non-200 status code error via Py3.request().
+    """

@@ -86,6 +86,7 @@ class Py3:
     Py3Exception = exceptions.Py3Exception
     CommandError = exceptions.CommandError
     RequestException = exceptions.RequestException
+    RequestHttpError = exceptions.RequestHttpError
     RequestInvalidJSON = exceptions.RequestInvalidJSON
     RequestTimeout = exceptions.RequestTimeout
     RequestURLError = exceptions.RequestURLError
@@ -1286,7 +1287,7 @@ class Py3:
         for n in range(1, retry_times):
             try:
                 return get_http_response()
-            except (self.RequestTimeout, self.RequestURLError):
+            except (self.RequestHttpError, self.RequestTimeout, self.RequestURLError):
                 if self.is_gevent():
                     from gevent import sleep
                 else:
