@@ -124,7 +124,7 @@ class Py3status:
         for item in self.items:
             out = self.py3.get_output(item)[:]
             for o in out:
-                composites[f'output_{o["name"]}'] = o["full_text"]
+                composites["output_" + o["name"]] = o["full_text"]
             if self.format_separator is None:
                 if out and "separator" not in out[-1]:
                     # we copy the item as we do not want to change the
