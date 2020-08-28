@@ -21,24 +21,35 @@ Configuration parameters:
     join: If query returned multiple rows, join them using this string. If you
         want to show just one, update your query.
 
-For example:
+Dynamic format placeholders:
+    All query result labels are available as format placeholders. The vector
+    values themselves are in placeholder __v. (Or __n and __u if you specified
+    units).
+
+Examples:
     # If blackbox exporter ran into any failures, show it. If everything
     # is healthy this will produce 0 rows hence not shown.
     query = "probe_success == 0"
-    format = "💀 %(job)s %(instance)s 💀"
+    format = "💀 {job} {instance} 💀"
     color = "bad"
 
     # Basic Prometheus stat
     query = "sum(prometheus_sd_discovered_targets)"
-    format = "%(__v)d targets monitored"
+    format = "{__v:.0f} targets monitored"
     color = "ok"
+
+@author github.com/Wilm0r
+
+SAMPLE OUTPUT
+{"full_text": "Ceph 21% (944GiB/4.4TiB)", "instance": "", "name": "prometheus"}
 """
 
 
 class Py3status:
+    # available configuration parameters
     server = None
     query = None
-    format = "%(__v)f"
+    format = "{__v:.0f}"
     units = None
     color = "ok"
     join = None
@@ -60,24 +71,24 @@ class Py3status:
                 unit = None
 
             vars = dict(row["metric"])
-            vars.update({
-                "__v": val,
-                "__n": num,
-                "__u": unit,
-            })
-            res.append(self.format % vars)
-        
+            vars.update({"__v": val, "__n": num, "__u": unit})
+            res.append(self.format.format(**vars))
+
         if res:
             join = self.join or ""
             res = join.join(res)
         else:
             res = ""
 
-        return dict(
-            full_text=res,
-            color=self.color,
-            cached_until=self.py3.time_in(self.query_interval),
-        )
+        ret = dict(full_text=res, cached_until=self.py3.time_in(self.query_interval))
+        if self.color:
+            if self.color.startswith("#"):
+                ret["color"] = self.color
+            else:
+                entry = "COLOR_" + self.color.upper()
+                if getattr(self.py3, entry):
+                    ret["color"] = getattr(self.py3, entry)
+        return ret
 
     def _query(self, query):
         r = self.py3.request(self.server + "/api/v1/query", params={"query": query})
@@ -91,4 +102,5 @@ class Py3status:
 
 if __name__ == "__main__":
     from py3status.module_test import module_test
+
     module_test(Py3status)
