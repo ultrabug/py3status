@@ -296,8 +296,9 @@ class Py3status:
         battery_list = []
 
         bglobs = ["BAT*", "*bat*"]
-        path_its = itertools.chain(*[iglob(os.path.join(self.sys_battery_path,
-                                                        bglob)) for bglob in bglobs])
+        path_its = itertools.chain(
+            *[iglob(os.path.join(self.sys_battery_path, bglob)) for bglob in bglobs]
+        )
         for path in path_its:
             r = _parse_battery_info(path)
 
