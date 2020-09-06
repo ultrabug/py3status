@@ -139,7 +139,10 @@ import httplib2
 import os
 import datetime
 
-from googleapiclient import discovery
+try:
+    from googleapiclient import discovery
+except ImportError:
+    from apiclient import discovery
 from oauth2client import client
 from oauth2client import clientsecrets
 from oauth2client import tools
