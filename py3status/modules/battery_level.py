@@ -83,6 +83,7 @@ discharging
 from re import findall
 from glob import iglob
 
+import itertools
 import math
 import os
 
@@ -293,7 +294,11 @@ class Py3status:
             return raw_values
 
         battery_list = []
-        for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
+
+        bglobs = ["BAT*", "*bat*"]
+        path_its = itertools.chain(*[iglob(os.path.join(self.sys_battery_path,
+                                                        bglob)) for bglob in bglobs])
+        for path in path_its:
             r = _parse_battery_info(path)
 
             capacity = r.get(
