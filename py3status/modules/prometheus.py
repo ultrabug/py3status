@@ -1,25 +1,29 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 """
 Displays result of a Prometheus query.
 
 Configuration parameters:
-    server: str, URL pointing at your Prometheus(-compatible) server, example:
-        http://prom.int.mydomain.net:9090
-    query: PromQL Query
-    query_interval: Re-query interval in seconds. (default 60)
+    color: Text colour. Supports py3status colour names.
+        Examples: GOOD, DEGRADED, BAD, #E9967A
+        (default None)
     format: Formatting of query result. Can refer to all labels from the query
         result. Query value placeholder __v.
+        (default "{__v:.0f}")
+    join: If query returned multiple rows, join them using this string.
+        If you want to show just one, update your query.
+        (default None)
+    query: The PromQL query
+        (default None)
+    query_interval: Re-query interval in seconds.
+        (default 60)
+    server: str, URL pointing at your Prometheus(-compatible) server, example:
+        http://prom.int.mydomain.net:9090
+        (default None)
     units: Dict with py3.format_units arguments, if you want human-readable
         unit formatting. Example: {"unit": "Wh", "si": True}
         If used, __v placeholder will contain formatted output. __n and __u
         will contain number and unit separately if you want to more finely
         control formatting.
-    color: Text colour. Supports py3status colour names.
-        Examples: ok, bad, #E9967A
-    join: If query returned multiple rows, join them using this string. If you
-        want to show just one, update your query.
+        (default None)
 
 Dynamic format placeholders:
     All query result labels are available as format placeholders. The vector
@@ -47,14 +51,13 @@ SAMPLE OUTPUT
 
 class Py3status:
     # available configuration parameters
-    server = None
-    query = None
+    color = None
     format = "{__v:.0f}"
-    units = None
-    color = "ok"
     join = None
-
-    query_interval = 90
+    query = None
+    query_interval = 60
+    server = None
+    units = None
 
     def prometheus(self):
         self._rows = []
