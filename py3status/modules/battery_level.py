@@ -302,6 +302,9 @@ class Py3status:
         for path in path_its:
             r = _parse_battery_info(path)
 
+            if not r:
+                continue
+
             capacity = r.get(
                 "POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL")
             )
@@ -314,6 +317,16 @@ class Py3status:
             )
             current_now = r.get("POWER_SUPPLY_CURRENT_NOW", 0)
             voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
+
+            # missing values may indicate this is not a battery and should be skipped
+            if not (
+                capacity
+                and present_rate
+                and remaining_energy
+                and current_now
+                and voltage_now
+            ):
+                continue
 
             battery = {}
             battery["capacity"] = capacity
