@@ -319,12 +319,12 @@ class Py3status:
             voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
 
             # missing values may indicate this is not a battery and should be skipped
-            if not (
-                capacity
-                and present_rate
-                and remaining_energy
-                and current_now
-                and voltage_now
+            if (
+                capacity is None
+                or present_rate is None
+                or remaining_energy is None
+                or current_now is None
+                or voltage_now is None
             ):
                 continue
 
@@ -334,15 +334,15 @@ class Py3status:
             battery["percent_charged"] = int(
                 math.floor(remaining_energy / capacity * 100)
             )
-            try:
+            if present_rate == 0:
+                # Battery is either full charged or is not discharging
+                battery["time_remaining"] = FULLY_CHARGED
+            else:
                 if battery["charging"]:
                     time_in_secs = (capacity - remaining_energy) / present_rate * 3600
                 else:
                     time_in_secs = remaining_energy / present_rate * 3600
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
-            except ZeroDivisionError:
-                # Battery is either full charged or is not discharging
-                battery["time_remaining"] = FULLY_CHARGED
 
             battery["power"] = current_now * voltage_now / 1e12
 
