@@ -232,21 +232,28 @@ class Pactl(Audio):
 
         # with the long gross id, find the associated number
         if device_id is not None:
-            output = self.command_output(
-                ["pactl", "list", "short", self.device_type_pl]
-            )
-            for line in output.splitlines():
-                parts = line.split()
-                if len(parts) < 2:
-                    continue
-                if parts[1] == device_id:
-                    return parts[0]
+            for d_number, d_id in self.get_current_devices().items():
+                if d_id == device_id:
+                    return d_number
 
         raise RuntimeError(
             "Failed to find default {} device.  Looked for {}".format(
                 "input" if self.is_input else "output", device_id
             )
         )
+
+    def get_current_devices(self):
+        current_devices = {}
+        output = self.command_output(["pactl", "list", "short", self.device_type_pl])
+        for line in output.splitlines():
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            current_devices[parts[0]] = parts[1]
+        self.parent.py3.log(
+            "available {}: {}".format(self.device_type_pl, current_devices)
+        )
+        return current_devices
 
     def get_volume(self):
         output = self.command_output(["pactl", "list", self.device_type_pl]).strip()
