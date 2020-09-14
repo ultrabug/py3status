@@ -1,3 +1,9 @@
+version 3.30 (2020-09-14)
+* battery_level module: fix filter in /sys thanks to @naclander and @armandg (#1951), by Marc Poulhiès
+* battery_level module: fix logic to skip batteries and charged state detection (#1949), by Danilo Treffiletti
+* volume_status module: device parameter can be used as a regex
+* volume_status module: log available devices on default mode
+
 version 3.29 (2020-09-07)
 * fix flake8 code linting and black code formatting to pass tests (#1940), by lasers
 * py3.requests: return empty json on remote server problem fix #1401
