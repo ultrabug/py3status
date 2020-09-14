@@ -206,6 +206,11 @@ class Pactl(Audio):
         self.use_default_device = self.device is None
         if self.use_default_device:
             self.device = self.get_default_device()
+        else:
+            # if a device name was present but is used to match multiple
+            # possible devices sharing the same name pattern we allow ourselves
+            # to override the device name
+            self.set_selected_device()
         self.update_device()
 
     def update_device(self):
@@ -241,6 +246,18 @@ class Pactl(Audio):
                 "input" if self.is_input else "output", device_id
             )
         )
+
+    def set_selected_device(self):
+        current_devices = self.get_current_devices()
+        if self.device in current_devices.values():
+            return
+        for device_name in current_devices.values():
+            if self.device in device_name:
+                self.parent.py3.log(
+                    "device {} detected as {}".format(self.device, device_name)
+                )
+                self.device = device_name
+                break
 
     def get_current_devices(self):
         current_devices = {}
