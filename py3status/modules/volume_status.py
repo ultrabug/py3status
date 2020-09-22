@@ -206,6 +206,11 @@ class Pactl(Audio):
         self.use_default_device = self.device is None
         if self.use_default_device:
             self.device = self.get_default_device()
+        else:
+            # if a device name was present but is used to match multiple
+            # possible devices sharing the same name pattern we allow ourselves
+            # to override the device name
+            self.set_selected_device()
         self.update_device()
 
     def update_device(self):
@@ -232,21 +237,40 @@ class Pactl(Audio):
 
         # with the long gross id, find the associated number
         if device_id is not None:
-            output = self.command_output(
-                ["pactl", "list", "short", self.device_type_pl]
-            )
-            for line in output.splitlines():
-                parts = line.split()
-                if len(parts) < 2:
-                    continue
-                if parts[1] == device_id:
-                    return parts[0]
+            for d_number, d_id in self.get_current_devices().items():
+                if d_id == device_id:
+                    return d_number
 
         raise RuntimeError(
             "Failed to find default {} device.  Looked for {}".format(
                 "input" if self.is_input else "output", device_id
             )
         )
+
+    def set_selected_device(self):
+        current_devices = self.get_current_devices()
+        if self.device in current_devices.values():
+            return
+        for device_name in current_devices.values():
+            if self.device in device_name:
+                self.parent.py3.log(
+                    "device {} detected as {}".format(self.device, device_name)
+                )
+                self.device = device_name
+                break
+
+    def get_current_devices(self):
+        current_devices = {}
+        output = self.command_output(["pactl", "list", "short", self.device_type_pl])
+        for line in output.splitlines():
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            current_devices[parts[0]] = parts[1]
+        self.parent.py3.log(
+            "available {}: {}".format(self.device_type_pl, current_devices)
+        )
+        return current_devices
 
     def get_volume(self):
         output = self.command_output(["pactl", "list", self.device_type_pl]).strip()

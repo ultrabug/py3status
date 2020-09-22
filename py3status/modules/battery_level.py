@@ -58,6 +58,7 @@ Format placeholders:
         as defined by the 'blocks' and 'charging_character' parameters
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
+    {power} - the current power consumption in Watts. Not working with acpi.
 
 Color options:
     color_bad: Battery level is below threshold_bad
@@ -82,6 +83,7 @@ discharging
 from re import findall
 from glob import iglob
 
+import itertools
 import math
 import os
 
@@ -250,6 +252,9 @@ class Py3status:
             except IndexError:
                 battery["time_remaining"] = FULLY_CHARGED
 
+            # TODO: Not implemented yet
+            battery["power"] = 0.0
+
             return battery
 
         acpi_list = self.py3.command_output(["acpi", "-b", "-i"]).splitlines()
@@ -289,8 +294,16 @@ class Py3status:
             return raw_values
 
         battery_list = []
-        for path in iglob(os.path.join(self.sys_battery_path, "BAT*")):
+
+        bglobs = ["BAT*", "*bat*"]
+        path_its = itertools.chain(
+            *[iglob(os.path.join(self.sys_battery_path, bglob)) for bglob in bglobs]
+        )
+        for path in path_its:
             r = _parse_battery_info(path)
+
+            if not r:
+                continue
 
             capacity = r.get(
                 "POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL")
@@ -302,6 +315,18 @@ class Py3status:
             remaining_energy = r.get(
                 "POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW")
             )
+            current_now = r.get("POWER_SUPPLY_CURRENT_NOW", 0)
+            voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
+
+            # missing values may indicate this is not a battery and should be skipped
+            if (
+                capacity is None
+                or present_rate is None
+                or remaining_energy is None
+                or current_now is None
+                or voltage_now is None
+            ):
+                continue
 
             battery = {}
             battery["capacity"] = capacity
@@ -309,15 +334,17 @@ class Py3status:
             battery["percent_charged"] = int(
                 math.floor(remaining_energy / capacity * 100)
             )
-            try:
+            if present_rate == 0:
+                # Battery is either full charged or is not discharging
+                battery["time_remaining"] = FULLY_CHARGED
+            else:
                 if battery["charging"]:
                     time_in_secs = (capacity - remaining_energy) / present_rate * 3600
                 else:
                     time_in_secs = remaining_energy / present_rate * 3600
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
-            except ZeroDivisionError:
-                # Battery is either full charged or is not discharging
-                battery["time_remaining"] = FULLY_CHARGED
+
+            battery["power"] = current_now * voltage_now / 1e12
 
             battery_list.append(battery)
         return battery_list
@@ -337,6 +364,7 @@ class Py3status:
             self.percent_charged = battery["percent_charged"]
             self.charging = battery["charging"]
             self.time_remaining = battery["time_remaining"]
+            self.power_now = battery["power"]
 
         elif self.battery_id == "all":
             total_capacity = sum([battery["capacity"] for battery in battery_list])
@@ -403,6 +431,8 @@ class Py3status:
             else:
                 self.time_remaining = None
 
+            self.power_now = sum([battery["power"] for battery in battery_list])
+
         if self.time_remaining and self.hide_seconds:
             self.time_remaining = self.time_remaining[:-3]
 
@@ -436,6 +466,7 @@ class Py3status:
                 icon=self.icon,
                 percent=self.percent_charged,
                 time_remaining=self.time_remaining,
+                power=self.power_now,
             ),
         )
 

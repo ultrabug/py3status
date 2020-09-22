@@ -127,6 +127,61 @@ def _get_time_str(microseconds):
     return time
 
 
+class BrokenDBusMpris:
+    class PropertiesChanged:
+        def __init__(self, parent, dbus):
+            self._dbus = dbus
+            self._parent = parent
+
+        def connect(self, callback):
+            def combined_function(*args):
+                callback(*self.filter_messages(*args))
+
+            self._subscription = self._dbus.subscribe(signal_fired=combined_function)
+
+        def disconnect(self):
+            self._subscription.disconnect()
+
+        # For some reason the dbus subscribe filtering doesn't work
+        def filter_messages(self, *args):
+            dbus_params = [
+                "/org/mpris/MediaPlayer2",
+                "org.freedesktop.DBus.Properties",
+                "PropertiesChanged",
+            ]
+
+            for i in range(1, 3):
+                if args[i] != dbus_params[i - 1]:
+                    return ("", {}, [])
+            # The 6th is a tuple, where the actual data is in the 2nd field
+            msg = args[4][1]
+
+            if msg:
+                try:
+                    if "PlaybackStatus" in msg:
+                        self._parent.PlaybackStatus = msg["PlaybackStatus"]
+                    if "Metadata" in msg:
+                        self._parent.Metadata = msg["Metadata"]
+                        self._parent.Metadata["xesam:artist"] = ", ".join(
+                            msg["Metadata"]["xesam:artist"]
+                        )
+
+                except KeyError:
+                    pass
+            return args[4]
+
+    def __init__(self, dbus, identity, playback_status):
+        self._dbus = dbus
+        self.Identity = identity
+        self.PlaybackStatus = playback_status
+        self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, dbus)
+        self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
+
+    def get(self, key):
+        data = {"subscription": self.PropertiesChanged._subscription}
+        return data[key]
+
+
 class Py3status:
     """
     """
@@ -279,7 +334,8 @@ class Py3status:
             "time": ptime,
             "title": self._data.get("title") or "No Track",
             "nowplaying": self._data.get("nowplaying"),
-            "full_name": self._player_details.get("full_name"),  # for debugging ;p
+            # for debugging ;p
+            "full_name": self._player_details.get("full_name"),
         }
 
         return (placeholders, color, update)
@@ -330,8 +386,8 @@ class Py3status:
     def _set_player(self):
         """
         Sort the current players into priority order and set self._player
-        Players are ordered by working state, then by preference supplied by user
-        and finally by instance if a player has more than one running.
+        Players are ordered by working state, then by preference supplied by
+        user and finally by instance if a player has more than one running.
         """
         players = []
         for name, p in self._mpris_players.items():
@@ -372,12 +428,14 @@ class Py3status:
             if status:
                 player = self._mpris_players[player_id]
 
-                # Note: Workaround. Since all players get noted if playback status
-                #       has been changed we have to check if we are the chosen one
+                # Note: Workaround. Since all players get noted if playback
+                #       status has been changed we have to check if we are the
+                #       chosen one
                 try:
                     dbus_status = player["_dbus_player"].PlaybackStatus
                 except GError:
-                    # Prevent errors when calling methods of deleted dbus objects
+                    # Prevent errors when calling methods of deleted dbus
+                    # objects
                     return
                 if status != dbus_status:
                     # FIXME: WE DON'T RECOGNIZE ANY TITLE CHANGE
@@ -396,10 +454,14 @@ class Py3status:
         if not player_id.startswith(SERVICE_BUS):
             return False
 
+        # Fixes chromium mpris
         try:
             player = self._dbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
-            return False
+            if "chromium" in player_id:
+                player = BrokenDBusMpris(self._dbus, "Chromium", "Stopped")
+            else:
+                return False
 
         if player.Identity not in self._mpris_names:
             self._mpris_names[player.Identity] = player_id.split(".")[-1]
@@ -492,7 +554,7 @@ class Py3status:
                 self._data["title"] = metadata.get("xesam:title")
                 self._data["album"] = metadata.get("xesam:album")
 
-                if metadata.get("xesam:artist") is not None:
+                if metadata.get("xesam:artist"):
                     self._data["artist"] = metadata.get("xesam:artist")[0]
                 else:
                     # we assume here that we playing a video and these types of
@@ -511,7 +573,6 @@ class Py3status:
         if is_stream and self._data.get("title"):
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
-
             self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def kill(self):
@@ -523,6 +584,7 @@ class Py3status:
         """
         if self._kill:
             raise KeyboardInterrupt
+
         current_player_id = self._player_details.get("id")
         cached_until = self.py3.CACHE_FOREVER
 
