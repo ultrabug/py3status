@@ -162,9 +162,6 @@ class BrokenDBusMpris:
                         self._parent.PlaybackStatus = msg["PlaybackStatus"]
                     if "Metadata" in msg:
                         self._parent.Metadata = msg["Metadata"]
-                        self._parent.Metadata["xesam:artist"] = ", ".join(
-                            msg["Metadata"]["xesam:artist"]
-                        )
 
                 except KeyError:
                     pass
