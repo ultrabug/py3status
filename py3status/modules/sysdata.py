@@ -375,7 +375,7 @@ class Py3status:
             free_percent,
         )
 
-    def _get_meminfo(self, head=24):
+    def _get_meminfo(self, head=28):
         with open("/proc/meminfo") as f:
             info = [line.split() for line in (next(f) for x in range(head))]
             return {fields[0]: float(fields[1]) for fields in info}
