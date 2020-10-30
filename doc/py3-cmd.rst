@@ -1,7 +1,7 @@
 .. _py3-cmd:
 
-py3-cmd
-=======
+The py3-cmd CLI
+===============
 
 py3status can be controlled remotely via the ``py3-cmd`` cli utility.
 

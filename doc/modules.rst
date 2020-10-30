@@ -1,7 +1,7 @@
 .. _modules:
 
-Modules
-=======
+Available Modules
+=================
 
 py3status comes with a large selection of modules ready to use.  For information on their configuration see :ref:`configuration`.
 

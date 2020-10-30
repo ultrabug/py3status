@@ -1,8 +1,8 @@
 
 .. _py3:
 
-py3 module helper
-=================
+The py3 module helper
+=====================
 
 Py3 is a special helper object that gets injected into py3status modules,
 providing extra functionality. A module can access it via the ``self.py3``
