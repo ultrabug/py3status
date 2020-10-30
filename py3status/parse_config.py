@@ -709,6 +709,10 @@ def process_config(config_path, py3_wrapper=None):
             ["file", "-b", "--mime-encoding", "--dereference", config_path]
         )
         encoding = encoding.strip().decode("utf-8")
+    except FileNotFoundError:
+        # can be missing on NixOS (see #1961)
+        notify_user("the 'file' command is missing, please install it.")
+        encoding = "utf-8"
     except CalledProcessError:
         # bsd does not have the --mime-encoding so assume utf-8
         encoding = "utf-8"
