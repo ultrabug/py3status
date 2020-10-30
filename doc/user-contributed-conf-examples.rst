@@ -111,3 +111,25 @@ Ultrabug's configuration examples
     	}
     }
 
+CorruptCommit 's configuration examples
+---------------------------------
+
+.. code-block:: none
+
+    # If I had time, I would make these proper modules.  Free feel to make them
+    # if you got time.
+
+    # weather without needing an API key
+    getjson wttr {
+    	url = "https://wttr.in/Paris?format=j1"
+    	format = "{current_condition-0-FeelsLikeC}° {current_condition-0-weatherDesc-0-value}"
+    	cache_timeout = 3600
+    }
+
+    # SABnzbd status
+    getjson sabnzbd {
+    	url = "https://sabnzbd.example.com/api?mode=queue&apikey=000000000&output=json"
+    	format = "SABnzbd: {queue-status}"
+    	cache_timeout = 60
+    }
+
