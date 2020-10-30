@@ -133,14 +133,11 @@ class Py3status:
         if len(self.format) == 1:
             self.cycle = 0
         # find any declared timezones eg {Europe/London}
-        self._items = {}
-        fmts = set()
+        self._fmts = set()
         for fmt in self.format:
-            fmts.update(self.py3.get_placeholders_list(fmt))
-        for fmt in fmts:
-            self._items[fmt] = self._get_timezone(fmt)
+            self._fmts.update(self.py3.get_placeholders_list(fmt))
 
-        self.multiple_tz = len(self._items) > 1
+        self.multiple_tz = len(self._fmts) > 1
 
         if not isinstance(self.format_time, list):
             self.format_time = [self.format_time]
@@ -250,7 +247,8 @@ class Py3status:
 
         # update our times
         times = {}
-        for name, zone in self._items.items():
+        for name in self._fmts:
+            zone = self._get_timezone(name)
             if zone == "?":
                 times[name] = "?"
             else:
