@@ -111,7 +111,7 @@ Ultrabug's configuration examples
     	}
     }
 
-CorruptCommit 's configuration examples
+CorruptCommit's configuration examples
 ---------------------------------
 
 .. code-block:: none
@@ -125,6 +125,9 @@ CorruptCommit 's configuration examples
     	format = "{current_condition-0-FeelsLikeC}° {current_condition-0-weatherDesc-0-value}"
     	cache_timeout = 3600
     }
+    
+    # example output
+    # 6° Partly cloudy
 
     # SABnzbd status
     getjson sabnzbd {
@@ -132,4 +135,8 @@ CorruptCommit 's configuration examples
     	format = "SABnzbd: {queue-status}"
     	cache_timeout = 60
     }
+    # example output
+    # SABnzbd: Idle
+    
+    
 
