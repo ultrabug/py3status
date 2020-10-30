@@ -15,7 +15,7 @@ Configuration parameters:
         False: disable Do Not Disturb on startup
         True: enable Do Not Disturb on startup
         last: toggle last known state on startup
-        None: query current state from notification manager (doesn't work on dunst)
+        None: query current state from notification manager (doesn't work on dunst<1.5.0)
         (default 'last')
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (1, 'good')])
@@ -89,8 +89,22 @@ class Dunst(Notification):
     Dunst Notification.
     """
 
+    def setup(self, parent):
+        self.has_dunstctl = bool(self.parent.py3.check_commands(["dunstctl"]))
+
+    def get_state(self):
+        if self.has_dunstctl:
+            state = self.parent.py3.command_output("dunstctl is-paused")
+            return state.strip() == "true"
+        else:
+            return self.parent.state
+
     def toggle(self, state):
-        if state:
+        if self.has_dunstctl:
+            self.parent.py3.command_run(
+                "dunstctl set-paused {}".format(str(state).lower())
+            )
+        elif state:
             # pause
             self.parent.py3.command_run("pkill -SIGUSR1 dunst")
         else:
@@ -177,7 +191,7 @@ class Py3status:
                 self.backend.toggle(self.state)
             else:
                 raise Exception(STRING_INVALID_STATE.format(self.state))
-        elif self.server == "dunst":
+        elif self.server == "dunst" and not self.backend.has_dunstctl:
             raise Exception(STRING_INVALID_STATE.format(self.state))
 
         self.name = self.server.capitalize()
