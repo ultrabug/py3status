@@ -96,7 +96,10 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def _get_df_usages(self, disk):
-        df_usages = self.py3.command_output(["df", "-k"])
+        try:
+            df_usages = self.py3.command_output(["df", "-k"])
+        except self.py3.CommandError as ce:
+            df_usages = ce.output
         total, used, free, devs = 0, 0, 0, []
 
         if disk and not disk.startswith("/dev/"):
