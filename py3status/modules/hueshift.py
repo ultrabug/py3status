@@ -120,7 +120,7 @@ class Py3status:
         self.last_command = None
         self._set_color_setter_boolean()
         if not self.is_color_setter_running:
-            self._set_color_temperature(self.color_temperature)
+            self._set_color_temperature(delta=0)
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
