@@ -583,6 +583,31 @@ be used to allow/prevent a module from setting itself as urgent.
         allow_urgent = true
     }
 
+Hide errors
+-----------
+
+When a module error has occurred, it will be reported on the bar.
+The ``hide_errors`` configuration parameter allows users to ignore 
+module errors instead.
+
+
+.. code-block:: py3status
+    :caption: Example
+
+    # hide errors on all modules
+    py3status {
+        hide_errors = True
+    }
+
+    # hide errors on non-NVIDIA hardwares
+    nvidia_smi {
+        hide_errors = True
+    }
+
+    # hide errors on sway
+    xrandr {
+        hide_errors = True
+    }
 
 Grouping Modules
 ----------------

@@ -36,7 +36,7 @@ class Module:
         self.disabled = False
         self.enabled = False
         self.error_messages = None
-        self.error_hide = False
+        self.error_hide = None
         self.has_post_config_hook = False
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
@@ -788,6 +788,12 @@ class Module:
             if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
+
+            # hide_errors
+            param = fn(self.module_full_name, "hide_errors")
+            if hasattr(param, "none_setting"):
+                param = False
+            self.error_hide = param
 
             # urgent background
             urgent_background = fn(self.module_full_name, "urgent_background")
