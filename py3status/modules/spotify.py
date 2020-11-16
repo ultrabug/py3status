@@ -6,6 +6,10 @@ Configuration parameters:
     button_play_pause: button to toggle play/pause (default None)
     button_previous: button to switch to previous song (default None)
     cache_timeout: how often to update the bar (default 5)
+    dbus_client: Used to override which app is used as a client for
+        spotify. If you use spotifyd as a client, set this to
+        'org.mpris.MediaPlayer2.spotifyd'
+        (default 'org.mpris.MediaPlayer2.spotify')
     format: see placeholders below (default '{artist} : {title}')
     format_down: define output if spotify is not running
         (default 'Spotify not running')
@@ -62,7 +66,7 @@ from time import sleep
 
 import dbus
 
-SPOTIFY_CMD = """dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify
+SPOTIFY_CMD = """dbus-send --print-reply --dest={dbus_client}
                  /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
 
 
@@ -75,6 +79,7 @@ class Py3status:
     button_play_pause = None
     button_previous = None
     cache_timeout = 5
+    dbus_client = "org.mpris.MediaPlayer2.spotify"
     format = "{artist} : {title}"
     format_down = "Spotify not running"
     format_stopped = "Spotify stopped"
@@ -93,7 +98,7 @@ class Py3status:
     ]
 
     def _spotify_cmd(self, action):
-        return SPOTIFY_CMD.format(cmd=action)
+        return SPOTIFY_CMD.format(dbus_client=self.dbus_client, cmd=action)
 
     def post_config_hook(self):
         """
@@ -131,7 +136,7 @@ class Py3status:
         bus = dbus.SessionBus()
         try:
             self.__bus = bus.get_object(
-                "org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2"
+                self.dbus_client, "/org/mpris/MediaPlayer2"
             )
             self.player = dbus.Interface(self.__bus, "org.freedesktop.DBus.Properties")
 
