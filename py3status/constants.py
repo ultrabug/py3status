@@ -252,3 +252,5 @@ RETIRED_MODULES = {
 }
 
 MARKUP_LANGUAGES = ["pango", "none"]
+
+ON_ERROR_VALUES = ["hide", "show"]

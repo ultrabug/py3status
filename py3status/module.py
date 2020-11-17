@@ -7,10 +7,17 @@ from time import time
 from random import randint
 
 from py3status.composite import Composite
-from py3status.constants import MARKUP_LANGUAGES, POSITIONS
+from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
 from py3status.py3 import Py3, ModuleErrorException
 from py3status.profiling import profile
 from py3status.formatter import Formatter
+
+
+def make_quotes(options):
+    x = ["`{}`".format(x) for x in options]
+    if len(x) > 2:
+        x = [", ".join(x[:-1]), x[-1]]
+    return " or ".join(x)
 
 
 class Module:
@@ -48,6 +55,7 @@ class Module:
         self.module_name = module.split(" ")[0]
         self.new_update = False
         self.nagged = False
+        self.on_error = None
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
@@ -146,7 +154,7 @@ class Module:
                         self.module_nice_name, str(e) or e.__class__.__name__
                     ),
                 ]
-                self.error_output(self.error_messages[0])
+                self.runtime_error(self.error_messages[0], "post_config_hook")
                 msg = "Exception in `%s` post_config_hook()" % self.module_full_name
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log("terminating module %s" % self.module_full_name)
@@ -160,7 +168,7 @@ class Module:
             self._py3_wrapper.report_exception(msg)
             raise KeyboardInterrupt
 
-        if self.error_hide:
+        if self.on_error == "hide" or self.error_hide:
             self.hide_errors()
             return
 
@@ -309,12 +317,6 @@ class Module:
         self.i3bar_gaps_module_options = {}
         self.py3status_module_options = {}
         fn = self._py3_wrapper.get_config_attribute
-
-        def make_quotes(options):
-            x = ["`{}`".format(x) for x in options]
-            if len(x) > 2:
-                x = [", ".join(x[:-1]), x[-1]]
-            return " or ".join(x)
 
         # i3bar
         min_width = fn(self.module_full_name, "min_width")
@@ -788,6 +790,16 @@ class Module:
             if hasattr(param, "none_setting"):
                 param = True
             self.allow_urgent = param
+
+            # on_error
+            param = fn(self.module_full_name, "on_error")
+            if hasattr(param, "none_setting"):
+                param = "show"
+            if param not in ON_ERROR_VALUES:
+                err = "Invalid `on_error` attribute, should be one of "
+                err += "{}. Got `{}`.".format(make_quotes(ON_ERROR_VALUES), param)
+                raise ValueError(err)
+            self.on_error = param
 
             # urgent background
             urgent_background = fn(self.module_full_name, "urgent_background")

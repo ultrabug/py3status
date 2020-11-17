@@ -583,6 +583,35 @@ be used to allow/prevent a module from setting itself as urgent.
         allow_urgent = true
     }
 
+Controlling error behavior
+--------------------------
+
+When a module error has occurred, it will be reported on the bar.
+The ``on_error`` configuration parameter allows users to choose
+what to do instead.
+
+Supported values:
+
+- ``show`` (default): report the error on the bar (click to view)
+- ``hide``: hide the module on the bar
+
+.. code-block:: py3status
+    :caption: Example
+
+    # hide errors on all modules by default (still reported on logs)
+    py3status {
+        on_error = "hide"
+    }
+
+    # hide errors on non-NVIDIA hardwares
+    nvidia_smi {
+        on_error = "hide"
+    }
+
+    # hide errors on sway where xrandr does not work
+    xrandr {
+        on_error = "hide"
+    }
 
 Grouping Modules
 ----------------
