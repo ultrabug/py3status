@@ -112,7 +112,7 @@ class I3statusModule:
         elif "%T" in time_format:
             # seconds included in "%H:%M:%S"
             time_delta = 1
-        elif "%c" in time_format:
+        elif "%c" in time_format or "%+" in time_format:
             # Locale's appropriate date and time representation
             time_delta = 1
         elif "%X" in time_format:
