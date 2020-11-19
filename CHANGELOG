@@ -1,3 +1,20 @@
+version 3.31 (2020-11-19)
+* core: new "on_error" parameter to control module error behavior (#1972)
+* doc: add CorruptCommit 's configuration examples (#1965), by CorruptCommit
+* doc: create a user contributed conf example section thx to @CorruptCommit #1959
+* update python version compatibility, 3.5 is gone, 3.9 is out
+* parse_config: report missing file command fixes #1961 thx to @Bouni
+* add poweron architecture ppc64le to travis build (#1963), by asellappen
+* clock module: handle timezone changes, thx to @sTiKyt fix #1962
+* coin_market module: broken module rewrite fixes #1913 (#1970), by lasers
+* diskdata module: ignore df -k errors (#1969), by lasers
+* do_not_disturb module: enhance dunst support using 1.5.0 dunstctl
+* hueshift module: fix initialization incrementing cached value by delta (#1967), by Eugène Nélou
+* i3status: add support for '%+' time format (#1975), by Parakleta
+* mpris module: don't join the artist fields in BrokenDBusMpris (#1954), by Moritz Lüdecke
+* spotify module: add spotifyd support (#1974), by Jean-Philippe Evrard
+* sysdata module: increasing meminfo readable lines count to support Raspberry Pi4 (fix #1958) (#1960), by Valdur Kana
+
 version 3.30 (2020-09-14)
 * battery_level module: fix filter in /sys thanks to @naclander and @armandg (#1951), by Marc Poulhiès
 * battery_level module: fix logic to skip batteries and charged state detection (#1949), by Danilo Treffiletti
