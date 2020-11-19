@@ -135,9 +135,7 @@ class Py3status:
         """
         bus = dbus.SessionBus()
         try:
-            self.__bus = bus.get_object(
-                self.dbus_client, "/org/mpris/MediaPlayer2"
-            )
+            self.__bus = bus.get_object(self.dbus_client, "/org/mpris/MediaPlayer2")
             self.player = dbus.Interface(self.__bus, "org.freedesktop.DBus.Properties")
 
             try:
