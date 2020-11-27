@@ -78,6 +78,10 @@ class I3statusModule:
         self.i3status = i3status
         py3_wrapper = i3status.py3_wrapper
 
+        markup = py3_wrapper.config["py3_config"]["general"].get("markup")
+        if markup:
+            self.item["markup"] = markup
+
         # color map for if color good/bad etc are set for the module
         color_map = {}
         py3_config = py3_wrapper.config["py3_config"]
