@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from fnmatch import fnmatch
 from math import log10
+from pathlib import Path
 from pprint import pformat
 from subprocess import Popen, PIPE, STDOUT
 from time import time
@@ -1103,7 +1104,7 @@ class Py3:
             if cmd:
                 if cmd == "ffplay":
                     cmd = "ffplay -autoexit -nodisp -loglevel 0"
-                sound_file = os.path.expanduser(sound_file)
+                sound_file = Path(sound_file).expanduser()
                 c = shlex.split(f"{cmd} {sound_file}")
                 self._audio = Popen(c)
 

@@ -1,9 +1,9 @@
-import codecs
 import os
 import re
 
 from collections import OrderedDict
 from importlib import util
+from pathlib import Path
 from string import Template
 from subprocess import check_output, CalledProcessError
 
@@ -38,7 +38,7 @@ class ParseException(Exception):
         self.token = token.replace("\n", "\\n")
 
     def one_line(self, config_path):
-        filename = os.path.basename(config_path)
+        filename = config_path.name
         notif = "CONFIG ERROR: {} saw `{}` at line {} position {} in file {}"
         return notif.format(
             self.error, self.token, self.line_no, self.position, filename
@@ -183,8 +183,8 @@ class ConfigParser:
         name = name.split()[0]
         if name in self.container_modules:
             return
-        root = os.path.dirname(os.path.realpath(__file__))
-        module_path = os.path.join(root, "modules")
+        root = Path(__file__).resolve().parent
+        module_path = root / "modules"
         info = util.find_spec(name, [module_path])
         if not info:
             return
@@ -717,13 +717,13 @@ def process_config(config_path, py3_wrapper=None):
         # bsd does not have the --mime-encoding so assume utf-8
         encoding = "utf-8"
     try:
-        with codecs.open(config_path, "r", encoding) as f:
+        with config_path.open("r", encoding=encoding) as f:
             try:
                 config_info = parse_config(f)
             except ParseException as e:
                 config_info = parse_config_error(e, config_path)
     except LookupError:
-        with codecs.open(config_path) as f:
+        with config_path.open() as f:
             try:
                 config_info = parse_config(f)
             except ParseException as e:
@@ -886,6 +886,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         file_name = sys.argv[1]
     else:
-        file_name = os.path.join(os.path.expanduser("~"), ".i3/i3status.conf")
+        file_name = Path.home() / ".i3/i3status.conf"
     print("\nPARSING CONFIG FILE %s\n\n" % file_name)
     pprint.pprint(process_config(file_name))

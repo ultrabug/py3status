@@ -112,6 +112,8 @@ au
 {"color": "#F0E68C", "full_text": "au"}
 """
 
+from pathlib import Path
+
 STRING_ERROR = "invalid command `{}`"
 STRING_NOT_AVAILABLE = "no available binary"
 STRING_NOT_INSTALLED = "command `{}` not installed"
@@ -198,7 +200,7 @@ class Xkb:
         self.variant_mapping = []
 
         try:
-            with open("/usr/share/X11/xkb/rules/base.lst") as f:
+            with Path("/usr/share/X11/xkb/rules/base.lst").open() as f:
                 for chunk in f.read().split("\n\n"):
                     if "! layout" in chunk:
                         for line in chunk.splitlines()[1:]:

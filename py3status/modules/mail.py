@@ -156,9 +156,10 @@ no_mail
 """
 
 import mailbox
+import os
 from csv import reader
 from imaplib import IMAP4_SSL, IMAP4
-from os.path import exists, expanduser, expandvars
+from pathlib import Path
 
 STRING_MISSING = "missing {} {}"
 STRING_INVALID_NAME = "invalid name `{}`"
@@ -167,8 +168,7 @@ STRING_INVALID_FILTER = "invalid imap filters `{}`"
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     accounts = {}
@@ -215,8 +215,10 @@ class Py3status:
                         if mail == box.lower():
                             if "path" not in account:
                                 raise Exception(STRING_MISSING.format(mail, "path"))
-                            path = expandvars(expanduser(account["path"]))
-                            if not exists(path):
+                            path = os.path.expandvars(
+                                Path(account["path"]).expanduser()
+                            )
+                            if not path.exists():
                                 path = f"path: {path}"
                                 raise Exception(STRING_MISSING.format(mail, path))
                             account["box"] = box

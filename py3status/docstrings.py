@@ -1,7 +1,8 @@
 import ast
 import re
-import os.path
 import difflib
+
+from pathlib import Path
 
 from py3status.helpers import print_stderr
 
@@ -10,7 +11,7 @@ def modules_directory():
     """
     Get the core modules directory.
     """
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
+    return Path(__file__).resolve().parent / "modules"
 
 
 def parse_readme():
@@ -20,9 +21,9 @@ def parse_readme():
     """
     name = None
     re_mod = re.compile(r'^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
-    readme_file = os.path.join(modules_directory(), "README.md")
+    readme_file = modules_directory() / "README.md"
     modules_dict = {}
-    with open(readme_file) as f:
+    with readme_file.open() as f:
         for row in f.readlines():
             match = re_mod.match(row)
             if match:
@@ -47,23 +48,21 @@ def core_module_docstrings(
     paths = {}
     docstrings = {}
     if include_core:
-        for file in os.listdir(modules_directory()):
-            if file.endswith(".py"):
-                name = file[:-3]
-                if name != "__init__":
-                    paths[name] = (os.path.join(modules_directory(), file), "core")
+        for file in modules_directory().iterdir():
+            if file.suffix == ".py":
+                if file.stem != "__init__":
+                    paths[file.stem] = (file, "core")
 
     if include_user:
         # include user modules
         for include_path in sorted(config["include_paths"]):
-            for file in sorted(os.listdir(include_path)):
-                if not file.endswith(".py"):
+            for file in sorted(include_path.iterdir()):
+                if file.suffix != ".py":
                     continue
-                name = file[:-3]
-                paths[name] = (os.path.join(include_path, file), "user")
+                paths[file.stem] = (file, "user")
     for name in paths:
         path, module_type = paths[name]
-        with open(path) as f:
+        with path.open() as f:
             try:
                 module = ast.parse(f.read())
             except SyntaxError:
@@ -297,8 +296,8 @@ def update_docstrings():
     files = {}
     # update modules
     for mod in modules_dict:
-        mod_file = os.path.join(modules_directory(), mod + ".py")
-        with open(mod_file) as f:
+        mod_file = modules_directory() / f"{mod}.py"
+        with mod_file.open() as f:
             files[mod] = f.readlines()
 
     for mod in files:
@@ -328,8 +327,8 @@ def update_docstrings():
                 continue
             if not lines or done:
                 out.append(row)
-        mod_file = os.path.join(modules_directory(), mod + ".py")
-        with open(mod_file, "w") as f:
+        mod_file = modules_directory() / f"{mod}.py"
+        with mod_file.open("w") as f:
             f.writelines(out)
     print_stderr("Modules updated from README.md")
 
@@ -395,9 +394,8 @@ def update_readme_for_modules(modules):
             print_stderr(f"Module {module} not in core modules")
 
     # write the file
-    readme_file = os.path.join(modules_directory(), "README.md")
-    with open(readme_file, "w") as f:
-        f.write(create_readme(readme))
+    readme_file = modules_directory() / "README.md"
+    readme_file.write_text(create_readme(readme))
 
 
 def show_modules(config, modules_list):

@@ -46,9 +46,8 @@ SAMPLE OUTPUT
 {'full_text': 'i3pystatus module'}
 """
 
-import os
-
 from importlib import import_module
+from pathlib import Path
 from threading import Timer
 
 try:
@@ -93,21 +92,16 @@ def get_backends():
     global backends
     if backends is None:
         backends = {}
-        i3pystatus_dir = os.path.dirname(i3pystatus.__file__)
-        subdirs = [
-            x
-            for x in next(os.walk(i3pystatus_dir))[1]
-            if not x.startswith("_") and x not in IGNORE_DIRS
-        ]
-        for subdir in subdirs:
-            dirs = next(os.walk(os.path.join(i3pystatus_dir, subdir)))[2]
-            backends.update(
-                {
-                    x[:-3]: "i3pystatus.{}.{}".format(subdir, x[:-3])
-                    for x in dirs
-                    if not x.startswith("_") and x.endswith(".py")
-                }
-            )
+        i3pystatus_dir = Path(i3pystatus.__file__).parent
+        for subdir in i3pystatus_dir.iterdir():
+            if (
+                subdir.is_dir()
+                and not subdir.name.startswith("_")
+                and subdir.name not in IGNORE_DIRS
+            ):
+                for path in subdir.glob("*.py"):
+                    if not path.stem.startswith("_"):
+                        backends[path.stem] = f"i3pystatus.{subdir.name}.{path.stem}"
     return backends
 
 
@@ -225,8 +219,7 @@ SKIP_ATTRS = [
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     module = None

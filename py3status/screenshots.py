@@ -16,6 +16,7 @@ import os
 import re
 
 from hashlib import md5
+from pathlib import Path
 
 from PIL import Image, ImageFont, ImageDraw
 from fontTools.ttLib import TTFont
@@ -182,8 +183,8 @@ def create_screenshot(name, data, path, font, is_module):
             )
             x += SEP_PADDING_LEFT
 
-    img.save(os.path.join(path, "%s.png" % name))
-    print(" %s.png" % name)
+    img.save(path / f"{name}.png")
+    print(f" {name}.png")
 
 
 def parse_sample_data(sample_data, module_name):
@@ -208,12 +209,10 @@ def get_samples():
     return a dict {screenshot_name: sample_output}
     """
     samples = {}
-    module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modules")
-    for file in sorted(os.listdir(module_dir)):
-        if file.endswith(".py") and file != "__init__.py":
-            #  remove .py
-            module_name = file[:-3]
-            with open(os.path.join(module_dir, file)) as f:
+    module_dir = Path(__file__).resolve().parent / "modules"
+    for file in sorted(module_dir.iterdir()):
+        if file.suffix == ".py" and file.name != "__init__.py":
+            with file.open() as f:
                 try:
                     module = ast.parse(f.read())
                 except SyntaxError:
@@ -225,7 +224,7 @@ def get_samples():
                 if len(parts) == 1:
                     continue
                 sample_data = parts[1]
-                samples.update(parse_sample_data(sample_data, module_name))
+                samples.update(parse_sample_data(sample_data, file.stem))
     return samples
 
 
@@ -237,7 +236,7 @@ def process(name, path, data, module=True):
     """
     # create dir if not exists
     try:
-        os.makedirs(path)
+        path.mkdir(parents=True, exists_ok=True)
     except OSError:
         pass
 
@@ -264,12 +263,9 @@ def create_screenshots(quiet=False):
     are created.
     """
     if os.environ.get("READTHEDOCS") == "True":
-        path = "../doc/screenshots"
+        path = Path("../doc/screenshots")
     else:
-        path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "doc/screenshots",
-        )
+        path = Path(__file__).resolve().parent / "doc" / "screenshots"
 
     print("Creating screenshots...")
     samples = get_samples()

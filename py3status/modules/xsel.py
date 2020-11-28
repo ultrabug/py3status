@@ -35,7 +35,7 @@ SAMPLE OUTPUT
 
 
 import time
-import os.path
+from pathlib import Path
 
 
 class Py3status:
@@ -52,14 +52,13 @@ class Py3status:
 
     def post_config_hook(self):
         self.selection_cache = None
-        if self.log_file:
-            self.log_file = os.path.expanduser(self.log_file)
+        self.log_file = Path(self.log_file).expanduser()
 
     def xsel(self):
         selection = self.py3.command_output(self.command).strip()
 
         if self.log_file and selection and selection != self.selection_cache:
-            with open(self.log_file, "a") as f:
+            with self.log_file.open("a") as f:
                 datetime = time.strftime("%Y-%m-%d %H:%M:%S")
                 f.write(f"{datetime}\n{selection}\n")
             self.selection_cache = selection

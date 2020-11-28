@@ -4,11 +4,11 @@ py3status
 
 from setuptools import find_packages, setup
 import fastentrypoints  # noqa f401
-import os
 import sys
+from pathlib import Path
 
-module_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "py3status")
-sys.path.insert(0, module_path)
+module_path = Path(__file__).resolve().parent / "py3status"
+sys.path.insert(0, str(module_path))
 from version import version  # noqa e402
 
 sys.path.remove(module_path)
@@ -19,7 +19,7 @@ sys.path.remove(module_path)
 # README file and 2) it's easier to type in the README file than to put a raw
 # string in below ...
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return (Path(__file__).resolve().parent / fname).read_text()
 
 
 # extra requirements

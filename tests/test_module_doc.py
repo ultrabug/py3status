@@ -11,10 +11,10 @@ Specific modules/config parameters are excluded but this should be discouraged.
 """
 
 import ast
-import os.path
 import re
 
 from collections import OrderedDict
+from pathlib import Path
 
 from py3status.docstrings import core_module_docstrings
 
@@ -40,9 +40,7 @@ AST_LITERAL_TYPES = {
     "Constant": "value",
 }
 
-MODULE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "py3status", "modules"
-)
+MODULE_PATH = Path(__file__).resolve().parent.parent / "py3status" / "modules"
 
 
 def docstring_params(docstring):
@@ -173,7 +171,7 @@ def get_module_attributes(path):
                     value = line.value
                     dest[attr] = get_value(value)
 
-    with open(path) as f:
+    with path.open() as f:
         tree = ast.parse(f.read(), "")
         # some modules have constants defined we need to find these
         get_values(tree.body, names)
@@ -239,7 +237,7 @@ def check_docstrings():
         if module_name in IGNORE_MODULE:
             continue
 
-        path = os.path.join(MODULE_PATH, "%s.py" % module_name)
+        path = MODULE_PATH / f"{module_name}.py"
         mod_config = get_module_attributes(path)
 
         params, obsolete = docstring_params(docstrings[module_name])

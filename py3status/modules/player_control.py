@@ -36,7 +36,7 @@ pause
 # Any contributor to this module should add his/her name to the @author
 # line, comma separated.
 
-import os
+from pathlib import Path
 
 try:
     import dbus
@@ -145,14 +145,11 @@ class Py3status:
         """
         supported_players = self.supported_players.split(",")
         running_players = []
-        for pid in os.listdir("/proc"):
-            if not pid.isdigit():
+        for pid in Path("/proc").iterdir():
+            if not pid.name.isdigit():
                 continue
-
-            fn = os.path.join("/proc", pid, "comm")
             try:
-                with open(fn, "rb") as f:
-                    player_name = f.read().decode().rstrip()
+                player_name = (pid / "comm").read_bytes().decode().rstrip()
             except:  # noqa e722
                 # (IOError, FileNotFoundError):  # (assumed py2, assumed py3)
                 continue

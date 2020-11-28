@@ -1,7 +1,8 @@
 import ast
 import inspect
-import os.path
 import re
+
+from pathlib import Path
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -139,7 +140,7 @@ def screenshots(screenshots_data, module_name):
 
     out = []
     for shot in file_sort(shots):
-        if not os.path.exists("../doc/screenshots/%s.png" % shot):
+        if not Path(f"../doc/screenshots/{shot}.png").exists():
             continue
         out.append(f"\n.. image:: screenshots/{shot}.png\n\n")
     return "".join(out)
@@ -172,8 +173,7 @@ def create_module_docs():
             )
         )
     # write include file
-    with open("../doc/modules-info.inc", "w") as f:
-        f.write("".join(out))
+    Path("../doc/modules-info.inc").write_text("".join(out))
 
 
 def get_variable_docstrings(filename):
@@ -212,9 +212,7 @@ def get_variable_docstrings(filename):
                 key = None
         return docstrings, values
 
-    with open(filename) as f:
-        source = f.read()
-    return walk_node(ast.parse(source))
+    return walk_node(ast.parse(filename.read_text()))
 
 
 def get_py3_info():
@@ -311,8 +309,7 @@ def create_py3_docs():
             output.append(".. py:{}:: {}".format(trans[k], name))
             output.append("")
             output.extend(auto_undent(desc))
-        with open("../doc/py3-%s-info.inc" % k, "w") as f:
-            f.write("\n".join(output))
+        Path(f"../doc/py3-{k}-info.inc").write_text("\n".join(output))
 
 
 def create_auto_documentation():
@@ -354,7 +351,7 @@ class ScreenshotDirective(Directive):
             }
 
         process(image_name, content, False)
-        image_path = os.path.join("screenshots", image_name + ".png")
+        image_path = Path("screenshots") / (image_name + ".png")
         screenshot_node = nodes.image(uri=image_path)
         return [targetnode, screenshot_node]
 

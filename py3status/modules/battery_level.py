@@ -81,11 +81,12 @@ discharging
 """
 
 from re import findall
-from glob import iglob
 
 import itertools
 import math
-import os
+
+from pathlib import Path
+
 
 BLOCKS = "_▁▂▃▄▅▆▇█"
 CHARGING_CHARACTER = "⚡"
@@ -158,7 +159,7 @@ class Py3status:
         self.last_known_status = ""
         # Guess mode if not set
         if self.measurement_mode is None:
-            if os.path.isdir(self.sys_battery_path):
+            if Path(self.sys_battery_path).is_dir():
                 self.measurement_mode = "sys"
             elif self.py3.check_commands(["acpi"]):
                 self.measurement_mode = "acpi"
@@ -275,7 +276,7 @@ class Py3status:
         a similar, yet incompatible interface in /proc
         """
 
-        if not os.listdir(self.sys_battery_path):
+        if not any(Path(self.sys_battery_path).iterdir()):
             return []
 
         def _parse_battery_info(sys_path):
@@ -284,7 +285,7 @@ class Py3status:
             int if necessary
             """
             raw_values = {}
-            with open(os.path.join(sys_path, "uevent")) as f:
+            with (sys_path / "uevent").open() as f:
                 for var in f.read().splitlines():
                     k, v = var.split("=")
                     try:
@@ -297,8 +298,9 @@ class Py3status:
 
         bglobs = ["BAT*", "*bat*"]
         path_its = itertools.chain(
-            *[iglob(os.path.join(self.sys_battery_path, bglob)) for bglob in bglobs]
+            *[Path(self.sys_battery_path).glob(bglob) for bglob in bglobs]
         )
+
         for path in path_its:
             r = _parse_battery_info(path)
 

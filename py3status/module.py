@@ -1,8 +1,8 @@
-import os
 import inspect
 
 from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
+from pathlib import Path
 from time import time
 from random import randint
 
@@ -110,9 +110,8 @@ class Module:
         Return user-written class object from given path.
         """
         class_inst = None
-        module_name, file_ext = os.path.splitext(os.path.split(filepath)[-1])
-        if file_ext.lower() == ".py":
-            py_mod = SourceFileLoader(module_name, filepath).load_module()
+        if filepath.suffix == ".py":
+            py_mod = SourceFileLoader(filepath.stem, filepath).load_module()
             if hasattr(py_mod, cls.EXPECTED_CLASS):
                 class_inst = py_mod.Py3status()
         return class_inst
@@ -588,7 +587,7 @@ class Module:
             # user provided modules take precedence over py3status provided modules
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
-                module_path = os.path.join(include_path, f_name)
+                module_path = Path(include_path) / f_name
                 self._py3_wrapper.log(f'loading module "{module}" from {module_path}')
                 self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules

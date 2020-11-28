@@ -138,9 +138,9 @@ SAMPLE OUTPUT
 {'full_text': 'New Task 1, New Task 2'}
 """
 
-from os import path
 from sqlite3 import connect
 from datetime import datetime
+from pathlib import Path
 
 STRING_NO_PROFILE = "missing profile"
 STRING_NOT_INSTALLED = "not installed"
@@ -166,20 +166,21 @@ class Py3status:
 
         # first profile, please.
         if not self.profile:
-            directory = "~/.thunderbird"
-            profile_ini = path.expanduser(directory + "/profiles.ini")
+            directory = Path("~/.thunderbird").expanduser()
+            profile_ini = directory / "profiles.ini"
             profile = []
-            for line in open(profile_ini):
-                if line.startswith("Path="):
-                    profile.append(
-                        "{}/{}".format(directory, line.split("Path=")[-1].strip())
-                    )
+            with profile_ini.open() as f:
+                for line in f:
+                    if line.startswith("Path="):
+                        profile.append(
+                            "{}/{}".format(directory, line.split("Path=")[-1].strip())
+                        )
             if not len(profile):
                 raise Exception(STRING_NO_PROFILE)
             self.profile = profile[0]
 
-        self.profile = path.expanduser(self.profile)
-        self.path = self.profile + "/calendar-data/local.sqlite"
+        self.profile = Path(self.profile).expanduser()
+        self.path = self.profile / "calendar-data/local.sqlite"
 
         self.init_datetimes = []
         for word in self.format_datetime:

@@ -32,6 +32,7 @@ SAMPLE OUTPUT
 ]
 """
 
+from pathlib import Path
 from time import time
 
 
@@ -111,7 +112,7 @@ class Py3status:
         self.last_time = time()
         # Get default gateway from /proc.
         if self.nic is None:
-            with open("/proc/net/route") as fh:
+            with Path("/proc/net/route").open() as fh:
                 for line in fh:
                     fields = line.strip().split()
                     if fields[1] == "00000000" and int(fields[3], 16) & 2:
@@ -124,7 +125,7 @@ class Py3status:
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def _get_bytes(self):
-        with open("/proc/net/dev") as fh:
+        with Path("/proc/net/dev").open() as fh:
             net_data = fh.read().split()
         interface_index = net_data.index(self.nic + ":")
         received_bytes = int(net_data[interface_index + 1])

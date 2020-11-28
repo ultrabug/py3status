@@ -1,6 +1,7 @@
 import argparse
 import os
 import subprocess
+from pathlib import Path
 
 from platform import python_version
 from py3status.version import version
@@ -11,13 +12,13 @@ def parse_cli_args():
     Parse the command line arguments
     """
     # get config paths
-    home_path = os.path.expanduser("~")
-    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", f"{home_path}/.config")
-    xdg_dirs_path = os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")
+    home_path = Path.home()
+    xdg_home_path = Path(os.environ.get("XDG_CONFIG_HOME", home_path / ".config"))
+    xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
     # get i3status path
     try:
-        with open(os.devnull, "w") as devnull:
+        with Path(os.devnull).open("w") as devnull:
             command = ["which", "i3status"]
             i3status_path = (
                 subprocess.check_output(command, stderr=devnull).decode().strip()
@@ -26,7 +27,7 @@ def parse_cli_args():
         i3status_path = None
 
     # get window manager
-    with open(os.devnull, "w") as devnull:
+    with Path(os.devnull).open("w") as devnull:
         if subprocess.call(["pgrep", "i3"], stdout=devnull) == 0:
             wm = "i3"
         else:
@@ -35,17 +36,17 @@ def parse_cli_args():
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
-        f"{xdg_home_path}/py3status/config",
-        f"{xdg_home_path}/i3status/config",
-        f"{xdg_home_path}/i3/i3status.conf",  # custom
-        f"{home_path}/.i3status.conf",
-        f"{home_path}/.i3/i3status.conf",  # custom
-        f"{xdg_dirs_path}/i3status/config",
+        xdg_home_path / "py3status/config",
+        xdg_home_path / "i3status/config",
+        xdg_home_path / "i3/i3status.conf",  # custom
+        home_path / ".i3status.conf",
+        home_path / ".i3/i3status.conf",  # custom
+        xdg_dirs_path / "i3status/config",
         "/etc/i3status.conf",
     ]
-    for fn in i3status_config_file_candidates:
-        if os.path.isfile(fn):
-            i3status_config_file_default = fn
+    for path in i3status_config_file_candidates:
+        if path.exists():
+            i3status_config_file_default = path
             break
     else:
         # if files does not exists, defaults to ~/.i3/i3status.conf
@@ -207,8 +208,8 @@ def parse_cli_args():
 
     include_paths = []
     for path in options.include_paths:
-        path = os.path.abspath(path)
-        if os.path.isdir(path) and os.listdir(path):
+        path = path.resolve()
+        if path.is_dir() and any(path.iterdir()):
             include_paths.append(path)
     options.include_paths = include_paths
 

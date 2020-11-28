@@ -326,7 +326,7 @@ from subprocess import Popen, PIPE, STDOUT
 from threading import Thread
 from tempfile import NamedTemporaryFile
 from json import dumps
-from os import remove as os_remove
+from pathlib import Path
 
 STRING_NOT_INSTALLED = "not installed"
 STRING_MISSING_FORMAT = "missing format"
@@ -387,7 +387,7 @@ class Py3status:
 
     def _cleanup(self):
         self.process.kill()
-        os_remove(self.tmpfile.name)
+        Path(self.tmpfile).unlink()
         self.py3.update()
 
     def _start_loop(self):

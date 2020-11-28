@@ -62,11 +62,11 @@ SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
 import imaplib
-import os
 from threading import Thread
 from time import sleep
 from ssl import create_default_context
 from socket import setdefaulttimeout, error as socket_error
+from pathlib import Path
 
 STRING_UNAVAILABLE = "N/A"
 NO_DATA_YET = -1
@@ -123,8 +123,8 @@ class Py3status:
         self.idle_thread = Thread()
 
         if self.client_secret:
-            self.client_secret = os.path.expanduser(self.client_secret)
-        self.auth_token = os.path.expanduser(self.auth_token)
+            self.client_secret = Path(self.client_secret).expanduser()
+        self.auth_token = Path(self.auth_token).expanduser()
 
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
@@ -186,8 +186,8 @@ class Py3status:
         self.creds = None
 
         # Open pickle file with access and refresh tokens if it exists
-        if os.path.exists(self.auth_token):
-            with open(self.auth_token, "rb") as token:
+        if self.auth_token.exists():
+            with self.auth_token.open("rb") as token:
                 self.creds = pickle.load(token)
 
         if not self.creds or not self.creds.valid:
@@ -202,7 +202,7 @@ class Py3status:
                     )
                     self.creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
-                with open(self.auth_token, "wb") as token:
+                with self.auth_token.open("wb") as token:
                     pickle.dump(self.creds, token)
             except TransportError as e:
                 # Treat the same as a socket_error

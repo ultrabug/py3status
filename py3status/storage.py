@@ -1,5 +1,6 @@
 import os
 
+from pathlib import Path
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
 from time import time
@@ -21,18 +22,18 @@ class Storage:
         # cutting edge storage cache
         storage_config = py3_config.get("py3status", {}).get("storage")
         if storage_config:
-            storage_file = os.path.expandvars(os.path.expanduser(storage_config))
+            storage_file = os.path.expandvars(storage_config.expanduser())
             if "/" in storage_file:
                 storage_dir = None
             else:
                 storage_dir = os.environ.get("XDG_CACHE_HOME")
         else:
             storage_dir = os.environ.get("XDG_CACHE_HOME")
-            storage_file = "py3status_cache.data"
+            storage_file = Path("py3status_cache.data")
 
         if not storage_dir:
-            storage_dir = os.path.expanduser("~/.cache")
-        self.storage_path = os.path.join(storage_dir, storage_file)
+            storage_dir = Path("~/.cache").expanduser()
+        self.storage_path = storage_dir / storage_file
 
         # move legacy storage cache to new desired / default location
         if legacy_storage_path:
@@ -41,10 +42,10 @@ class Storage:
                     legacy_storage_path, self.storage_path
                 )
             )
-            os.rename(legacy_storage_path, self.storage_path)
+            legacy_storage_path.rename(self.storage_path)
 
         try:
-            with open(self.storage_path, "rb") as f:
+            with self.storage_path.open("rb") as f:
                 self.data = load(f, encoding="bytes")
         except OSError:
             pass
@@ -58,11 +59,11 @@ class Storage:
         """
         Detect and return existing legacy storage path.
         """
-        config_dir = os.path.dirname(
+        config_dir = Path(
             self.py3_wrapper.config.get("i3status_config_path", "/tmp")
-        )
-        storage_path = os.path.join(config_dir, "py3status.data")
-        if os.path.exists(storage_path):
+        ).parent
+        storage_path = config_dir / "py3status.data"
+        if storage_path.exists():
             return storage_path
         else:
             return None
@@ -71,15 +72,13 @@ class Storage:
         """
         Save our data to disk. We want to always have a valid file.
         """
-        with NamedTemporaryFile(
-            dir=os.path.dirname(self.storage_path), delete=False
-        ) as f:
+        with NamedTemporaryFile(dir=self.storage_path.parent, delete=False) as f:
             # we use protocol=2 for python 2/3 compatibility
             dump(self.data, f, protocol=2)
             f.flush()
             os.fsync(f.fileno())
-            tmppath = f.name
-        os.rename(tmppath, self.storage_path)
+            tmppath = Path(f.name)
+        tmppath.rename(self.storage_path)
 
     def storage_set(self, module_name, key, value):
         if key.startswith("_"):

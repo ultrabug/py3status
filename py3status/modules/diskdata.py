@@ -55,6 +55,7 @@ SAMPLE OUTPUT
 {'full_text': 'all:  34.4% ( 82.0 KiB/s)'}
 """
 
+from pathlib import Path
 from time import time
 
 
@@ -130,7 +131,7 @@ class Py3status:
         if disk and disk.startswith("/dev/"):
             disk = disk[5:]
 
-        with open("/proc/diskstats") as fd:
+        with Path("/proc/diskstats").open() as fd:
             for line in fd:
                 data = line.split()
                 if disk:
