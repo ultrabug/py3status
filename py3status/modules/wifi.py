@@ -118,12 +118,12 @@ class Py3status:
                     self.device = last_device
                     break
         else:
-            device = " `{}`".format(self.device) if self.device else ""
+            device = f" `{self.device}`" if self.device else ""
             raise Exception(STRING_NO_DEVICE + device)
 
         self._max_bitrate = 0
         self._ssid = ""
-        self.color_down = getattr(self.py3, "COLOR_{}".format(self.down_color.upper()))
+        self.color_down = getattr(self.py3, f"COLOR_{self.down_color.upper()}")
         self.commands = set()
         self.ip_addr_list_id = ["ip", "addr", "list", self.device]
         self.iw_dev_id_link = [iw, "dev", self.device, "link"]

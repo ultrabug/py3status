@@ -77,9 +77,9 @@ def format_value(num, value_round=True):
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
         if abs(num) < 1000.0:
             if value_round:
-                return "{:1.0f}{}".format(num, unit)
+                return f"{num:1.0f}{unit}"
             else:
-                return "{:3.1f}{}".format(num, unit)
+                return f"{num:3.1f}{unit}"
         num /= 1000.0
     if value_round:
         return "{:.0f}{}".format(num, "Y")
@@ -134,13 +134,13 @@ class Py3status:
                 proxies["http"] = self.proxy
 
         r = get(
-            "{}/render".format(self.graphite_url),
+            f"{self.graphite_url}/render",
             params,
             timeout=self.http_timeout,
             proxies=proxies,
         )
         if r.status_code != 200:
-            raise Exception("HTTP error {}".format(r.status_code))
+            raise Exception(f"HTTP error {r.status_code}")
         else:
             color_key = "good"
             r_json = {}
@@ -190,9 +190,9 @@ class Py3status:
 
     def _store_notification(self, target, threshold, value):
         if self.value_comparator == "max":
-            msg = "{}: {} > {}".format(target, value, threshold)
+            msg = f"{target}: {value} > {threshold}"
         elif self.value_comparator == "min":
-            msg = "{}: {} < {}".format(target, value, threshold)
+            msg = f"{target}: {value} < {threshold}"
         self.notifications.append(msg)
 
     def _notify_user(self):
@@ -226,7 +226,7 @@ class Py3status:
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "color": getattr(self.py3, "COLOR_{}".format(color_key.upper())),
+            "color": getattr(self.py3, f"COLOR_{color_key.upper()}"),
             "full_text": self.py3.safe_format(self.format, r_json),
         }
         return response

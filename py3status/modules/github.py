@@ -253,7 +253,7 @@ class Py3status:
                     # open repo page if there are no unread notifications
                     url = self.url_base + "/" + self.repo
             # open url in default browser
-            self.py3.command_run("xdg-open {}".format(url))
+            self.py3.command_run(f"xdg-open {url}")
             self.py3.prevent_refresh()
         elif button != self.button_refresh:
             # only refresh the module if needed

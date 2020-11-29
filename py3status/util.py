@@ -113,7 +113,7 @@ class Gradients:
         gradient cannot be guaranteed.
         """
         thresholds = sorted(thresholds)
-        key = "{}|{}".format(thresholds, size)
+        key = f"{thresholds}|{size}"
         try:
             return self._gradients_cache[key]
         except KeyError:

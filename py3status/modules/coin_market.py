@@ -145,7 +145,7 @@ class Py3status:
             "X-CMC_PRO_API_KEY": self.api_key,
         }
         self.url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes"
-        self.url += "/latest?convert={}&symbol={}".format(convert, markets)
+        self.url += f"/latest?convert={convert}&symbol={markets}"
 
         self.thresholds_init = self.py3.get_color_names_list(self.format_coin)
 

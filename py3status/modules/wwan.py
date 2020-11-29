@@ -454,7 +454,7 @@ class Py3status:
             if isinstance(value, (list, tuple)):
                 if len(value) > 1:
                     for i, v in enumerate(value):
-                        new_data["{}_{}".format(key, i)] = v
+                        new_data[f"{key}_{i}"] = v
                 elif len(value) == 1:
                     new_data[key] = value[0]
                 else:

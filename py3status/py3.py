@@ -295,7 +295,7 @@ class Py3:
             d = dict(enumerate(d))
         for k, v in d.items():
             if parent_key:
-                k = "{}{}{}".format(parent_key, delimiter, k)
+                k = f"{parent_key}{delimiter}{k}"
             if intermediates:
                 items.append((k, v))
             if isinstance(v, list):
@@ -459,7 +459,7 @@ class Py3:
                 message = "\n" + message
         except:  # noqa e722
             pass
-        message = "Module `{}`: {}".format(self._module.module_full_name, message)
+        message = f"Module `{self._module.module_full_name}`: {message}"
         self._py3_wrapper.log(message, level)
 
     def update(self, module_name=None):
@@ -522,7 +522,7 @@ class Py3:
         if isinstance(msg, Composite):
             msg = msg.text()
         if title is None:
-            title = "py3status: {}".format(module_name)
+            title = f"py3status: {module_name}"
         elif isinstance(title, Composite):
             title = title.text()
         if msg:
@@ -842,7 +842,7 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception("Invalid format `{}`".format(format_string))
+            self._report_exception(f"Invalid format `{format_string}`")
             return "invalid format"
 
     def build_composite(
@@ -878,7 +878,7 @@ class Py3:
                 attr_getter=attr_getter,
             )
         except Exception:
-            self._report_exception("Invalid format `{}`".format(format_string))
+            self._report_exception(f"Invalid format `{format_string}`")
             return [{"full_text": "invalid format"}]
 
     def composite_update(self, item, update_dict, soft=False):
@@ -937,7 +937,7 @@ class Py3:
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
-            if self.command_run("which {}".format(cmd)) == 0:
+            if self.command_run(f"which {cmd}") == 0:
                 return cmd
 
     def command_run(self, command):
@@ -958,7 +958,7 @@ class Py3:
                 pretty_cmd = command
             else:
                 pretty_cmd = " ".join(command)
-            msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e.errno)
+            msg = f"Command `{pretty_cmd}` {e.errno}"
             raise exceptions.CommandError(msg, error_code=e.errno)
 
     def command_output(
@@ -998,7 +998,7 @@ class Py3:
                 env=env,
             )
         except Exception as e:
-            msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e)
+            msg = f"Command `{pretty_cmd}` {e}"
             self.log(msg)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
@@ -1104,7 +1104,7 @@ class Py3:
                 if cmd == "ffplay":
                     cmd = "ffplay -autoexit -nodisp -loglevel 0"
                 sound_file = os.path.expanduser(sound_file)
-                c = shlex.split("{} {}".format(cmd, sound_file))
+                c = shlex.split(f"{cmd} {sound_file}")
                 self._audio = Popen(c)
 
     def stop_sound(self):
@@ -1270,7 +1270,7 @@ class Py3:
             retry_wait = getattr(self._py3status_module, "request_retry_wait", 2)
 
         if "User-Agent" not in headers:
-            headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
+            headers["User-Agent"] = f"py3status/{version} {self._uid}"
 
         def get_http_response():
             return HttpResponse(
@@ -1291,8 +1291,8 @@ class Py3:
                     from gevent import sleep
                 else:
                     from time import sleep
-                self.log("HTTP request retry {}/{}".format(n, retry_times))
+                self.log(f"HTTP request retry {n}/{retry_times}")
                 sleep(retry_wait)
-        self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
+        self.log(f"HTTP request retry {retry_times}/{retry_times}")
         sleep(retry_wait)
         return get_http_response()

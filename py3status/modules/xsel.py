@@ -61,7 +61,7 @@ class Py3status:
         if self.log_file and selection and selection != self.selection_cache:
             with open(self.log_file, "a") as f:
                 datetime = time.strftime("%Y-%m-%d %H:%M:%S")
-                f.write("{}\n{}\n".format(datetime, selection))
+                f.write(f"{datetime}\n{selection}\n")
             self.selection_cache = selection
 
         selection = " ".join(selection.split())

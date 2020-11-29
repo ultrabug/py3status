@@ -497,7 +497,7 @@ class Py3status:
             "index": index,
             "identity": identity,
             "name": name,
-            "full_name": "{} {}".format(name, index),
+            "full_name": f"{name} {index}",
             "status": status,
             "subscription": subscription,
         }

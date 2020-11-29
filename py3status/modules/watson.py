@@ -50,12 +50,12 @@ class Py3status:
             }
 
         try:
-            with open(self.state_file, "r") as f:
+            with open(self.state_file) as f:
                 session_data = json.load(f)
                 output = self._format_output(session_data=session_data)
                 output["cached_until"] = self.py3.time_in(seconds=self.cache_timeout)
                 return output
-        except IOError:
+        except OSError:
             return {
                 "full_text": "Error reading file",
                 "color": self.py3.COLOR_BAD,

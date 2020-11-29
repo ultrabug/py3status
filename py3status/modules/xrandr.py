@@ -147,8 +147,7 @@ from time import sleep
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     cache_timeout = 10
@@ -227,7 +226,7 @@ class Py3status:
                 else:
                     continue
             except Exception as err:
-                self.py3.log('xrandr error="{}"'.format(err))
+                self.py3.log(f'xrandr error="{err}"')
             else:
                 layout[state][output] = {"infos": infos, "mode": mode, "state": state}
 
@@ -285,8 +284,8 @@ class Py3status:
         """
         Construct the string to be displayed and record the max width.
         """
-        show = getattr(self, "icon_{}".format(mode)).join(
-            tuple(getattr(self, "{}_icon".format(x), x) for x in combination)
+        show = getattr(self, f"icon_{mode}").join(
+            tuple(getattr(self, f"{x}_icon", x) for x in combination)
         )
         self.max_width = max([self.max_width, len(show)])
         return show
@@ -342,23 +341,23 @@ class Py3status:
         previous_output = None
         primary_added = False
         for output in outputs:
-            cmd += " --output {}".format(output)
+            cmd += f" --output {output}"
             #
             if output in combination:
-                pos = getattr(self, "{}_pos".format(output), "0x0")
-                primary = getattr(self, "{}_primary".format(output), None)
-                resolution = getattr(self, "{}_mode".format(output), None)
-                resolution = "--mode {}".format(resolution) if resolution else "--auto"
-                rotation = getattr(self, "{}_rotate".format(output), "normal")
+                pos = getattr(self, f"{output}_pos", "0x0")
+                primary = getattr(self, f"{output}_primary", None)
+                resolution = getattr(self, f"{output}_mode", None)
+                resolution = f"--mode {resolution}" if resolution else "--auto"
+                rotation = getattr(self, f"{output}_rotate", "normal")
                 if rotation not in ["inverted", "left", "normal", "right"]:
-                    self.py3.log("configured rotation {} is not valid".format(rotation))
+                    self.py3.log(f"configured rotation {rotation} is not valid")
                     rotation = "normal"
                 #
                 if primary is True and not primary_added:
                     primary_added = True
                     cmd += " --primary"
                 if mode == "clone" and previous_output is not None:
-                    cmd += " {} --same-as {}".format(resolution, previous_output)
+                    cmd += f" {resolution} --same-as {previous_output}"
                 else:
                     if (
                         "above" in pos
@@ -366,7 +365,7 @@ class Py3status:
                         or "left-of" in pos
                         or "right-of" in pos
                     ):
-                        cmd += " {} --{} --rotate {}".format(resolution, pos, rotation)
+                        cmd += f" {resolution} --{pos} --rotate {rotation}"
                     else:
                         cmd += " {} --pos {} --rotate {}".format(
                             resolution, pos, rotation
@@ -380,7 +379,7 @@ class Py3status:
             self.active_comb = combination
             self.active_layout = self.displayed
             self.active_mode = mode
-        self.py3.log('command "{}" exit code {}'.format(cmd, code))
+        self.py3.log(f'command "{cmd}" exit code {code}')
 
         if self.command:
             self.py3.command_run(self.command)
@@ -399,14 +398,12 @@ class Py3status:
         if len(combination) > 1 and mode == "extend":
             sleep(3)
             for output in combination:
-                workspaces = getattr(self, "{}_workspaces".format(output), "").split(
-                    ","
-                )
+                workspaces = getattr(self, f"{output}_workspaces", "").split(",")
                 for workspace in workspaces:
                     if not workspace:
                         continue
                     # switch to workspace
-                    cmd = '{} workspace "{}"'.format(self.py3.get_wm_msg(), workspace)
+                    cmd = f'{self.py3.get_wm_msg()} workspace "{workspace}"'
                     self.py3.command_run(cmd)
                     # move it to output
                     cmd = '{} move workspace to output "{}"'.format(
@@ -414,9 +411,7 @@ class Py3status:
                     )
                     self.py3.command_run(cmd)
                     # log this
-                    self.py3.log(
-                        "moved workspace {} to output {}".format(workspace, output)
-                    )
+                    self.py3.log(f"moved workspace {workspace} to output {output}")
 
     def _fallback_to_available_output(self):
         """

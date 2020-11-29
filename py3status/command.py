@@ -230,7 +230,7 @@ class CommandServer(threading.Thread):
         self.py3_wrapper = py3_wrapper
 
         self.command_runner = CommandRunner(py3_wrapper)
-        server_address = "{}.{}".format(SERVER_ADDRESS, os.getpid())
+        server_address = f"{SERVER_ADDRESS}.{os.getpid()}"
         self.server_address = server_address
 
         # Make sure the socket does not already exist
@@ -302,16 +302,14 @@ def command_parser():
     class Parser(argparse.ArgumentParser):
         # print usages and exit on errors
         def error(self, message):
-            print("\x1b[1;31merror: \x1b[0m{}".format(message))
+            print(f"\x1b[1;31merror: \x1b[0m{message}")
             self.print_help()
             self.exit(1)
 
         # hide choices on errors
         def _check_value(self, action, value):
             if action.choices is not None and value not in action.choices:
-                raise argparse.ArgumentError(
-                    action, "invalid choice: '{}'".format(value)
-                )
+                raise argparse.ArgumentError(action, f"invalid choice: '{value}'")
 
     # make parser
     parser = Parser(formatter_class=argparse.RawTextHelpFormatter)
@@ -352,7 +350,7 @@ def command_parser():
     # click subparser: add button, index, width, height, relative_{x,y}, x, y
     sp = sps["click"]
     for name, msg in CLICK_OPTIONS:
-        arg = "--{}".format(name)
+        arg = f"--{name}"
         if name == "button":
             sp.add_argument(arg, metavar="INT", type=int, help=msg, default=1)
         elif name == "index":
@@ -365,21 +363,21 @@ def command_parser():
     # docstring subparser: add check, diff, update
     sp = sps["docstring"]
     for name, msg in DOCSTRING_OPTIONS:
-        arg = "--{}".format(name)
+        arg = f"--{name}"
         sp.add_argument(arg, action="store_true", help=msg)
 
     # refresh subparser: add all
     sp = sps["refresh"]
     for name, msg in REFRESH_OPTIONS:
-        arg = "--{}".format(name)
+        arg = f"--{name}"
         sp.add_argument(arg, action="store_true", help=msg)
 
     # list subparser: add all, core, user, full
     sp = sps["list"]
     for short, name, msg in LIST_OPTIONS:
-        name = "--{}".format(name)
+        name = f"--{name}"
         if short:
-            short = "-{}".format(short)
+            short = f"-{short}"
             sp.add_argument(short, name, action="store_true", help=msg)
         else:
             sp.add_argument(name, action="store_true", help=msg)
@@ -424,7 +422,7 @@ def command_parser():
         from platform import python_version
         from py3status.version import version
 
-        print("py3status {} (python {})".format(version, python_version()))
+        print(f"py3status {version} (python {python_version()})")
         parser.exit()
     elif not options.command:
         parser.error("too few arguments")
@@ -463,12 +461,12 @@ def parse_list_or_docstring(options, sps):
 
     # HARDCODE: make include path to search for user modules
     home_path = os.path.expanduser("~")
-    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", f"{home_path}/.config")
     options.include_paths = [
-        "{}/py3status/modules".format(xdg_home_path),
-        "{}/i3status/py3status".format(xdg_home_path),
-        "{}/i3/py3status".format(xdg_home_path),
-        "{}/.i3/py3status".format(home_path),
+        f"{xdg_home_path}/py3status/modules",
+        f"{xdg_home_path}/i3status/py3status",
+        f"{xdg_home_path}/i3/py3status",
+        f"{home_path}/.i3/py3status",
     ]
     include_paths = []
     for path in options.include_paths:
@@ -530,7 +528,7 @@ def send_command():
         verbose("Message length too long, max length (%s)" % MAX_SIZE)
 
     # find all likely socket addresses
-    uds_list = glob.glob("{}.[0-9]*".format(SERVER_ADDRESS))
+    uds_list = glob.glob(f"{SERVER_ADDRESS}.[0-9]*")
 
     verbose('message "%s"' % msg)
     for uds in uds_list:

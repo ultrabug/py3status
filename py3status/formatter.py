@@ -154,7 +154,7 @@ class Formatter:
                                     not_, variable, condition_, value_
                                 )
                         if value:
-                            items.append("{}={}".format(key, value))
+                            items.append(f"{key}={value}")
                         else:
                             items.append(key)
 
@@ -333,13 +333,13 @@ class Placeholder:
                         value = float(value)
                     if "d" in self.format:
                         value = int(float(value))
-                    output = "{{[{}]{}}}".format(self.key, self.format)
+                    output = f"{{[{self.key}]{self.format}}}"
                     value = output.format({self.key: value})
                     value_ = float(value)
                 except ValueError:
                     pass
             elif self.format.startswith("!"):
-                output = "{{{}{}}}".format(self.key, self.format)
+                output = f"{{{self.key}{self.format}}}"
                 value = value_ = output.format(**{self.key: value})
 
             if block.commands.not_zero:
@@ -361,7 +361,7 @@ class Placeholder:
 
     def repr(self):
         if self.format:
-            value = "{}{}".format(self.key, self.format)
+            value = f"{self.key}{self.format}"
         else:
             value = self.key
         return "{%s}" % value

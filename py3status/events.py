@@ -176,7 +176,7 @@ class Events(Thread):
             module = module_info["module"]
             module.click_event(event)
             if self.config["debug"]:
-                self.py3_wrapper.log("dispatching event {}".format(event))
+                self.py3_wrapper.log(f"dispatching event {event}")
 
             # to make the bar more responsive to users we refresh the module
             # unless the on_click event called py3.prevent_refresh()
@@ -187,7 +187,7 @@ class Events(Thread):
         if default_event:
             # default button 2 action is to clear this method's cache
             if self.config["debug"]:
-                self.py3_wrapper.log("dispatching default event {}".format(event))
+                self.py3_wrapper.log(f"dispatching default event {event}")
             self.py3_wrapper.refresh_modules(module_name)
 
         # find container that holds the module and call its onclick
@@ -202,7 +202,7 @@ class Events(Thread):
         such as setting the index needed for composits.
         """
         if self.config["debug"]:
-            self.py3_wrapper.log("received event {}".format(event))
+            self.py3_wrapper.log(f"received event {event}")
 
         # usage variables
         event["index"] = event.get("index", "")
@@ -225,12 +225,12 @@ class Events(Thread):
         if self.config["debug"]:
             self.py3_wrapper.log(
                 'trying to dispatch event to module "{}"'.format(
-                    "{} {}".format(name, instance).strip()
+                    f"{name} {instance}".strip()
                 )
             )
 
         # guess the module config name
-        module_name = "{} {}".format(name, instance).strip()
+        module_name = f"{name} {instance}".strip()
 
         default_event = False
         module_info = self.output_modules.get(module_name)

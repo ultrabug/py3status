@@ -237,7 +237,7 @@ class Py3status:
             Have to restart i3 after getting credentials to prevent bad output.
             This only has to be done once on the first run of the module.
             """
-            self.py3.command_run("{} restart".format(self.py3.get_wm_msg()))
+            self.py3.command_run(f"{self.py3.get_wm_msg()} restart")
 
         return credentials
 

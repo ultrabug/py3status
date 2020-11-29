@@ -123,7 +123,7 @@ class I3statusModule:
         self.time_delta = time_delta
 
     def __repr__(self):
-        return "<I3statusModule {}>".format(self.module_name)
+        return f"<I3statusModule {self.module_name}>"
 
     def get_latest(self):
         return [self.item.copy()]
@@ -353,8 +353,8 @@ class I3status(Thread):
                     if key == "format_time":
                         continue
                 if isinstance(value, bool):
-                    value = "{}".format(value).lower()
-                self.write_in_tmpfile('    {} = "{}"\n'.format(key, value), tmpfile)
+                    value = f"{value}".lower()
+                self.write_in_tmpfile(f'    {key} = "{value}"\n', tmpfile)
             self.write_in_tmpfile("}\n\n", tmpfile)
         tmpfile.flush()
 
@@ -403,7 +403,7 @@ class I3status(Thread):
                 )
 
                 self.py3_wrapper.log(
-                    "i3status spawned using config file {}".format(tmpfile.name)
+                    f"i3status spawned using config file {tmpfile.name}"
                 )
 
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
@@ -432,9 +432,9 @@ class I3status(Thread):
                             if code is not None:
                                 msg = "i3status died"
                                 if err:
-                                    msg += " and said: {}".format(err)
+                                    msg += f" and said: {err}"
                                 else:
-                                    msg += " with code {}".format(code)
+                                    msg += f" with code {code}"
                                 raise OSError(msg)
                 except OSError:
                     err = sys.exc_info()[1]

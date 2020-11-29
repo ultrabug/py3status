@@ -141,7 +141,7 @@ def screenshots(screenshots_data, module_name):
     for shot in file_sort(shots):
         if not os.path.exists("../doc/screenshots/%s.png" % shot):
             continue
-        out.append("\n.. image:: screenshots/{}.png\n\n".format(shot))
+        out.append(f"\n.. image:: screenshots/{shot}.png\n\n")
     return "".join(out)
 
 

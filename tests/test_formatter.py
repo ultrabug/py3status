@@ -77,7 +77,7 @@ def attr_getter_fn(attr):
     """
     test attr_getter function
     """
-    return "*{}*".format(attr)
+    return f"*{attr}*"
 
 
 def run_formatter(test_dict):

@@ -154,10 +154,10 @@ class Amixer(Audio):
         return perc, muted
 
     def volume_up(self, delta):
-        self.run_cmd(self.cmd + ["{}%+".format(delta)])
+        self.run_cmd(self.cmd + [f"{delta}%+"])
 
     def volume_down(self, delta):
-        self.run_cmd(self.cmd + ["{}%-".format(delta)])
+        self.run_cmd(self.cmd + [f"{delta}%-"])
 
     def toggle_mute(self):
         self.run_cmd(self.cmd + ["toggle"])
@@ -225,9 +225,7 @@ class Pactl(Audio):
         device_id = None
 
         # Find the default device for the device type
-        default_dev_pattern = re.compile(
-            r"^Default {}: (.*)$".format(self.device_type_cap)
-        )
+        default_dev_pattern = re.compile(fr"^Default {self.device_type_cap}: (.*)$")
         output = self.command_output(["pactl", "info"])
         for info_line in output.splitlines():
             default_dev_match = default_dev_pattern.match(info_line)
@@ -253,9 +251,7 @@ class Pactl(Audio):
             return
         for device_name in current_devices.values():
             if self.device in device_name:
-                self.parent.py3.log(
-                    "device {} detected as {}".format(self.device, device_name)
-                )
+                self.parent.py3.log(f"device {self.device} detected as {device_name}")
                 self.device = device_name
                 break
 
@@ -267,9 +263,7 @@ class Pactl(Audio):
             if len(parts) < 2:
                 continue
             current_devices[parts[0]] = parts[1]
-        self.parent.py3.log(
-            "available {}: {}".format(self.device_type_pl, current_devices)
-        )
+        self.parent.py3.log(f"available {self.device_type_pl}: {current_devices}")
         return current_devices
 
     def get_volume(self):
@@ -287,17 +281,11 @@ class Pactl(Audio):
     def volume_up(self, delta):
         perc, muted = self.get_volume()
         if int(perc) + delta >= self.max_volume:
-            change = "{}%".format(self.max_volume)
+            change = f"{self.max_volume}%"
         else:
-            change = "+{}%".format(delta)
+            change = f"+{delta}%"
         self.run_cmd(
-            [
-                "pactl",
-                "--",
-                "set-{}-volume".format(self.device_type),
-                self.device,
-                change,
-            ]
+            ["pactl", "--", f"set-{self.device_type}-volume", self.device, change]
         )
 
     def volume_down(self, delta):
@@ -305,21 +293,18 @@ class Pactl(Audio):
             [
                 "pactl",
                 "--",
-                "set-{}-volume".format(self.device_type),
+                f"set-{self.device_type}-volume",
                 self.device,
-                "-{}%".format(delta),
+                f"-{delta}%",
             ]
         )
 
     def toggle_mute(self):
-        self.run_cmd(
-            ["pactl", "set-{}-mute".format(self.device_type), self.device, "toggle"]
-        )
+        self.run_cmd(["pactl", f"set-{self.device_type}-mute", self.device, "toggle"])
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     blocks = "_▁▂▃▄▅▆▇█"

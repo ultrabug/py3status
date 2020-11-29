@@ -101,7 +101,7 @@ class Py3status:
         # icon deprecation
         on = getattr(self, "icon_available", "\u25cf")
         off = getattr(self, "icon_unavailable", "\u25a0")
-        new_icon = r"\?color=path [\?if=path {}|{}]".format(on, off)
+        new_icon = fr"\?color=path [\?if=path {on}|{off}]"
         self.format = self.format.replace("{icon}", new_icon)
 
         # convert str to list + expand path

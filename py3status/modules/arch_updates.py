@@ -71,7 +71,7 @@ class Py3status:
 
         for key in helper:
             value = getattr(self, "_get_{}_updates".format(helper[key]), None)
-            setattr(self, "_get_{}_updates".format(key), value)
+            setattr(self, f"_get_{key}_updates", value)
 
     def _get_checkupdates_updates(self):
         try:
