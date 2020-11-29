@@ -217,7 +217,7 @@ class Py3status:
                                 raise Exception(STRING_MISSING.format(mail, "path"))
                             path = expandvars(expanduser(account["path"]))
                             if not exists(path):
-                                path = "path: {}".format(path)
+                                path = f"path: {path}"
                                 raise Exception(STRING_MISSING.format(mail, path))
                             account["box"] = box
                             account["path"] = path
@@ -241,7 +241,7 @@ class Py3status:
                         filters = "|".join(account.pop("filters"))
                         objs = [x.decode() for x in inbox.list()[1]]
                         folders = [x[-1] for x in reader(objs, delimiter=" ")]
-                        lines = ["===== IMAP {} =====".format(i)]
+                        lines = [f"===== IMAP {i} ====="]
                         for name in folders:
                             subscribed = " "
                             try:
@@ -249,12 +249,12 @@ class Py3status:
                                     subscribed = "x"
                                     folder = name.replace("\\", "\\\\")
                                     folder = folder.replace('"', '\\"')
-                                    folder = '"{}"'.format(folder)
+                                    folder = f'"{folder}"'
                                     account["folders"].append(folder)
                             except re.error:
                                 account["folders"] = []
                                 break
-                            lines.append("[{}] {}".format(subscribed, name))
+                            lines.append(f"[{subscribed}] {name}")
                         if not account["folders"]:
                             self.py3.error(
                                 STRING_INVALID_FILTER.format(filters),
@@ -286,7 +286,7 @@ class Py3status:
                     mail_data[account["name"]] = count_mail
                 if account["urgent"] and count_mail:
                     mail_data["urgent"] = True
-                mail_data["{}_{}".format(k, i)] = count_mail
+                mail_data[f"{k}_{i}"] = count_mail
                 mail_data["mail"] += count_mail
                 mail_data[k] += count_mail
 

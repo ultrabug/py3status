@@ -161,7 +161,7 @@ class Py3status:
     def _set_setxkbmap(self):
         layout = self._layouts[self._active]
         # Note: This will override user-defined layout, keyboard shortcut won't work
-        self.py3.command_run("setxkbmap -layout {}".format(layout))
+        self.py3.command_run(f"setxkbmap -layout {layout}")
 
     def _set_xkblayout(self):
         layout = self._layouts[self._active]
@@ -170,7 +170,7 @@ class Py3status:
             .split()
             .index(layout)
         )
-        self.py3.command_run("xkblayout-state set {}".format(layout_pos))
+        self.py3.command_run(f"xkblayout-state set {layout_pos}")
 
     def _set_active(self, delta):
         self._active += delta

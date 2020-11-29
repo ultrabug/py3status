@@ -94,7 +94,7 @@ class Py3status:
         cmd = "xrandr"
         outputs = [self.screen] if self.screen else self._get_active_outputs()
         for output in outputs:
-            cmd += " --output {} --rotate {}".format(output, rotation)
+            cmd += f" --output {output} --rotate {rotation}"
         self.py3.command_run(cmd)
 
     def _switch_selection(self):

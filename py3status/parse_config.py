@@ -198,7 +198,7 @@ class ConfigParser:
         if container:
             self.container_modules.append(name)
         else:
-            self.error("Module `{}` cannot contain others".format(name))
+            self.error(f"Module `{name}` cannot contain others")
 
     def check_module_name(self, name, offset=0):
         """
@@ -581,7 +581,7 @@ class ConfigParser:
             elif scheme == "hide":
                 value = PrivateHide(value, module_name)
             else:
-                self.error("Unknown scheme {} for data".format(scheme))
+                self.error(f"Unknown scheme {scheme} for data")
 
         return name, value
 
@@ -623,7 +623,7 @@ class ConfigParser:
                     if name.split(":")[0] not in dictionary:
                         # order is treated specially
                         if not (self.level == 1 and name == "order"):
-                            self.error("{} does not exist".format(name))
+                            self.error(f"{name} does not exist")
                 if t_value in ["{"]:
                     if self.current_module:
                         self.check_child_friendly(self.current_module[-1])
@@ -647,7 +647,7 @@ class ConfigParser:
                         and " " not in name
                         and name not in I3S_MODULE_NAMES
                     ):
-                        name = "{} _anon_module_{}".format(name, self.anon_count)
+                        name = f"{name} _anon_module_{self.anon_count}"
                         self.anon_count += 1
                     dictionary[name] = value
                 # assignment of value
@@ -844,10 +844,8 @@ def process_config(config_path, py3_wrapper=None):
             continue
         module_name = name.split(" ")[0]
         if module_name in RETIRED_MODULES:
-            old = "`{}`".format(module_name)
-            new = ", ".join(
-                "`{}`".format(x) for x in RETIRED_MODULES[module_name]["new"]
-            )
+            old = f"`{module_name}`"
+            new = ", ".join(f"`{x}`" for x in RETIRED_MODULES[module_name]["new"])
             msg = RETIRED_MODULES[module_name]["msg"].format(old=old, new=new)
             notify_user(msg)
             continue

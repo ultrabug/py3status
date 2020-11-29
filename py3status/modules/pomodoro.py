@@ -117,7 +117,7 @@ class Py3status:
         if self._active:
             self.py3.notify_user("Pomodoro time is up !")
         else:
-            self.py3.notify_user("Break #{} time is up !".format(self._break_number))
+            self.py3.notify_user(f"Break #{self._break_number} time is up !")
         self._alert = True
         self._advance()
 

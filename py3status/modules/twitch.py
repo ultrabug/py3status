@@ -72,8 +72,8 @@ class Py3status:
         self.headers = {"Client-ID": self.client_id}
         base_api = "https://api.twitch.tv/kraken/"
         self.url = {
-            "users": base_api + "users/{}".format(self.stream_name),
-            "streams": base_api + "streams/{}".format(self.stream_name),
+            "users": base_api + f"users/{self.stream_name}",
+            "streams": base_api + f"streams/{self.stream_name}",
         }
         self.users = {}
 

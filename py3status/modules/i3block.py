@@ -213,7 +213,7 @@ class Py3status:
                         break
                     self.persistent_output = line
                     self.py3.update()
-        self.py3.log("command exited {cmd}".format(cmd=command))
+        self.py3.log(f"command exited {command}")
         self.persistent_output = "Error\nError\n{}".format(
             self.py3.COLOR_ERROR or self.py3.COLOR_BAD
         )

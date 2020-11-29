@@ -12,7 +12,7 @@ def parse_cli_args():
     """
     # get config paths
     home_path = os.path.expanduser("~")
-    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", "{}/.config".format(home_path))
+    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", f"{home_path}/.config")
     xdg_dirs_path = os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg")
 
     # get i3status path
@@ -35,12 +35,12 @@ def parse_cli_args():
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
-        "{}/py3status/config".format(xdg_home_path),
-        "{}/i3status/config".format(xdg_home_path),
-        "{}/i3/i3status.conf".format(xdg_home_path),  # custom
-        "{}/.i3status.conf".format(home_path),
-        "{}/.i3/i3status.conf".format(home_path),  # custom
-        "{}/i3status/config".format(xdg_dirs_path),
+        f"{xdg_home_path}/py3status/config",
+        f"{xdg_home_path}/i3status/config",
+        f"{xdg_home_path}/i3/i3status.conf",  # custom
+        f"{home_path}/.i3status.conf",
+        f"{home_path}/.i3/i3status.conf",  # custom
+        f"{xdg_dirs_path}/i3status/config",
         "/etc/i3status.conf",
     ]
     for fn in i3status_config_file_candidates:
@@ -54,16 +54,14 @@ def parse_cli_args():
     class Parser(argparse.ArgumentParser):
         # print usages and exit on errors
         def error(self, message):
-            print("\x1b[1;31merror: \x1b[0m{}".format(message))
+            print(f"\x1b[1;31merror: \x1b[0m{message}")
             self.print_help()
             self.exit(1)
 
         # hide choices on errors
         def _check_value(self, action, value):
             if action.choices is not None and value not in action.choices:
-                raise argparse.ArgumentError(
-                    action, "invalid choice: '{}'".format(value)
-                )
+                raise argparse.ArgumentError(action, f"invalid choice: '{value}'")
 
     class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         def _format_action_invocation(self, action):
@@ -201,10 +199,10 @@ def parse_cli_args():
     # make include path to search for user modules if None
     if not options.include_paths:
         options.include_paths = [
-            "{}/py3status/modules".format(xdg_home_path),
-            "{}/i3status/py3status".format(xdg_home_path),
-            "{}/i3/py3status".format(xdg_home_path),
-            "{}/.i3/py3status".format(home_path),
+            f"{xdg_home_path}/py3status/modules",
+            f"{xdg_home_path}/i3status/py3status",
+            f"{xdg_home_path}/i3/py3status",
+            f"{home_path}/.i3/py3status",
         ]
 
     include_paths = []

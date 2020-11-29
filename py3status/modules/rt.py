@@ -92,7 +92,7 @@ class Py3status:
         if has_one_queue_formatted:
             response["full_text"] = self.py3.safe_format(self.format, tickets)
         else:
-            response["full_text"] = "queue(s) not found ({})".format(self.format)
+            response["full_text"] = f"queue(s) not found ({self.format})"
         mydb.close()
 
         response["cached_until"] = self.py3.time_in(self.cache_timeout)

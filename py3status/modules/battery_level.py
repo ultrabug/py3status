@@ -163,14 +163,14 @@ class Py3status:
             elif self.py3.check_commands(["acpi"]):
                 self.measurement_mode = "acpi"
 
-        msg = "measurement_mode `{}`".format(self.measurement_mode)
+        msg = f"measurement_mode `{self.measurement_mode}`"
         if self.measurement_mode == "sys":
             self.get_battery_info = self._extract_battery_info_from_sys
         elif self.measurement_mode == "acpi":
             self.get_battery_info = self._extract_battery_info_from_acpi
         else:
-            raise NameError("invalid {}".format(msg))
-        self.py3.log("selected {}".format(msg))
+            raise NameError(f"invalid {msg}")
+        self.py3.log(f"selected {msg}")
 
     def battery_level(self):
         battery_list = self.get_battery_info()

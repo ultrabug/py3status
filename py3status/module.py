@@ -14,7 +14,7 @@ from py3status.formatter import Formatter
 
 
 def make_quotes(options):
-    x = ["`{}`".format(x) for x in options]
+    x = [f"`{x}`" for x in options]
     if len(x) > 2:
         x = [", ".join(x[:-1]), x[-1]]
     return " or ".join(x)
@@ -87,7 +87,7 @@ class Module:
             ]
             self.error_output(self.error_messages[0])
             # log the error
-            msg = "Module `{}` could not be loaded".format(self.module_full_name)
+            msg = f"Module `{self.module_full_name}` could not be loaded"
             if isinstance(e, SyntaxError):
                 # provide full traceback
                 self._py3_wrapper.report_exception(msg, notify_user=False)
@@ -102,7 +102,7 @@ class Module:
             self.set_module_options(module)
 
     def __repr__(self):
-        return "<Module {}>".format(self.module_full_name)
+        return f"<Module {self.module_full_name}>"
 
     @classmethod
     def load_from_file(cls, filepath):
@@ -123,7 +123,7 @@ class Module:
         Load a py3status bundled module.
         """
         class_inst = None
-        name = "py3status.modules.{}".format(module_name)
+        name = f"py3status.modules.{module_name}"
         py_mod = __import__(name)
         components = name.split(".")
         for comp in components[1:]:
@@ -175,7 +175,7 @@ class Module:
         # only show first line of error
         msg = msg.splitlines()[0]
 
-        errors = [self.module_nice_name, "{}: {}".format(self.module_nice_name, msg)]
+        errors = [self.module_nice_name, f"{self.module_nice_name}: {msg}"]
 
         # if we have shown this error then keep in the same state
         if self.error_messages != errors:
@@ -241,7 +241,7 @@ class Module:
         for meth in self.methods:
             self.methods[meth]["cached_until"] = time()
             if self.config["debug"]:
-                self._py3_wrapper.log("clearing cache for method {}".format(meth))
+                self._py3_wrapper.log(f"clearing cache for method {meth}")
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -323,7 +323,7 @@ class Module:
         if not hasattr(min_width, "none_setting"):
             if not isinstance(min_width, int):
                 err = "Invalid `min_width` attribute, should be an int. "
-                err += "Got `{}`.".format(min_width)
+                err += f"Got `{min_width}`."
                 raise TypeError(err)
             self.i3bar_module_options["min_width"] = min_width
 
@@ -332,7 +332,7 @@ class Module:
                 if align not in POSITIONS:
                     err = "Invalid `align` attribute, should be "
                     err += make_quotes(POSITIONS)
-                    err += ". Got `{}`.".format(align)
+                    err += f". Got `{align}`."
                     raise ValueError(err)
                 self.i3bar_module_options["align"] = align
 
@@ -340,7 +340,7 @@ class Module:
         if not hasattr(separator, "none_setting"):
             if not isinstance(separator, bool):
                 err = "Invalid `separator` attribute, should be a boolean. "
-                err += "Got `{}`.".format(separator)
+                err += f"Got `{separator}`."
                 raise TypeError(err)
             self.i3bar_module_options["separator"] = separator
 
@@ -349,7 +349,7 @@ class Module:
             if not isinstance(separator_block_width, int):
                 err = "Invalid `separator_block_width` attribute, "
                 err += "should be an int. "
-                err += "Got `{}`.".format(separator_block_width)
+                err += f"Got `{separator_block_width}`."
                 raise TypeError(err)
             self.i3bar_module_options["separator_block_width"] = separator_block_width
 
@@ -359,7 +359,7 @@ class Module:
             color = self.module_class.py3._get_color(background)
             if not color:
                 err = "Invalid `background` attribute should be a color. "
-                err += "Got `{}`.".format(background)
+                err += f"Got `{background}`."
                 raise ValueError(err)
             self.i3bar_gaps_module_options["background"] = color
 
@@ -368,7 +368,7 @@ class Module:
             color = self.module_class.py3._get_color(border)
             if not color:
                 err = "Invalid `border` attribute, should be a color. "
-                err += "Got `{}`.".format(border)
+                err += f"Got `{border}`."
                 raise ValueError(err)
             self.i3bar_gaps_module_options["border"] = color
 
@@ -378,9 +378,9 @@ class Module:
                 if hasattr(param, "none_setting"):
                     param = 1
                 elif not isinstance(param, int):
-                    err = "Invalid `{}` attribute, ".format(name)
+                    err = f"Invalid `{name}` attribute, "
                     err += "should be an int. "
-                    err += "Got `{}`.".format(param)
+                    err += f"Got `{param}`."
                     raise TypeError(err)
                 self.i3bar_gaps_module_options[name] = param
 
@@ -389,7 +389,7 @@ class Module:
         if not hasattr(min_length, "none_setting"):
             if not isinstance(min_length, int):
                 err = "Invalid `min_length` attribute, should be an int. "
-                err += "Got `{}`.".format(min_length)
+                err += f"Got `{min_length}`."
                 raise TypeError(err)
             self.py3status_module_options["min_length"] = min_length
             self.random_int = randint(0, 1)
@@ -399,7 +399,7 @@ class Module:
                 if position not in POSITIONS:
                     err = "Invalid `position` attribute, should be "
                     err += make_quotes(POSITIONS)
-                    err += ". Got `{}`.".format(position)
+                    err += f". Got `{position}`."
                     raise ValueError(err)
                 self.py3status_module_options["position"] = position
 
@@ -409,7 +409,7 @@ class Module:
             if markup not in MARKUP_LANGUAGES:
                 err = "Invalid `markup` attribute, should be "
                 err += make_quotes(MARKUP_LANGUAGES)
-                err += ". Got `{}`.".format(markup)
+                err += f". Got `{markup}`."
                 raise ValueError(err)
             self.i3bar_module_options["markup"] = markup
             self.py3status_module_options["markup"] = markup
@@ -459,7 +459,7 @@ class Module:
             # make sure all components have a name
             if "name" not in item:
                 instance_index = item.get("index", index)
-                item["instance"] = "{} {}".format(self.module_inst, instance_index)
+                item["instance"] = f"{self.module_inst} {instance_index}"
                 item["name"] = self.module_name
             # hide separator for all inner components unless existing
             if index != composite_length:
@@ -589,9 +589,7 @@ class Module:
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
                 module_path = os.path.join(include_path, f_name)
-                self._py3_wrapper.log(
-                    'loading module "{}" from {}'.format(module, module_path)
-                )
+                self._py3_wrapper.log(f'loading module "{module}" from {module_path}')
                 self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
@@ -661,7 +659,7 @@ class Module:
                         msg = item["msg"]
                         param = item.get("param")
                         if param:
-                            msg = "`{}` {}".format(param, msg)
+                            msg = f"`{param}` {msg}"
                         msg = "DEPRECATION WARNING: {} {}".format(
                             self.module_full_name, msg
                         )
@@ -807,7 +805,7 @@ class Module:
                 color = self.module_class.py3._get_color(urgent_background)
                 if not color:
                     err = "Invalid `urgent_background` attribute, should be "
-                    err += "a color. Got `{}`.".format(urgent_background)
+                    err += f"a color. Got `{urgent_background}`."
                     raise ValueError(err)
                 self.i3bar_gaps_urgent_options["background"] = color
 
@@ -817,7 +815,7 @@ class Module:
                 color = self.module_class.py3._get_color(urgent_foreground)
                 if not color:
                     err = "Invalid `urgent_foreground` attribute, should be "
-                    err += "a color. Got `{}`.".format(urgent_foreground)
+                    err += f"a color. Got `{urgent_foreground}`."
                     raise ValueError(err)
                 self.i3bar_gaps_urgent_options["foreground"] = color
 
@@ -827,7 +825,7 @@ class Module:
                 color = self.module_class.py3._get_color(urgent_border)
                 if not color:
                     err = "Invalid `urgent_border` attribute, should be a color. "
-                    err += "Got `{}`.".format(urgent_border)
+                    err += f"Got `{urgent_border}`."
                     raise ValueError(err)
                 self.i3bar_gaps_urgent_options["border"] = color
 
@@ -837,9 +835,9 @@ class Module:
                     if hasattr(param, "none_setting"):
                         param = 1
                     elif not isinstance(param, int):
-                        err = "Invalid `{}` attribute, ".format(name)
+                        err = f"Invalid `{name}` attribute, "
                         err += "should be an int. "
-                        err += "Got `{}`.".format(param)
+                        err += f"Got `{param}`."
                         raise TypeError(err)
                     self.i3bar_gaps_urgent_options[name[7:]] = param
 
@@ -917,7 +915,7 @@ class Module:
                 # nothing has happened so no need for refresh
                 self.prevent_refresh = True
         except Exception:
-            msg = "on_click event in `{}` failed".format(self.module_full_name)
+            msg = f"on_click event in `{self.module_full_name}` failed"
             self._py3_wrapper.report_exception(msg)
 
     @profile
@@ -1018,9 +1016,7 @@ class Module:
 
                     # debug info
                     if self.config["debug"]:
-                        self._py3_wrapper.log(
-                            "method {} returned {} ".format(meth, result)
-                        )
+                        self._py3_wrapper.log(f"method {meth} returned {result} ")
                     # module working correctly so ensure module works as
                     # expected
                     self.allow_config_clicks = True

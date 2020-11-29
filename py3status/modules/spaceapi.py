@@ -126,7 +126,7 @@ class Py3status:
         button = event["button"]
         if button == self.button_url:
             if self.hackerspace_url:
-                self.py3.command_run("xdg-open {}".format(self.hackerspace_url))
+                self.py3.command_run(f"xdg-open {self.hackerspace_url}")
         if button != self.button_refresh:
             self.py3.prevent_refresh()
 

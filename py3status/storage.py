@@ -49,9 +49,9 @@ class Storage:
         except OSError:
             pass
 
-        self.py3_wrapper.log("storage_path: {}".format(self.storage_path))
+        self.py3_wrapper.log(f"storage_path: {self.storage_path}")
         if self.data:
-            self.py3_wrapper.log("storage_data: {}".format(self.data))
+            self.py3_wrapper.log(f"storage_data: {self.data}")
         self.initialized = True
 
     def get_legacy_storage_path(self):

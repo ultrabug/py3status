@@ -145,7 +145,7 @@ def get_module_attributes(path):
                     if op == "USub":
                         attr_value = -attr_value
                     else:
-                        attr_value = "UNKNOWN {} UnaryOp {}".format(class_name, op)
+                        attr_value = f"UNKNOWN {class_name} UnaryOp {op}"
                 elif class_name == "BinOp":
                     left = get_value(value.left)
                     right = get_value(value.right)
@@ -156,7 +156,7 @@ def get_module_attributes(path):
                         elif op == "Mult":
                             attr_value = left * right
                         else:
-                            attr_value = "UNKNOWN {} BinOp {}".format(class_name, op)
+                            attr_value = f"UNKNOWN {class_name} BinOp {op}"
                     except Exception:
                         attr_value = "UNKNOWN %s BinOp error" % class_name
                 else:
@@ -304,7 +304,7 @@ def check_docstrings():
         for param in params:
             if (module_name, param) in IGNORE_ITEM:
                 continue
-            errors.append("{} in module docstring but not module".format(param))
+            errors.append(f"{param} in module docstring but not module")
         if errors:
             all_errors += ["=" * 30, module_name, "=" * 30] + errors + ["\n"]
     return all_errors

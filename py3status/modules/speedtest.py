@@ -194,7 +194,7 @@ class Py3status:
         if any(x in tests for x in self.placeholders):
             for x in tests:
                 if x not in self.placeholders:
-                    self.speedtest_command += " --no-{}".format(x)
+                    self.speedtest_command += f" --no-{x}"
 
     def _set_speedtest_data(self):
         # start
@@ -242,7 +242,7 @@ class Py3status:
         if button == self.button_share:
             share = self.speedtest_data.get("share")
             if share:
-                self.py3.command_run("xdg-open {}".format(share))
+                self.py3.command_run(f"xdg-open {share}")
         if button == self.button_refresh:
             if self.thread and not self.thread.isAlive():
                 self.thread = None

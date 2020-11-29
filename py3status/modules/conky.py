@@ -353,7 +353,7 @@ class Py3status:
         colors = self.py3.get_color_names_list(self.format)
         _colors = []
         for color in colors:
-            if not getattr(self, "color_{}".format(color), None):
+            if not getattr(self, f"color_{color}", None):
                 _colors.append(color.replace(".", " "))
         self.placeholders = placeholders + colors
         conky_placeholders = _placeholders + _colors
@@ -367,7 +367,7 @@ class Py3status:
         # make an output.
         config = dumps(self.config, separators=(",", "=")).replace('"', "")
         text = self.separator.join(["${%s}" % x for x in conky_placeholders])
-        tmp = "conky.config = {}\nconky.text = [[{}]]".format(config, text)
+        tmp = f"conky.config = {config}\nconky.text = [[{text}]]"
 
         # write tmp output to '/tmp/py3status-conky_*', make a command
         self.tmpfile = NamedTemporaryFile(
@@ -375,7 +375,7 @@ class Py3status:
         )
         self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
-        self.conky_command = "conky -c {}".format(self.tmpfile.name).split()
+        self.conky_command = f"conky -c {self.tmpfile.name}".split()
 
         # thread
         self.line = ""

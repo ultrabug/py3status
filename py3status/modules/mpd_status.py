@@ -83,7 +83,7 @@ def song_attr(song, attr):
             duration = int(song["time"])
             if duration > 0:
                 minutes, seconds = divmod(duration, 60)
-                return "{:d}:{:02d}".format(minutes, seconds)
+                return f"{minutes:d}:{seconds:02d}"
             raise ValueError
         except (KeyError, ValueError):
             return ""

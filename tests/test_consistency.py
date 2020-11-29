@@ -14,7 +14,7 @@ def test_method_mismatch():
         if _file.endswith(".py") and _file not in skip_files:
             with open(os.path.join(MODULE_PATH, _file)) as f:
                 name = _file[:-3]
-                if "def {}(self".format(name) not in f.read():
+                if f"def {name}(self" not in f.read():
                     errors.append((name, _file))
     if errors:
         line = "Method mismatched error(s) detected!\n\n"
@@ -193,7 +193,7 @@ def test_format_placeholders():
                     if comment2 not in output:
                         errors.append((comment, _file))
     if errors:
-        line = "Missing `{}` error(s) detected!\n\n".format(comment)
+        line = f"Missing `{comment}` error(s) detected!\n\n"
         for error in errors:
             line += "`{}` is not in module `{}`\n".format(*error)
         print(line[:-1])

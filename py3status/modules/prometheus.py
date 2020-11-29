@@ -68,7 +68,7 @@ class Py3status:
             val = float(row["value"][1])
             if self.units:
                 num, unit = self.py3.format_units(val, **self.units)
-                val = "%s%s" % (num, unit)
+                val = f"{num}{unit}"
             else:
                 num = val
                 unit = None

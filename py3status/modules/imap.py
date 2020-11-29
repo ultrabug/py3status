@@ -73,8 +73,7 @@ NO_DATA_YET = -1
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     allow_urgent = False
@@ -271,9 +270,7 @@ class Py3status:
             # Dovecot will responde with "+ idling", courier will return "+ entering idle mode"
             # RFC 2177 (https://tools.ietf.org/html/rfc2177) only requires the "+" character.
             if not response.lower().startswith("+"):
-                raise imaplib.IMAP4.abort(
-                    "While initializing IDLE: {}".format(response)
-                )
+                raise imaplib.IMAP4.abort(f"While initializing IDLE: {response}")
 
             # wait for changes (EXISTS, EXPUNGE, etc.):
             socket.settimeout(self.cache_timeout)
@@ -359,8 +356,7 @@ class Py3status:
 
                 if self.debug:
                     self.py3.log(
-                        "{} error - {}".format(error_type, e),
-                        level=self.py3.LOG_WARNING,
+                        f"{error_type} error - {e}", level=self.py3.LOG_WARNING,
                     )
                 self._disconnect()
 
@@ -368,13 +364,13 @@ class Py3status:
                 if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
-                            "Retrying ({}/{})".format(retry_counter, retry_max),
+                            f"Retrying ({retry_counter}/{retry_max})",
                             level=self.py3.LOG_INFO,
                         )
                     continue
                 break
             except (imaplib.IMAP4.error, Exception) as e:
-                self.mail_error = "Fatal error - {}".format(e)
+                self.mail_error = f"Fatal error - {e}"
                 self._disconnect()
                 self.mail_count = None
 

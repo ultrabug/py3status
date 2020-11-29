@@ -195,7 +195,7 @@ class Py3status:
 
         self.timewarrior_command = "timew export"
         if self.filter:
-            self.timewarrior_command += " {}".format(self.filter)
+            self.timewarrior_command += f" {self.filter}"
 
         self.init = {"datetimes": []}
         for word in ["start", "end"]:

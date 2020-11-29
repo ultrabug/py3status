@@ -348,12 +348,12 @@ def check_docstrings(show_diff=False, config=None, mods=None):
                 continue
             err = None
             if module not in modules_readme:
-                err = "Module {} in README but not in /modules".format(module)
+                err = f"Module {module} in README but not in /modules"
             elif (
                 "".join(readme[module]).strip()
                 != "".join(modules_readme[module]).strip()
             ):
-                err = "Module {} docstring does not match README".format(module)
+                err = f"Module {module} docstring does not match README"
             if err:
                 if not warned:
                     print_stderr("Documentation does not match!\n")
@@ -364,7 +364,7 @@ def check_docstrings(show_diff=False, config=None, mods=None):
             if mods and module not in mods:
                 continue
             if module not in readme:
-                print_stderr("Module {} in /modules but not in README".format(module))
+                print_stderr(f"Module {module} in /modules but not in README")
         if show_diff:
             print_stderr(
                 "\n".join(
@@ -389,10 +389,10 @@ def update_readme_for_modules(modules):
         modules = core_module_docstrings().keys()
     for module in modules:
         if module in module_docstrings:
-            print_stderr("Updating README.md for module {}".format(module))
+            print_stderr(f"Updating README.md for module {module}")
             readme[module] = module_docstrings[module]
         else:
-            print_stderr("Module {} not in core modules".format(module))
+            print_stderr(f"Module {module} not in core modules")
 
     # write the file
     readme_file = os.path.join(modules_directory(), "README.md")
@@ -430,9 +430,9 @@ def show_modules(config, modules_list):
         if details:
             dash_len = len(name) + 4
             print("#" * dash_len)
-            print("# {} #".format(name))
+            print(f"# {name} #")
             print("#" * dash_len)
             for description in module:
                 print(description[:-1])
         else:
-            print("{:<22} {}".format(name, desc))
+            print(f"{name:<22} {desc}")

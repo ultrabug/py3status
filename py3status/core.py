@@ -189,7 +189,7 @@ class Common:
             # We need to make sure to delete tb even if things go wrong.
             exc_type, exc_obj, tb = sys.exc_info()
             stack = extract_tb(tb)
-            error_str = "{}: {}\n".format(exc_type.__name__, exc_obj)
+            error_str = f"{exc_type.__name__}: {exc_obj}\n"
             traceback = [error_str]
 
             if error_frame:
@@ -222,7 +222,7 @@ class Common:
             )
         except:  # noqa e722
             # something went wrong report what we can.
-            msg = "{}.".format(msg)
+            msg = f"{msg}."
         finally:
             # delete tb!
             del tb
@@ -452,9 +452,7 @@ class Py3statusWrapper:
                 if module_name in user_modules:
                     pass
                 user_modules[module_name] = (include_path, f_name)
-                self.log(
-                    "available module from {}: {}".format(include_path, module_name)
-                )
+                self.log(f"available module from {include_path}: {module_name}")
         return user_modules
 
     def _get_entry_point_based_modules(self):
@@ -463,15 +461,13 @@ class Py3statusWrapper:
             try:
                 module = entry_point.load()
             except Exception as err:
-                self.log("entry_point '{}' error: {}".format(entry_point, err))
+                self.log(f"entry_point '{entry_point}' error: {err}")
                 continue
             klass = getattr(module, Module.EXPECTED_CLASS, None)
             if klass:
                 module_name = entry_point.module_name.split(".")[-1]
                 classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
-                self.log(
-                    "available module from {}: {}".format(ENTRY_POINT_KEY, module_name)
-                )
+                self.log(f"available module from {ENTRY_POINT_KEY}: {module_name}")
         return classes_from_entry_points
 
     def get_user_configured_modules(self):
@@ -519,10 +515,10 @@ class Py3statusWrapper:
                 if my_m.methods:
                     self.modules[module] = my_m
                 elif self.config["debug"]:
-                    self.log('ignoring module "{}" (no methods found)'.format(module))
+                    self.log(f'ignoring module "{module}" (no methods found)')
             except Exception:
                 err = sys.exc_info()[1]
-                msg = 'Loading module "{}" failed ({}).'.format(module, err)
+                msg = f'Loading module "{module}" failed ({err}).'
                 self.report_exception(msg, level="warning")
 
     def setup(self):
@@ -551,21 +547,21 @@ class Py3statusWrapper:
             with open(os.path.join(git_path, "HEAD")) as f:
                 out = f.readline()
             branch = "/".join(out.strip().split("/")[2:])
-            self.log("git branch: {}".format(branch))
+            self.log(f"git branch: {branch}")
             # last commit
             log_path = os.path.join(git_path, "logs", "refs", "heads", branch)
             with open(log_path) as f:
                 out = f.readlines()[-1]
             sha = out.split(" ")[1][:7]
             msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
-            self.log("git commit: {}{}".format(sha, msg))
+            self.log(f"git commit: {sha}{msg}")
         except:  # noqa e722
             pass
 
         self.log("window manager: {}".format(self.config["wm_name"]))
 
         if self.config["debug"]:
-            self.log("py3status started with config {}".format(self.config))
+            self.log(f"py3status started with config {self.config}")
 
         if self.config["gevent"]:
             self.is_gevent = self.gevent_monkey_patch_report()
@@ -597,7 +593,7 @@ class Py3statusWrapper:
             i3s_mode = "mocked"
         else:
             for module in i3s_modules:
-                self.log("adding module {}".format(module))
+                self.log(f"adding module {module}")
             i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -651,7 +647,7 @@ class Py3statusWrapper:
         self.log("modules include paths: {}".format(self.config["include_paths"]))
         user_modules = self.get_user_configured_modules()
         if self.config["debug"]:
-            self.log("user_modules={}".format(user_modules))
+            self.log(f"user_modules={user_modules}")
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
@@ -675,12 +671,12 @@ class Py3statusWrapper:
         dbus = self.config.get("dbus_notify")
         if dbus:
             # force msg, icon, title to be a string
-            title = "{}".format(title)
-            msg = "{}".format(msg)
+            title = f"{title}"
+            msg = f"{msg}"
             if icon:
-                icon = "{}".format(icon)
+                icon = f"{icon}"
         else:
-            msg = "py3status: {}".format(msg)
+            msg = f"py3status: {msg}"
         if level != "info" and module_name == "":
             fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
             msg = fix_msg.format(msg)
@@ -698,7 +694,7 @@ class Py3statusWrapper:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
         # and imperfect but should work for our needs.
-        msg_hash = hash("{}#{}#{}#{}".format(module_name, limit_key, msg, title))
+        msg_hash = hash(f"{module_name}#{limit_key}#{msg}#{title}")
         if msg_hash in self.notified_messages:
             return
         elif module_name:
@@ -778,11 +774,11 @@ class Py3statusWrapper:
             ):
                 if module["type"] == "py3status":
                     if self.config["debug"]:
-                        self.log("refresh py3status module {}".format(name))
+                        self.log(f"refresh py3status module {name}")
                     module["module"].force_update()
                 else:
                     if self.config["debug"]:
-                        self.log("refresh i3status module {}".format(name))
+                        self.log(f"refresh i3status module {name}")
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
@@ -860,7 +856,7 @@ class Py3statusWrapper:
         if not self.config.get("log_file"):
             # If level was given as a str then convert to actual level
             level = LOG_LEVELS.get(level, level)
-            syslog(level, "{}".format(msg))
+            syslog(level, f"{msg}")
         else:
             # Binary mode so fs encoding setting is not an issue
             with open(self.config["log_file"], "ab") as f:
@@ -872,7 +868,7 @@ class Py3statusWrapper:
                     # to aid readability.
                     if "\n" in msg:
                         msg = "\n" + msg
-                out = "{} {} {}\n".format(log_time, level.upper(), msg)
+                out = f"{log_time} {level.upper()} {msg}\n"
                 try:
                     # Encode unicode strings to bytes
                     f.write(out.encode("utf-8"))
@@ -1040,5 +1036,5 @@ class Py3statusWrapper:
                 # build output string
                 out = ",".join([x for x in output if x])
                 # dump the line to stdout
-                write(",[{}]\n".format(out))
+                write(f",[{out}]\n")
                 flush()

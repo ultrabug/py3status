@@ -58,7 +58,7 @@ class Py3status:
             ]
             data = {}
             for cmd in cmds:
-                if self.py3.format_contains(self.format, "{}".format(cmd)):
+                if self.py3.format_contains(self.format, f"{cmd}"):
                     data[cmd] = _run_cmd(cmd)
             full_text = self.py3.safe_format(self.format, data)
 

@@ -159,13 +159,13 @@ class Py3status:
 
     def _get_credentials(self, coin):
         if coin not in self._credential_cache:
-            username = getattr(self, "{}_username".format(coin), None)
+            username = getattr(self, f"{coin}_username", None)
             if username is None:
                 username = getattr(self, "username", None)
             if username is None:
                 username = self._get_daemon_config_value(coin, "rpcuser")
 
-            password = getattr(self, "{}_password".format(coin), None)
+            password = getattr(self, f"{coin}_password", None)
             if password is None:
                 password = getattr(self, "password", None)
             if password is None:

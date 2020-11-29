@@ -164,7 +164,7 @@ class Py3status:
         if not self.py3.check_commands(self.command):
             raise Exception(STRING_NOT_INSTALLED)
         if self.arguments:
-            self.command = "{} {}".format(self.command, self.arguments)
+            self.command = f"{self.command} {self.arguments}"
         self.init_summary = self.py3.format_contains(
             self.format, ["up", "down", "have"]
         )
