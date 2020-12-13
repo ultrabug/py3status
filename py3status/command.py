@@ -243,7 +243,7 @@ class CommandServer(threading.Thread):
 
         # Create a UDS socket
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.bind(server_address)
+        sock.bind(server_address.as_posix())
 
         if self.debug:
             self.py3_wrapper.log("Unix domain socket at %s" % server_address)
