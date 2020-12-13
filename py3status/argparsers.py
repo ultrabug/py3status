@@ -42,7 +42,7 @@ def parse_cli_args():
         home_path / ".i3status.conf",
         home_path / ".i3/i3status.conf",  # custom
         xdg_dirs_path / "i3status/config",
-        "/etc/i3status.conf",
+        Path("/etc/i3status.conf"),
     ]
     for path in i3status_config_file_candidates:
         if path.exists():
