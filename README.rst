@@ -5,6 +5,7 @@ py3status
 *********
 |travis| |readthedocs|
 
+.. |CI| image:: https://github.com/ultrabug/py3status/workflows/CI/badge.svg
 .. |travis| image:: https://travis-ci.org/ultrabug/py3status.svg?branch=master
 .. |readthedocs| image:: https://readthedocs.org/projects/py3status/badge/?version=latest
 
