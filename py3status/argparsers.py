@@ -200,10 +200,10 @@ def parse_cli_args():
     # make include path to search for user modules if None
     if not options.include_paths:
         options.include_paths = [
-            f"{xdg_home_path}/py3status/modules",
-            f"{xdg_home_path}/i3status/py3status",
-            f"{xdg_home_path}/i3/py3status",
-            f"{home_path}/.i3/py3status",
+            xdg_home_path / "py3status/modules",
+            xdg_home_path / "i3status/py3status",
+            xdg_home_path / "i3/py3status",
+            home_path / ".i3/py3status",
         ]
 
     include_paths = []
