@@ -213,8 +213,8 @@ class Py3status:
         client_secret_path = self.client_secret.parent
         auth_token_path = self.auth_token.parent
 
-        auth_token_path.mkdir(parents=True, exists_ok=True)
-        client_secret_path.mkdir(parents=True, exists_ok=True)
+        auth_token_path.mkdir(parents=True, exist_ok=True)
+        client_secret_path.mkdir(parents=True, exist_ok=True)
 
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token)

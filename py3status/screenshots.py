@@ -236,7 +236,7 @@ def process(name, path, data, module=True):
     """
     # create dir if not exists
     try:
-        path.mkdir(parents=True, exists_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
     except OSError:
         pass
 
