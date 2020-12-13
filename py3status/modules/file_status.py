@@ -52,8 +52,8 @@ missing
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-from glob import glob
-from os.path import basename, expanduser
+from pathlib import Path
+
 
 STRING_NO_PATHS = "missing paths"
 
@@ -107,7 +107,7 @@ class Py3status:
         # convert str to list + expand path
         if not isinstance(self.paths, list):
             self.paths = [self.paths]
-        self.paths = list(map(expanduser, self.paths))
+        self.paths = [Path(path).expanduser() for path in self.paths]
 
         self.init = {"format_path": []}
         if self.py3.format_contains(self.format, "format_path"):
@@ -117,7 +117,9 @@ class Py3status:
 
     def file_status(self):
         # init data
-        paths = sorted([files for path in self.paths for files in glob(path)])
+        paths = sorted(
+            files for path in self.paths for files in path.parent.glob(path.name)
+        )
         count_path = len(paths)
         format_path = None
 
@@ -130,7 +132,7 @@ class Py3status:
                 path = {}
                 for key in self.init["format_path"]:
                     if key == "basename":
-                        value = basename(pathname)
+                        value = pathname.name
                     elif key == "pathname":
                         value = pathname
                     else:

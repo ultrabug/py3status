@@ -136,8 +136,8 @@ SAMPLE OUTPUT
 """
 
 import httplib2
-import os
 import datetime
+from pathlib import Path
 
 try:
     from googleapiclient import discovery
@@ -195,8 +195,8 @@ class Py3status:
         self.events = None
         self.no_update = False
 
-        self.client_secret = os.path.expanduser(self.client_secret)
-        self.auth_token = os.path.expanduser(self.auth_token)
+        self.client_secret = Path(self.client_secret).expanduser()
+        self.auth_token = Path(self.auth_token).expanduser()
 
         self.credentials = self._get_credentials()
         self.is_authorized = False
@@ -210,14 +210,11 @@ class Py3status:
 
         Returns: Credentials, the obtained credential.
         """
-        client_secret_path = os.path.dirname(self.client_secret)
-        auth_token_path = os.path.dirname(self.auth_token)
+        client_secret_path = self.client_secret.parent
+        auth_token_path = self.auth_token.parent
 
-        if not os.path.exists(auth_token_path):
-            os.makedirs(auth_token_path)
-
-        if not os.path.exists(client_secret_path):
-            os.makedirs(client_secret_path)
+        auth_token_path.mkdir(parents=True, exists_ok=True)
+        client_secret_path.mkdir(parents=True, exists_ok=True)
 
         flags = tools.argparser.parse_args(args=[])
         store = Storage(self.auth_token)

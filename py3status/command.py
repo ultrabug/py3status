@@ -1,9 +1,10 @@
 import argparse
-import glob
 import json
 import os
 import socket
 import threading
+
+from pathlib import Path
 
 SERVER_ADDRESS = "/tmp/py3status_uds"
 MAX_SIZE = 1024
@@ -230,14 +231,14 @@ class CommandServer(threading.Thread):
         self.py3_wrapper = py3_wrapper
 
         self.command_runner = CommandRunner(py3_wrapper)
-        server_address = f"{SERVER_ADDRESS}.{os.getpid()}"
+        server_address = Path(f"{SERVER_ADDRESS}.{os.getpid()}")
         self.server_address = server_address
 
         # Make sure the socket does not already exist
         try:
-            os.unlink(server_address)
+            server_address.unlink()
         except OSError:
-            if os.path.exists(server_address):
+            if server_address.exists():
                 raise
 
         # Create a UDS socket
@@ -256,9 +257,9 @@ class CommandServer(threading.Thread):
         Remove the socket as it is no longer needed.
         """
         try:
-            os.unlink(self.server_address)
+            self.server_address.unlink()
         except OSError:
-            if os.path.exists(self.server_address):
+            if self.server_address.exists():
                 raise
 
     def run(self):
@@ -460,24 +461,25 @@ def parse_list_or_docstring(options, sps):
     import py3status.docstrings as docstrings
 
     # HARDCODE: make include path to search for user modules
-    home_path = os.path.expanduser("~")
-    xdg_home_path = os.environ.get("XDG_CONFIG_HOME", f"{home_path}/.config")
+    home_path = Path.home()
+    xdg_home_path = Path(
+        os.environ.get("XDG_CONFIG_HOME", home_path / ".config")
+    ).resolve()
     options.include_paths = [
-        f"{xdg_home_path}/py3status/modules",
-        f"{xdg_home_path}/i3status/py3status",
-        f"{xdg_home_path}/i3/py3status",
-        f"{home_path}/.i3/py3status",
+        xdg_home_path / "py3status/modules",
+        xdg_home_path / "i3status/py3status",
+        xdg_home_path / "i3/py3status",
+        home_path / ".i3/py3status",
     ]
     include_paths = []
     for path in options.include_paths:
-        path = os.path.abspath(path)
-        if os.path.isdir(path) and os.listdir(path):
+        if path.is_dir() and any(path.iterdir()):
             include_paths.append(path)
     options.include_paths = include_paths
 
     # init
     config = vars(options)
-    modules = [x.rsplit(".py", 1)[0] for x in config["module"]]
+    modules = [Path(x).stem for x in config["module"]]
 
     # list module names and details
     if config["command"] == "list":
@@ -528,7 +530,7 @@ def send_command():
         verbose("Message length too long, max length (%s)" % MAX_SIZE)
 
     # find all likely socket addresses
-    uds_list = glob.glob(f"{SERVER_ADDRESS}.[0-9]*")
+    uds_list = Path(".").glob(f"{SERVER_ADDRESS}.[0-9]*")
 
     verbose('message "%s"' % msg)
     for uds in uds_list:
@@ -543,7 +545,7 @@ def send_command():
             # this is a stale socket so delete it
             verbose("stale socket deleting")
             try:
-                os.unlink(uds)
+                uds.unlink()
             except OSError:
                 pass
             continue

@@ -106,6 +106,7 @@ SAMPLE OUTPUT
 
 from fnmatch import fnmatch
 from os import getloadavg
+from pathlib import Path
 
 import re
 
@@ -284,7 +285,7 @@ class Py3status:
                         break
 
     def _get_cpuinfo(self):
-        with open("/proc/cpuinfo") as f:
+        with Path("/proc/cpuinfo").open() as f:
             return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
 
     def _calc_cpu_freqs(self, cpu_freqs, unit, keys):
@@ -301,7 +302,7 @@ class Py3status:
     def _get_stat(self):
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
         stat = []
-        with open("/proc/stat") as f:
+        with Path("/proc/stat").open() as f:
             for line in f:
                 if "cpu" in line:
                     stat.append(line)
@@ -376,7 +377,7 @@ class Py3status:
         )
 
     def _get_meminfo(self, head=28):
-        with open("/proc/meminfo") as f:
+        with Path("/proc/meminfo").open() as f:
             info = [line.split() for line in (next(f) for x in range(head))]
             return {fields[0]: float(fields[1]) for fields in info}
 
@@ -422,7 +423,7 @@ class Py3status:
     def _get_cputemp(self, zone, unit):
         if zone is not None:
             try:
-                with open(zone) as f:
+                with Path(zone).open() as f:
                     cpu_temp = f.readline()
                     cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
             except (OSError, ValueError):

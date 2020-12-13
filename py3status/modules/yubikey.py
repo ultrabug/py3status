@@ -26,6 +26,8 @@ import os
 import socket
 import threading
 
+from pathlib import Path
+
 
 class YubiKeyTouchDetectorListener(threading.Thread):
     """
@@ -82,7 +84,7 @@ class Py3status:
     socket_path = "$XDG_RUNTIME_DIR/yubikey-touch-detector.socket"
 
     def post_config_hook(self):
-        self.socket_path = os.path.expanduser(self.socket_path)
+        self.socket_path = Path(self.socket_path).expanduser()
         self.socket_path = os.path.expandvars(self.socket_path)
 
         self.status = {"is_gpg": False, "is_u2f": False}

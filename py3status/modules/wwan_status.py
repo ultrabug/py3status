@@ -55,9 +55,9 @@ off
 """
 
 import netifaces as ni
-import os
 import stat
 import serial
+from pathlib import Path
 from time import sleep
 
 
@@ -92,7 +92,8 @@ class Py3status:
         response["cached_until"] = self.py3.time_in(self.cache_timeout)
 
         # Check if path exists and is a character device
-        if os.path.exists(self.modem) and stat.S_ISCHR(os.stat(self.modem).st_mode):
+        modem_path = Path(self.modem)
+        if modem_path.exists() and stat.S_ISCHR(modem_path.stat().st_mode):
             print("Found modem " + self.modem)
             try:
                 ser = serial.Serial(

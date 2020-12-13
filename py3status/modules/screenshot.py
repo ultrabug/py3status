@@ -37,9 +37,10 @@ basename
 {'color': '#00FF00', 'full_text': 'qs60.jpg'}
 """
 
-import os
 import random
 import string
+
+from pathlib import Path
 
 
 class Py3status:
@@ -65,7 +66,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.shot_data = {}
-        self.save_path = os.path.expanduser(self.save_path)
+        self.save_path = Path(self.save_path).expanduser()
         self.chars = string.ascii_lowercase + string.digits
 
     def _generator(self, size=6):
@@ -79,7 +80,7 @@ class Py3status:
 
     def on_click(self, event):
         basename = self._generator(self.file_length) + ".jpg"
-        pathname = os.path.join(self.save_path, basename)
+        pathname = self.save_path / basename
         self.shot_data["basename"] = basename
 
         self.py3.command_run(" ".join([self.screenshot_command, pathname]))

@@ -92,7 +92,7 @@ SAMPLE OUTPUT
 """
 
 from importlib import import_module
-from os.path import expanduser
+from pathlib import Path
 
 
 class Py3status:
@@ -124,7 +124,7 @@ class Py3status:
         )
         self.is_parameters_a_dict = isinstance(self.parameters, dict)
         if not self.is_parameters_a_dict:
-            self.parameters = expanduser(self.parameters)
+            self.parameters = Path(self.parameters).expanduser()
 
         self.thresholds_init = {}
         for name in ("format", "format_row"):

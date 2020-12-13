@@ -63,6 +63,7 @@ SAMPLE OUTPUT
 from time import time
 from datetime import datetime
 from collections import OrderedDict
+from pathlib import Path
 
 
 class Py3status:
@@ -91,7 +92,7 @@ class Py3status:
                 self.seconds, self.interval = None, second
 
     def uptime(self):
-        with open("/proc/uptime") as f:
+        with Path("/proc/uptime").open() as f:
             up = int(float(f.readline().split()[0]))
             offset = time() - up
 

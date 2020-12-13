@@ -99,9 +99,9 @@ SAMPLE OUTPUT
 """
 
 from errno import ENOENT
-from os.path import expanduser
 import requests
 from string import Formatter
+from pathlib import Path
 
 
 COIN_PORTS = {"bitcoin": 8332, "dogecoin": 22555, "litecoin": 9332}
@@ -144,7 +144,7 @@ class Py3status:
 
     def _get_daemon_config_value(self, coin, key):
         try:
-            with open(expanduser("~/.{0}/{0}.conf".format(coin))) as cfg:
+            with (Path.home() / f".{coin}" / coin).open() as cfg:
                 for line in cfg.readlines():
                     line = line.strip()
                     if line.startswith("#"):

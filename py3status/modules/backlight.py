@@ -44,7 +44,7 @@ SAMPLE OUTPUT
 {'full_text': u'\u263c: 100%'}
 """
 
-import os
+from pathlib import Path
 
 try:
     from pydbus import SystemBus
@@ -55,12 +55,11 @@ STRING_NOT_AVAILABLE = "no available device"
 
 
 def get_device():
-    for (path, devices, files) in os.walk("/sys/class/backlight/"):
-        for device in devices:
-            if "brightness" in os.listdir(
-                path + device
-            ) and "max_brightness" in os.listdir(path + device):
-                return path + device
+    for path in Path("/sys/class/backlight").rglob("*"):
+        if path.is_dir():
+            children = {child.name for child in path.iterdir()}
+            if children >= {"brightness", "max_brightness"}:
+                return path
 
 
 commands = {
@@ -161,20 +160,15 @@ class Py3status:
             self.py3.command_run(self._command_set(level))
             return
         if self._logind_proxy:
-            for brightness_max_line in open("%s/max_brightness" % self.device, "rb"):
-                brightness_max = int(brightness_max_line)
+            brightness_max = int(Path(f"{self.device}/max_brightness").read_text())
             brightness = brightness_max * level / 100
-            self._logind_proxy.SetBrightness(
-                "backlight", os.path.basename(os.path.normpath(self.device)), brightness
-            )
+            self._logind_proxy.SetBrightness("backlight", self.device.name, brightness)
 
     def _get_backlight_level(self):
         if self.command_available:
             return float(self.py3.command_output(self._command_get()))
-        for brightness_line in open("%s/brightness" % self.device, "rb"):
-            brightness = int(brightness_line)
-        for brightness_max_line in open("%s/max_brightness" % self.device, "rb"):
-            brightness_max = int(brightness_max_line)
+        brightness = int(Path(f"{self.device}/brightness").read_text())
+        brightness_max = int(Path(f"{self.device}/max_brightness").read_text())
         return brightness * 100 / brightness_max
 
     # Returns the string array for the command to get the current backlight level

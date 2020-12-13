@@ -38,8 +38,8 @@ SAMPLE OUTPUT
 """
 
 
-import os
 import time
+from pathlib import Path
 
 
 # No "magic numbers"
@@ -61,13 +61,13 @@ class Py3status:
     tax = 1.02
 
     def post_config_hook(self):
-        self.config_file = os.path.expanduser(self.config_file)
+        self.config_file = Path(self.config_file).expanduser()
         self.running = False
         self.saved_time = 0
         self.start_time = self.current_time
         try:
             # Use file to refer to the file object
-            with open(self.config_file) as file:
+            with self.config_file.open() as file:
                 self.saved_time = float(file.read())
         except:  # noqa e722 // (IOError, FileNotFoundError):  # py2/py3
             pass
@@ -113,7 +113,7 @@ class Py3status:
 
     def kill(self):
         self._stop_timer()
-        with open(self.config_file, "w") as f:
+        with self.config_file.open("w") as f:
             f.write(str(self.saved_time))
 
     def on_click(self, event):
@@ -125,7 +125,7 @@ class Py3status:
     def _reset(self):
         if not self.running:
             self.saved_time = 0.0
-            with open(self.config_file, "w") as f:
+            with self.config_file.open("w") as f:
                 f.write("0")
 
     def rate_counter(self):

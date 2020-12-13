@@ -1,5 +1,5 @@
 import argparse
-import os
+from pathlib import Path
 
 import pkg_resources
 import pytest
@@ -17,11 +17,11 @@ def make_status_wrapper():
 
 def test__get_path_based_modules(status_wrapper):
     """Use the list of inbuilt modules as reference to check against."""
-    included_modules_path = os.path.join(os.path.dirname(py3status.__file__), "modules")
+    included_modules_path = Path(py3status.__file__).resolve().parent / "modules"
     status_wrapper.options.__dict__["include_paths"] = [included_modules_path]
-    assert os.path.exists(included_modules_path)
+    assert included_modules_path.exists()
     expected_keys = [
-        n[:-3] for n in os.listdir(included_modules_path) if n.endswith(".py")
+        n.stem for n in included_modules_path.iterdir() if n.suffix == ".py"
     ]
     modules = status_wrapper._get_path_based_modules()
     assert sorted(modules.keys()) == sorted(expected_keys)

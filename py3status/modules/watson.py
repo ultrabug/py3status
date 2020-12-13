@@ -24,8 +24,8 @@ SAMPLE OUTPUT
 """
 
 import json
-import os
 
+from pathlib import Path
 from typing import Dict, List, Union
 
 
@@ -39,10 +39,10 @@ class Py3status:
     state_file = "~/.config/watson/state"
 
     def post_config_hook(self):
-        self.state_file = os.path.expanduser(self.state_file)
+        self.state_file = Path(self.state_file).expanduser()
 
     def watson(self) -> Dict[str, str]:
-        if not os.path.isfile(self.state_file):
+        if not self.state_file.is_file():
             return {
                 "full_text": "State file not found",
                 "color": self.py3.COLOR_BAD,
@@ -50,7 +50,7 @@ class Py3status:
             }
 
         try:
-            with open(self.state_file) as f:
+            with self.state_file.open("r") as f:
                 session_data = json.load(f)
                 output = self._format_output(session_data=session_data)
                 output["cached_until"] = self.py3.time_in(seconds=self.cache_timeout)

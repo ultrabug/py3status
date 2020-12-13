@@ -36,8 +36,8 @@ off
 from pydbus import SystemBus
 from gi.repository import GObject
 from threading import Thread
-from os import path
 from time import sleep
+from pathlib import Path
 
 
 class Py3status:
@@ -101,7 +101,7 @@ class Py3status:
 
     def _check_pid(self):
         """Returns True if pidfile exists, False otherwise."""
-        return path.isfile(self.pidfile)
+        return Path(self.pidfile).is_file()
 
     # Method run by py3status
     def vpn_status(self):

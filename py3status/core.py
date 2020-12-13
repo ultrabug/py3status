@@ -1,10 +1,10 @@
-import os
 import pkg_resources
 import sys
 import time
 
 from collections import deque
 from json import dumps
+from pathlib import Path
 from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
@@ -182,7 +182,7 @@ class Common:
         NOTE: msg should not end in a '.' for consistency.
         """
         # Get list of paths that our stack trace should be found in.
-        py3_paths = [os.path.dirname(__file__)] + self.config["include_paths"]
+        py3_paths = [Path(__file__).resolve()] + self.config["include_paths"]
         traceback = None
 
         try:
@@ -197,7 +197,7 @@ class Common:
                 # should be made to appear correct.  We caught the exception
                 # but make it look as though we did not.
                 traceback += format_stack(error_frame, 1) + format_tb(tb)
-                filename = os.path.basename(error_frame.f_code.co_filename)
+                filename = Path(error_frame.f_code.co_filename).name
                 line_no = error_frame.f_lineno
             else:
                 # This is a none module based error
@@ -210,7 +210,7 @@ class Common:
                     for path in py3_paths:
                         if filename.startswith(path):
                             # Found a good trace
-                            filename = os.path.basename(item[0])
+                            filename = item[0].name
                             line_no = item[1]
                             found = True
                             break
@@ -444,10 +444,10 @@ class Py3statusWrapper:
         """
         user_modules = {}
         for include_path in self.config["include_paths"]:
-            for f_name in sorted(os.listdir(include_path)):
-                if not f_name.endswith(".py"):
+            for f_name in sorted(include_path.iterdir()):
+                if f_name.suffix != ".py":
                     continue
-                module_name = f_name[:-3]
+                module_name = f_name.stem
                 # do not overwrite modules if already found
                 if module_name in user_modules:
                     pass
@@ -542,15 +542,15 @@ class Py3statusWrapper:
         try:
             # if running from git then log the branch and last commit
             # we do this by looking in the .git directory
-            git_path = os.path.join(os.path.dirname(__file__), "..", ".git")
+            git_path = Path(__file__).resolve().parent.parent / ".git"
             # branch
-            with open(os.path.join(git_path, "HEAD")) as f:
+            with (git_path / "HEAD").open() as f:
                 out = f.readline()
             branch = "/".join(out.strip().split("/")[2:])
             self.log(f"git branch: {branch}")
             # last commit
-            log_path = os.path.join(git_path, "logs", "refs", "heads", branch)
-            with open(log_path) as f:
+            log_path = git_path / "logs" / "refs" / "heads" / branch
+            with log_path.open() as f:
                 out = f.readlines()[-1]
             sha = out.split(" ")[1][:7]
             msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
@@ -637,8 +637,8 @@ class Py3statusWrapper:
 
         # suppress modules' output wrt issue #20
         if not self.config["debug"]:
-            sys.stdout = open("/dev/null", "w")
-            sys.stderr = open("/dev/null", "w")
+            sys.stdout = Path("/dev/null").open("w")
+            sys.stderr = Path("/dev/null").open("w")
 
         # get the list of py3status configured modules
         self.py3_modules = self.config["py3_config"]["py3_modules"]
@@ -724,7 +724,11 @@ class Py3statusWrapper:
                 cmd = [wm_nag, "-m", msg, "-t", level]
                 if nagbar_font:
                     cmd += ["-f", nagbar_font]
-            Popen(cmd, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
+            Popen(
+                cmd,
+                stdout=Path("/dev/null").open("w"),
+                stderr=Path("/dev/null").open("w"),
+            )
         except Exception as err:
             self.log("notify_user error: %s" % err)
 
@@ -859,7 +863,7 @@ class Py3statusWrapper:
             syslog(level, f"{msg}")
         else:
             # Binary mode so fs encoding setting is not an issue
-            with open(self.config["log_file"], "ab") as f:
+            with self.config["log_file"].open("ab") as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
                 # nice formatting of data structures using pretty print
                 if isinstance(msg, (dict, list, set, tuple)):

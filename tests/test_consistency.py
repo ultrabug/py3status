@@ -1,8 +1,6 @@
-import os
+from pathlib import Path
 
-MODULE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "py3status", "modules"
-)
+MODULE_PATH = Path(__file__).resolve().parent.parent / "py3status" / "modules"
 
 
 def test_method_mismatch():
@@ -10,12 +8,11 @@ def test_method_mismatch():
     skip_files = ["__init__.py", "i3pystatus.py"]
     errors = []
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
-                name = _file[:-3]
-                if f"def {name}(self" not in f.read():
-                    errors.append((name, _file))
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
+                if f"def {_file.stem}(self" not in f.read():
+                    errors.append((_file.stem, _file))
     if errors:
         line = "Method mismatched error(s) detected!\n\n"
         for error in errors:
@@ -29,9 +26,9 @@ def test_authors():
     skip_files = ["__init__.py"]
     errors = []
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 if comment not in f.read():
                     errors.append((comment, _file))
     if errors:
@@ -47,9 +44,9 @@ def test_sample_output():
     skip_files = ["__init__.py"]
     errors = []
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 if comment not in f.read():
                     errors.append((comment, _file))
     if errors:
@@ -65,9 +62,9 @@ def test_sample_output():
 #     skip_files = ["__init__.py"]
 #     errors = []
 #
-#     for _file in sorted(os.listdir(MODULE_PATH)):
-#         if _file.endswith(".py") and _file not in skip_files:
-#             with open(os.path.join(MODULE_PATH, _file)) as f:
+#     for _file in sorted(MODULE_PATH.iterdir()):
+#         if _file.suffix == ".py" and _file.name not in skip_files:
+#             with _file.open() as f:
 #                 if comment not in f.read():
 #                     errors.append((comment, _file))
 #     if errors:
@@ -83,9 +80,9 @@ def test_available_configuration_parameters():
     skip_files = ["__init__.py"]
     errors = []
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 if comment not in f.read():
                     errors.append((comment, _file))
     if errors:
@@ -102,9 +99,9 @@ def test_class_meta_before_parameters():
     errors = []
     skip_files = ["__init__.py"]
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 for x in f.readlines():
                     if line in x:
                         errors.append((line, _file))
@@ -125,9 +122,9 @@ def test_examples_before_requires():
     errors = []
     skip_files = ["__init__.py"]
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 output = f.read()
                 if line not in output or comment not in output:
                     continue
@@ -151,9 +148,9 @@ def test_authors_before_examples():
     errors = []
     skip_files = ["__init__.py"]
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 output = f.read()
                 if line not in output or comment not in output:
                     continue
@@ -185,9 +182,9 @@ def test_format_placeholders():
     ]
     errors = []
 
-    for _file in sorted(os.listdir(MODULE_PATH)):
-        if _file.endswith(".py") and _file not in skip_files:
-            with open(os.path.join(MODULE_PATH, _file)) as f:
+    for _file in sorted(MODULE_PATH.iterdir()):
+        if _file.suffix == ".py" and _file.name not in skip_files:
+            with _file.open() as f:
                 output = f.read()
                 if comment not in output:
                     if comment2 not in output:

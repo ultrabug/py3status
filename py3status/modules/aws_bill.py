@@ -39,6 +39,8 @@ import boto
 import csv
 import datetime
 
+from pathlib import Path
+
 from boto.s3.connection import Key
 
 
@@ -88,7 +90,7 @@ class Py3status:
 
         # Parse the file and get the InvoiceTotal amount
         try:
-            with open(self.billing_file, "rb") as f:
+            with Path(self.billing_file).open("rb") as f:
                 reader = csv.reader(f)
                 for row in reader:
                     if "".join(row).find("InvoiceTotal") == -1:
