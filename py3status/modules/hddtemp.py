@@ -145,7 +145,7 @@ class Py3status:
             try:
                 hdd["name"] = self.cache_names[hdd["name"]]
             except KeyError:
-                key = "".join([x for x in hdd["name"] if x in printable]).strip()
+                key = "".join(x for x in hdd["name"] if x in printable).strip()
                 if key.endswith("G B") and key[-4].isdigit():
                     key = "GB".join(key.rsplit("G B", 1))
                 hdd["name"] = self.cache_names[hdd["name"]] = key

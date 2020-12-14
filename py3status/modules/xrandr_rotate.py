@@ -78,7 +78,7 @@ class Py3status:
     def _get_current_rotation_icon(self, all_outputs):
         data = self.py3.command_output(["xrandr"]).splitlines()
         output = self.screen or all_outputs[0]
-        output_line = "".join([x for x in data if x.startswith(output)])
+        output_line = "".join(x for x in data if x.startswith(output))
 
         for x in output_line.split():
             if "normal" in x or "inverted" in x:

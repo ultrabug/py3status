@@ -310,7 +310,7 @@ class Xkblayout_State(Xkb):
         self.placeholders = list("cnsveC")
         self.separator = "|SEPARATOR|"
         self.xkblayout_command = "xkblayout-state print {}".format(
-            self.separator.join(["%" + x for x in self.placeholders])
+            self.separator.join("%" + x for x in self.placeholders)
         )
 
     def get_xkb_inputs(self):

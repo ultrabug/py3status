@@ -74,7 +74,7 @@ class Composite:
         """
         Return the text only component of the composite.
         """
-        return "".join([x.get("full_text", "") for x in self._content])
+        return "".join(x.get("full_text", "") for x in self._content)
 
     def simplify(self):
         """

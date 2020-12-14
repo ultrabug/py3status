@@ -287,7 +287,7 @@ class Py3status:
         show = getattr(self, f"icon_{mode}").join(
             tuple(getattr(self, f"{x}_icon", x) for x in combination)
         )
-        self.max_width = max([self.max_width, len(show)])
+        self.max_width = max(self.max_width, len(show))
         return show
 
     def _choose_what_to_display(self, force_refresh=False):

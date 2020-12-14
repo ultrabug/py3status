@@ -943,7 +943,7 @@ class Py3statusWrapper:
                 if "color" not in output:
                     output["color"] = color
         # Create the json string output.
-        return ",".join([dumps(x) for x in outputs])
+        return ",".join(dumps(x) for x in outputs)
 
     def i3bar_stop(self, signum, frame):
         self.log("received SIGTSTP")
@@ -1038,7 +1038,7 @@ class Py3statusWrapper:
                         output[index] = out
 
                 # build output string
-                out = ",".join([x for x in output if x])
+                out = ",".join(x for x in output if x)
                 # dump the line to stdout
                 write(f",[{out}]\n")
                 flush()

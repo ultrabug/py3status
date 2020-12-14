@@ -192,7 +192,7 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
         lst.extend([blank for i in range(max_len - len(lst))])
 
     # Determine the length of the longest item in the list
-    max_elem_len = max([len(str(elem)) for elem in source])
+    max_elem_len = max(len(str(elem)) for elem in source)
     padding = "    "
     format_str = padding + ("%%%ds %%s %%s" % max_elem_len)
 

@@ -366,7 +366,7 @@ class Py3status:
 
         # make an output.
         config = dumps(self.config, separators=(",", "=")).replace('"', "")
-        text = self.separator.join(["${%s}" % x for x in conky_placeholders])
+        text = self.separator.join("${%s}" % x for x in conky_placeholders)
         tmp = f"conky.config = {config}\nconky.text = [[{text}]]"
 
         # write tmp output to '/tmp/py3status-conky_*', make a command
