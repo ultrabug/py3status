@@ -305,8 +305,8 @@ class Py3status:
 
                 # filter out blacklisted event names
                 if event["summary"] is not None:
-                    if event["summary"].lower() in map(
-                        lambda e: e.lower(), self.blacklist_events
+                    if event["summary"].lower() in (
+                        e.lower() for e in self.blacklist_events
                     ):
                         continue
 

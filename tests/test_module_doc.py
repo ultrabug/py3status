@@ -121,21 +121,19 @@ def get_module_attributes(path):
                 attr_value = getattr(value, value_type)
             else:
                 if class_name == "Dict":
-                    attr_value = dict(
-                        zip(
-                            list(map(get_value, value.keys)),
-                            list(map(get_value, value.values)),
-                        )
-                    )
+                    attr_value = {
+                        get_value(k): get_value(v)
+                        for k, v in zip(value.keys, value.values)
+                    }
                 elif class_name == "List":
-                    attr_value = list(map(get_value, value.elts))
+                    attr_value = [get_value(e) for e in value.elts]
                 elif class_name == "Name":
                     # in python 2 True, False, None are Names rather than
                     # NameConstant so we use them for the default
                     default = python2_names.get(value.id)
                     attr_value = extra.get(value.id, default)
                 elif class_name == "Tuple":
-                    attr_value = tuple(map(get_value, value.elts))
+                    attr_value = tuple(get_value(e) for e in value.elts)
                 elif class_name == "UnaryOp":
                     op = value.op.__class__.__name__
                     attr_value = get_value(value.operand)

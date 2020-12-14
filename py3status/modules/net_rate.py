@@ -210,8 +210,8 @@ class Py3status:
         x = filter(dev_filter, open(self.devfile).readlines()[2:])
 
         try:
-            # split info into words, filter empty ones
-            return [list(filter(lambda x: x, _x.split(" "))) for _x in x]
+            # split info into words
+            return [_x.split() for _x in x]
 
         except StopIteration:
             return None

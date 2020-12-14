@@ -56,10 +56,7 @@ class Py3status:
 
     @staticmethod
     def descriptions(tasks_json):
-        def _describeTask(taskObj):
-            return str(taskObj["id"]) + " " + taskObj["description"]
-
-        return ", ".join(map(_describeTask, tasks_json))
+        return ", ".join(f"{t['id']} {t['description']}" for t in tasks_json)
 
     @staticmethod
     def tasks(tasks_json):

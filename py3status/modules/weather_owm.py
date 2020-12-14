@@ -392,8 +392,8 @@ class Py3status:
                         raise Exception("Invalid icon range: %s" % key)
 
                     # Populate each code
-                    (start, end) = tuple(map(int, key.split("_")))
-                    for code in range(start, end + 1):
+                    start, _, end = key.partition("_")
+                    for code in range(int(start), int(end) + 1):
                         data[code] = source[key]
 
                 else:
@@ -477,7 +477,7 @@ class Py3status:
 
     def _get_loc_tz_info(self):
         # Preference a user-set location
-        if all(map(lambda x: x is not None, (self.location, self.city, self.country))):
+        if all(x is not None for x in (self.location, self.city, self.country)):
             return (self.location, self.city, self.country)
 
         data = {}
