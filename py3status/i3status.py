@@ -335,12 +335,12 @@ class I3status(Thread):
         """
         # order += ...
         for module in self.py3_config["i3s_modules"]:
-            self.write_in_tmpfile('order += "%s"\n' % module, tmpfile)
+            self.write_in_tmpfile(f'order += "{module}"\n', tmpfile)
         self.write_in_tmpfile("\n", tmpfile)
         # config params for general section and each module
         for section_name in ["general"] + self.py3_config["i3s_modules"]:
             section = self.py3_config[section_name]
-            self.write_in_tmpfile("%s {\n" % section_name, tmpfile)
+            self.write_in_tmpfile(f"{section_name} {{\n", tmpfile)
             for key, value in section.items():
                 # don't include color values except in the general section
                 if key.startswith("color"):

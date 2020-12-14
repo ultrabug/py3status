@@ -114,7 +114,7 @@ class Py3status:
         if not self.device:
             self.device = get_device()
         elif "/" not in self.device:
-            self.device = "/sys/class/backlight/%s" % self.device
+            self.device = f"/sys/class/backlight/{self.device}"
         if self.device is None:
             if self.hide_when_unavailable:
                 return

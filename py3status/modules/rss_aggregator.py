@@ -70,7 +70,7 @@ class Py3status:
     def post_config_hook(self):
         self._cached = "?"
         if self.aggregator not in ["owncloud", "ttrss"]:  # more options coming
-            raise ValueError("%s is not a supported feed aggregator" % self.aggregator)
+            raise ValueError(f"{self.aggregator} is not a supported feed aggregator")
         if self.user is None or self.password is None:
             raise ValueError("user and password must be provided")
 
@@ -97,7 +97,7 @@ class Py3status:
     def _get_count_owncloud(self):
         try:
             rss_count = 0
-            api_url = "%s/index.php/apps/news/api/v1-2/" % self.server
+            api_url = f"{self.server}/index.php/apps/news/api/v1-2/"
             r = requests.get(
                 api_url + "feeds", auth=(self.user, self.password), timeout=10
             )
@@ -117,7 +117,7 @@ class Py3status:
     def _get_count_ttrss(self):
         try:
             rss_count = 0
-            api_url = "%s/api/" % self.server
+            api_url = f"{self.server}/api/"
             r = requests.post(
                 api_url,
                 data=json.dumps(

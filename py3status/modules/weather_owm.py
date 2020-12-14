@@ -385,11 +385,11 @@ class Py3status:
         for source in (defaults, self.icons):
             for key in source:
                 if not key.replace("_", "").isdigit():
-                    raise Exception("Invalid icon id: (%s)" % key)
+                    raise Exception(f"Invalid icon id: ({key})")
 
                 if "_" in key:
                     if key.count("_") != 1:
-                        raise Exception("Invalid icon range: %s" % key)
+                        raise Exception("fInvalid icon range: {key}")
 
                     # Populate each code
                     start, _, end = key.partition("_")

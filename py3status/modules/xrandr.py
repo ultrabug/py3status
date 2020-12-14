@@ -319,8 +319,7 @@ class Py3status:
         """
         Center the given string on the detected max width.
         """
-        fmt = "{:^%d}" % self.max_width
-        return fmt.format(s)
+        return f"{s:^{self.max_width}}"
 
     def _apply(self, force=False):
         """

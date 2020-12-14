@@ -123,7 +123,7 @@ class Py3status:
             if character in language:
                 language = language.replace(character, "_")
 
-        lang_color = getattr(self.py3, "COLOR_%s" % language)
+        lang_color = getattr(self.py3, f"COLOR_{language}")
         if not lang_color:
             lang_color = self.colors_dict.get(lang)
         if not lang_color:  # old compatibility: try default value

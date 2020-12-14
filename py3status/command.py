@@ -159,7 +159,7 @@ class CommandRunner:
                         found_modules.add(module_name)
 
         if self.debug:
-            self.py3_wrapper.log("found %s" % found_modules)
+            self.py3_wrapper.log(f"found {found_modules}")
         return found_modules
 
     def refresh(self, data):
@@ -172,7 +172,7 @@ class CommandRunner:
         for module_name in self.find_modules(modules):
             module = self.py3_wrapper.output_modules[module_name]
             if self.debug:
-                self.py3_wrapper.log("refresh %s" % module)
+                self.py3_wrapper.log(f"refresh {module}")
             if module["type"] == "py3status":
                 module["module"].force_update()
             else:
@@ -209,7 +209,7 @@ class CommandRunner:
         """
         command = data.get("command")
         if self.debug:
-            self.py3_wrapper.log("Running remote command %s" % command)
+            self.py3_wrapper.log(f"Running remote command {command}")
         if command == "refresh":
             self.refresh(data)
         elif command == "refresh_all":
@@ -246,7 +246,7 @@ class CommandServer(threading.Thread):
         sock.bind(server_address.as_posix())
 
         if self.debug:
-            self.py3_wrapper.log("Unix domain socket at %s" % server_address)
+            self.py3_wrapper.log(f"Unix domain socket at {server_address}")
 
         # Listen for incoming connections
         sock.listen(1)
@@ -283,7 +283,7 @@ class CommandServer(threading.Thread):
                     if data:
                         data = json.loads(data.decode("utf-8"))
                         if self.debug:
-                            self.py3_wrapper.log("received %s" % data)
+                            self.py3_wrapper.log(f"received {data}")
                         self.command_runner.run_command(data)
                 finally:
                     # Clean up the connection
@@ -317,9 +317,7 @@ def command_parser():
 
     # parser: add verbose, version
     for short, name, msg in INFORMATION:
-        short = "-%s" % short
-        arg = "--%s" % name
-        parser.add_argument(short, arg, action="store_true", help=msg)
+        parser.add_argument(f"-{short}", f"--{name}", action="store_true", help=msg)
 
     # make subparsers // ALIAS_DEPRECATION: remove metavar later
     metavar = "{click,list,refresh}"
@@ -527,18 +525,18 @@ def send_command():
     options = command_parser()
     msg = json.dumps(vars(options)).encode("utf-8")
     if len(msg) > MAX_SIZE:
-        verbose("Message length too long, max length (%s)" % MAX_SIZE)
+        verbose(f"Message length too long, max length ({MAX_SIZE})")
 
     # find all likely socket addresses
     uds_list = Path(".").glob(f"{SERVER_ADDRESS}.[0-9]*")
 
-    verbose('message "%s"' % msg)
+    verbose(f"message {msg!r}")
     for uds in uds_list:
         # Create a UDS socket
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         # Connect the socket to the port where the server is listening
-        verbose("connecting to %s" % uds)
+        verbose(f"connecting to {uds}")
         try:
             sock.connect(uds)
         except OSError:

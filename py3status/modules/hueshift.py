@@ -67,8 +67,8 @@ cool
 [{'full_text': 'Blueshift '}, {'full_text': '10000K', 'color': '#33ccff'}]
 """
 
-STRING_BAD_COMMAND = "invalid command `%s`"
-STRING_NOT_INSTALLED = "command `%s` not installed"
+STRING_BAD_COMMAND = "invalid command `{}`"
+STRING_NOT_INSTALLED = "command `{}` not installed"
 STRING_NOT_AVAILABLE = "no available command"
 
 
@@ -96,9 +96,9 @@ class Py3status:
         if not self.command:
             self.command = self.py3.check_commands(hueshift_commands)
         elif self.command not in hueshift_commands:
-            raise Exception(STRING_BAD_COMMAND % self.command)
+            raise Exception(STRING_BAD_COMMAND.format(self.command))
         elif not self.py3.check_commands(self.command):
-            raise Exception(STRING_NOT_INSTALLED % self.command)
+            raise Exception(STRING_NOT_INSTALLED.format(self.command))
         if not self.command:
             raise Exception(STRING_NOT_AVAILABLE)
 

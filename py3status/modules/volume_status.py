@@ -84,9 +84,9 @@ import re
 import math
 from py3status.exceptions import CommandError
 
-STRING_ERROR = "invalid command `%s`"
+STRING_ERROR = "invalid command `{}`"
 STRING_NOT_AVAILABLE = "no available binary"
-COMMAND_NOT_INSTALLED = "command `%s` not installed"
+COMMAND_NOT_INSTALLED = "command `{}` not installed"
 
 
 class Audio:
@@ -356,9 +356,9 @@ class Py3status:
                 commands = ["amixer"]
             self.command = self.py3.check_commands(commands)
         elif self.command not in ["amixer", "pamixer", "pactl"]:
-            raise Exception(STRING_ERROR % self.command)
+            raise Exception(STRING_ERROR.format(self.command))
         elif not self.py3.check_commands(self.command):
-            raise Exception(COMMAND_NOT_INSTALLED % self.command)
+            raise Exception(COMMAND_NOT_INSTALLED.format(self.command))
         if not self.command:
             raise Exception(STRING_NOT_AVAILABLE)
 

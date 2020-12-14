@@ -98,7 +98,7 @@ class Py3status:
         if not isinstance(self.interfaces_blacklist, list):
             self.interfaces_blacklist = self.interfaces_blacklist.split(",")
         placeholders = self.py3.get_placeholder_formats_list(self.format_value)
-        values = ["{%s}" % x[1] for x in placeholders if x[0] == "value"]
+        values = [f"{{{x[1]}}}" for x in placeholders if x[0] == "value"]
         self._value_formats = values
         # last
         self.last_interface = None

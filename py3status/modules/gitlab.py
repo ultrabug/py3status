@@ -154,7 +154,7 @@ class Py3status:
     def on_click(self, event):
         button = event["button"]
         if button == self.button_open:
-            self.py3.command_run("xdg-open %s" % self.project)
+            self.py3.command_run(f"xdg-open {self.project}")
         if button != self.button_refresh:
             self.py3.prevent_refresh()
 

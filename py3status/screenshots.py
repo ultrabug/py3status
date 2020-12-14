@@ -86,7 +86,7 @@ def get_color_for_name(module_name):
         )
         * 3
     )[5 ** int(hue) // 3 % 3 :: int(hue) % 2 + 1][:3]
-    return "#" + "%02x" * 3 % (int(r), int(g), int(b))
+    return f"#{int(r):02x}{int(g):02x}{int(b):02x}"
 
 
 def contains_bad_glyph(glyph_data, data):

@@ -113,7 +113,7 @@ class Py3status:
                 return False
 
         try:
-            self._dev = _bus.get(SERVICE_BUS, DEVICE_PATH + "/%s" % self.device_id)
+            self._dev = _bus.get(SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}")
         except Exception:
             return False
 
@@ -130,7 +130,7 @@ class Py3status:
             return devices[0]
 
         for id in devices:
-            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + "/%s" % id)
+            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + f"/{id}")
             if self.device == self._dev.name:
                 return id
 

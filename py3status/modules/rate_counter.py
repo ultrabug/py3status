@@ -141,11 +141,11 @@ class Py3status:
         subtotal = float(self.hour_price) * (running_time / SECS_IN_HOUR)
         total = subtotal * float(self.tax)
         subtotal_cost = self.py3.safe_format(
-            self.format_money, {"price": "%.2f" % subtotal}
+            self.format_money, {"price": f"{subtotal:.2f}"}
         )
-        total_cost = self.py3.safe_format(self.format_money, {"price": "%.2f" % total})
+        total_cost = self.py3.safe_format(self.format_money, {"price": f"{total:.2f}"})
         tax_cost = self.py3.safe_format(
-            self.format_money, {"price": "%.2f" % (total - subtotal)}
+            self.format_money, {"price": f"{total - subtotal:.2f}"}
         )
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),

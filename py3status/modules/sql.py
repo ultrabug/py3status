@@ -116,7 +116,7 @@ class Py3status:
                 if not self.py3.format_contains(self.format, config_name):
                     continue
             if not getattr(self, config_name, None):
-                raise Exception("missing %s" % config_name)
+                raise Exception(f"missing {config_name}")
 
         self.connect = getattr(import_module(self.database), "connect")
         self.operational_error = getattr(

@@ -120,7 +120,7 @@ class Py3status:
                         break
             if self.nic is None:
                 self.nic = "lo"
-            self.py3.log("selected nic: %s" % self.nic)
+            self.py3.log(f"selected nic: {self.nic}")
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 

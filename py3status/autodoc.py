@@ -101,7 +101,7 @@ def markdown_2_rst(lines):
             code = not code
             space = " " * (len(line.rstrip()) - 3)
             if code:
-                out.append("\n\n%s.. code-block:: none\n\n" % space)
+                out.append(f"\n\n{space}.. code-block:: none\n\n")
             else:
                 out.append("\n")
         else:
@@ -163,7 +163,7 @@ def create_module_docs():
     out = []
     # details
     for module in sorted(data.keys()):
-        out.append("\n.. _module_%s:\n" % module)  # reference for linking
+        out.append(f"\n.. _module_{module}:\n")  # reference for linking
         out.append(
             "\n{name}\n{underline}\n\n{screenshots}{details}\n".format(
                 name=module,
@@ -304,9 +304,9 @@ def create_py3_docs():
         output = []
         for name, desc in v:
             output.append("")
-            output.append(".. _%s:" % name)  # reference for linking
+            output.append(f".. _{name}:")  # reference for linking
             output.append("")
-            output.append(".. py:{}:: {}".format(trans[k], name))
+            output.append(f".. py:{trans[k]}:: {name}")
             output.append("")
             output.extend(auto_undent(desc))
         Path(f"../doc/py3-{k}-info.inc").write_text("\n".join(output))
@@ -337,10 +337,10 @@ class ScreenshotDirective(Directive):
     def run(self):
         env = self.state.document.settings.env
 
-        targetid = "screenshot-%d" % env.new_serialno("screenshot")
+        targetid = f"screenshot-{env.new_serialno('screenshot')}"
         targetnode = nodes.target("", "", ids=[targetid])
 
-        image_name = "_%s" % targetid
+        image_name = f"_{targetid}"
         try:
             content = ast.literal_eval("\n".join(self.content))
         except:  # noqa e722
