@@ -115,7 +115,7 @@ class Py3status:
     def _seconds_to_time(self, value):
         m, s = divmod(int(value), 60)
         h, m = divmod(m, 60)
-        time = "%d:%02d:%02d" % (h, m, s)
+        time = f"{h}:{m:02d}:{s:02d}"
         return time.lstrip("0").lstrip(":")
 
     def _get_cmus_data(self):
@@ -196,7 +196,7 @@ class Py3status:
                     is_playing=is_playing,
                     is_started=is_started,
                     is_stopped=is_stopped,
-                    **data
+                    **data,
                 ),
             ),
         }

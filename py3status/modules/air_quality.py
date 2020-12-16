@@ -135,7 +135,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.auth_token = {"token": self.auth_token}
-        self.url = "https://api.waqi.info/feed/%s/" % self.location
+        self.url = f"https://api.waqi.info/feed/{self.location}/"
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format, word)) and (

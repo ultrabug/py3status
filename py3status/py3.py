@@ -125,7 +125,7 @@ class Py3:
         if it exists
         """
         if not name.startswith("COLOR_"):
-            raise AttributeError("Attribute `%s` not in Py3" % name)
+            raise AttributeError(f"Attribute `{name}` not in Py3")
         return self._get_config_setting(name.lower())
 
     def _get_config_setting(self, name, default=None):
@@ -1209,7 +1209,7 @@ class Py3:
 
         # save color so it can be accessed via safe_format()
         if name:
-            color_name = "color_threshold_%s" % name
+            color_name = f"color_threshold_{name}"
         else:
             color_name = "color_threshold"
         setattr(self._py3status_module, color_name, color)

@@ -50,7 +50,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
         self.placeholders = self.py3.get_placeholders_list(self.format)
         if self.filter:
-            self.taskwarrior_command = "task %s export" % self.filter
+            self.taskwarrior_command = f"task {self.filter} export"
         else:
             self.taskwarrior_command = "task export"
 

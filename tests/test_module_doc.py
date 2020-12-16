@@ -154,9 +154,9 @@ def get_module_attributes(path):
                         else:
                             attr_value = f"UNKNOWN {class_name} BinOp {op}"
                     except Exception:
-                        attr_value = "UNKNOWN %s BinOp error" % class_name
+                        attr_value = f"UNKNOWN {class_name} BinOp error"
                 else:
-                    attr_value = "UNKNOWN %s" % class_name
+                    attr_value = f"UNKNOWN {class_name}"
             return attr_value
 
         if extra is None:
@@ -192,12 +192,12 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
     # Determine the length of the longest item in the list
     max_elem_len = max(len(str(elem)) for elem in source)
     padding = "    "
-    format_str = padding + ("%%%ds %%s %%s" % max_elem_len)
+    format_str = padding + f"{{:{max_elem_len}}} {{}} {{}}"
 
     # Set up initial output contents
     middle_orig = "  "
     out = [
-        format_str % (source_label, middle_orig, target_label),
+        format_str.format(source_label, middle_orig, target_label),
         # Length of dashes is enough for the longest element on both sides,
         # plus the size of the middle symbol(s), plus two spaces for separation
         padding + ("-" * (2 * max_elem_len + len(middle_orig) + 2)),
@@ -222,7 +222,7 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
             middle = "!!"
 
         # Place the diff into the output
-        out.append(format_str % (str(have), middle, str(want)))
+        out.append(format_str.format(str(have), middle, str(want)))
 
     return "\n".join(out) + "\n"
 

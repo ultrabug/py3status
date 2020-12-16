@@ -68,7 +68,7 @@ class Py3status:
     def keyboard_locks(self):
         xset_data = self.py3.command_output("xset q")
         for k, v in self.keyring.items():
-            self.locks[k] = "on" in xset_data.split("%s Lock:" % v)[1][0:6]
+            self.locks[k] = "on" in xset_data.split(f"{v} Lock:")[1][0:6]
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

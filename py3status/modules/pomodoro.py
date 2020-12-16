@@ -222,15 +222,12 @@ class Py3status:
             mins, seconds = divmod(rest, 60)
 
             if hours:
-                vals["mmss"] = "%d%s%02d%s%02d" % (
-                    hours,
-                    self.format_separator,
-                    mins,
-                    self.format_separator,
-                    seconds,
+                vals["mmss"] = (
+                    f"{hours}{self.format_separator}"
+                    f"{mins:02d}{self.format_separator}{seconds:02d}"
                 )
             else:
-                vals["mmss"] = "%d%s%02d" % (mins, self.format_separator, seconds)
+                vals["mmss"] = f"{mins}{self.format_separator}{seconds:02d}"
 
         if self.py3.format_contains(self.format, "bar"):
             vals["bar"] = self._setup_bar()

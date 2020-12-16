@@ -179,8 +179,7 @@ class Formatter:
                 and token.group("key") in placeholder_formats
             ):
                 output.append(
-                    "{%s%s}"
-                    % (token.group("key"), placeholder_formats[token.group("key")])
+                    f"{{{token.group('key')}{placeholder_formats[token.group('key')]}}}"
                 )
                 continue
             value = token.group(0)
@@ -312,7 +311,7 @@ class Placeholder:
         """
         return the correct value for the placeholder
         """
-        value = "{%s}" % self.key
+        value = f"{{{self.key}}}"
         try:
             value = value_ = get_params(self.key)
             if self.format.startswith(":"):
@@ -357,14 +356,14 @@ class Placeholder:
         return valid, value, enough
 
     def __repr__(self):
-        return "<Placeholder {%s}>" % self.repr()
+        return f"<Placeholder {{{self.repr()}}}>"
 
     def repr(self):
         if self.format:
             value = f"{self.key}{self.format}"
         else:
             value = self.key
-        return "{%s}" % value
+        return f"{{{value}}}"
 
 
 class Literal:
@@ -376,7 +375,7 @@ class Literal:
         self.text = text
 
     def __repr__(self):
-        return "<Literal %s>" % self.text
+        return f"<Literal {self.text}>"
 
     def repr(self):
         return self.text
@@ -562,7 +561,7 @@ class Block:
         return self.next_block
 
     def __repr__(self):
-        return "<Block %s>" % self.repr()
+        return f"<Block {self.repr()}>"
 
     def repr(self):
         my_repr = [x.repr() for x in self.content]
@@ -624,8 +623,8 @@ class Block:
         # clean
         color = self.commands.color
         if color and color[0] != "#":
-            color_name = "color_%s" % color
-            threshold_color_name = "color_threshold_%s" % color
+            color_name = f"color_{color}"
+            threshold_color_name = f"color_threshold_{color}"
             # substitute color
             color = (
                 getattr(module, color_name, None)

@@ -94,9 +94,9 @@ class Py3status:
             r"[\?color=orange&show <"
             r"[\?color=lightblue&show º]"
             r"[\?color=darkorange&show ,]))"
-            r"[\?color=darkorange&show ))>%s]]"
+            r"[\?color=darkorange&show ))>{}]]"
         )
-        wanda = [body % fin for fin in ("<", ">", "<", "3")]
+        wanda = [body.format(fin) for fin in ("<", ">", "<", "3")]
         self.wanda = [self.py3.safe_format(x) for x in wanda]
         self.wanda_length = len(self.wanda)
         self.index = 0

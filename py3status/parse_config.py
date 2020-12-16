@@ -378,7 +378,7 @@ class ConfigParser:
         """
         value = os.getenv(param)
         if value is None:
-            self.notify_user("Environment variable `%s` undefined" % param)
+            self.notify_user(f"Environment variable `{param}` undefined" % param)
         return self.value_convert(value, value_type)
 
     def make_value_from_shell(self, param, value_type, function):
@@ -394,7 +394,7 @@ class ConfigParser:
             else:
                 if self.py3_wrapper:
                     self.py3_wrapper.report_exception(
-                        msg="shell: called with command `%s`" % param
+                        msg=f"shell: called with command `{param}`"
                     )
                 self.notify_user("shell script exited with an error")
                 value = None
@@ -425,18 +425,17 @@ class ConfigParser:
 
                 value = base64.b64decode(value).decode("utf-8")
             except TypeError as e:
-                self.notify_user("base64(..) error %s" % str(e))
+                self.notify_user(f"base64(..) error {e}")
 
         # check we are in a module definition etc
         if not self.current_module:
-            self.notify_user("%s(..) used outside of module or section" % function)
+            self.notify_user(f"{function}(..) used outside of module or section")
             return None
 
         module = self.current_module[-1].split()[0]
         if module in CONFIG_FILE_SPECIAL_SECTIONS + I3S_MODULE_NAMES:
             self.notify_user(
-                "%s(..) cannot be used outside of py3status module "
-                "configuration" % function
+                f"{function}(..) cannot be used outside of py3status module configuration"
             )
             return None
 
@@ -887,5 +886,5 @@ if __name__ == "__main__":
         file_name = sys.argv[1]
     else:
         file_name = Path.home() / ".i3/i3status.conf"
-    print("\nPARSING CONFIG FILE %s\n\n" % file_name)
+    print(f"\nPARSING CONFIG FILE {file_name}\n\n")
     pprint.pprint(process_config(file_name))

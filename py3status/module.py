@@ -154,9 +154,9 @@ class Module:
                     ),
                 ]
                 self.runtime_error(self.error_messages[0], "post_config_hook")
-                msg = "Exception in `%s` post_config_hook()" % self.module_full_name
+                msg = f"Exception in `{self.module_full_name}` post_config_hook()"
                 self._py3_wrapper.report_exception(msg, notify_user=False)
-                self._py3_wrapper.log("terminating module %s" % self.module_full_name)
+                self._py3_wrapper.log(f"terminating module {self.module_full_name}")
         self.enabled = True
 
     def runtime_error(self, msg, method):
@@ -227,7 +227,7 @@ class Module:
         self.prepare_module()
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
-            self._py3_wrapper.log("starting module %s" % self.module_full_name)
+            self._py3_wrapper.log(f"starting module {self.module_full_name}")
             self._py3_wrapper.timeout_queue_add(self)
 
     def force_update(self):
@@ -253,7 +253,7 @@ class Module:
         # purge from any container modules
         self._py3_wrapper.purge_module(self.module_full_name)
         self.error_output("")
-        self._py3_wrapper.log("disabling module `%s`" % self.module_full_name)
+        self._py3_wrapper.log(f"disabling module `{self.module_full_name}`")
 
     def wake(self):
         self.sleeping = False
@@ -682,7 +682,7 @@ class Module:
                         placeholder = item["placeholder"]
                         if "{}" in mod_config.get(param, ""):
                             mod_config[param] = mod_config[param].replace(
-                                "{}", "{%s}" % placeholder
+                                "{}", f"{{{placeholder}}}"
                             )
                             deprecation_log(item)
                 if "rename_placeholder" in deprecated:

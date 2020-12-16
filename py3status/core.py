@@ -730,7 +730,7 @@ class Py3statusWrapper:
                 stderr=Path("/dev/null").open("w"),
             )
         except Exception as err:
-            self.log("notify_user error: %s" % err)
+            self.log(f"notify_user error: {err}")
 
     def stop(self):
         """

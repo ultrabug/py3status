@@ -97,7 +97,7 @@ class Py3status:
 
     def _run(self, command):
         if self.debug:
-            self.py3.log("running %s" % command)
+            self.py3.log(f"running {command}")
         self.py3.command_run(command)
 
     def _play(self):
@@ -137,7 +137,7 @@ class Py3status:
         """Change volume using amixer
         """
         sign = "+" if increase else "-"
-        delta = "%d%%%s" % (self.volume_tick, sign)
+        delta = f"{self.volume_tick}%{sign}"
         self._run(["amixer", "-q", "sset", "Master", delta])
 
     def _detect_running_player(self):
@@ -161,11 +161,11 @@ class Py3status:
         for player_name in supported_players:
             if player_name in running_players:
                 if self.debug:
-                    self.py3.log("found player: %s" % player_name)
+                    self.py3.log(f"found player: {player_name}")
 
                 # those players need the dbus module
                 if player_name in ("vlc") and not dbus_available:
-                    self.py3.log("%s requires the dbus python module" % player_name)
+                    self.py3.log(f"{player_name} requires the dbus python module")
                     return None
 
                 return player_name
