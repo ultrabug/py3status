@@ -313,7 +313,7 @@ class Py3status:
         # if avg, return (name, idle, total)
         if avg:
             fields = stat[0].split()
-            return "avg", int(fields[4]), sum(map(int, fields[1:]))
+            return "avg", int(fields[4]), sum(int(x) for x in fields[1:])
 
         # return a list of (name, idle, total)
         new_stat = []
@@ -328,7 +328,7 @@ class Py3status:
                 if cpu_name not in self.cpus["list"]:
                     continue
 
-            new_stat.append((cpu_name, int(fields[4]), sum(map(int, fields[1:]))))
+            new_stat.append((cpu_name, int(fields[4]), sum(int(x) for x in fields[1:])))
         return new_stat
 
     def _calc_mem_info(self, unit, meminfo, memory):

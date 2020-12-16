@@ -87,7 +87,7 @@ class Py3status:
             set(self.py3.get_placeholders_list(self.format) + ["isplaying"])
         )
         self.deadbeef_command = 'deadbeef --nowplaying-tf "{}"'.format(
-            self.separator.join([f"%{x}%" for x in self.placeholders])
+            self.separator.join(f"%{x}%" for x in self.placeholders)
         )
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD

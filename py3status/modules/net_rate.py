@@ -129,8 +129,8 @@ class Py3status:
             # get the interface with max rate
             if self.sum_values:
                 interface = "sum"
-                sum_up = sum([itm["up"] for _, itm in deltas.items()])
-                sum_down = sum([itm["down"] for _, itm in deltas.items()])
+                sum_up = sum(itm["up"] for _, itm in deltas.items())
+                sum_down = sum(itm["down"] for _, itm in deltas.items())
                 deltas[interface] = {
                     "total": sum_up + sum_down,
                     "up": sum_up,
@@ -210,8 +210,8 @@ class Py3status:
         x = filter(dev_filter, open(self.devfile).readlines()[2:])
 
         try:
-            # split info into words, filter empty ones
-            return [list(filter(lambda x: x, _x.split(" "))) for _x in x]
+            # split info into words
+            return [_x.split() for _x in x]
 
         except StopIteration:
             return None

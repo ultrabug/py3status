@@ -369,23 +369,19 @@ class Py3status:
             self.power_now = battery["power"]
 
         elif self.battery_id == "all":
-            total_capacity = sum([battery["capacity"] for battery in battery_list])
+            total_capacity = sum(battery["capacity"] for battery in battery_list)
 
             # Average and weigh % charged by the capacities of the batteries so
             # that self.percent_charged properly represents batteries that have
             # different capacities.
             self.percent_charged = int(
                 sum(
-                    [
-                        battery["capacity"]
-                        / total_capacity
-                        * battery["percent_charged"]
-                        for battery in battery_list
-                    ]
+                    battery["capacity"] / total_capacity * battery["percent_charged"]
+                    for battery in battery_list
                 )
             )
 
-            self.charging = any([battery["charging"] for battery in battery_list])
+            self.charging = any(battery["charging"] for battery in battery_list)
 
             # Assumes a system has at max two batteries
             active_battery = None
@@ -433,7 +429,7 @@ class Py3status:
             else:
                 self.time_remaining = None
 
-            self.power_now = sum([battery["power"] for battery in battery_list])
+            self.power_now = sum(battery["power"] for battery in battery_list)
 
         if self.time_remaining and self.hide_seconds:
             self.time_remaining = self.time_remaining[:-3]

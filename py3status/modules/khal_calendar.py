@@ -54,7 +54,7 @@ class Py3status:
             str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
         )
         output = khal_list(self.collection, daterange, self.config, self.output_format)
-        output = list(map(lambda x: self._format_output(x), output[1:]))
+        output = [self._format_output(x) for x in output[1:]]
 
         output = " ".join(output)
         khal_data = {"appointments": output}

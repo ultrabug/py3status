@@ -512,7 +512,7 @@ class Module:
             min_length = self.py3status_module_options["min_length"]
 
             # get length, skip if length exceeds min_length
-            length = sum([len(x["full_text"]) for x in response["composite"]])
+            length = sum(len(x["full_text"]) for x in response["composite"])
             if length >= min_length:
                 return
 

@@ -127,7 +127,7 @@ class Msg(Ipc):
         return {
             "ipc": self.parent.ipc,
             "scratchpad": len(leaves),
-            "urgent": sum([window["urgent"] for window in leaves]),
+            "urgent": sum(window["urgent"] for window in leaves),
         }
 
     def find_scratchpad(self, tree):

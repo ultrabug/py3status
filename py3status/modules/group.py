@@ -170,7 +170,7 @@ class Py3status:
             if not output:
                 widths.append(0)
             else:
-                widths.append(sum([len(x["full_text"]) for x in output]))
+                widths.append(sum(len(x["full_text"]) for x in output))
             if i == self.active:
                 current = output
                 current_width = widths[-1]
