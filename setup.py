@@ -11,7 +11,7 @@ module_path = Path(__file__).resolve().parent / "py3status"
 sys.path.insert(0, str(module_path))
 from version import version  # noqa e402
 
-sys.path.remove(module_path)
+sys.path.remove(str(module_path))
 
 
 # Utility function to read the README file.
