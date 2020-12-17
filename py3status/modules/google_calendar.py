@@ -137,6 +137,7 @@ SAMPLE OUTPUT
 
 import httplib2
 import datetime
+import time
 from pathlib import Path
 
 try:
@@ -258,7 +259,7 @@ class Py3status:
 
         Returns: The list of events.
         """
-        self.last_update = datetime.datetime.now()
+        self.last_update = time.time()
         time_min = datetime.datetime.utcnow()
         time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
         events = []
@@ -499,9 +500,8 @@ class Py3status:
             if button_index == "sep":
                 self.py3.prevent_refresh()
             elif button == self.button_refresh:
-                now = datetime.datetime.now()
-                diff = (now - self.last_update).seconds
-                if diff > 1:
+                # wait before the next refresh
+                if time.time() - self.last_update > 1:
                     self.no_update = False
             elif button == self.button_toggle:
                 self.button_states[button_index] = not self.button_states[button_index]
