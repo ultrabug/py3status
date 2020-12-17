@@ -117,14 +117,11 @@ STOPPED = 2
 
 
 def _get_time_str(microseconds):
-    seconds = int(microseconds / 1000000)
-    time = str(timedelta(seconds=seconds))
-    if time[0] == "0":
-        time = time[2:]
-        if time[0] == "0":
-            time = time[1:]
-
-    return time
+    delta = timedelta(seconds=microseconds // 1_000_000)
+    delta_str = str(delta).lstrip("0").lstrip(":")
+    if delta_str.startswith("0"):
+        delta_str = delta_str[1:]
+    return delta_str
 
 
 class BrokenDBusMpris:
