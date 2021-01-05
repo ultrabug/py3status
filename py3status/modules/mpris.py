@@ -451,12 +451,14 @@ class Py3status:
         if not player_id.startswith(SERVICE_BUS):
             return False
 
-        # Fixes chromium mpris
+        # Fixes chromium/google-chrome mpris
         try:
             player = self._dbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
             if "chromium" in player_id:
                 player = BrokenDBusMpris(self._dbus, "Chromium", "Stopped")
+            elif "chrome" in player_id:
+                player = BrokenDBusMpris(self._dbus, "Chrome", "Stopped")
             else:
                 return False
 
