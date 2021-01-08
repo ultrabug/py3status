@@ -342,9 +342,7 @@ class Py3status:
     def _get_response_buttons(self):
         response = {}
 
-        for button in self._control_states.keys():
-            control_state = self._control_states[button]
-
+        for button, control_state in self._control_states.items():
             if self._get_button_state(control_state):
                 color = self.py3.COLOR_CONTROL_ACTIVE or self.py3.COLOR_GOOD
             else:

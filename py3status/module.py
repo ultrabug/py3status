@@ -237,8 +237,8 @@ class Module:
         if self.disabled or self.terminated or not self.enabled:
             return
         # clear cached_until for each method to allow update
-        for meth in self.methods:
-            self.methods[meth]["cached_until"] = time.perf_counter()
+        for meth, my_method in self.methods.items():
+            my_method["cached_until"] = time.perf_counter()
             if self.config["debug"]:
                 self._py3_wrapper.log(f"clearing cache for method {meth}")
         # set module to update
@@ -928,17 +928,16 @@ class Module:
         if self._py3_wrapper.running:
             cache_time = None
             # execute each method of this module
-            for meth, obj in self.methods.items():
-                my_method = self.methods[meth]
+            for meth, my_method in self.methods.items():
 
                 # always check py3status is running
                 if not self._py3_wrapper.running:
                     break
 
                 # respect the cache set for this method
-                if time.perf_counter() < obj["cached_until"]:
-                    if not cache_time or obj["cached_until"] < cache_time:
-                        cache_time = obj["cached_until"]
+                if time.perf_counter() < my_method["cached_until"]:
+                    if not cache_time or my_method["cached_until"] < cache_time:
+                        cache_time = my_method["cached_until"]
                     continue
 
                 try:

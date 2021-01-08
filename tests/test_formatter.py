@@ -1437,7 +1437,7 @@ if __name__ == "__main__":
     import sys
 
     this_module = sys.modules[__name__]
-    for x in range(10):
+    for _ in range(10):
         for name in dir(this_module):
             if not name.startswith("test_"):
                 continue

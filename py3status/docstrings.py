@@ -99,15 +99,15 @@ def create_readme(data):
     """
     out = ['<a name="top"></a>Modules\n========\n\n']
     # Links
-    for module in sorted(data):
-        desc = "".join(data[module]).strip().split("\n")[0]
+    for module, lines in sorted(data.items()):
+        desc = "".join(lines).strip().split("\n")[0]
         format_str = "\n**[{name}](#{name})** — {desc}\n"
         out.append(format_str.format(name=module, desc=desc))
     # details
-    for module in sorted(data):
+    for module, lines in sorted(data.items()):
         out.append(
             '\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(
-                name=module, details="".join(data[module]).strip()
+                name=module, details="".join(lines).strip()
             )
         )
     return "".join(out)
@@ -300,13 +300,13 @@ def update_docstrings():
         with mod_file.open() as f:
             files[mod] = f.readlines()
 
-    for mod in files:
+    for mod, rows in files.items():
         replaced = False
         done = False
         lines = False
         out = []
         quotes = None
-        for row in files[mod]:
+        for row in rows:
             # deal with single or double quoted docstring
             if not quotes:
                 if row.strip().startswith('"""'):
@@ -342,16 +342,13 @@ def check_docstrings(show_diff=False, config=None, mods=None):
     modules_readme = core_module_docstrings(config=config)
     warned = False
     if create_readme(readme) != create_readme(modules_readme):
-        for module in sorted(readme):
+        for module, lines in sorted(readme.items()):
             if mods and module not in mods:
                 continue
             err = None
             if module not in modules_readme:
                 err = f"Module {module} in README but not in /modules"
-            elif (
-                "".join(readme[module]).strip()
-                != "".join(modules_readme[module]).strip()
-            ):
+            elif "".join(lines).strip() != "".join(modules_readme[module]).strip():
                 err = f"Module {module} docstring does not match README"
             if err:
                 if not warned:

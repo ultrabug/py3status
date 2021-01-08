@@ -225,7 +225,7 @@ def get_py3_info():
     # we only care about ones defined in Py3
     constants = constants["Py3"]
     # sort them alphabetically
-    constants = [(k, v) for k, v in sorted(constants.items())]
+    constants = sorted(constants.items())
 
     # filter values as we only care about values defined in Py3
     values = {v: k[4:] for k, v in values.items() if k.startswith("Py3.")}

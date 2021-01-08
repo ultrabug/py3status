@@ -187,7 +187,7 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
     # Make both lists the same length
     max_len = max(len(source), len(target))
     for lst in (source, target):
-        lst.extend([blank for i in range(max_len - len(lst))])
+        lst.extend([blank] * (max_len - len(lst)))
 
     # Determine the length of the longest item in the list
     max_elem_len = max(len(str(elem)) for elem in source)

@@ -296,9 +296,9 @@ class Py3status:
 
         # get callbacks available, useful for deciding if double clicks exist
         callbacks = []
-        for i in range(len(CLICK_EVENTS)):
-            click = getattr(module, CLICK_EVENTS[i], None)
-            dbclick = getattr(module, DBL_CLICK_EVENTS[i], None)
+        for click_event, dbl_click_event in zip(CLICK_EVENTS, DBL_CLICK_EVENTS):
+            click = getattr(module, click_event, None)
+            dbclick = getattr(module, dbl_click_event, None)
             callbacks.append((click, dbclick))
 
         self._click_timer = ClickTimer(self, callbacks)

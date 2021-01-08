@@ -666,8 +666,8 @@ class Block:
                 # if this is a block then likely it is soft.
                 if not out:
                     continue
-                for x in range(index + 1, len(output)):
-                    if output[x] and not isinstance(output[x], Block):
+                for other in output[index + 1 :]:
+                    if other and not isinstance(other, Block):
                         valid, _output = item.render(get_params, module, _if=True)
                         if _output and _output != last_block:
                             last_block = _output
