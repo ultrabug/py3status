@@ -64,7 +64,7 @@ class Gradients:
 
         hue_diff = h1 - h2
         if long_route:
-            if hue_diff < 0.5 and hue_diff > -0.5:
+            if -0.5 < hue_diff < 0.5:
                 h1 += 1
         else:
             if hue_diff > 0.5:
