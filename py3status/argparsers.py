@@ -89,7 +89,7 @@ def parse_cli_args():
         dest="i3status_config_path",
         help="load config",
         metavar="FILE",
-        type=str,
+        type=Path,
     )
     parser.add_argument(
         "-d",
@@ -111,6 +111,7 @@ def parse_cli_args():
         dest="include_paths",
         help="append additional user-defined module paths",
         metavar="PATH",
+        type=Path,
     )
     parser.add_argument(
         "-l",
@@ -119,7 +120,7 @@ def parse_cli_args():
         dest="log_file",
         help="enable logging to FILE",
         metavar="FILE",
-        type=str,
+        type=Path,
     )
     parser.add_argument(
         "-s",
@@ -153,7 +154,7 @@ def parse_cli_args():
         dest="i3status_path",
         help="specify i3status path",
         metavar="PATH",
-        type=str,
+        type=Path,
     )
     parser.add_argument(
         "-v",
@@ -195,7 +196,7 @@ def parse_cli_args():
 
     # make it i3status if None
     if not options.i3status_path:
-        options.i3status_path = "i3status"
+        options.i3status_path = Path("i3status")
 
     # make include path to search for user modules if None
     if not options.include_paths:
