@@ -531,7 +531,7 @@ class Py3status:
         data = self._make_req(OWM_FUTURE_ENDPOINT, extras)
         # Extract forecast
         weathers = data["list"]
-        return weathers[:-1] if (self.forecast_include_today) else weathers[1:]
+        return weathers[:-1] if self.forecast_include_today else weathers[1:]
 
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)

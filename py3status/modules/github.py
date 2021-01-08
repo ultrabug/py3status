@@ -133,7 +133,7 @@ class Py3status:
             auth = None
         try:
             info = self.py3.request(url, auth=auth)
-        except (self.py3.RequestException):
+        except self.py3.RequestException:
             return
         if info and info.status_code == 200:
             return int(info.json()["total_count"])
@@ -162,7 +162,7 @@ class Py3status:
         url += "?per_page=100"
         try:
             info = self.py3.request(url, auth=(self.username, self.auth_token))
-        except (self.py3.RequestException):
+        except self.py3.RequestException:
             return
         if info.status_code == 200:
             links = info.headers.get("Link")

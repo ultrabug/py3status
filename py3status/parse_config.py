@@ -530,7 +530,7 @@ class ConfigParser:
             elif t_value == "(":
                 return tuple(self.make_list(end_token=")"))
             else:
-                self.error("Value expected", previous=not (end_token))
+                self.error("Value expected", previous=not end_token)
 
     def module_def(self):
         """
