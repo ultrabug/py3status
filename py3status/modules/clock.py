@@ -146,7 +146,7 @@ class Py3status:
         # display fresh
         self.time_deltas = []
         for format in self.format_time:
-            format_time = re.sub(r"\{([^}]*)\}", "", format)
+            format_time = re.sub(r"{([^}]*)}", "", format)
             format_time = format_time.replace("%%", "")
             if "%f" in format_time:
                 # microseconds

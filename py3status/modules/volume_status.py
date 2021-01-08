@@ -215,7 +215,7 @@ class Pactl(Audio):
 
     def update_device(self):
         self.re_volume = re.compile(
-            r"{} (?:\#{}|.*?Name: {}).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})\%".format(
+            r"{} (?:#{}|.*?Name: {}).*?Mute: (\w{{2,3}}).*?Volume:.*?(\d{{1,3}})%".format(
                 self.device_type_cap, self.device, self.device
             ),
             re.M | re.DOTALL,

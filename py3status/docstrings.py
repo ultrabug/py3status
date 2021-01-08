@@ -20,7 +20,7 @@ def parse_readme():
     returns a dict of {<module_name>: <documentation>}
     """
     name = None
-    re_mod = re.compile(r'^\#\#\# <a name="(?P<name>[a-z_0-9]+)"></a>')
+    re_mod = re.compile(r'^### <a name="(?P<name>[a-z_0-9]+)"></a>')
     readme_file = modules_directory() / "README.md"
     modules_dict = {}
     with readme_file.open() as f:

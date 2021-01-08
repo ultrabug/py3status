@@ -110,8 +110,8 @@ class Py3status:
             else:
                 status_re = re.compile(
                     r"\((?P<cu>[\d]+) of (?P<t>[\d]+)\) "
-                    r"(?P<a>[a-zA-Z\/]+( [a-zA-Z]+)?) "
-                    r"\((?P<ca>[\w\-]+)\/(?P<p>[\w\.]+)"
+                    r"(?P<a>[a-zA-Z/]+( [a-zA-Z]+)?) "
+                    r"\((?P<ca>[\w\-]+)/(?P<p>[\w.]+)"
                 )
                 res = status_re.search(line)
                 if res is not None:

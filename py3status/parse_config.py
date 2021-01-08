@@ -303,7 +303,7 @@ class ConfigParser:
                 return r"\\"
             return match.group(0).encode("utf-8").decode("unicode-escape")
 
-        return re.sub(r"\\\\|\\u\w{4}|\\U\w{8}|\\N\{([^}\\]|\\.)+\}", fix_fn, value)
+        return re.sub(r"\\\\|\\u\w{4}|\\U\w{8}|\\N{([^}\\]|\\.)+}", fix_fn, value)
 
     def make_value(self, value):
         """

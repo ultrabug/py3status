@@ -78,7 +78,7 @@ class Py3status:
             ("hash", re.compile(r"hash \"(.*)\" parent-hash")),
             ("parent_hash", re.compile(r"parent-hash \"(.*)\" via-port")),
             ("port", re.compile(r"via-port \"(.*)\" with-interface")),
-            ("interface", re.compile(r"with-interface \{ (.*) \}$")),
+            ("interface", re.compile(r"with-interface { (.*) }$")),
         ]
 
         self._init_dbus()
