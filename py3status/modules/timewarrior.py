@@ -138,9 +138,8 @@ no_timew
 {'full_text': 'No Timew'}
 """
 
-from pytz import utc
 from json import loads as json_loads
-from datetime import datetime
+import datetime as dt
 from dateutil.relativedelta import relativedelta
 
 STRING_NOT_INSTALLED = "not installed"
@@ -149,8 +148,7 @@ STRING_INVALID_TIMEOUT = "invalid cache_timeout"
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     cache_timeout = None
@@ -241,11 +239,11 @@ class Py3status:
             # duraton
             if time["state_time"]:
                 self.tracking = True
-                end = datetime.now(utc).utcnow()
+                end = dt.datetime.now(dt.timezone.utc)
             else:
-                end = datetime.strptime(time["end"], DATETIME)
+                end = dt.datetime.strptime(time["end"], DATETIME)
 
-            start = datetime.strptime(time["start"], DATETIME)
+            start = dt.datetime.strptime(time["start"], DATETIME)
             duration = relativedelta(end, start)
 
             time["format_duration"] = self.py3.safe_format(
@@ -262,8 +260,8 @@ class Py3status:
             for word in self.init["datetimes"]:
                 if word in time:
                     time[word] = self.py3.safe_format(
-                        datetime.strftime(
-                            datetime.strptime(time[word], DATETIME),
+                        dt.datetime.strftime(
+                            dt.datetime.strptime(time[word], DATETIME),
                             self.format_datetime[word],
                         )
                     )
