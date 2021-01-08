@@ -143,7 +143,7 @@ class Py3status:
                 album = metadata.get("xesam:album")
                 artist = metadata.get("xesam:artist")[0]
                 microtime = metadata.get("mpris:length")
-                rtime = str(timedelta(microseconds=microtime))[:-7]
+                rtime = str(timedelta(seconds=microtime // 1_000_000))
                 title = metadata.get("xesam:title")
                 if self.sanitize_titles:
                     album = self._sanitize_title(album)
