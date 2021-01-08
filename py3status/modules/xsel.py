@@ -66,7 +66,7 @@ class Py3status:
         selection = " ".join(selection.split())
         if len(selection) >= self.max_size:
             if self.symmetric is True:
-                split = int(self.max_size / 2) - 1
+                split = self.max_size // 2 - 1
                 selection = selection[:split] + ".." + selection[-split:]
             else:
                 selection = selection[: self.max_size]

@@ -518,7 +518,7 @@ class Module:
 
             # sometimes we go under min_length to pad both side evenly,
             # we will add extra space on either side to honor min_length
-            padding = int((min_length / 2.0) - (length / 2.0))
+            padding = min_length // 2 - length // 2
             offset = min_length - ((padding * 2) + length)
 
             # set position

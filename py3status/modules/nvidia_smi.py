@@ -131,7 +131,7 @@ class Py3status:
         for line in nvidia_data.splitlines():
             gpu = dict(zip(self.properties, line.split(", ")))
             gpu["memory.used_percent"] = (
-                float(gpu["memory.used"]) / float(gpu["memory.total"]) * 100.0
+                float(gpu["memory.used"]) / float(gpu["memory.total"]) * 100
             )
 
             for key in self.memory_properties:

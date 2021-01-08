@@ -292,10 +292,10 @@ class Py3status:
         freq_avg, freq_max = None, None
         for key in keys:
             if key == "cpu_freq_avg":
-                value = sum(cpu_freqs) / len(cpu_freqs) * 1e6
+                value = sum(cpu_freqs) / len(cpu_freqs) * 10 ** 6
                 freq_avg, _ = self.py3.format_units(value, unit, si=True)
             elif key == "cpu_freq_max":
-                value = max(cpu_freqs) * 1e6
+                value = max(cpu_freqs) * 10 ** 6
                 freq_max, _ = self.py3.format_units(value, unit, si=True)
         return freq_avg, freq_max
 
@@ -437,7 +437,7 @@ class Py3status:
 
         if cpu_temp is float:
             if unit == "°F":
-                cpu_temp = cpu_temp * (9.0 / 5.0) + 32
+                cpu_temp = cpu_temp * 9 / 5 + 32
             elif unit == "K":
                 cpu_temp += 273.15
 

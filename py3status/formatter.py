@@ -325,7 +325,7 @@ class Placeholder:
                 # be successfully converted then the format will be removed.
                 try:
                     if "ceil" in self.format:
-                        value = int(ceil(float(value)))
+                        value = ceil(float(value))
                     if "f" in self.format:
                         value = float(value)
                     if "g" in self.format:

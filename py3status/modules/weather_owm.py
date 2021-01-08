@@ -661,7 +661,7 @@ class Py3status:
             return val - 273.15
 
         def kToF(val):
-            return val * (9.0 / 5.0) - 459.67
+            return val * 9 / 5 - 459.67
 
         options = {
             "c": {

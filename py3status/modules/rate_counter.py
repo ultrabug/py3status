@@ -43,7 +43,7 @@ from pathlib import Path
 
 
 # No "magic numbers"
-SECS_IN_MIN = 60.0
+SECS_IN_MIN = 60
 SECS_IN_HOUR = 60 * SECS_IN_MIN  # 3600
 SECS_IN_DAY = 24 * SECS_IN_HOUR  # 86400
 
@@ -87,12 +87,9 @@ class Py3status:
         Using days as the largest unit of time.  Blindly using the days in
         `time.gmtime()` will fail if it's more than one month (days > 31).
         """
-        days = int(time_in_secs / SECS_IN_DAY)
-        remaining_secs = time_in_secs % SECS_IN_DAY
-        hours = int(remaining_secs / SECS_IN_HOUR)
-        remaining_secs = remaining_secs % SECS_IN_HOUR
-        mins = int(remaining_secs / SECS_IN_MIN)
-        secs = int(remaining_secs % SECS_IN_MIN)
+        days, secs = divmod(int(time_in_secs), SECS_IN_DAY)
+        hours, secs = divmod(secs, SECS_IN_HOUR)
+        mins, secs = divmod(secs, SECS_IN_MIN)
         return days, hours, mins, secs
 
     def _start_timer(self):
@@ -138,7 +135,7 @@ class Py3status:
             running_time = self.saved_time
 
         days, hours, mins, secs = self.secs_to_dhms(running_time)
-        subtotal = float(self.hour_price) * (running_time / SECS_IN_HOUR)
+        subtotal = self.hour_price * running_time / SECS_IN_HOUR
         total = subtotal * float(self.tax)
         subtotal_cost = self.py3.safe_format(
             self.format_money, {"price": f"{subtotal:.2f}"}

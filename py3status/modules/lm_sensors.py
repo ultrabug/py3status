@@ -296,11 +296,11 @@ class Py3status:
                         if _min >= _input:
                             auto_input.append((_min, self.color_min))
                         if _max:
-                            _near_max = _max - _max / 100.0 * 10.0
+                            _near_max = _max - _max / 100 * 10
                             auto_input.append((_near_max, self.color_near_max))
                             auto_input.append((_max, self.color_max))
                         if _crit:
-                            _near_crit = _crit - _crit / 100.0 * 10.0
+                            _near_crit = _crit - _crit / 100 * 10
                             auto_input.append((_near_crit, self.color_near_crit))
                             auto_input.append((_crit, self.color_crit))
 
