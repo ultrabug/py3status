@@ -2,7 +2,7 @@ import sys
 
 from copy import deepcopy
 from json import loads
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timezone
 from subprocess import Popen
 from subprocess import PIPE
 from signal import SIGTSTP, SIGSTOP, SIGUSR1, SIG_IGN, signal
@@ -20,32 +20,6 @@ from py3status.constants import (
     TIME_MODULES,
     TZTIME_FORMAT,
 )
-
-
-class Tz(tzinfo):
-    """
-    Timezone info for creating dates.
-    This is mainly so we can use %Z in strftime
-    """
-
-    MAX_OFFSET = timedelta(hours=23, minutes=59)
-
-    def __init__(self, name, offset):
-        # issue 1375 race issue on suspend
-        if abs(offset) > self.MAX_OFFSET:
-            raise ValueError("Invalid offset")
-        self._offset = offset
-        self._name = name
-
-    def utcoffset(self, dt):
-        return self._offset
-
-    def tzname(self, dt):
-        return str(self._name)
-
-    def dst(self, dt):
-        # we have no idea if daylight savings, so just say no kids
-        return timedelta(0)
 
 
 class I3statusModule:
@@ -241,7 +215,7 @@ class I3statusModule:
         ) - datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour, utcnow.minute)
         # create our custom timezone
         try:
-            self.tz = Tz(i3s_time_tz, delta)
+            self.tz = timezone(delta, i3s_time_tz)
         except ValueError:
             return False
         return True
