@@ -107,11 +107,7 @@ def run_formatter(test_dict):
     # simplify the composite and convert to text if possible
     if isinstance(result, Composite):
         result.simplify()
-        if (
-            not test_dict.get("composite")
-            and len(result) == 1
-            and len(result[0].keys()) == 1
-        ):
+        if not test_dict.get("composite") and len(result) == 1 and len(result[0]) == 1:
             result = result[0]["full_text"]
 
     if hasattr(result, "get_content"):

@@ -154,7 +154,7 @@ def create_module_docs():
     # get screenshot data
     screenshots_data = {}
     samples = get_samples()
-    for sample in samples.keys():
+    for sample in samples:
         module = sample.split("-")[0]
         if module not in screenshots_data:
             screenshots_data[module] = []
@@ -162,7 +162,7 @@ def create_module_docs():
 
     out = []
     # details
-    for module in sorted(data.keys()):
+    for module in sorted(data):
         out.append(f"\n.. _module_{module}:\n")  # reference for linking
         out.append(
             "\n{name}\n{underline}\n\n{screenshots}{details}\n".format(

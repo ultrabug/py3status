@@ -629,7 +629,7 @@ class Py3status:
         index = event["index"]
         button = event["button"]
 
-        if index not in self._control_states.keys():
+        if index not in self._control_states:
             if button == self.button_toggle:
                 index = "toggle"
             elif button == self.button_stop:

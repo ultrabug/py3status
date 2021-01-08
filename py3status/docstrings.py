@@ -99,12 +99,12 @@ def create_readme(data):
     """
     out = ['<a name="top"></a>Modules\n========\n\n']
     # Links
-    for module in sorted(data.keys()):
+    for module in sorted(data):
         desc = "".join(data[module]).strip().split("\n")[0]
         format_str = "\n**[{name}](#{name})** — {desc}\n"
         out.append(format_str.format(name=module, desc=desc))
     # details
-    for module in sorted(data.keys()):
+    for module in sorted(data):
         out.append(
             '\n---\n\n### <a name="{name}"></a>{name}\n\n{details}\n'.format(
                 name=module, details="".join(data[module]).strip()
@@ -385,7 +385,7 @@ def update_readme_for_modules(modules):
     readme = parse_readme()
     module_docstrings = core_module_docstrings()
     if modules == ["__all__"]:
-        modules = core_module_docstrings().keys()
+        modules = list(core_module_docstrings())
     for module in modules:
         if module in module_docstrings:
             print_stderr(f"Updating README.md for module {module}")
@@ -415,12 +415,12 @@ def show_modules(config, modules_list):
         from fnmatch import fnmatch
 
         for _filter in modules_list:
-            for name in modules.keys():
+            for name in modules:
                 if fnmatch(name, _filter):
                     if name not in new_modules:
                         new_modules.append(name)
     else:
-        new_modules = modules.keys()
+        new_modules = list(modules)
 
     for name in sorted(new_modules):
         module = _to_docstring(modules[name])

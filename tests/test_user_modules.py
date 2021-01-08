@@ -24,7 +24,7 @@ def test__get_path_based_modules(status_wrapper):
         n.stem for n in included_modules_path.iterdir() if n.suffix == ".py"
     ]
     modules = status_wrapper._get_path_based_modules()
-    assert sorted(modules.keys()) == sorted(expected_keys)
+    assert sorted(modules) == sorted(expected_keys)
 
 
 def test__get_entry_point_based_modules(status_wrapper, monkeypatch):

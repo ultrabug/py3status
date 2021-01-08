@@ -424,7 +424,7 @@ class Py3status:
             raise Exception("unit_wind is not recognized")
 
         # Check thresholds for validity
-        if set(self.thresholds.keys()) > THRESHOLDS_NAMES:
+        if set(self.thresholds) > THRESHOLDS_NAMES:
             raise Exception("threshold name(s) are not recognized")
 
         # Copy thresholds if available

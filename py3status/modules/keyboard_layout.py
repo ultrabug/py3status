@@ -73,7 +73,7 @@ class Py3status:
             "setxkbmap": (self._set_setxkbmap, self._get_setxkbmap),
         }
         self._set_command, self._get_command = avail_command[
-            self.py3.check_commands(avail_command.keys())
+            self.py3.check_commands(list(avail_command))
         ]
 
         if not self.layouts:

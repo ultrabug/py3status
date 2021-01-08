@@ -871,7 +871,7 @@ class Module:
         if self.config["debug"]:
             self._py3_wrapper.log(
                 'module "{}" click_events={} has_kill={} methods={}'.format(
-                    module, self.click_events, self.has_kill, self.methods.keys()
+                    module, self.click_events, self.has_kill, list(self.methods)
                 )
             )
 

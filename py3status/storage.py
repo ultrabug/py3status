@@ -105,4 +105,4 @@ class Storage:
             self.save()
 
     def storage_keys(self, module_name):
-        return self.data.get(module_name, {}).keys()
+        return list(self.data.get(module_name, {}))
