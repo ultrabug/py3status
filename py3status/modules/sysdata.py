@@ -399,7 +399,7 @@ class Py3status:
         """
         Tries to determine CPU temperature using the 'sensors' command.
         Searches for the CPU temperature by looking for a value prefixed
-        by either "CPU Temp" or "Core 0" - does not look for or average
+        by either "CPU Temp", "Core 0" or "Tdie" - does not look for or average
         out temperatures of all codes if more than one.
         """
 
@@ -412,7 +412,7 @@ class Py3status:
                 pass
         if not sensors:
             sensors = self.py3.command_output(command)
-        m = re.search(r"(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
+        m = re.search(r"(Core 0|CPU Temp|Tdie:?).+\+(.+).*(\(.+)?", sensors)
         if m:
             cpu_temp = float(m.groups()[1].strip()[:-2])
         else:
