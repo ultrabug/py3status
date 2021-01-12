@@ -67,7 +67,7 @@ SAMPLE OUTPUT
 
 import re
 import math
-from time import time
+import time
 
 HEX_RE = re.compile("#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})")
 
@@ -155,7 +155,7 @@ class Py3status:
         """
         Set next cycle update time synced to nearest second or 0.1 of second.
         """
-        now = time()
+        now = time.perf_counter()
         try:
             cycle_time = now - self._cycle_time
             if cycle_time < 0:
@@ -188,7 +188,7 @@ class Py3status:
         if not self.items:
             return {"full_text": "", "cached_until": self.py3.CACHE_FOREVER}
 
-        if time() >= self._cycle_time - (self.cycle_time / 10):
+        if time.perf_counter() >= self._cycle_time - (self.cycle_time / 10):
             self.active_color = (self.active_color + 1) % len(self.colors)
             self._set_cycle_time()
 

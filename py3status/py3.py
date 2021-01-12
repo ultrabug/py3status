@@ -1,6 +1,7 @@
 import os
 import sys
 import shlex
+import time
 
 from collections.abc import Mapping
 from copy import deepcopy
@@ -9,7 +10,6 @@ from math import log10
 from pathlib import Path
 from pprint import pformat
 from subprocess import Popen, PIPE, STDOUT
-from time import time
 from uuid import uuid4
 
 from py3status import exceptions
@@ -624,7 +624,7 @@ class Py3:
                 if seconds:
                     seconds -= 0.1
 
-        requested = time() + seconds - offset
+        requested = time.perf_counter() + seconds - offset
 
         # if sync_to then we find the sync time for the requested time
         if sync_to:

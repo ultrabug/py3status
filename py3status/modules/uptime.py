@@ -60,7 +60,7 @@ SAMPLE OUTPUT
 {'full_text': 'up 1 days 18 hours 20 minutes'}
 """
 
-from time import time
+import time
 from datetime import datetime
 from collections import OrderedDict
 from pathlib import Path
@@ -94,7 +94,7 @@ class Py3status:
     def uptime(self):
         with Path("/proc/uptime").open() as f:
             up = int(float(f.readline().split()[0]))
-            offset = time() - up
+            offset = time.time() - up
 
         uptime = {}
         for unit, interval in self.time_periods.items():

@@ -1,9 +1,9 @@
 import os
+import time
 
 from pathlib import Path
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
-from time import time
 
 
 class Storage:
@@ -90,7 +90,7 @@ class Storage:
         if module_name not in self.data:
             self.data[module_name] = {}
         self.data[module_name][key] = value
-        ts = time()
+        ts = time.time()
         if "_ctime" not in self.data[module_name]:
             self.data[module_name]["_ctime"] = ts
         self.data[module_name]["_mtime"] = ts

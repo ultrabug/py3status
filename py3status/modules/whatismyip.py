@@ -47,7 +47,7 @@ mode
 {'color': '#00FF00', 'full_text': u'\u25cf'}
 """
 
-from time import time
+import time
 
 URL_GEO_OLD_DEFAULT = "http://ip-api.com/json"
 URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
@@ -120,7 +120,7 @@ class Py3status:
 
     def whatismyip(self):
         # refresh
-        current_time = time()
+        current_time = time.perf_counter()
         refresh = current_time >= self.idle_time
 
         # time
