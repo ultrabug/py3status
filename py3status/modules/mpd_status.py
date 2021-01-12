@@ -106,7 +106,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 2
-    format = "{state} [[[{artist}] - {title}]|[{file}]]"
+    format = "{state} [[[{artist} ]- {title}]|[{file}]]"
     hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
