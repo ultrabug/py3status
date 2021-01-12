@@ -387,7 +387,7 @@ class Py3status:
             icon = self.blocks[
                 min(
                     len(self.blocks) - 1,
-                    int(math.ceil(int(perc) / 100 * (len(self.blocks) - 1))),
+                    math.ceil(int(perc) / 100 * (len(self.blocks) - 1)),
                 )
             ]
 

@@ -191,10 +191,9 @@ class Py3status:
         """
         bar = ""
         items_cnt = len(PROGRESS_BAR_ITEMS)
-        bar_val = float(self._time_left) / self._section_time * self.num_progress_bars
+        bar_val = self._time_left / self._section_time * self.num_progress_bars
         while bar_val > 0:
-            selector = int(bar_val * items_cnt)
-            selector = min(selector, items_cnt - 1)
+            selector = min(int(bar_val * items_cnt), items_cnt - 1)
             bar += PROGRESS_BAR_ITEMS[selector]
             bar_val -= 1
 
@@ -215,7 +214,7 @@ class Py3status:
         else:
             time_left = ceil(self._time_left)
 
-        vals = {"ss": int(time_left), "mm": int(ceil(time_left / 60))}
+        vals = {"ss": int(time_left), "mm": ceil(time_left / 60)}
 
         if self.py3.format_contains(self.format, "mmss"):
             hours, rest = divmod(time_left, 3600)

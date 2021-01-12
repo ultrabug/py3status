@@ -75,12 +75,12 @@ from syslog import syslog, LOG_INFO
 
 def format_value(num, value_round=True):
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
-        if abs(num) < 1000.0:
+        if abs(num) < 1000:
             if value_round:
                 return f"{num:1.0f}{unit}"
             else:
                 return f"{num:3.1f}{unit}"
-        num /= 1000.0
+        num /= 1000
     if value_round:
         return "{:.0f}{}".format(num, "Y")
     else:

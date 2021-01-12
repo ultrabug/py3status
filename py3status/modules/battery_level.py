@@ -102,8 +102,7 @@ FULLY_CHARGED = "?"
 
 
 class Py3status:
-    """
-    """
+    """"""
 
     # available configuration parameters
     battery_id = 0
@@ -333,9 +332,7 @@ class Py3status:
             battery = {}
             battery["capacity"] = capacity
             battery["charging"] = "Charging" in r["POWER_SUPPLY_STATUS"]
-            battery["percent_charged"] = int(
-                math.floor(remaining_energy / capacity * 100)
-            )
+            battery["percent_charged"] = math.floor(remaining_energy / capacity * 100)
             if present_rate == 0:
                 # Battery is either full charged or is not discharging
                 battery["time_remaining"] = FULLY_CHARGED
@@ -346,7 +343,7 @@ class Py3status:
                     time_in_secs = remaining_energy / present_rate * 3600
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
 
-            battery["power"] = current_now * voltage_now / 1e12
+            battery["power"] = current_now * voltage_now / 10 ** 12
 
             battery_list.append(battery)
         return battery_list
@@ -437,12 +434,10 @@ class Py3status:
     def _update_ascii_bar(self):
         self.ascii_bar = FULL_BLOCK * int(self.percent_charged / 10)
         if self.charging:
-            self.ascii_bar += EMPTY_BLOCK_CHARGING * (
-                10 - int(self.percent_charged / 10)
-            )
+            self.ascii_bar += EMPTY_BLOCK_CHARGING * (10 - self.percent_charged // 10)
         else:
             self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (
-                10 - int(self.percent_charged / 10)
+                10 - self.percent_charged // 10
             )
 
     def _update_icon(self):

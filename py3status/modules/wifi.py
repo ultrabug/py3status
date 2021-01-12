@@ -148,10 +148,10 @@ class Py3status:
             self.py3.log(msg)
 
     def _dbm_to_percent(self, dbm):
-        return 2.0 * (dbm + 100)
+        return 2 * (dbm + 100)
 
     def _percent_to_dbm(self, percent):
-        return (percent / 2.0) - 100
+        return (percent / 2) - 100
 
     def _get_wifi_data(self, command):
         for time in range(2):
@@ -209,7 +209,7 @@ class Py3status:
         freq_out = re.search(r"freq: ([\-0-9]+)", iw)
         if freq_out:
             freq_mhz = int(freq_out.group(1))
-            freq_ghz = freq_mhz / 1000.0
+            freq_ghz = freq_mhz / 1000
 
         # ip
         if self.py3.format_contains(self.format, "ip"):
@@ -229,7 +229,7 @@ class Py3status:
 
         # wifi
         if ssid is not None:
-            icon = self.blocks[int(math.ceil(quality / 100.0 * (len(self.blocks) - 1)))]
+            icon = self.blocks[math.ceil(quality / 100 * (len(self.blocks) - 1))]
             color = self.py3.COLOR_GOOD
             if bitrate:
                 if bitrate <= self.bitrate_bad:

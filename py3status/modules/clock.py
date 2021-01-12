@@ -257,9 +257,9 @@ class Py3status:
                 icon = None
                 if self.py3.format_contains(format_time, "icon"):
                     # calculate the decimal hour
-                    h = t.hour + t.minute / 60.0
+                    h = t.hour + t.minute / 60
                     if self.round_to_nearest_block:
-                        h += (self.block_hours / len(self.blocks)) / 2
+                        h += self.block_hours / len(self.blocks) / 2
                     # make 12 hourly etc
                     h = h % self.block_hours
                     idx = int(h / self.block_hours * len(self.blocks))
