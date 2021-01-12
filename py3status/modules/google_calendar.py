@@ -259,7 +259,7 @@ class Py3status:
 
         Returns: The list of events.
         """
-        self.last_update = time.time()
+        self.last_update = time.perf_counter()
         time_min = datetime.datetime.utcnow()
         time_max = time_min + datetime.timedelta(hours=self.events_within_hours)
         events = []
@@ -501,7 +501,7 @@ class Py3status:
                 self.py3.prevent_refresh()
             elif button == self.button_refresh:
                 # wait before the next refresh
-                if time.time() - self.last_update > 1:
+                if time.perf_counter() - self.last_update > 1:
                     self.no_update = False
             elif button == self.button_toggle:
                 self.button_states[button_index] = not self.button_states[button_index]

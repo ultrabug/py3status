@@ -109,7 +109,7 @@ class CheckI3StatusThread(Task):
             self.notify_user(err)
         else:
             # check again in 5 seconds
-            self.timeout_queue_add(self, int(time.time()) + 5)
+            self.timeout_queue_add(self, int(time.perf_counter()) + 5)
 
 
 class ModuleRunner(Task):
@@ -251,7 +251,7 @@ class Py3statusWrapper:
         """
         self.config = vars(options)
         self.i3bar_running = True
-        self.last_refresh_ts = time.time()
+        self.last_refresh_ts = time.perf_counter()
         self.lock = Event()
         self.modules = {}
         self.notified_messages = set()
@@ -344,7 +344,7 @@ class Py3statusWrapper:
         # process any items that need adding to the queue
         while self.timeout_add_queue:
             self.timeout_process_add_queue(*self.timeout_add_queue.popleft())
-        now = time.time()
+        now = time.perf_counter()
         due_timeouts = []
         # find any due timeouts
         for timeout in self.timeout_keys:
@@ -402,7 +402,7 @@ class Py3statusWrapper:
 
         # we return how long till we next need to process the timeout_queue
         if self.timeout_due is not None:
-            return self.timeout_due - time.time()
+            return self.timeout_due - time.perf_counter()
 
     def gevent_monkey_patch_report(self):
         """
@@ -689,7 +689,7 @@ class Py3statusWrapper:
         limit_key = ""
         if rate_limit:
             try:
-                limit_key = time.time() // rate_limit
+                limit_key = time.perf_counter() // rate_limit
             except TypeError:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
@@ -764,8 +764,8 @@ class Py3statusWrapper:
         refreshes.
         """
         if not module_string:
-            if time.time() > (self.last_refresh_ts + 0.1):
-                self.last_refresh_ts = time.time()
+            if time.perf_counter() > (self.last_refresh_ts + 0.1):
+                self.last_refresh_ts = time.perf_counter()
             else:
                 # rate limiting
                 return

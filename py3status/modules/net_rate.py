@@ -52,7 +52,7 @@ SAMPLE OUTPUT
 {'full_text': 'eno1:  852.2 KiB/s'}
 """
 
-from time import time
+import time
 
 
 class Py3status:
@@ -103,7 +103,7 @@ class Py3status:
         # last
         self.last_interface = None
         self.last_stat = self._get_stat()
-        self.last_time = time()
+        self.last_time = time.perf_counter()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
@@ -112,7 +112,7 @@ class Py3status:
         deltas = {}
         try:
             # time from previous check
-            current_time = time()
+            current_time = time.perf_counter()
             timedelta = current_time - self.last_time
 
             # calculate deltas for all interfaces

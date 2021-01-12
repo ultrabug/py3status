@@ -77,8 +77,9 @@ no_velib
 {'full_text': 'No Velib'}
 """
 
+import time
 from re import sub
-from time import time
+
 
 STRING_MISSING_STATIONS = "missing stations"
 VELIB_ENDPOINT = "https://www.velib-metropole.fr/webapi/map/details"
@@ -223,7 +224,7 @@ class Py3status:
 
     def velib_metropole(self):
         # refresh
-        current_time = time()
+        current_time = time.perf_counter()
         refresh = current_time >= self.idle_time
 
         # time

@@ -96,7 +96,7 @@ SAMPLE OUTPUT
 """
 
 from datetime import timedelta
-from time import time
+import time
 from gi.repository import GObject
 from gi.repository.GLib import GError
 from threading import Thread
@@ -315,7 +315,7 @@ class Py3status:
             and self._data.get("state") == PLAYING
         ):
             # Don't get trapped in aliasing errors!
-            update = time() + 0.5
+            update = time.perf_counter() + 0.5
         else:
             update = self.py3.CACHE_FOREVER
 

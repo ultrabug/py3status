@@ -1,7 +1,8 @@
+import time
+
 from ast import literal_eval
 from sys import argv
 from threading import Event
-from time import sleep, time
 
 from py3status.core import Common, Module
 
@@ -97,7 +98,7 @@ def module_test(module_class, config=None):
     while not m.error_messages:
         try:
             for meth in m.methods:
-                m.methods[meth]["cached_until"] = time()
+                m.methods[meth]["cached_until"] = time.perf_counter()
             m.run()
             output = m.get_latest()
             for item in output:
@@ -124,7 +125,7 @@ def module_test(module_class, config=None):
                     output = output[0]
                 print(output)
 
-            sleep(1)
+            time.sleep(1)
         except KeyboardInterrupt:
             m.kill()
             break
