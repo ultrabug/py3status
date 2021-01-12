@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 from pathlib import Path
+from shutil import which
 
 from platform import python_version
 from py3status.version import version
@@ -17,14 +18,7 @@ def parse_cli_args():
     xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
     # get i3status path
-    try:
-        with Path(os.devnull).open("w") as devnull:
-            command = ["which", "i3status"]
-            i3status_path = (
-                subprocess.check_output(command, stderr=devnull).decode().strip()
-            )
-    except subprocess.CalledProcessError:
-        i3status_path = None
+    i3status_path = which("i3status")
 
     # get window manager
     with Path(os.devnull).open("w") as devnull:

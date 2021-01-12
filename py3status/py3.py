@@ -9,6 +9,7 @@ from fnmatch import fnmatch
 from math import log10
 from pathlib import Path
 from pprint import pformat
+from shutil import which
 from subprocess import Popen, PIPE, STDOUT
 from uuid import uuid4
 
@@ -926,7 +927,7 @@ class Py3:
 
     def check_commands(self, cmd_list):
         """
-        Checks to see if commands in list are available using ``which``.
+        Checks to see if commands in list are available using shutil.which().
 
         returns the first available command.
 
@@ -938,7 +939,7 @@ class Py3:
             cmd_list = [cmd_list]
 
         for cmd in cmd_list:
-            if self.command_run(f"which {cmd}") == 0:
+            if which(cmd) is not None:
                 return cmd
 
     def command_run(self, command):
