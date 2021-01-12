@@ -87,7 +87,7 @@ class Module:
             ]
             self.error_output(self.error_messages[0])
             # log the error
-            msg = f"Module `{self.module_full_name}` could not be loaded"
+            msg = f"Module `{self.module_full_name}` could not be loaded ({e})"
             if isinstance(e, SyntaxError):
                 # provide full traceback
                 self._py3_wrapper.report_exception(msg, notify_user=False)
@@ -111,7 +111,7 @@ class Module:
         """
         class_inst = None
         if filepath.suffix == ".py":
-            py_mod = SourceFileLoader(filepath.stem, filepath).load_module()
+            py_mod = SourceFileLoader(filepath.stem, filepath.as_posix()).load_module()
             if hasattr(py_mod, cls.EXPECTED_CLASS):
                 class_inst = py_mod.Py3status()
         return class_inst
