@@ -17,9 +17,6 @@ def parse_cli_args():
     xdg_home_path = Path(os.environ.get("XDG_CONFIG_HOME", home_path / ".config"))
     xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
-    # get i3status path
-    i3status_path = which("i3status")
-
     # get window manager
     with Path(os.devnull).open("w") as devnull:
         if subprocess.call(["pgrep", "i3"], stdout=devnull) == 0:
@@ -144,7 +141,7 @@ def parse_cli_args():
         "-u",
         "--i3status",
         action="store",
-        default=i3status_path,
+        default=which("i3status") or "i3status",
         dest="i3status_path",
         help="specify i3status path",
         metavar="PATH",
@@ -187,10 +184,6 @@ def parse_cli_args():
         "i3": {"msg": "i3-msg", "nag": "i3-nagbar"},
         "sway": {"msg": "swaymsg", "nag": "swaynag"},
     }[options.wm]
-
-    # make it i3status if None
-    if not options.i3status_path:
-        options.i3status_path = Path("i3status")
 
     # make include path to search for user modules if None
     if not options.include_paths:
