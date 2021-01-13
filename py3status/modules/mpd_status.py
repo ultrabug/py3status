@@ -4,7 +4,7 @@ Display song currently playing in mpd.
 Configuration parameters:
     cache_timeout: how often we refresh this module in seconds (default 2)
     format: template string (see below)
-        (default '{state} [[[{artist}] - {title}]|[{file}]]')
+        (default '{state} [[[{artist} ]- {title}]|[{file}]]')
     hide_on_error: hide the status if an error has occurred (default False)
     hide_when_paused: hide the status if state is paused (default False)
     hide_when_stopped: hide the status if state is stopped (default True)
@@ -106,7 +106,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 2
-    format = "{state} [[[{artist}] - {title}]|[{file}]]"
+    format = "{state} [[[{artist} ]- {title}]|[{file}]]"
     hide_on_error = False
     hide_when_paused = False
     hide_when_stopped = True
