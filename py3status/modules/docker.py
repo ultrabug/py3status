@@ -52,21 +52,23 @@ class Py3status:
         containers = self.client.containers.list()
         if self.containers:
             for container in containers:
-                if any(fnmatch(container.attrs["Config"]["Image"], glob) for glob in self.containers) \
-                        or any(fnmatch(container.name, glob) for glob in self.containers):
+                if any(
+                    fnmatch(container.attrs["Config"]["Image"], glob)
+                    for glob in self.containers
+                ) or any(fnmatch(container.name, glob) for glob in self.containers):
                     yield container
         else:
             yield from containers
 
     def _print(self, container):
         return self.format.format(
-                name=container.name,
-                short_id=container.short_id,
-                id=container.id,
-                status=container.status,
-                image=container.attrs["Config"]["Image"],
-                gateway=container.attrs["NetworkSettings"]["Gateway"]
-            )
+            name=container.name,
+            short_id=container.short_id,
+            id=container.id,
+            status=container.status,
+            image=container.attrs["Config"]["Image"],
+            gateway=container.attrs["NetworkSettings"]["Gateway"]
+        )
 
     def docker(self):
         """
