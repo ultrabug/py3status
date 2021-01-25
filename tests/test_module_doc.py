@@ -187,7 +187,7 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
     # Make both lists the same length
     max_len = max(len(source), len(target))
     for lst in (source, target):
-        lst.extend([blank for i in range(max_len - len(lst))])
+        lst.extend([blank] * (max_len - len(lst)))
 
     # Determine the length of the longest item in the list
     max_elem_len = max(len(str(elem)) for elem in source)
@@ -230,7 +230,7 @@ def _gen_diff(source, target, source_label="Source", target_label="Target"):
 def check_docstrings():
     all_errors = []
     docstrings = core_module_docstrings()
-    for module_name in sorted(docstrings.keys()):
+    for module_name in sorted(docstrings):
         errors = []
         if module_name in IGNORE_MODULE:
             continue
@@ -240,12 +240,12 @@ def check_docstrings():
 
         params, obsolete = docstring_params(docstrings[module_name])
 
-        if list(params.keys()) != list(sorted(params.keys())):
-            keys = list(params.keys())
+        if list(params) != sorted(params):
+            keys = list(params)
             msg = "config params not in alphabetical order should be\n{keys}"
             errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
-        if list(obsolete.keys()) != list(sorted(obsolete.keys())):
-            keys = list(obsolete.keys())
+        if list(obsolete) != sorted(obsolete):
+            keys = list(obsolete)
             msg = "obsolete params not in alphabetical order should be\n{keys}"
             errors.append(msg.format(keys=_gen_diff(keys, sorted(keys))))
 
@@ -265,7 +265,7 @@ def check_docstrings():
             errors.append(msg.format(", ".join(bad_config_params)))
 
         # check attributes are in alphabetical order
-        keys = list(mod_config.keys())
+        keys = list(mod_config)
         for item in IGNORE_ITEM:
             if item[0] == module_name and item[1] in keys:
                 keys.remove(item[1])
@@ -276,7 +276,7 @@ def check_docstrings():
             errors.append("Attributes not in alphabetical order, should be")
             errors.append(_gen_diff(keys, sorted(keys)))
 
-        for param in sorted(mod_config.keys()):
+        for param in sorted(mod_config):
             if (module_name, param) in IGNORE_ITEM:
                 continue
             default = mod_config[param]

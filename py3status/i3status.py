@@ -354,7 +354,7 @@ class I3status(Thread):
     def run(self):
         # if the i3status process dies we want to restart it.
         # We give up restarting if we have died too often
-        for x in range(10):
+        for _ in range(10):
             if not self.py3_wrapper.running:
                 break
             self.spawn_i3status()

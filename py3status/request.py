@@ -40,7 +40,7 @@ class HttpResponse:
         if auth:
             # we need to do the encode/decode to keep python 3 happy
             # TODO: make this straight for python 3
-            auth_str = base64.b64encode(("%s:%s" % (auth)).encode("utf-8"))
+            auth_str = base64.b64encode(("%s:%s" % auth).encode("utf-8"))
             headers["Authorization"] = "Basic %s" % auth_str.decode("utf-8")
         if data:
             data = urlencode(data).encode()

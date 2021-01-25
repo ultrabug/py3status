@@ -378,7 +378,7 @@ class Py3status:
 
     def _get_meminfo(self, head=28):
         with Path("/proc/meminfo").open() as f:
-            info = [line.split() for line in (next(f) for x in range(head))]
+            info = [next(f).split() for _ in range(head)]
             return {fields[0]: float(fields[1]) for fields in info}
 
     def _calc_cpu_percent(self, cpu):

@@ -81,7 +81,7 @@ class Py3status:
         # We only care about changes in ActiveConnections
         active = "ActiveConnections"
         # Compare current ActiveConnections to last seen ActiveConnections
-        if active in args.keys() and sorted(self.active) != sorted(args[active]):
+        if active in args and sorted(self.active) != sorted(args[active]):
             self.active = args[active]
             self.py3.update()
 

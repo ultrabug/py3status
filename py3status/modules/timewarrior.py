@@ -216,8 +216,8 @@ class Py3status:
         new_time = []
         self.tracking = False
 
-        for time_index, time in zip(range(len(data), -1, -1), data):
-            time["index"] = time_index
+        for i, time in enumerate(data):
+            time["index"] = len(data) - i
             time["state_time"] = "end" not in time
 
             # tags

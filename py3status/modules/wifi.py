@@ -154,7 +154,7 @@ class Py3status:
         return (percent / 2) - 100
 
     def _get_wifi_data(self, command):
-        for time in range(2):
+        for _ in range(2):
             try:
                 return self.py3.command_output(command)
             except self.py3.CommandError as ce:

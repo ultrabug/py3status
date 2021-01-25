@@ -43,7 +43,7 @@ def get_connected_devices():
     devices = []
 
     for dev_path, interfaces in objects.items():
-        if "org.bluez.Device1" in interfaces.keys():
+        if "org.bluez.Device1" in interfaces:
             properties = objects[dev_path]["org.bluez.Device1"]
 
             if properties["Connected"] == 1:

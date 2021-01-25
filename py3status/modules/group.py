@@ -165,8 +165,8 @@ class Py3status:
         # and then pad with spaces to make correct width.
         current = []
         widths = []
-        for i in range(len(self.items)):
-            output = self.py3.get_output(self.items[i])
+        for i, item in enumerate(self.items):
+            output = self.py3.get_output(item)
             if not output:
                 widths.append(0)
             else:
@@ -197,7 +197,7 @@ class Py3status:
 
     def _get_output_and_time(self):
         # get an output. again if empty (twice).
-        for x in range(3):
+        for _ in range(3):
             output = self._get_output()
             if output:
                 update_time = None

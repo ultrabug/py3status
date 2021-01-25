@@ -383,12 +383,12 @@ class Py3status:
             # Assumes a system has at max two batteries
             active_battery = None
             inactive_battery = battery_list[:]
-            for battery_id in range(0, len(battery_list)):
+            for battery_id, battery in enumerate(battery_list):
                 if (
-                    battery_list[battery_id]["time_remaining"]
-                    and battery_list[battery_id]["time_remaining"] != FULLY_CHARGED
+                    battery["time_remaining"]
+                    and battery["time_remaining"] != FULLY_CHARGED
                 ):
-                    active_battery = battery_list[battery_id]
+                    active_battery = battery
                     del inactive_battery[battery_id]
 
             # Only one battery will be discharging or charging at a time.

@@ -164,7 +164,7 @@ class Py3status:
                     self.py3.log(f"found player: {player_name}")
 
                 # those players need the dbus module
-                if player_name in ("vlc") and not dbus_available:
+                if player_name == "vlc" and not dbus_available:
                     self.py3.log(f"{player_name} requires the dbus python module")
                     return None
 

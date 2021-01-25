@@ -335,8 +335,8 @@ class Py3status:
             return
 
         cmd = "xrandr"
-        outputs = list(self.layout["connected"].keys())
-        outputs += list(self.layout["disconnected"].keys())
+        outputs = list(self.layout["connected"])
+        outputs += list(self.layout["disconnected"])
         previous_output = None
         primary_added = False
         for output in outputs:

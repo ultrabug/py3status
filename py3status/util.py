@@ -64,7 +64,7 @@ class Gradients:
 
         hue_diff = h1 - h2
         if long_route:
-            if hue_diff < 0.5 and hue_diff > -0.5:
+            if -0.5 < hue_diff < 0.5:
                 h1 += 1
         else:
             if hue_diff > 0.5:
@@ -88,17 +88,14 @@ class Gradients:
             gradient_data.append((int(gradient_step * x), color_list[x]))
 
         data = []
-        for i in range(len(gradient_data) - 1):
-            start, color1 = gradient_data[i]
-            end, color2 = gradient_data[i + 1]
-
+        for (start, color1), (end, color2) in zip(gradient_data, gradient_data[1:]):
             color1 = self.hex_2_hsv(color1)
             color2 = self.hex_2_hsv(color2)
 
             steps = end - start
             for j in range(steps):
                 data.append(
-                    self.hsv_2_hex(*self.make_mid_color(color1, color2, j / (steps)))
+                    self.hsv_2_hex(*self.make_mid_color(color1, color2, j / steps))
                 )
         data.append(self.hsv_2_hex(*color2))
         return data
@@ -125,11 +122,9 @@ class Gradients:
         else:
             steps_size = 1
         colors = []
-        for index in range(len(thresholds) - 1):
-            color_list = [thresholds[index][1], thresholds[index + 1][1]]
-            num_colors = int(
-                (thresholds[index + 1][0] - thresholds[index][0]) * steps_size
-            )
+        for thres_a, thres_b in zip(thresholds, thresholds[1:]):
+            color_list = [thres_a[1], thres_b[1]]
+            num_colors = int((thres_b[0] - thres_a[0]) * steps_size)
             colors.extend(self.generate_gradient(color_list, num_colors))
         # cache gradient
         self._gradients_cache[key] = colors

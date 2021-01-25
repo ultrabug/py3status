@@ -107,11 +107,7 @@ def run_formatter(test_dict):
     # simplify the composite and convert to text if possible
     if isinstance(result, Composite):
         result.simplify()
-        if (
-            not test_dict.get("composite")
-            and len(result) == 1
-            and len(result[0].keys()) == 1
-        ):
+        if not test_dict.get("composite") and len(result) == 1 and len(result[0]) == 1:
             result = result[0]["full_text"]
 
     if hasattr(result, "get_content"):
@@ -1441,7 +1437,7 @@ if __name__ == "__main__":
     import sys
 
     this_module = sys.modules[__name__]
-    for x in range(10):
+    for _ in range(10):
         for name in dir(this_module):
             if not name.startswith("test_"):
                 continue

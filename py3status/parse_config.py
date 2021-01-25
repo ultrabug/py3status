@@ -303,7 +303,7 @@ class ConfigParser:
                 return r"\\"
             return match.group(0).encode("utf-8").decode("unicode-escape")
 
-        return re.sub(r"\\\\|\\u\w{4}|\\U\w{8}|\\N\{([^}\\]|\\.)+\}", fix_fn, value)
+        return re.sub(r"\\\\|\\u\w{4}|\\U\w{8}|\\N{([^}\\]|\\.)+}", fix_fn, value)
 
     def make_value(self, value):
         """
@@ -530,7 +530,7 @@ class ConfigParser:
             elif t_value == "(":
                 return tuple(self.make_list(end_token=")"))
             else:
-                self.error("Value expected", previous=not (end_token))
+                self.error("Value expected", previous=not end_token)
 
     def module_def(self):
         """

@@ -138,15 +138,9 @@ class Py3status:
         if self.steps == 1:
             colors = [to_hex(from_hex(x)) for x in self.gradient]
         else:
-            for i in range(len(self.gradient) - 1):
+            for grad_a, grad_b in zip(self.gradient, self.gradient[1:]):
                 for j in range(self.steps):
-                    colors.append(
-                        to_hex(
-                            make_color(
-                                self.gradient[i], self.gradient[i + 1], j / (self.steps)
-                            )
-                        )
-                    )
+                    colors.append(to_hex(make_color(grad_a, grad_b, j / self.steps)))
         self.colors = colors
         self.active_color = 0
         self._set_cycle_time()
