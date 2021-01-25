@@ -263,7 +263,7 @@ class Pactl(Audio):
             if len(parts) < 2:
                 continue
             current_devices[parts[0]] = parts[1]
-        self.parent.py3.log(f"available {self.device_type_pl}: {current_devices}")
+        # self.parent.py3.log(f"available {self.device_type_pl}: {current_devices}")
         return current_devices
 
     def get_volume(self):
