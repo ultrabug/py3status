@@ -5,7 +5,7 @@ GENERAL_DEFAULTS = {
     "color_degraded": "#FFFF00",
     "color_good": "#00FF00",
     "color_separator": "#333333",
-    "colors": False,
+    "colors": True,
     "interval": 5,
     "output_format": "i3bar",
 }

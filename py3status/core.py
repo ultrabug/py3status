@@ -936,12 +936,16 @@ class Py3statusWrapper:
         Color processing occurs here.
         """
         outputs = module["module"].get_latest()
-        color = module["color"]
-        if color:
+        if self.config["py3_config"]["general"].get("colors") is False:
             for output in outputs:
-                # Color: substitute the config defined color
-                if "color" not in output:
-                    output["color"] = color
+                output.pop("color", None)
+        else:
+            color = module["color"]
+            if color:
+                for output in outputs:
+                    # Color: substitute the config defined color
+                    if "color" not in output:
+                        output["color"] = color
         # Create the json string output.
         return ",".join(dumps(x) for x in outputs)
 
