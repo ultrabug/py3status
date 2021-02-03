@@ -1,3 +1,33 @@
+version 3.32 (2021-02-03)
+* IMPORTANT: a lot of python3 and code normalization happened thanks to Miroslav Šedivý
+* core: upgrade to python 3.6 syntax using pyupgrade, by Miroslav Šedivý
+* core: modernize python3 code (#1993), by Miroslav Šedivý
+* py3status code uses f-strings (#1981), by Miroslav Šedivý
+* use list/generator/dict comprehensions where appropriate (#1982), by Miroslav Šedivý
+* use pathlib everywhere to manipulate paths and files (#1978), by Miroslav Šedivý
+* use shutil.which() instead of external which binary (#1997), by Jonas Witschel
+* use time.perf_counter to measure short time periods (#1996), by Miroslav Šedivý
+* add github project sponsoring
+* argparsers: add missing path on default value
+* argparsers: make sure FILE and PATH options are Path objects
+* battery_level module: fix float formatting with f-strings
+* better usage of timedelta/time modules (#1985), by Miroslav Šedivý
+* ci: switch to GitHub Actions CI (#1980), by Miroslav Šedivý
+* command: fix binding on PosixPath instead of a bytes-like object
+* core: honor the "colors" general directive thx to @infabo fixes #1999
+* docs: fix building of html docs
+* drop travis-ci
+* fix sys.path manipulation in setup.py as reported by @X-dark (#1983), by Miroslav Šedivý
+* i3status module: use datetime.timezone for a custom tz (#1984), by Miroslav Šedivý
+* i3status module: add markup support for time,tztime modules, by lasers
+* mpd_status module: fixes extra space in the state when there's no artist (#1998), by Nicolás Sirolli
+* mpris module: fixes mpris for Chrome, too. (#1989), by Klaus Umbach
+* remove obsolete numeric relics from Python 2 (#1991), by Miroslav Šedivý
+* spotify module: fix QA black format* Drop Python 3.5 support, by Miroslav Šedivý
+* taskwarrior module: replace pytz with datetime.timezone (#1992), by Miroslav Šedivý
+* volume_status module: stop spamming logs fixes #2002
+* window module: change i3ipc to required dependency thx to @ssiyad
+
 version 3.31 (2020-11-19)
 * core: new "on_error" parameter to control module error behavior (#1972)
 * doc: add CorruptCommit 's configuration examples (#1965), by CorruptCommit
