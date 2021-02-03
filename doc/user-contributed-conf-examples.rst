@@ -112,7 +112,7 @@ Ultrabug's configuration examples
     }
 
 CorruptCommit's configuration examples
----------------------------------
+--------------------------------------
 
 .. code-block:: none
 
