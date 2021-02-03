@@ -12,7 +12,7 @@ Format placeholders:
     {instance} window instance
     {title} window title
 
-Optional:
+Requires:
     i3ipc: an improved python library to control i3wm and sway
 
 Examples:
