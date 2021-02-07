@@ -527,18 +527,17 @@ def send_command():
     if len(msg) > MAX_SIZE:
         verbose(f"Message length too long, max length ({MAX_SIZE})")
 
-    # find all likely socket addresses
-    uds_list = Path(".").glob(f"{SERVER_ADDRESS}.[0-9]*")
-
     verbose(f"message {msg!r}")
-    for uds in uds_list:
+    # find all likely socket addresses
+    wildcard = Path(f"{SERVER_ADDRESS}.[0-9]*")
+    for uds in wildcard.parent.glob(wildcard.name):
         # Create a UDS socket
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         # Connect the socket to the port where the server is listening
         verbose(f"connecting to {uds}")
         try:
-            sock.connect(uds)
+            sock.connect(str(uds))
         except OSError:
             # this is a stale socket so delete it
             verbose("stale socket deleting")
