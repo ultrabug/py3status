@@ -204,7 +204,7 @@ class Py3status:
                 for chunk in lm_sensors_data.split("\n\n")[:-1]:
                     for line in chunk.splitlines():
                         if fnmatch(line, _filter):
-                            chips.append(line)
+                            chips.append(_filter)
                         break
             self.lm_sensors_command += " {}".format(" ".join(chips))
 
