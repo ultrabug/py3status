@@ -1,3 +1,8 @@
+version 3.33 (2021-02-07)
+* HOTFIX: this hotfix release fixes py3-cmd
+* IMPORTANT: since we touched a lot of stuff in 3.32, we might have broken stuff.
+* command: fix py3-cmd refresh error thx to @btmcg fixes #2003
+
 version 3.32 (2021-02-03)
 * IMPORTANT: a lot of python3 and code normalization happened thanks to Miroslav Šedivý
 * core: upgrade to python 3.6 syntax using pyupgrade, by Miroslav Šedivý

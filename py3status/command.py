@@ -528,7 +528,7 @@ def send_command():
         verbose(f"Message length too long, max length ({MAX_SIZE})")
 
     # find all likely socket addresses
-    uds_list = Path(".").glob(f"{SERVER_ADDRESS}.[0-9]*")
+    uds_list = Path(SERVER_ADDRESS).parent.glob(f"{Path(SERVER_ADDRESS).name}.[0-9]*")
 
     verbose(f"message {msg!r}")
     for uds in uds_list:
@@ -538,7 +538,7 @@ def send_command():
         # Connect the socket to the port where the server is listening
         verbose(f"connecting to {uds}")
         try:
-            sock.connect(uds)
+            sock.connect(uds.as_posix())
         except OSError:
             # this is a stale socket so delete it
             verbose("stale socket deleting")
