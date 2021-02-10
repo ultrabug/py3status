@@ -352,7 +352,7 @@ class Py3status:
         if not self.command:
             commands = ["pamixer", "pactl", "amixer"]
             # pamixer, pactl requires pulseaudio to work
-            if not self.py3.check_commands("pulseaudio"):
+            if not self.py3.check_commands(["pulseaudio", "pipewire"]):
                 commands = ["amixer"]
             self.command = self.py3.check_commands(commands)
         elif self.command not in ["amixer", "pamixer", "pactl"]:
