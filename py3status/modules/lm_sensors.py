@@ -91,7 +91,7 @@ Examples:
 lm_sensors {
     chips = ['coretemp-isa-0000']  # full
         OR
-    chips = ['coretemp*']  # fnmatch
+    chips = ['coretemp-*']  # lm_sensors-compatible wildcard
 }
 
 # specify sensors to use
