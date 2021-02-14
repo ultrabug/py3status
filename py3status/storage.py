@@ -22,18 +22,18 @@ class Storage:
         # cutting edge storage cache
         storage_config = py3_config.get("py3status", {}).get("storage")
         if storage_config:
-            storage_file = os.path.expandvars(storage_config.expanduser())
+            storage_file = os.path.expandvars(os.path.expanduser(storage_config))
             if "/" in storage_file:
                 storage_dir = None
             else:
                 storage_dir = os.environ.get("XDG_CACHE_HOME")
         else:
             storage_dir = os.environ.get("XDG_CACHE_HOME")
-            storage_file = Path("py3status_cache.data")
+            storage_file = "py3status_cache.data"
 
         if not storage_dir:
             storage_dir = Path("~/.cache").expanduser()
-        self.storage_path = storage_dir / storage_file
+        self.storage_path = Path(storage_dir, storage_file)
 
         # move legacy storage cache to new desired / default location
         if legacy_storage_path:
