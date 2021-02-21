@@ -57,7 +57,7 @@ Configuration parameters:
         accepted values : hangoutLink (open the VC room associated with the event),
         htmlLink (open the event's details in Google Calendar).
         fallback to htmlLink if the preferred_event_link does not exist it the event.
-        (default: htmlLink)
+        (default 'htmlLink')
     response: Only display events for which the response status is
         on the list. (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
