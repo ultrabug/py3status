@@ -53,6 +53,8 @@ Configuration parameters:
         (default 3)
     response: Only display events for which the response status is
         on the list. (default ['accepted'])
+    browser_invocation: Command to run to open browser. Curly braces stands for URL opened.
+    (default "xdg-open {}")
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
@@ -60,6 +62,10 @@ Configuration parameters:
         string; e.g. if time_to_max is 60, `{format_timer}` will only be
         displayed for events starting in 60 minutes or less.
         (default 180)
+    preferred_event_link: link to open in the browser.
+        accepted values : hangoutLink (open the VC room associated with the event),
+           (default)    : htmlLink (open the event's details in Google Calendar).
+        fallback to htmlLink if the preferred_event_link does not exist it the event.
     warn_threshold: The number of minutes until an event starts before a
         warning is displayed to notify the user; e.g. if warn_threshold is 30
         and an event is starting in 30 minutes or less, a notification will be
@@ -163,6 +169,7 @@ class Py3status:
     # available configuration parameters
     auth_token = "~/.config/py3status/google_calendar.auth_token"
     blacklist_events = []
+    browser_invocation = "xdg-open {}"
     button_open = 3
     button_refresh = 2
     button_toggle = 1
@@ -185,6 +192,7 @@ class Py3status:
     )
     ignore_all_day_events = False
     num_events = 3
+    preferred_event_link = "htmlLink"
     response = ["accepted"]
     thresholds = []
     time_to_max = 180
@@ -397,7 +405,10 @@ class Py3status:
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            self.event_urls.append(event["htmlLink"])
+            if self.preferred_event_link == "hangoutLink":
+                self.event_urls.append(event.get("hangoutLink", event.get("htmlLink")))
+            else:
+                self.event_urls.append(event.get("htmlLink"))
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
@@ -508,7 +519,7 @@ class Py3status:
             elif button == self.button_open:
                 if self.event_urls:
                     self.py3.command_run(
-                        "xdg-open {}".format(self.event_urls[button_index])
+                        self.browser_invocation.format(self.event_urls[button_index])
                     )
                 self.py3.prevent_refresh()
             else:
