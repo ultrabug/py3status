@@ -512,7 +512,15 @@ class Py3:
         """
         self._module.prevent_refresh = True
 
-    def notify_user(self, msg, level="info", rate_limit=5, title=None, icon=None):
+    def notify_user(
+        self,
+        msg,
+        level="info",
+        rate_limit=5,
+        title=None,
+        icon=None,
+        escape_html_symbols=True,
+    ):
         """
         Send a notification to the user.
         level must be 'info', 'error' or 'warning'.
@@ -535,6 +543,7 @@ class Py3:
                 module_name=module_name,
                 title=title,
                 icon=icon,
+                escape_html_symbols=escape_html_symbols,
             )
 
     def register_function(self, function_name, function):

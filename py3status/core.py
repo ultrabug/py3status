@@ -661,6 +661,7 @@ class Py3statusWrapper:
         module_name="",
         icon=None,
         title="py3status",
+        escape_html_symbols=True,
     ):
         """
         Display notification to user via i3-nagbar or send-notify
@@ -709,9 +710,10 @@ class Py3statusWrapper:
         try:
             if dbus:
                 # fix any html entities
-                msg = msg.replace("&", "&amp;")
-                msg = msg.replace("<", "&lt;")
-                msg = msg.replace(">", "&gt;")
+                if escape_html_symbols:
+                    msg = msg.replace("&", "&amp;")
+                    msg = msg.replace("<", "&lt;")
+                    msg = msg.replace(">", "&gt;")
                 cmd = ["notify-send"]
                 if icon:
                     cmd += ["-i", icon]
