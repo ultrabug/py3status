@@ -12,6 +12,8 @@ Configuration parameters:
     blacklist_events: Event names in this list will not be shown in the module
         (case insensitive).
         (default [])
+    browser_invocation: Command to run to open browser. Curly braces stands for URL opened.
+        (default "xdg-open {}")
     button_open: Opens the event URL in the default web browser.
         (default 3)
     button_refresh: Refreshes the module and updates the list of events.
@@ -51,10 +53,13 @@ Configuration parameters:
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
+    preferred_event_link: link to open in the browser.
+        accepted values : hangoutLink (open the VC room associated with the event),
+        htmlLink (open the event's details in Google Calendar).
+        fallback to htmlLink if the preferred_event_link does not exist it the event.
+        (default: htmlLink)
     response: Only display events for which the response status is
         on the list. (default ['accepted'])
-    browser_invocation: Command to run to open browser. Curly braces stands for URL opened.
-    (default "xdg-open {}")
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
@@ -62,10 +67,6 @@ Configuration parameters:
         string; e.g. if time_to_max is 60, `{format_timer}` will only be
         displayed for events starting in 60 minutes or less.
         (default 180)
-    preferred_event_link: link to open in the browser.
-        accepted values : hangoutLink (open the VC room associated with the event),
-           (default)    : htmlLink (open the event's details in Google Calendar).
-        fallback to htmlLink if the preferred_event_link does not exist it the event.
     warn_threshold: The number of minutes until an event starts before a
         warning is displayed to notify the user; e.g. if warn_threshold is 30
         and an event is starting in 30 minutes or less, a notification will be
