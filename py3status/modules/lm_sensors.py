@@ -197,7 +197,17 @@ class Py3status:
         if not self.py3.format_contains(self.format_chip, "adapter"):
             self.lm_sensors_command += "A"  # don't print adapters
 
-        self.lm_sensors_command += " {}".format(" ".join(self.chips))
+        if self.chips:
+            lm_sensors_data = self._get_lm_sensors_data()
+            chips = []
+            for _filter in self.chips:
+                for chunk in lm_sensors_data.split("\n\n")[:-1]:
+                    for line in chunk.splitlines():
+                        if fnmatch(line, _filter):
+                            chips.append(_filter)
+                        break
+            self.lm_sensors_command += " {}".format(" ".join(chips))
+
         self.sensors = {"list": [], "name": {}, "sensors": self.sensors}
 
         self.thresholds_auto = False
