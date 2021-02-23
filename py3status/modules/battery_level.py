@@ -355,7 +355,7 @@ class Py3status:
     def _seconds_to_hms(self, secs):
         m, s = divmod(secs, 60)
         h, m = divmod(m, 60)
-        return f"{h}:{int(m):02d}:{int(s):02d}"
+        return f"{int(h):2d}:{int(m):02d}:{int(s):02d}"
 
     def _refresh_battery_info(self, battery_list):
         if type(self.battery_id) == int:
