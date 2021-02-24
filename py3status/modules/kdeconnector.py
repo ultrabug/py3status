@@ -194,7 +194,7 @@ class Py3status:
         """
         Get the battery status
         """
-        if battery["charge"] == -1:
+        if not battery or battery["charge"] == -1:
             return (UNKNOWN_SYMBOL, UNKNOWN, "#FFFFFF")
 
         if battery["isCharging"]:
