@@ -5,6 +5,9 @@ This module will display information about upcoming Google Calendar events
 in one of two formats which can be toggled with a button press. The event
 URL may also be opened in a web browser with a button press.
 
+Some events details can be retreived in the Google Calendar API Documentation.
+https://developers.google.com/calendar/v3/reference/events
+
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
@@ -54,12 +57,16 @@ Configuration parameters:
     num_events: The maximum number of events to display.
         (default 3)
     preferred_event_link: link to open in the browser.
-        accepted values : hangoutLink (open the VC room associated with the event),
-        htmlLink (open the event's details in Google Calendar).
+        accepted values :
+        hangoutLink (open the VC room associated with the event),
+        htmlLink (open the event's details in Google Calendar)
         fallback to htmlLink if the preferred_event_link does not exist it the event.
-        (default 'htmlLink')
+        (default "htmlLink")
     response: Only display events for which the response status is
-        on the list. (default ['accepted'])
+        on the list.
+        Available values in the Google Calendar API's documentation,
+        look for the attendees[].responseStatus.
+        (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
@@ -406,10 +413,7 @@ class Py3status:
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            if self.preferred_event_link == "hangoutLink":
-                self.event_urls.append(event.get("hangoutLink", event.get("htmlLink")))
-            else:
-                self.event_urls.append(event.get("htmlLink"))
+            self.event_urls.append(event.get(self.preferred_event_link, event.get("htmlLink")))
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
