@@ -6,9 +6,7 @@ Configuration parameters:
     devices: specify a list of devices to use (default ['[e|w]*'])
     format: display format for this module (default '{format_device}')
     format_device: format for devices
-        *(default "[\?if=general_connection {general_device}[\?soft  ]"
-        "[\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ]"
-        "[\?color=good {ip4_address1}]]")*
+        *(default "[\?if=general_connection {general_device}[\?soft  ][\?color=ap_signal {ap_ssid} {ap_bars} {ap_signal}%][\?soft  ][\?color=good {ip4_address1}]]")*
     format_device_separator: show separator if more than one (default ' ')
     thresholds: specify color thresholds to use
         (default [(0, 'bad'), (30, 'degraded'), (65, 'good')])
