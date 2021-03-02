@@ -5,6 +5,9 @@ This module will display information about upcoming Google Calendar events
 in one of two formats which can be toggled with a button press. The event
 URL may also be opened in a web browser with a button press.
 
+Some events details can be retreived in the Google Calendar API Documentation.
+https://developers.google.com/calendar/v3/reference/events
+
 Configuration parameters:
     auth_token: The path to where the access/refresh token will be saved
         after successful credential authorization.
@@ -12,6 +15,8 @@ Configuration parameters:
     blacklist_events: Event names in this list will not be shown in the module
         (case insensitive).
         (default [])
+    browser_invocation: Command to run to open browser. Curly braces stands for URL opened.
+        (default "xdg-open {}")
     button_open: Opens the event URL in the default web browser.
         (default 3)
     button_refresh: Refreshes the module and updates the list of events.
@@ -51,8 +56,17 @@ Configuration parameters:
         (default False)
     num_events: The maximum number of events to display.
         (default 3)
+    preferred_event_link: link to open in the browser.
+        accepted values :
+        hangoutLink (open the VC room associated with the event),
+        htmlLink (open the event's details in Google Calendar)
+        fallback to htmlLink if the preferred_event_link does not exist it the event.
+        (default "htmlLink")
     response: Only display events for which the response status is
-        on the list. (default ['accepted'])
+        on the list.
+        Available values in the Google Calendar API's documentation,
+        look for the attendees[].responseStatus.
+        (default ['accepted'])
     thresholds: Thresholds for events. The first entry is the color for event 1,
         the second for event 2, and so on.
         (default [])
@@ -67,6 +81,7 @@ Configuration parameters:
         (default 0)
     warn_timeout: The number of seconds before a warning should be issued again.
         (default 300)
+
 
 Control placeholders:
     {is_toggled} a boolean toggled by button_toggle
@@ -163,6 +178,7 @@ class Py3status:
     # available configuration parameters
     auth_token = "~/.config/py3status/google_calendar.auth_token"
     blacklist_events = []
+    browser_invocation = "xdg-open {}"
     button_open = 3
     button_refresh = 2
     button_toggle = 1
@@ -185,6 +201,7 @@ class Py3status:
     )
     ignore_all_day_events = False
     num_events = 3
+    preferred_event_link = "htmlLink"
     response = ["accepted"]
     thresholds = []
     time_to_max = 180
@@ -397,7 +414,9 @@ class Py3status:
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            self.event_urls.append(event["htmlLink"])
+            self.event_urls.append(
+                event.get(self.preferred_event_link, event.get("htmlLink"))
+            )
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
@@ -508,7 +527,7 @@ class Py3status:
             elif button == self.button_open:
                 if self.event_urls:
                     self.py3.command_run(
-                        "xdg-open {}".format(self.event_urls[button_index])
+                        self.browser_invocation.format(self.event_urls[button_index])
                     )
                 self.py3.prevent_refresh()
             else:
