@@ -82,6 +82,7 @@ Configuration parameters:
     warn_timeout: The number of seconds before a warning should be issued again.
         (default 300)
 
+
 Control placeholders:
     {is_toggled} a boolean toggled by button_toggle
 
@@ -413,7 +414,9 @@ class Py3status:
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            self.event_urls.append(event.get(self.preferred_event_link, event.get("htmlLink")))
+            self.event_urls.append(
+                event.get(self.preferred_event_link, event.get("htmlLink"))
+            )
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
