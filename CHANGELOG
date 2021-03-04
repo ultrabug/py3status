@@ -1,3 +1,14 @@
+version 3.34 (2021-03-04)
+* storage: fix Path generation in storage fixes #2004 (#2007), by Miroslav Šedivý
+* battery_level module: fix converting seconds to H:M:S format (#2010), by David Herman
+* google_calendar module: add options to personalize behavior (#2013), by ben75020
+* kdeconnector module: fix for battery unavailable (#2015), by Zack Didcott
+* lm_sensors module: fix an issue when sensors disconnect and are not detected again  (#2006), by Jack Doan
+* net_iplist module: show only non deprecated ipv6 addresses (#2011), by Christian Struck
+* networkmanager module: make format_device less confusing in docstring
+* volume_status module: log available devices only on change
+* volume_status module: run with either pulseaudio or pipewire installed (#2009), by Yaroslav Dronskii
+
 version 3.33 (2021-02-07)
 * HOTFIX: this hotfix release fixes py3-cmd
 * IMPORTANT: since we touched a lot of stuff in 3.32, we might have broken stuff.
