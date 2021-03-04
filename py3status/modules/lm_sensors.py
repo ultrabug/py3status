@@ -91,7 +91,7 @@ Examples:
 lm_sensors {
     chips = ['coretemp-isa-0000']  # full
         OR
-    chips = ['coretemp*']  # fnmatch
+    chips = ['coretemp-*']  # lm_sensors-compatible wildcard
 }
 
 # specify sensors to use
@@ -204,7 +204,7 @@ class Py3status:
                 for chunk in lm_sensors_data.split("\n\n")[:-1]:
                     for line in chunk.splitlines():
                         if fnmatch(line, _filter):
-                            chips.append(line)
+                            chips.append(_filter)
                         break
             self.lm_sensors_command += " {}".format(" ".join(chips))
 
