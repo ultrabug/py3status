@@ -98,7 +98,7 @@ Configuration parameters:
     format_wind: Formatting for wind degree and speed
         The 'gust' option represents the speed of wind gusts in the wind unit.
         Available placeholders:
-            icon, degree, speed, gust
+            icon, degree, speed, gust, direction
         (default '[\?if=speed {icon} {speed:.0f} {unit}]')
     icon_atmosphere: Icon for atmospheric conditions, like fog, smog, etc.
         (default '🌫')
@@ -206,6 +206,7 @@ Format placeholders:
         {unit} The unit specified
     format_wind:
         {degree} Current wind heading
+        {direction} Letter reprents direction e.g. N,NE,E etc
         {gust} Wind gusts speed in the specified unit
         {speed} Wind speed
         {unit} The unit specified
@@ -626,6 +627,23 @@ class Py3status:
         choice = options[self.unit_wind.lower()]
         choice["icon"] = self.icon_wind
         choice["degree"] = wind["deg"] if ("deg" in wind) else 0
+        if wind["deg"] >= 20 and wind["deg"] < 65:
+            direction = "NE"
+        elif wind["deg"] >= 65 and wind["deg"] < 110:
+            direction = "E"
+        elif wind["deg"] >= 110 and wind["deg"] < 155:
+            direction = "SE"
+        elif wind["deg"] >= 155 and wind["deg"] < 200:
+            direction = "S"
+        elif wind["deg"] >= 200 and wind["deg"] < 245:
+            direction = "SW"
+        elif wind["deg"] >= 245 and wind["deg"] < 290:
+            direction = "W"
+        elif wind["deg"] >= 290 and wind["deg"] < 335:
+            direction = "NW"
+        else:
+            direction = "NW"
+        choice["direction"] = direction
         choice["unit"] = self.unit_wind
 
         # Format the wind speed
