@@ -640,7 +640,7 @@ class Py3status:
         elif wind["deg"] >= 245 and wind["deg"] < 290:
             direction = "W"
         elif wind["deg"] >= 290 and wind["deg"] < 335:
-            direction = "NW"
+            direction = "N"
         else:
             direction = "NW"
         choice["direction"] = direction
