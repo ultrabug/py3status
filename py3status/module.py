@@ -117,6 +117,20 @@ class Module:
         return class_inst
 
     @staticmethod
+    def load_from_entry_point(package, module_name):
+        """
+        Load a module from entry_point
+        """
+        class_inst = None
+        name = f"{package}.{module_name}"
+        py_mod = __import__(name)
+        components = name.split(".")
+        for comp in components[1:]:
+            py_mod = getattr(py_mod, comp)
+        class_inst = py_mod.Py3status()
+        return class_inst
+
+    @staticmethod
     def load_from_namespace(module_name):
         """
         Load a py3status bundled module.
@@ -587,9 +601,17 @@ class Module:
             # user provided modules take precedence over py3status provided modules
             if self.module_name in user_modules:
                 include_path, f_name = user_modules[self.module_name]
-                module_path = Path(include_path) / f_name
-                self._py3_wrapper.log(f'loading module "{module}" from {module_path}')
-                self.module_class = self.load_from_file(module_path)
+                # include_path from modules from the environment aka 'entry_point'
+                # is just entry_point the string making Path explode
+                # since it's not an actual path.
+                if include_path == 'entry_point':
+                    # probably a better way to get this
+                    package = f_name.__module__.split(".")[0]
+                    self._py3_wrapper.log(f'"{package}.{self.module_name}"')
+                    self.module_class = self.load_from_entry_point(package, self.module_name)
+                else:
+                    module_path = Path(include_path) / f_name
+                    self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
