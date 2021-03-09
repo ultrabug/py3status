@@ -99,24 +99,26 @@ To have it globally persistent add to your NixOS configuration file py3status as
 .. code-block:: nix
 
     (python3Packages.py3status.overrideAttrs (oldAttrs: {
-      propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
+      propagatedBuildInputs = with python3Packages;[ pytz tzlocal ] ++ oldAttrs.propagatedBuildInputs;
     }))
 
-If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your `/etc/nixos/configuration.nix` that looks like this:
+If you are, and you probably are, using `i3 <https://i3wm.org/>`_ you might want a section in your ``/etc/nixos/configuration.nix`` that looks like this:
 
 .. code-block:: nix
 
-    services.xserver.windowManager.i3 = {
-      enable = true;
-      extraPackages = with pkgs; [
-        dmenu
-        i3status
-        i3lock
-        (python3Packages.py3status.overrideAttrs (oldAttrs: {
-          propagatedBuildInputs = [ python3Packages.pytz python3Packages.tzlocal ];
-        }))
-      ];
-    };
+    {
+      services.xserver.windowManager.i3 = {
+        enable = true;
+        extraPackages = with pkgs; [
+          dmenu
+          i3status
+          i3lock
+          (python3Packages.py3status.overrideAttrs (oldAttrs: {
+            propagatedBuildInputs = with python3Packages; [ pytz tzlocal ] ++ oldAttrs.propagatedBuildInputs;
+          }))
+        ];
+      };
+    }
 
 In this example I included the python packages **pytz** and **tzlocal** which are necessary for the py3status module **clock**.
 The default packages that come with i3 (dmenu, i3status, i3lock) have to be mentioned if they should still be there.
