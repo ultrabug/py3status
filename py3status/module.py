@@ -604,11 +604,13 @@ class Module:
                 # include_path from modules from the environment aka 'entry_point'
                 # is just entry_point the string making Path explode
                 # since it's not an actual path.
-                if include_path == 'entry_point':
+                if include_path == "entry_point":
                     # probably a better way to get this
                     package = f_name.__module__.split(".")[0]
                     self._py3_wrapper.log(f'"{package}.{self.module_name}"')
-                    self.module_class = self.load_from_entry_point(package, self.module_name)
+                    self.module_class = self.load_from_entry_point(
+                        package, self.module_name
+                    )
                 else:
                     module_path = Path(include_path) / f_name
                     self.module_class = self.load_from_file(module_path)
