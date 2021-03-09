@@ -505,7 +505,7 @@ class Py3statusWrapper:
                 continue
             try:
                 instance = None
-                payload = user_modules.get(module)
+                payload = user_modules.get(module.split(" ")[0])
                 if payload:
                     kind, Klass = payload
                     if kind == ENTRY_POINT_KEY:
