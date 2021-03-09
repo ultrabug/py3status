@@ -20,6 +20,7 @@ Color options:
 
 Requires:
     pydbus: pythonic dbus library
+    pygobject: Python bindings for GObject Introspection
 
 @author jmdana <https://github.com/jmdana>
 @license GPLv3 <https://www.gnu.org/licenses/gpl-3.0.txt>
