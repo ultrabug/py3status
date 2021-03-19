@@ -288,8 +288,9 @@ class Py3status:
                 raise Exception(INVALID_CPU_TEMP_UNIT)
 
             chips_and_sensors = [
-                ("coretemp-isa-0000", "Core"),
-                ("k10temp-pci-00c3", "Tdie"),
+                ("coretemp-isa-0000", "Core"),  # Intel
+                ("k10temp-pci-00c3", "Tdie"),  # AMD
+                ("cpu_thermal-virtual-0", "temp"),  # RPi
             ]
 
             chips = loads(self.py3.command_output([command, args]))
