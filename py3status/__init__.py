@@ -24,7 +24,7 @@ def main():
             # user will be notified when we start
             pass
 
-    from py3status.core import Py3statusWrapper
+    from py3status.v3.core import Py3statusWrapper
 
     try:
         locale.setlocale(locale.LC_ALL, "")

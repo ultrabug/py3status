@@ -357,7 +357,7 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    from py3status.module_test import module_test
+    from py3status.v3.module_test import module_test
 
     config = {"command": "date '+%D %T'", "interval": 1}
     module_test(Py3status, config)

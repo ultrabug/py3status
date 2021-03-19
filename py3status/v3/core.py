@@ -18,7 +18,7 @@ from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
-from py3status.module import Module
+from py3status.v3.module import Module
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 

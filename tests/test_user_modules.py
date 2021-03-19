@@ -5,7 +5,7 @@ import pkg_resources
 import pytest
 
 import py3status
-from py3status.core import Py3statusWrapper, ENTRY_POINT_KEY
+from py3status.v3.core import Py3statusWrapper, ENTRY_POINT_KEY
 
 
 @pytest.fixture(name="status_wrapper")

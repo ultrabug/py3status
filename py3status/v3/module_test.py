@@ -4,7 +4,7 @@ from ast import literal_eval
 from sys import argv
 from threading import Event
 
-from py3status.core import Common, Module
+from py3status.v3.core import Common, Module
 
 
 class MockPy3statusWrapper:
