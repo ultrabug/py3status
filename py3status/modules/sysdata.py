@@ -286,6 +286,8 @@ class Py3status:
                 raise Exception(STRING_NOT_INSTALLED)
             if self.cpu_temp_unit not in list("CFK"):
                 raise Exception(INVALID_CPU_TEMP_UNIT)
+            elif self.cpu_temp_unit == "F":
+                args += "f"  # print fahrenheit
 
             chips_and_sensors = [
                 ("coretemp-isa-0000", "Core"),  # Intel
@@ -430,11 +432,7 @@ class Py3status:
 
         cpu_temp = sensor_total / sensor_count
 
-        if cpu_temp_unit == "C":
-            pass
-        elif cpu_temp_unit == "F":
-            cpu_temp = cpu_temp * 9 / 5 + 32
-        elif cpu_temp_unit == "K":
+        if cpu_temp_unit == "K":
             cpu_temp += 273.15
 
         return cpu_temp, cpu_temp_unit
