@@ -20,9 +20,6 @@ Configuration parameters:
         ['dynamic', 'KiB', 'MiB', 'GiB'] (default 'GiB')
     thresholds: specify color thresholds to use
         (default [(0, "good"), (40, "degraded"), (75, "bad")])
-    zone: Either a path in sysfs to CPU temperature sensor, or an lm_sensors thermal zone to use.
-        If None try to guess CPU temperature
-        (default None)
 
 Format placeholders:
     {cpu_freq_avg} average CPU frequency across all cores
@@ -58,6 +55,9 @@ format_cpu placeholders:
 
 Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
+
+Requires:
+    lm_sensors: a tool to read cpu temperature
 
 Examples:
 ```
@@ -104,12 +104,12 @@ SAMPLE OUTPUT
 """
 
 from fnmatch import fnmatch
+from json import loads
 from os import getloadavg
 from pathlib import Path
 
-import re
-
 INVALID_CPU_TEMP_UNIT = "invalid cpu_temp_unit"
+STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
@@ -131,7 +131,6 @@ class Py3status:
     mem_unit = "GiB"
     swap_unit = "GiB"
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
-    zone = None
 
     class Meta:
         def update_deprecated_placeholder_format(config):
@@ -194,6 +193,7 @@ class Py3status:
             "remove": [
                 {"param": "padding", "msg": "obsolete, use the format_* parameters"},
                 {"param": "precision", "msg": "obsolete, use the format_* parameters"},
+                {"param": "zone", "msg": "obsolete"},
             ],
             "update_placeholder_format": [
                 {
@@ -281,16 +281,28 @@ class Py3status:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
 
         if self.init["cpu_temp"]:
+            command, args = ("sensors", "-jA")
+            if not self.py3.check_commands(command):
+                raise Exception(STRING_NOT_INSTALLED)
             if self.cpu_temp_unit not in list("CFK"):
                 raise Exception(INVALID_CPU_TEMP_UNIT)
 
-            if self.zone is None:
-                output = self.py3.command_output("sensors")
+            chips_and_sensors = [
+                ("coretemp-isa-0000", "Core"),
+                ("k10temp-pci-00c3", "Tdie"),
+            ]
 
-                for sensor in ["coretemp-isa-0000", "k10temp-pci-00c3"]:
-                    if sensor in output:
-                        self.zone = sensor
-                        break
+            chips = loads(self.py3.command_output([command, args]))
+            for chip, sensor in chips_and_sensors:
+                if chip in chips:
+                    self.lm_sensors = {
+                        "command": [command, args, chip],
+                        "chip": chip,
+                        "sensor": sensor,
+                    }
+                    break
+            else:
+                self.init["cpu_temp"] = []
 
     def _get_cpuinfo(self):
         with Path("/proc/cpuinfo").open() as f:
@@ -403,53 +415,28 @@ class Py3status:
         )
         return used_percent
 
-    def _get_cputemp_with_lmsensors(self, zone=None):
-        """
-        Tries to determine CPU temperature using the 'sensors' command.
-        Searches for the CPU temperature by looking for a value prefixed
-        by either "CPU Temp" or "Core 0" - does not look for or average
-        out temperatures of all codes if more than one.
-        """
+    def _get_cputemp(self, cpu_temp_unit):
+        chips = loads(self.py3.command_output(self.lm_sensors["command"]))
+        sensor_total, sensor_count = (0, 0)
 
-        sensors = None
-        command = ["sensors"]
-        if zone:
-            try:
-                sensors = self.py3.command_output(command + [zone])
-            except self.py3.CommandError:
-                pass
-        if not sensors:
-            sensors = self.py3.command_output(command)
-        m = re.search(r"(Core 0|CPU Temp).+\+(.+).+\(.+", sensors)
-        if m:
-            cpu_temp = float(m.groups()[1].strip()[:-2])
-        else:
-            cpu_temp = "?"
+        for name, sensor in chips[self.lm_sensors["chip"]].items():
+            if self.lm_sensors["sensor"] in name:
+                sensor_count += 1
+                for key, value in sensor.items():
+                    if "input" in key:
+                        sensor_total += value
+                        break
 
-        return cpu_temp
+        cpu_temp = sensor_total / sensor_count
 
-    def _get_cputemp(self, zone, unit):
-        if zone is not None:
-            try:
-                with Path(zone).open() as f:
-                    cpu_temp = f.readline()
-                    cpu_temp = float(cpu_temp) / 1000  # convert from mdegC to degC
-            except (OSError, ValueError):
-                # FileNotFoundError does not exist on Python < 3.3, so we catch OSError instead
-                # ValueError can be thrown if zone was a file that didn't have a float
-                # if zone was not a file, it might be a sensor!
-                cpu_temp = self._get_cputemp_with_lmsensors(zone=zone)
+        if cpu_temp_unit == "C":
+            pass
+        elif cpu_temp_unit == "F":
+            cpu_temp = cpu_temp * 9 / 5 + 32
+        elif cpu_temp_unit == "K":
+            cpu_temp += 273.15
 
-        else:
-            cpu_temp = self._get_cputemp_with_lmsensors()
-
-        if cpu_temp is float:
-            if unit == "F":
-                cpu_temp = cpu_temp * 9 / 5 + 32
-            elif unit == "K":
-                cpu_temp += 273.15
-
-        return cpu_temp
+        return cpu_temp, cpu_temp_unit
 
     def sysdata(self):
         sys = {"max_used_percent": 0}
@@ -483,8 +470,9 @@ class Py3status:
                 sys["format_cpu"] = format_cpu
 
         if self.init["cpu_temp"]:
-            sys["cpu_temp"] = self._get_cputemp(self.zone, self.cpu_temp_unit)
-            sys["cpu_temp_unit"] = self.cpu_temp_unit
+            cputemp = self._get_cputemp(self.cpu_temp_unit)
+            cputemp_keys = ["cpu_temp", "cpu_temp_unit"]
+            sys.update(zip(cputemp_keys, cputemp))
 
         if self.init["load"]:
             load_keys = ["load1", "load5", "load15"]
