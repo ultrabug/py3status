@@ -1,3 +1,12 @@
+version 3.35 (2021-03-22)
+* fix time modules synchronization bug thanks to @ya-isakov
+* core: fix detection of instances of user provided modules fix #2020 (#2023)
+* docs: fix NixOS instructions to address #2018 (#2024), by Thiago Kenji Okada
+* add github issue templates
+* bluetooth module: add missing requirement
+* sysdata module: rename temp_unit to cpu_temp_unit and drop zone config to support intel, amd, RPi (#2029), by lasers
+* weather_owm module: add wind direction placeholder (#2021), by leroyz84
+
 version 3.34 (2021-03-04)
 * storage: fix Path generation in storage fixes #2004 (#2007), by Miroslav Šedivý
 * battery_level module: fix converting seconds to H:M:S format (#2010), by David Herman
