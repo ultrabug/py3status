@@ -1,3 +1,7 @@
+version 3.36 (2021-04-02)
+* new zypper_updates module: to watch for OpenSuse updates (#2026), by Yiannis
+* clock module: switch back to time.time
+
 version 3.35 (2021-03-22)
 * fix time modules synchronization bug thanks to @ya-isakov
 * core: fix detection of instances of user provided modules fix #2020 (#2023)
