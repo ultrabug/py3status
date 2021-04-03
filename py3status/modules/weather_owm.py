@@ -169,11 +169,11 @@ Configuration parameters:
         case, such as 'Ft', and still be considered valid as long as it is in
         the below options.
         Options:
-            cm, ft, in, mm, m, yd
+            mm, cm, in
         (default 'in')
     unit_snow: Unit for snow fall
         Options:
-            cm, ft, in, mm, m, yd
+            mm, cm, in
         (default 'in')
     unit_temperature: Unit for temperature
         Options:
@@ -278,8 +278,8 @@ OWM_DESC = "//weather:0/main"
 OWM_DESC_LONG = "//weather:0/description"
 OWM_HUMIDITY = "//main/humidity"
 OWM_PRESSURE = "//main"
-OWM_RAIN = "//rain/3h"
-OWM_SNOW = "//snow/3h"
+OWM_RAIN = "//rain/1h"
+OWM_SNOW = "//snow/1h"
 OWM_SUNRISE = "//sys/sunrise"
 OWM_SUNSET = "//sys/sunset"
 OWM_TEMP = "//main"
@@ -287,7 +287,7 @@ OWM_WEATHER_ICON = "//weather:0/id"
 OWM_WIND = "//wind"
 
 # Units constants
-RAIN_UNITS = {"cm", "ft", "in", "mm", "m", "yd"}
+RAIN_UNITS = {"mm", "cm", "in"}
 SNOW_UNITS = RAIN_UNITS
 TEMP_UNITS = {"c", "f", "k"}
 WIND_UNITS = {"fsec", "msec", "mph", "kmh"}
@@ -366,7 +366,7 @@ class Py3status:
         update_config = {
             "update_placeholder_format": [
                 {
-                    "placeholder_formats": {"amount": ":.1f"},
+                    "placeholder_formats": {"amount": ":.2f"},
                     "format_strings": ["format_rain", "format_snow"],
                 },
                 {
@@ -579,10 +579,7 @@ class Py3status:
         options = {
             "mm": rain,
             "cm": rain / 10,
-            "m": rain / 100,
             "in": inches,
-            "ft": inches / 12,
-            "yd": inches / 36,
         }
 
         # Format the rain fall
@@ -605,10 +602,7 @@ class Py3status:
         options = {
             "mm": snow,
             "cm": snow / 10,
-            "m": snow / 100,
             "in": inches,
-            "ft": inches / 12,
-            "yd": inches / 36,
         }
 
         # Format the snow fall
