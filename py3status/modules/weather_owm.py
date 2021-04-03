@@ -363,6 +363,27 @@ class Py3status:
             ],
         }
 
+        update_config = {
+            "update_placeholder_format": [
+                {
+                    "placeholder_formats": {"amount": ":.1f"},
+                    "format_strings": ["format_rain", "format_snow"],
+                },
+                {
+                    "placeholder_formats": {
+                        "max": ":.1f",
+                        "min": ":.1f",
+                        "current": ":.1f",
+                    },
+                    "format_strings": ["format_temperature"],
+                },
+                {
+                    "placeholder_formats": {"speed": ":.1f", "gust": ":.1f"},
+                    "format_strings": ["format_wind"],
+                },
+            ],
+        }
+
     def _get_icons(self):
         if self.icons is None:
             self.icons = {}
@@ -556,12 +577,12 @@ class Py3status:
         inches = rain * IN_FROM_MM
 
         options = {
-            "mm": round(rain),
-            "cm": round(rain / 10),
-            "m": round(rain / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            "mm": rain,
+            "cm": rain / 10,
+            "m": rain / 100,
+            "in": inches,
+            "ft": inches / 12,
+            "yd": inches / 36,
         }
 
         # Format the rain fall
@@ -582,12 +603,12 @@ class Py3status:
         inches = snow * IN_FROM_MM
 
         options = {
-            "mm": round(snow),
-            "cm": round(snow / 10),
-            "m": round(snow / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            "mm": snow,
+            "cm": snow / 10,
+            "m": snow / 100,
+            "in": inches,
+            "ft": inches / 12,
+            "yd": inches / 36,
         }
 
         # Format the snow fall
@@ -683,19 +704,19 @@ class Py3status:
 
         options = {
             "c": {
-                "current": round(kToC(kelvin["temp"])),
-                "max": round(kToC(kelvin["temp_max"])),
-                "min": round(kToC(kelvin["temp_min"])),
+                "current": kToC(kelvin["temp"]),
+                "max": kToC(kelvin["temp_max"]),
+                "min": kToC(kelvin["temp_min"]),
             },
             "f": {
-                "current": round(kToF(kelvin["temp"])),
-                "max": round(kToF(kelvin["temp_max"])),
-                "min": round(kToF(kelvin["temp_min"])),
+                "current": kToF(kelvin["temp"]),
+                "max": kToF(kelvin["temp_max"]),
+                "min": kToF(kelvin["temp_min"]),
             },
             "k": {
-                "current": round(kelvin["temp"]),
-                "max": round(kelvin["temp_max"]),
-                "min": round(kelvin["temp_min"]),
+                "current": kelvin["temp"],
+                "max": kelvin["temp_max"],
+                "min": kelvin["temp_min"],
             },
         }
 
