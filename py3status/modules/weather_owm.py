@@ -802,49 +802,42 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    import os
+    from os import getenv
     from py3status.module_test import module_test
 
-    # All possible outputs
-    all_string = "/".join(
-        [
-            "{clouds}",
-            "{description}",
-            "{main}",
-            "{humidity}",
-            "{pressure}",
-            "{snow}",
-            "{sunrise}",
-            "{sunset}",
-            "{temperature}",
-            "{wind}",
-        ]
-    )
+    def colorize(names, color="lightgreen", separator=None):
+        if separator is None:
+            separator = "[\?color={c}&show  / ]".format(c=color)
+        body = "[\?color={c}&show {n}] [\?color={n} {{{n}}}]"
+        return separator.join([body.format(c=color, n=name) for name in names])
 
-    module_test(
-        Py3status,
-        config={
-            "api_key": os.getenv("OWM_API_KEY"),
-            # Select icons
-            "icons": {"200": "☔", "230_232": "🌧"},
-            # Complete configuration
-            "format_clouds": "{icon} {coverage}%",
-            "format_humidity": "{icon} {humidity}%",
-            "format_pressure": "{icon} {pressure} Pa, sea: {sea_level} Pa",
-            "format_rain": "{icon} {amount:.0f} in",
-            "format_snow": "{icon} {amount:.0f} in",
-            "format_temperature": (
-                r"{icon}: max: [\?color=max {max:.0f}°F], "
-                r"min: [\?color=min {min:.0f}°F], "
-                r"current: [\?color=current {current:.0f}°F]"
-            ),
-            "format_wind": (
-                "{icon} {degree}°, gust: {gust:.0f} mph, " "speed: {speed:.0f} mph"
-            ),
-            "format": ("{city}, {country}: {icon} " + all_string + "//{forecast}"),
-            "format_forecast": ("{icon} " + all_string),
-            # Miscellaneous
-            "forecast_days": 1,
-            "format_forecast_separator": "//",
-        },
-    )
+    # fmt: off
+    weather_placeholders = [
+        "icon", "clouds", "description", "humidity", "main", "pressure", "rain",
+        "snow", "sunrise", "sunset", "temperature", "wind",
+    ]
+    format_placeholders = ["city", "country"] + weather_placeholders + ["forecast"]
+    # fmt: on
+
+    config = {
+        # Miscellaneous
+        "api_key": getenv("OWM_API_KEY"),
+        "icons": {"200": "☔", "230_232": "🌧"},
+        "format_forecast_separator": "\?color=tomato  separator ",
+        "forecast_days": 1,
+        # Format
+        "format": colorize(format_placeholders, "lightblue"),
+        "format_forecast": colorize(weather_placeholders, "pink"),
+        # Weather
+        "format_clouds": colorize(["icon", "coverage"]),
+        "format_humidity": colorize(["icon", "humidity"]),
+        "format_pressure": colorize(["icon", "pressure", "sea_level"]),
+        "format_rain": colorize(["icon", "amount", "unit"]),
+        "format_snow": colorize(["icon", "amount", "unit"]),
+        "format_temperature": colorize(["icon", "max", "min", "current", "unit"]),
+        "format_wind": colorize(
+            ["icon", "degree", "direction", "gust", "speed", "unit"]
+        ),
+    }
+
+    module_test(Py3status, config)
