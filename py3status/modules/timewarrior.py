@@ -239,7 +239,7 @@ class Py3status:
             # duraton
             if time["state_time"]:
                 self.tracking = True
-                end = dt.datetime.now()
+                end = dt.datetime.utcnow()
             else:
                 end = dt.datetime.strptime(time["end"], DATETIME)
 
