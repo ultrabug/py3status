@@ -169,11 +169,11 @@ Configuration parameters:
         case, such as 'Ft', and still be considered valid as long as it is in
         the below options.
         Options:
-            cm, ft, in, mm, m, yd
+            mm, cm, in
         (default 'in')
     unit_snow: Unit for snow fall
         Options:
-            cm, ft, in, mm, m, yd
+            mm, cm, in
         (default 'in')
     unit_temperature: Unit for temperature
         Options:
@@ -278,8 +278,8 @@ OWM_DESC = "//weather:0/main"
 OWM_DESC_LONG = "//weather:0/description"
 OWM_HUMIDITY = "//main/humidity"
 OWM_PRESSURE = "//main"
-OWM_RAIN = "//rain/3h"
-OWM_SNOW = "//snow/3h"
+OWM_RAIN = "//rain/1h"
+OWM_SNOW = "//snow/1h"
 OWM_SUNRISE = "//sys/sunrise"
 OWM_SUNSET = "//sys/sunset"
 OWM_TEMP = "//main"
@@ -287,7 +287,7 @@ OWM_WEATHER_ICON = "//weather:0/id"
 OWM_WIND = "//wind"
 
 # Units constants
-RAIN_UNITS = {"cm", "ft", "in", "mm", "m", "yd"}
+RAIN_UNITS = {"mm", "cm", "in"}
 SNOW_UNITS = RAIN_UNITS
 TEMP_UNITS = {"c", "f", "k"}
 WIND_UNITS = {"fsec", "msec", "mph", "kmh"}
@@ -360,6 +360,27 @@ class Py3status:
                     "new": "format_forecast_separator",
                     "msg": "obsolete parameter, use format_forecast_separator",
                 }
+            ],
+        }
+
+        update_config = {
+            "update_placeholder_format": [
+                {
+                    "placeholder_formats": {"amount": ":.2f"},
+                    "format_strings": ["format_rain", "format_snow"],
+                },
+                {
+                    "placeholder_formats": {
+                        "max": ":.1f",
+                        "min": ":.1f",
+                        "current": ":.1f",
+                    },
+                    "format_strings": ["format_temperature"],
+                },
+                {
+                    "placeholder_formats": {"speed": ":.1f", "gust": ":.1f"},
+                    "format_strings": ["format_wind"],
+                },
             ],
         }
 
@@ -556,12 +577,9 @@ class Py3status:
         inches = rain * IN_FROM_MM
 
         options = {
-            "mm": round(rain),
-            "cm": round(rain / 10),
-            "m": round(rain / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            "mm": rain,
+            "cm": rain / 10,
+            "in": inches,
         }
 
         # Format the rain fall
@@ -582,12 +600,9 @@ class Py3status:
         inches = snow * IN_FROM_MM
 
         options = {
-            "mm": round(snow),
-            "cm": round(snow / 10),
-            "m": round(snow / 100),
-            "in": round(inches),
-            "ft": round(inches / 12),
-            "yd": round(inches / 36),
+            "mm": snow,
+            "cm": snow / 10,
+            "in": inches,
         }
 
         # Format the snow fall
@@ -683,19 +698,19 @@ class Py3status:
 
         options = {
             "c": {
-                "current": round(kToC(kelvin["temp"])),
-                "max": round(kToC(kelvin["temp_max"])),
-                "min": round(kToC(kelvin["temp_min"])),
+                "current": kToC(kelvin["temp"]),
+                "max": kToC(kelvin["temp_max"]),
+                "min": kToC(kelvin["temp_min"]),
             },
             "f": {
-                "current": round(kToF(kelvin["temp"])),
-                "max": round(kToF(kelvin["temp_max"])),
-                "min": round(kToF(kelvin["temp_min"])),
+                "current": kToF(kelvin["temp"]),
+                "max": kToF(kelvin["temp_max"]),
+                "min": kToF(kelvin["temp_min"]),
             },
             "k": {
-                "current": round(kelvin["temp"]),
-                "max": round(kelvin["temp_max"]),
-                "min": round(kelvin["temp_min"]),
+                "current": kelvin["temp"],
+                "max": kelvin["temp_max"],
+                "min": kelvin["temp_min"],
             },
         }
 
