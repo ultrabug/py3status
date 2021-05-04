@@ -86,7 +86,7 @@ def parse_cli_args():
         "-d",
         "--debug",
         action="store_true",
-        help="enable debug logging in syslog and --log-file",
+        help="enable debug logging in syslog or log file if --log-file option is passed",
     )
     parser.add_argument(
         "-g",
@@ -109,7 +109,7 @@ def parse_cli_args():
         "--log-file",
         action="store",
         dest="log_file",
-        help="enable logging to FILE",
+        help="enable logging to FILE (this option is not set by default)",
         metavar="FILE",
         type=Path,
     )
