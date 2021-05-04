@@ -101,8 +101,8 @@ class Py3status:
     status_notif = " ✉"
 
     def post_config_hook(self):
-        self._dev = None
         self._bat = None
+        self._dev = None
         self._not = None
 
     def _init_dbus(self):
@@ -186,12 +186,12 @@ class Py3status:
         Get the battery
         """
         try:
-            charge = self._bat.charge if self._bat is not None else self._dev.charge()
-            isCharging = (
-                self._bat.isCharging
-                if self._bat is not None
-                else self._dev.isCharging()
-            )
+            if self._bat:
+                charge = self._bat.charge
+                isCharging = self._bat.isCharging
+            else:
+                charge = self._dev.charge()
+                isCharging = self._dev.isCharging()
             battery = {
                 "charge": charge,
                 "isCharging": isCharging == 1,
@@ -206,11 +206,10 @@ class Py3status:
         Get notifications
         """
         try:
-            activeNotifications = (
-                self._not.activeNotifications()
-                if self._not is not None
-                else self._dev.activeNotifications()
-            )
+            if self._not:
+                notifications = {"activeNotifications": self._not.activeNotifications()}
+            else:
+                notifications = {"activeNotifications": self._dev.activeNotifications()}
             notifications = {"activeNotifications": activeNotifications}
         except Exception:
             return None
