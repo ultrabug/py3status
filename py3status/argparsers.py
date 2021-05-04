@@ -109,7 +109,7 @@ def parse_cli_args():
         "--log-file",
         action="store",
         dest="log_file",
-        help="enable logging to FILE, this option is not set",
+        help="enable logging to FILE (this option is not set by default)",
         metavar="FILE",
         type=Path,
     )
