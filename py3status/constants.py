@@ -221,6 +221,10 @@ ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
 POSITIONS = ["left", "center", "right"]
 
 RETIRED_MODULES = {
+    "bitcoin_price": {
+        "new": ["coin_market"],
+        "msg": "Module {old} is no longer available due to unmaintained APIs. You can try a different module {new}.",
+    },
     "nvidia_temp": {
         "new": ["nvidia_smi"],
         "msg": "Module {old} has been replaced with a module {new}.",
