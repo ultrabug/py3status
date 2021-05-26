@@ -42,7 +42,7 @@ setup(
     platforms="any",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['setuptools'],
+    install_requires=["setuptools"],
     entry_points={
         "console_scripts": [
             "py3status = py3status:main",
