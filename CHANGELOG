@@ -1,3 +1,15 @@
+version 3.37 (2021-05-26)
+* require setuptools: py3status/core.py and tests/test_user_modules.py import pkg_resources (#2043), by Tomáš Hrnčiar
+* help: clarify connection between --debug and --log-file options (#2044), by Ilia Kurenkov
+* tox: exit on first error
+* bitcoin_price module: remove module due to unmaintained APIs (#2047), by lasers
+* exchange_rate module: update code to require an api key fix #2048
+* kdeconnector module: add support for version 20.12.3 (#2037), by Danilo Treffiletti
+* lm_sensors module: replace raw with json output (#2049), by lasers
+* timewarrior module: remove timezone info from end date (#2039), by Glenn Feunteun
+* weather_owm module: avoid customized formats in module_test (#2034), by lasers
+* weather_owm module: remove hardcoded rounded numbers (#2033), by lasers
+
 version 3.36 (2021-04-02)
 * new zypper_updates module: to watch for OpenSuse updates (#2026), by Yiannis
 * clock module: switch back to time.time
