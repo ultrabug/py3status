@@ -210,7 +210,7 @@ class Py3status:
                 notifications = {"activeNotifications": self._not.activeNotifications()}
             else:
                 notifications = {"activeNotifications": self._dev.activeNotifications()}
-            notifications = {"activeNotifications": activeNotifications}
+            notifications = {"activeNotifications": notifications}
         except Exception:
             return None
 
