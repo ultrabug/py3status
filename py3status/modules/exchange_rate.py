@@ -2,6 +2,7 @@
 Display foreign exchange rates.
 
 Configuration parameters:
+    api_key: the exchangeratesapi.io API access key (default None)
     base: specify base currency to use for exchange rates (default 'EUR')
     cache_timeout: refresh interval for this module (default 600)
     format: display format for this module (default '${USD} £{GBP} ¥{JPY}')
@@ -24,12 +25,21 @@ class Py3status:
     """
 
     # available configuration parameters
+    api_key = None
     base = "EUR"
     cache_timeout = 600
     format = "${USD} £{GBP} ¥{JPY}"
 
     def post_config_hook(self):
-        self.url = "https://api.exchangeratesapi.io/latest?base=" + self.base
+        # Verify the API key
+        if self.api_key is None:
+            raise Exception(
+                "API Key for ExchangeRatesApi.io cannot be empty!"
+                " Go to https://exchangeratesapi.io/pricing/"
+                " get an API Key."
+            )
+        self.url = f"http://api.exchangeratesapi.io/v1/latest?base={self.base}"
+        self.url += f"&access_key={self.api_key}"
         placeholders = self.py3.get_placeholders_list(self.format)
         formats = dict.fromkeys(placeholders, ":.3f")
         self.format = self.py3.update_placeholder_formats(self.format, formats)
@@ -41,13 +51,12 @@ class Py3status:
         except self.py3.RequestException:
             return {}
         data = response.json()
-        if data:
+        if data and data["success"]:
             data = data.get("rates", {})
         else:
-            data = vars(response)
-            error = data.get("_error_message")
+            error = data.get("error")
             if error:
-                self.py3.error("{} {}".format(error, data["_status_code"]))
+                self.py3.error(error["info"])
         return data
 
     def exchange_rate(self):
