@@ -58,7 +58,7 @@ Up-to-date `documentation <https://py3status.readthedocs.io>`_:
 
 Get help or share your ideas on IRC:
 
-- channel **#py3status** on **FreeNode**
+- channel **#py3status** on **OFTC**
 
 Usage
 =====

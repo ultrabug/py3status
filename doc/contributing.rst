@@ -10,7 +10,7 @@ Please read carefully the :ref:`zen` describing the minimal things
 to keep in mind when contributing or participating to this project.
 
 Feel free to open an issue to propose your ideas as request for comments [RFC]
-and to join us on IRC Freenode #py3status channel for a live chat.
+and to join us on IRC OFTC #py3status channel for a live chat.
 
 .. _zen:
 

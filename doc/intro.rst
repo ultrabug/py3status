@@ -139,8 +139,7 @@ Live IRC Chat
 ^^^^^^^^^^^^^
 
 
-Visit `#py3status <https://webchat.freenode.net/?channels=%23py3status&uio=d4>`_
-at `freenode.net <https://freenode.net>`_
+Join us on `#py3status` at `oftc.net <https://www.oftc.net>`_
 
 
 Usage
