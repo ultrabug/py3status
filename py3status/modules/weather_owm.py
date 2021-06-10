@@ -181,7 +181,7 @@ Configuration parameters:
         (default 'F')
     unit_wind: Unit for wind speed
         Options:
-            fsec, msec, mph, kmh
+            fsec, msec, mph, kmh, knot
         (default 'mph')
 
 Format placeholders:
@@ -290,13 +290,14 @@ OWM_WIND = "//wind"
 RAIN_UNITS = {"mm", "cm", "in"}
 SNOW_UNITS = RAIN_UNITS
 TEMP_UNITS = {"c", "f", "k"}
-WIND_UNITS = {"fsec", "msec", "mph", "kmh"}
+WIND_UNITS = {"fsec", "msec", "mph", "kmh", "knot"}
 
 # Conversion factors
 FT_FROM_METER = 3.28084
 IN_FROM_MM = 0.0393701
 KMH_FROM_MSEC = 0.277778
 MPH_FROM_MSEC = 2.23694
+KNOT_FROM_MSEC = 1.94384
 
 # Thresholds options
 THRESHOLDS_ALL = "all"
@@ -635,6 +636,10 @@ class Py3status:
             "kmh": {
                 "speed": msec_speed * KMH_FROM_MSEC,
                 "gust": msec_gust * KMH_FROM_MSEC,
+            },
+            "knot": {
+                "speed": msec_speed * KNOT_FROM_MSEC,
+                "gust": msec_gust * KNOT_FROM_MSEC,
             },
         }
 
