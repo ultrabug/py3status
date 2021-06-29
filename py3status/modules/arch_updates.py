@@ -47,7 +47,9 @@ class Py3status:
     def post_config_hook(self):
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),
-            "aur": self.py3.check_commands(["auracle", "trizen", "yay", "cower", "paru"]),
+            "aur": self.py3.check_commands(
+                ["auracle", "trizen", "yay", "cower", "paru"]
+            ),
         }
         if self.format:
             placeholders = self.py3.get_placeholders_list(self.format)
