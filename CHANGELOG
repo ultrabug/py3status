@@ -1,3 +1,9 @@
+version 3.38 (2021-06-29)
+* update IRC doc to OFTC
+* arch_updates module: add paru support (#2052), by Andreas Schleifer
+* spotify module: work around play/pause bug in spotifyd (#2053), by Benjamin van der Burgh
+* weather_owm module: added support for displaying wind speeds in knots (#2050), by Tarjei Knapstad
+
 version 3.37 (2021-05-26)
 * require setuptools: py3status/core.py and tests/test_user_modules.py import pkg_resources (#2043), by Tomáš Hrnčiar
 * help: clarify connection between --debug and --log-file options (#2044), by Ilia Kurenkov
