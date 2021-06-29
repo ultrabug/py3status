@@ -16,6 +16,7 @@ Requires:
     auracle: a flexible command line client for arch linux's user repository
     trizen: lightweight pacman wrapper and AUR helper
     yay: yet another yogurt. pacman wrapper and aur helper written in go
+    paru: feature packed AUR helper
 ```
 
 @author Iain Tatch <iain.tatch@gmail.com>
@@ -46,7 +47,7 @@ class Py3status:
     def post_config_hook(self):
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),
-            "aur": self.py3.check_commands(["auracle", "trizen", "yay", "cower"]),
+            "aur": self.py3.check_commands(["auracle", "trizen", "yay", "cower", "paru"]),
         }
         if self.format:
             placeholders = self.py3.get_placeholders_list(self.format)
@@ -104,6 +105,13 @@ class Py3status:
     def _get_yay_updates(self):
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
+            return len(updates.splitlines())
+        except self.py3.CommandError:
+            return None
+
+    def _get_paru_updates(self):
+        try:
+            updates = self.py3.command_output(["paru", "-Qua"])
             return len(updates.splitlines())
         except self.py3.CommandError:
             return None
