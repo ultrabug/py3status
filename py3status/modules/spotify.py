@@ -133,8 +133,7 @@ class Py3status:
         """
         Get the playback status. One of: "Playing", "Paused" or "Stopped".
         """
-        return self.player.Get("org.mpris.MediaPlayer2.Player",
-                               "PlaybackStatus")
+        return self.player.Get("org.mpris.MediaPlayer2.Player", "PlaybackStatus")
 
     def _get_text(self):
         """
@@ -208,6 +207,8 @@ class Py3status:
         """
         button = event["button"]
         if button == self.button_play_pause:
+            # we do not use the 'PlayPause' command because of a bug
+            # in spotifyd: https://github.com/Spotifyd/spotifyd/issues/890
             playback_status = self._get_playback_status()
             if playback_status == "Playing":
                 self.py3.command_run(self._spotify_cmd("Pause"))
