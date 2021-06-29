@@ -129,6 +129,13 @@ class Py3status:
         expression = expression.replace("META_WORDS_HERE", meta_words)
         return re.compile(expression, re.IGNORECASE)
 
+    def _get_playback_status(self):
+        """
+        Get the playback status. One of: "Playing", "Paused" or "Stopped".
+        """
+        return self.player.Get("org.mpris.MediaPlayer2.Player",
+                               "PlaybackStatus")
+
     def _get_text(self):
         """
         Get the current song metadatas (artist - title)
@@ -149,9 +156,7 @@ class Py3status:
                     album = self._sanitize_title(album)
                     title = self._sanitize_title(title)
 
-                playback_status = self.player.Get(
-                    "org.mpris.MediaPlayer2.Player", "PlaybackStatus"
-                )
+                playback_status = self._get_playback_status()
                 if playback_status == "Playing":
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
                 else:
@@ -203,7 +208,11 @@ class Py3status:
         """
         button = event["button"]
         if button == self.button_play_pause:
-            self.py3.command_run(self._spotify_cmd("PlayPause"))
+            playback_status = self._get_playback_status()
+            if playback_status == "Playing":
+                self.py3.command_run(self._spotify_cmd("Pause"))
+            else:
+                self.py3.command_run(self._spotify_cmd("Play"))
             sleep(0.1)
         elif button == self.button_next:
             self.py3.command_run(self._spotify_cmd("Next"))
