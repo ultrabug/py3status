@@ -58,7 +58,7 @@ class Py3status:
 
         if ".mp3" in title or ".wav" in title:
             title = title[:-4]
-        if "http" in title:
+        if "http" in title or "https" in title:
             title = ""
             internet_radio = True
 
