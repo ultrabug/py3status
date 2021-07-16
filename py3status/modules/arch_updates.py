@@ -17,7 +17,6 @@ Requires:
     trizen: lightweight pacman wrapper and AUR helper
     yay: yet another yogurt. pacman wrapper and aur helper written in go
     paru: feature packed AUR helper
-```
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
