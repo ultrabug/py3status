@@ -233,11 +233,11 @@ def _from_docstring_md(doc):
             # parameters
             if re_from_param.match(line):
                 m = re_from_param.match(line)
-                line = "  - `{}` {}".format(m.group(1), fix_tags(m.group(3)))
+                line = "\n- `{}` {}".format(m.group(1), fix_tags(m.group(3)))
             # status items
             elif re_from_status.match(line):
                 m = re_from_status.match(line)
-                line = "  - `{}` {}".format(m.group(1), fix_tags(m.group(3)))
+                line = "\n- `{}` {}".format(m.group(1), fix_tags(m.group(3)))
             # bullets
             elif re_from_item.match(line):
                 line = re_from_item.sub(r"  -", fix_tags(line))

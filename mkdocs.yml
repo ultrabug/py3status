@@ -1,0 +1,43 @@
+site_name: Py3status
+site_url: https://ultrabug.github.io/py3status
+repo_url: https://github.com/ultrabug/py3status
+
+theme:
+  name: readthedocs
+  font:
+    text: Ubuntu
+    code: Ubuntu Mono
+  icon:
+    logo: material/file-document-multiple
+  palette:
+    primary: blue
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ultrabug/py3status
+      name: py3status on Github
+
+markdown_extensions:
+  - admonition
+
+plugins:
+  - search
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "py3status.autodoc:create_module_docs"
+        on_pre_build: "py3status.screenshots:create_screenshots"
+
+nav:
+  - Introduction: index.md
+  - Getting Started: getting-started.md
+  - User Guide:
+    - Installation: user-guide/installation.md
+    - Configuration: user-guide/configuration.md
+    - Available Modules: user-guide/modules.md
+    - Controlling Py3status Remotely: user-guide/remote-control.md
+    - User Configuration Examples: user-guide/user-contributed-conf-examples.md
+  - Developer Guide:
+    - Writing Py3status Modules: dev-guide/writing-modules.md
+    - The Py3 Module Helper: dev-guide/the-py3-helper.md
+    - Contributing to Py3status: dev-guide/contributing.md

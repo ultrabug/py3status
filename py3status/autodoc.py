@@ -132,25 +132,25 @@ def file_sort(my_list):
 
 def screenshots(screenshots_data, module_name):
     """
-    Create .rst output for any screenshots a module may have.
+    Create .md output for any screenshots a module may have.
     """
     shots = screenshots_data.get(module_name)
     if not shots:
         return ""
 
     out = []
-    for shot in file_sort(shots):
-        if not Path(f"../doc/screenshots/{shot}.png").exists():
+    for index, shot in enumerate(file_sort(shots)):
+        if not Path(f"docs/screenshots/{shot}.png").exists():
             continue
-        out.append(f"\n.. image:: screenshots/{shot}.png\n\n")
+        out.append(f"\n![{module_name} example {index}](screenshots/{shot}.png)\n")
     return "".join(out)
 
 
-def create_module_docs():
+def create_module_docs(config):
     """
     Create documentation for modules.
     """
-    data = core_module_docstrings(format="rst")
+    data = core_module_docstrings(format="md")
     # get screenshot data
     screenshots_data = {}
     samples = get_samples()
@@ -160,20 +160,18 @@ def create_module_docs():
             screenshots_data[module] = []
         screenshots_data[module].append(sample)
 
-    out = []
+    out = ["# Available modules"]
     # details
     for module in sorted(data):
-        out.append(f"\n.. _module_{module}:\n")  # reference for linking
         out.append(
-            "\n{name}\n{underline}\n\n{screenshots}{details}\n".format(
+            "\n## {name}\n\n{screenshots}\n{details}\n".format(
                 name=module,
                 screenshots=screenshots(screenshots_data, module),
-                underline="-" * len(module),
-                details="".join(markdown_2_rst(data[module])).strip(),
+                details="".join(data[module]).strip(),
             )
         )
     # write include file
-    Path("../doc/modules-info.inc").write_text("".join(out))
+    Path("docs/user-guide/modules.md").write_text("".join(out))
 
 
 def get_variable_docstrings(filename):
@@ -309,7 +307,7 @@ def create_py3_docs():
             output.append(f".. py:{trans[k]}:: {name}")
             output.append("")
             output.extend(auto_undent(desc))
-        Path(f"../doc/py3-{k}-info.inc").write_text("\n".join(output))
+        Path(f"../docs/py3-{k}-info.inc").write_text("\n".join(output))
 
 
 def create_auto_documentation():
