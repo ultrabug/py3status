@@ -12,7 +12,6 @@ PIL may work if installed but is not supported.
 
 
 import ast
-import os
 import re
 
 from hashlib import md5
