@@ -13,8 +13,9 @@ serve:
 build:
 	mkdocs build
 
-deploy: qa test
-	mkdocs gh-deploy
+# TODO: maybe move the docs to github
+#deploy: qa test
+#	mkdocs gh-deploy
 
 test:
 	pytest -xsvv
