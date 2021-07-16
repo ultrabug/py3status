@@ -256,27 +256,19 @@ def process(name, path, data, module=True):
         create_screenshot(name, data, path, font=font, is_module=module)
 
 
-def create_screenshots(config, quiet=False):
+def create_screenshots(config):
     """
     create screenshots for all core modules.
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
-    if os.environ.get("READTHEDOCS") == "True":
-        path = Path("../docs/user-guide/screenshots")
-    else:
-        path = (
-            Path(__file__).resolve().parent.parent
-            / "docs"
-            / "user-guide"
-            / "screenshots"
-        )
-
+    path = Path(f"{config['docs_dir']}/user-guide/screenshots")
     print(f"Creating screenshots in {path}...")
     samples = get_samples()
     for name, data in sorted(samples.items()):
         process(name, path, data)
         pass
+    return config
 
 
 if __name__ == "__main__":

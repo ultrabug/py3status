@@ -130,7 +130,7 @@ def file_sort(my_list):
     return my_list
 
 
-def screenshots(screenshots_data, module_name):
+def screenshots(config, screenshots_data, module_name):
     """
     Create .md output for any screenshots a module may have.
     """
@@ -140,7 +140,7 @@ def screenshots(screenshots_data, module_name):
 
     out = []
     for index, shot in enumerate(file_sort(shots)):
-        if not Path(f"docs/screenshots/{shot}.png").exists():
+        if not Path(f"{config['docs_dir']}/user-guide/screenshots/{shot}.png").exists():
             continue
         out.append(f"\n![{module_name} example {index}](screenshots/{shot}.png)\n")
     return "".join(out)
@@ -166,12 +166,15 @@ def create_module_docs(config):
         out.append(
             "\n## {name}\n\n{screenshots}\n{details}\n".format(
                 name=module,
-                screenshots=screenshots(screenshots_data, module),
+                screenshots=screenshots(config, screenshots_data, module),
                 details="".join(data[module]).strip(),
             )
         )
     # write include file
-    Path("docs/user-guide/modules.md").write_text("".join(out))
+    path = f"{config['docs_dir']}/user-guide/modules.md"
+    print(f"Writing modules documentation to {path}...")
+    Path(path).write_text("".join(out))
+    return config
 
 
 def get_variable_docstrings(filename):
@@ -310,14 +313,13 @@ def create_py3_docs():
         Path(f"../docs/py3-{k}-info.inc").write_text("\n".join(output))
 
 
-def create_auto_documentation():
+def create_auto_documentation(config):
     """
     Create any include files needed for sphinx documentation
     """
-    create_screenshots()
-
-    create_module_docs()
-    create_py3_docs()
+    create_screenshots(config)
+    create_module_docs(config)
+    return config
 
 
 class ScreenshotDirective(Directive):
