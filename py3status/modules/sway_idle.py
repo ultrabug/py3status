@@ -36,7 +36,7 @@ class Py3status:
 
     def sway_idle(self):
         sway_tree = self.py3.command_output(self.py3.get_wm_msg() + " -t get_tree")
-        inhibit_idle = str(sway_tree.find('"inhibit_idle": true') > 0)
+        inhibit_idle = '"inhibit_idle": true' in sway_tree
         return {
             "full_text": self.py3.safe_format(
                 self.format, param_dict={"inhibit_idle": inhibit_idle}
