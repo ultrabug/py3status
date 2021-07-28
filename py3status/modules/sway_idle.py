@@ -7,7 +7,7 @@ For more information about inhibit idle see `man 5 sway`
 
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 1)
-    format: Display format (default 'Inhibit Idle: [\?if=inhibit_idle=True True]|False')
+    format: Display format (default 'Inhibit Idle: {inhibit_idle}')
 
 Format placeholders:
     {inhibit_idle} Returns 'True' if idle is inhibited, 'False' else.
@@ -16,7 +16,7 @@ Example:
 
 ```
 sway_idle {
-    format = "[\?if=inhibit_idle=True Idle Inhibited]"
+    format = "Inhibit Idle: [\?if=inhibit_idle=True True]|False"
 }
 ```
 
@@ -32,7 +32,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
-    format = "Inhibit Idle: [\?if=inhibit_idle=True True]|False"
+    format = "Inhibit Idle: {inhibit_idle}"
 
     def sway_idle(self):
         sway_tree = self.py3.command_output(self.py3.get_wm_msg() + " -t get_tree")
