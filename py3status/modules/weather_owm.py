@@ -735,7 +735,7 @@ class Py3status:
 
     def _format_sunrise(self, wthr):
         # Get the time for sunrise (default is the start of time)
-        dt = datetime.datetime.utcfromtimestamp(self._jpath(wthr, OWM_SUNRISE, 0))
+        dt = datetime.datetime.fromtimestamp(self._jpath(wthr, OWM_SUNRISE, 0))
 
         # Format the sunrise
         replaced = dt.strftime(self.format_sunrise)
@@ -743,7 +743,7 @@ class Py3status:
 
     def _format_sunset(self, wthr):
         # Get the time for sunset (default is the start of time)
-        dt = datetime.datetime.utcfromtimestamp(self._jpath(wthr, OWM_SUNSET, 0))
+        dt = datetime.datetime.fromtimestamp(self._jpath(wthr, OWM_SUNSET, 0))
 
         # Format the sunset
         replaced = dt.strftime(self.format_sunset)
