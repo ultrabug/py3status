@@ -32,7 +32,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
-    format = "Inhibit Idle: [\?if=inhibit_idle=True True]|False"
+    format = "Inhibit Idle: {inhibit_idle}"
 
     def sway_idle(self):
         sway_tree = self.py3.command_output(self.py3.get_wm_msg() + " -t get_tree")
