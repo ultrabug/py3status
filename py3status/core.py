@@ -1,12 +1,14 @@
 import importlib.metadata
+import logging
+import logging.config
+import logging.handlers
 import sys
 import time
 from collections import deque
+from json import JSONDecodeError, load
 from pathlib import Path
-from pprint import pformat
 from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
 from subprocess import Popen
-from syslog import LOG_ERR, LOG_INFO, LOG_WARNING, syslog
 from threading import Event, Thread
 from traceback import extract_tb, format_stack, format_tb
 
@@ -21,7 +23,11 @@ from py3status.parse_config import process_config
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 
-LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
+LOGGING_LEVELS = {
+    "error": logging.ERROR,
+    "warning": logging.WARNING,
+    "info": logging.INFO,
+}
 
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
 
@@ -38,6 +44,8 @@ CONFIG_SPECIAL_SECTIONS = [
 
 ENTRY_POINT_NAME = "py3status"
 ENTRY_POINT_KEY = "entry_point"
+
+_logger = logging.getLogger("core")
 
 
 class Runner(Thread):
@@ -516,8 +524,7 @@ class Py3statusWrapper:
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
-                elif self.config["debug"]:
-                    self.log(f'ignoring module "{module}" (no methods found)')
+                _logger.debug('ignoring module "%s" (no methods found)', module)
             except Exception:
                 err = sys.exc_info()[1]
                 msg = f'Loading module "{module}" failed ({err}).'
@@ -566,10 +573,52 @@ class Py3statusWrapper:
             self.log(f"git commit: {commit.hexsha[:7]} {commit.summary}")
             self.log(f"git clean: {not repo.is_dirty()!s}")
 
+    def _setup_logging(self):
+        """Set up the global logger."""
+        log_config = self.config.get("log_config")
+        if log_config:
+            if self.config.get("debug"):
+                self.report_exception("--debug is invalid when --log-config is passed")
+            if self.config.get("log_file"):
+                self.report_exception("--log-file is invalid when --log-config is passed")
+
+            with log_config.open() as f:
+                try:
+                    config_dict = load(f, strict=False)
+                    config_dict.setdefault("disable_existing_loggers", False)
+                    logging.config.dictConfig(config_dict)
+                except JSONDecodeError as e:
+                    self.report_exception(str(e))
+            # Nothing else to do. All logging config is provided by the config
+            # dictionary.
+            return
+
+        root = logging.getLogger(name=None)
+        if self.config.get("debug"):
+            root.setLevel(logging.DEBUG)
+        else:
+            root.setLevel(logging.INFO)
+
+        log_file = self.config.get("log_file")
+        if log_file:
+            handler = logging.FileHandler(log_file, encoding="utf8")
+        else:
+            # https://stackoverflow.com/a/3969772/340862
+            handler = logging.handlers.SysLogHandler(address="/dev/log")
+        handler.setFormatter(
+            logging.Formatter(
+                fmt="%(asctime)s %(levelname)s %(module)s %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                style="%",
+            )
+        )
+        root.addHandler(handler)
+
     def setup(self):
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
+        self._setup_logging()
 
         # log py3status and python versions
         self.log("=" * 8)
@@ -581,8 +630,7 @@ class Py3statusWrapper:
 
         self.log("window manager: {}".format(self.config["wm_name"]))
 
-        if self.config["debug"]:
-            self.log(f"py3status started with config {self.config}")
+        _logger.debug("py3status started with config %s", self.config)
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]
@@ -632,10 +680,7 @@ class Py3statusWrapper:
                     i3s_mode = "mocked"
                     break
                 time.sleep(0.1)
-        if self.config["debug"]:
-            self.log(
-                "i3status thread {} with config {}".format(i3s_mode, self.config["py3_config"])
-            )
+        _logger.debug("i3status thread %s with config %s", i3s_mode, self.config["py3_config"])
 
         # add i3status thread monitoring task
         if i3s_mode == "started":
@@ -646,15 +691,13 @@ class Py3statusWrapper:
         self.events_thread = Events(self)
         self.events_thread.daemon = True
         self.events_thread.start()
-        if self.config["debug"]:
-            self.log("events thread started")
+        _logger.debug("events thread started")
 
         # initialise the command server
         self.commands_thread = CommandServer(self)
         self.commands_thread.daemon = True
         self.commands_thread.start()
-        if self.config["debug"]:
-            self.log("commands thread started")
+        _logger.debug("commands thread started")
 
         # initialize the udev monitor (lazy)
         self.udev_monitor = UdevMonitor(self)
@@ -697,8 +740,7 @@ class Py3statusWrapper:
         # get a dict of all user provided modules
         self.log("modules include paths: {}".format(self.config["include_paths"]))
         user_modules = self.get_user_configured_modules()
-        if self.config["debug"]:
-            self.log(f"user_modules={user_modules}")
+        _logger.debug("user_modules=%s", user_modules)
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
@@ -808,8 +850,7 @@ class Py3statusWrapper:
 
         try:
             self.lock.set()
-            if self.config["debug"]:
-                self.log("lock set, exiting")
+            _logger.debug("lock set, exiting")
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -840,12 +881,10 @@ class Py3statusWrapper:
                 or (not exact and name.startswith(module_string))
             ):
                 if module["type"] == "py3status":
-                    if self.config["debug"]:
-                        self.log(f"refresh py3status module {name}")
+                    _logger.debug("refresh py3status module %s", name)
                     module["module"].force_update()
                 else:
-                    if self.config["debug"]:
-                        self.log(f"refresh i3status module {name}")
+                    _logger.debug("refresh i3status module %s", name)
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
@@ -919,29 +958,11 @@ class Py3statusWrapper:
     def log(self, msg, level="info"):
         """
         log this information to syslog or user provided logfile.
+
+        This is soft-deprecated; prefer using the 'logging' module directly in
+        new code.
         """
-        if not self.config.get("log_file"):
-            # If level was given as a str then convert to actual level
-            level = LOG_LEVELS.get(level, level)
-            syslog(level, f"{msg}")
-        else:
-            # Binary mode so fs encoding setting is not an issue
-            with self.config["log_file"].open("ab") as f:
-                log_time = time.strftime("%Y-%m-%d %H:%M:%S")
-                # nice formatting of data structures using pretty print
-                if isinstance(msg, (dict, list, set, tuple)):
-                    msg = pformat(msg)
-                    # if multiline then start the data output on a fresh line
-                    # to aid readability.
-                    if "\n" in msg:
-                        msg = "\n" + msg
-                out = f"{log_time} {level.upper()} {msg}\n"
-                try:
-                    # Encode unicode strings to bytes
-                    f.write(out.encode("utf-8"))
-                except (AttributeError, UnicodeDecodeError):
-                    # Write any byte strings straight to log
-                    f.write(out)
+        _logger.log(LOGGING_LEVELS.get(level, logging.DEBUG), msg)
 
     def create_output_modules(self):
         """
