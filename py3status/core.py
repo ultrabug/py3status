@@ -1,3 +1,5 @@
+import logging
+import logging.handlers
 import pkg_resources
 import sys
 import time
@@ -24,6 +26,12 @@ from py3status.udev_monitor import UdevMonitor
 
 LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
 
+LOGGING_LEVELS = {
+        "error": logging.ERROR,
+        "warning": logging.WARNING,
+        "info": logging.INFO,
+}
+
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
 
 CONFIG_SPECIAL_SECTIONS = [
@@ -39,6 +47,8 @@ CONFIG_SPECIAL_SECTIONS = [
 
 ENTRY_POINT_NAME = "py3status"
 ENTRY_POINT_KEY = "entry_point"
+
+_logger = logging.getLogger('core')
 
 
 class Runner(Thread):
@@ -521,10 +531,30 @@ class Py3statusWrapper:
                 msg = f'Loading module "{module}" failed ({err}).'
                 self.report_exception(msg, level="warning")
 
+    def _setup_logging(self):
+        """Set up the global logger."""
+        root = logging.getLogger(name=None)
+        if self.config.get("debug"):
+            root.setLevel(logging.DEBUG)
+        else:
+            root.setLevel(logging.DEBUG)
+
+        log_file = self.config.get("log_file")
+        if log_file:
+            handler = logging.FileHandler(log_file, encoding='utf8')
+        else:
+            logging.handlers.SysLogHandler()
+        handler.setFormatter(logging.Formatter(
+                fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S',
+                style='%'))
+        root.addHandler(handler)
+
     def setup(self):
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
+        self._setup_logging()
 
         # SIGTSTP will be received from i3bar indicating that all output should
         # stop and we should consider py3status suspended.  It is however
@@ -856,29 +886,11 @@ class Py3statusWrapper:
     def log(self, msg, level="info"):
         """
         log this information to syslog or user provided logfile.
+
+        This is soft-deprecated; prefer using the 'logging' module directly in
+        new code.
         """
-        if not self.config.get("log_file"):
-            # If level was given as a str then convert to actual level
-            level = LOG_LEVELS.get(level, level)
-            syslog(level, f"{msg}")
-        else:
-            # Binary mode so fs encoding setting is not an issue
-            with self.config["log_file"].open("ab") as f:
-                log_time = time.strftime("%Y-%m-%d %H:%M:%S")
-                # nice formatting of data structures using pretty print
-                if isinstance(msg, (dict, list, set, tuple)):
-                    msg = pformat(msg)
-                    # if multiline then start the data output on a fresh line
-                    # to aid readability.
-                    if "\n" in msg:
-                        msg = "\n" + msg
-                out = f"{log_time} {level.upper()} {msg}\n"
-                try:
-                    # Encode unicode strings to bytes
-                    f.write(out.encode("utf-8"))
-                except (AttributeError, UnicodeDecodeError):
-                    # Write any byte strings straight to log
-                    f.write(out)
+        _logger.log(LOGGING_LEVELS.get(level, logging.DEBUG), msg)
 
     def create_output_modules(self):
         """
