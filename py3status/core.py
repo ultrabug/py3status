@@ -11,7 +11,6 @@ from pprint import pformat
 from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event, Thread
-from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
 from py3status.command import CommandServer
@@ -24,12 +23,10 @@ from py3status.module import Module
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 
-LOG_LEVELS = {"error": LOG_ERR, "warning": LOG_WARNING, "info": LOG_INFO}
-
 LOGGING_LEVELS = {
-        "error": logging.ERROR,
-        "warning": logging.WARNING,
-        "info": logging.INFO,
+    "error": logging.ERROR,
+    "warning": logging.WARNING,
+    "info": logging.INFO,
 }
 
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
@@ -48,7 +45,7 @@ CONFIG_SPECIAL_SECTIONS = [
 ENTRY_POINT_NAME = "py3status"
 ENTRY_POINT_KEY = "entry_point"
 
-_logger = logging.getLogger('core')
+_logger = logging.getLogger("core")
 
 
 class Runner(Thread):
@@ -524,8 +521,7 @@ class Py3statusWrapper:
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
-                elif self.config["debug"]:
-                    self.log(f'ignoring module "{module}" (no methods found)')
+                _logger.debug('ignoring module "%s" (no methods found)', module)
             except Exception:
                 err = sys.exc_info()[1]
                 msg = f'Loading module "{module}" failed ({err}).'
@@ -541,13 +537,16 @@ class Py3statusWrapper:
 
         log_file = self.config.get("log_file")
         if log_file:
-            handler = logging.FileHandler(log_file, encoding='utf8')
+            handler = logging.FileHandler(log_file, encoding="utf8")
         else:
             logging.handlers.SysLogHandler()
-        handler.setFormatter(logging.Formatter(
-                fmt='%(asctime)s %(levelname)s %(module)s %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S',
-                style='%'))
+        handler.setFormatter(
+            logging.Formatter(
+                fmt="%(asctime)s %(levelname)s %(module)s %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                style="%",
+            )
+        )
         root.addHandler(handler)
 
     def setup(self):
@@ -590,8 +589,7 @@ class Py3statusWrapper:
 
         self.log("window manager: {}".format(self.config["wm_name"]))
 
-        if self.config["debug"]:
-            self.log(f"py3status started with config {self.config}")
+        _logger.debug("py3status started with config %s", self.config)
 
         if self.config["gevent"]:
             self.is_gevent = self.gevent_monkey_patch_report()
@@ -636,12 +634,9 @@ class Py3statusWrapper:
                     i3s_mode = "mocked"
                     break
                 time.sleep(0.1)
-        if self.config["debug"]:
-            self.log(
-                "i3status thread {} with config {}".format(
-                    i3s_mode, self.config["py3_config"]
-                )
-            )
+        _logger.debug(
+            "i3status thread %s with config %s", i3s_mode, self.config["py3_config"]
+        )
 
         # add i3status thread monitoring task
         if i3s_mode == "started":
@@ -652,15 +647,13 @@ class Py3statusWrapper:
         self.events_thread = Events(self)
         self.events_thread.daemon = True
         self.events_thread.start()
-        if self.config["debug"]:
-            self.log("events thread started")
+        _logger.debug("events thread started")
 
         # initialise the command server
         self.commands_thread = CommandServer(self)
         self.commands_thread.daemon = True
         self.commands_thread.start()
-        if self.config["debug"]:
-            self.log("commands thread started")
+        _logger.debug("commands thread started")
 
         # initialize the udev monitor (lazy)
         self.udev_monitor = UdevMonitor(self)
@@ -676,8 +669,7 @@ class Py3statusWrapper:
         # get a dict of all user provided modules
         self.log("modules include paths: {}".format(self.config["include_paths"]))
         user_modules = self.get_user_configured_modules()
-        if self.config["debug"]:
-            self.log(f"user_modules={user_modules}")
+        _logger.debug("user_modules=%s", user_modules)
 
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
@@ -775,8 +767,7 @@ class Py3statusWrapper:
 
         try:
             self.lock.set()
-            if self.config["debug"]:
-                self.log("lock set, exiting")
+            _logger.debug("lock set, exiting")
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -807,12 +798,10 @@ class Py3statusWrapper:
                 or (not exact and name.startswith(module_string))
             ):
                 if module["type"] == "py3status":
-                    if self.config["debug"]:
-                        self.log(f"refresh py3status module {name}")
+                    _logger.debug("refresh py3status module %s", name)
                     module["module"].force_update()
                 else:
-                    if self.config["debug"]:
-                        self.log(f"refresh i3status module {name}")
+                    _logger.debug("refresh i3status module %s", name)
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
