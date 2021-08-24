@@ -28,12 +28,6 @@ LOGGING_LEVELS = {
     "info": logging.INFO,
 }
 
-LOGGING_LEVELS = {
-        "error": logging.ERROR,
-        "warning": logging.WARNING,
-        "info": logging.INFO,
-}
-
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
 
 CONFIG_SPECIAL_SECTIONS = [
