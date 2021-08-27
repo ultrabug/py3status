@@ -265,7 +265,12 @@ class Py3status:
                     idx = int(h / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
-                timezone = zone.zone
+                try:
+                    # tzlocal < 3.0
+                    timezone = zone.zone
+                except AttributeError:
+                    # tzlocal >= 3.0
+                    timezone = zone.key
                 tzname = timezone.split("/")[-1].replace("_", " ")
 
                 if self.multiple_tz:
