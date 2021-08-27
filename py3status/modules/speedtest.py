@@ -219,6 +219,7 @@ class Py3status:
         # end
         self.speedtest_data["elapsed"] = False
         self.speedtest_data["elapsed_time"] = time.perf_counter() - self.start_time
+        self.thread = None
 
     def speedtest(self):
         if self.speedtest_data.get("elapsed"):
@@ -245,8 +246,6 @@ class Py3status:
             if share:
                 self.py3.command_run(f"xdg-open {share}")
         if button == self.button_refresh:
-            if self.thread and not self.thread.isAlive():
-                self.thread = None
             if self.thread is None:
                 self.thread = Thread(target=self._set_speedtest_data)
                 self.thread.daemon = True
