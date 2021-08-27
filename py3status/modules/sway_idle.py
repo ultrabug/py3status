@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# -*- coding: utf-8 -*-
+>>>>>>> 17d826db (new sway_idle module: to display the idle state of sway wm (#2058))
 """
 Display sway inhibit idle status.
 
