@@ -1,3 +1,13 @@
+version 3.39 (2021-08-30)
+* documentation was refactored to use MkDocs, lots of work has been done
+* add a makefile to ease tasks
+* create and split project, documentation and tests requirements
+* tests: update tox and module tests to match mkdocs md format
+* new sway_idle module: to display the idle state of sway wm (#2058), by Valentin Weber
+* clock module: compatible with tzlocal 3.0, thx to @flyingapfopenguin
+* speedtest module: fix error when clicking too fast, closes #2060
+* weather_owm module: _format_sunrise and _format_sunset as aware datetime (#2055), by msk
+
 version 3.38 (2021-06-29)
 * update IRC doc to OFTC
 * arch_updates module: add paru support (#2052), by Andreas Schleifer
