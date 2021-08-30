@@ -1,5 +1,5 @@
 qa:
-	isort --profile black . && black . && flake8
+	tox
 
 clean:
 	rm -rf dist
