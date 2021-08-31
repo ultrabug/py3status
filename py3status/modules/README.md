@@ -1,3 +1,3 @@
 # Modules documentation
 
-Up to date documentation: https://py3status.readthedocs.io/en/latest/modules.html
+Up to date modules documentation: https://py3status.readthedocs.io/en/latest/user-guide/modules
