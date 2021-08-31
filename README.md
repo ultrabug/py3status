@@ -10,7 +10,7 @@
 Using py3status, you can take control of your i3bar easily by:
 
 -   using one of the available
-    [modules](https://py3status.readthedocs.io/en/latest/modules.html)
+    [modules](https://py3status.readthedocs.io/en/latest/user-guide/modules/)
     shipped with py3status
 -   grouping multiple modules and automatically or manually cycle their
     display
@@ -40,18 +40,19 @@ You will love py3status if you're using [i3wm](https://i3wm.org)
 -   **easily allow interactivity** with the i3bar
 -   add some **built-in enhancement/transformation** of basic i3status modules output
 
-We apply the [Zen of py3status](https://py3status.readthedocs.io/en/latest/contributing.html#zen-of-py3status) to improve this project and encourage everyone to read it!
+We apply the [Zen of py3status](https://py3status.readthedocs.io/en/latest/dev-guide/contributing/#zen-of-py3status) to improve this project and encourage everyone to read it!
 
 ## Documentation
 
 Up-to-date [documentation](https://py3status.readthedocs.io):
 
--   [Installation](https://py3status.readthedocs.io/en/latest/intro.html#installation)
--   [Using modules](https://py3status.readthedocs.io/en/latest/configuration.html)
--   [Custom click events](https://py3status.readthedocs.io/en/latest/configuration.html#custom-click-events)
--   [Writing custom modules](https://py3status.readthedocs.io/en/latest/writing_modules.html)
--   [Contributing](https://py3status.readthedocs.io/en/latest/contributing.html)
--   [The py3-cmd command line](https://py3status.readthedocs.io/en/latest/py3-cmd.html)
+-   [Installation](https://py3status.readthedocs.io/en/latest/user-guide/installation/)
+-   [Getting started](https://py3status.readthedocs.io/en/latest/getting-started/)
+-   [Using Modules](https://py3status.readthedocs.io/en/latest/user-guide/configuration/#loading-and-ordering-py3status-modules)
+-   [Custom click events](https://py3status.readthedocs.io/en/latest/user-guide/configuration/#custom-click-events)
+-   [The py3-cmd command line](https://py3status.readthedocs.io/en/latest/user-guide/remote-control/)
+-   [Writing custom modules](https://py3status.readthedocs.io/en/latest/dev-guide/writing-modules/)
+-   [Contributing](https://py3status.readthedocs.io/en/latest/dev-guide/contributing/)
 
 Get help or share your ideas on IRC:
 
@@ -59,7 +60,7 @@ Get help or share your ideas on IRC:
 
 ## Installation
 
-See the up to date and complete [installation instructions](https://py3status.readthedocs.io/en/latest/intro.html#installation) for your favorite distribution.
+See the up to date and complete [installation instructions](https://py3status.readthedocs.io/en/latest/user-guide/installation/) for your favorite distribution.
 
 ## Usage
 
@@ -102,10 +103,10 @@ You can see the help of py3status by issuing \`py3status -h\`:
 
 ## Available modules
 
-[All modules](https://py3status.readthedocs.io/en/latest/modules.html)
-shipped with py3status are [configurable directly from your current i3status.conf](https://py3status.readthedocs.io/en/latest/configuration.html#using-modules)!
+[All modules](https://py3status.readthedocs.io/en/latest/user-guide/modules/)
+shipped with py3status are [configurable directly from your current i3status.conf](https://py3status.readthedocs.io/en/latest/user-guide/configuration/#loading-and-ordering-py3status-modules)!
 
-[Check them out](https://py3status.readthedocs.io/en/latest/modules.html)
+[Check them out](https://py3status.readthedocs.io/en/latest/user-guide/modules/)
 to see all the configuration options.
 
 ## Control from CLI
@@ -117,7 +118,7 @@ signal to i3status:
     killall -USR1 py3status
 
 To refresh individual modules, the
-[py3-cmd](http://py3status.readthedocs.io/en/latest/py3-cmd.html)
+[py3-cmd](https://py3status.readthedocs.io/en/latest/user-guide/remote-control/)
 utility can be used, e.g:
 
     py3-cmd refresh wifi
