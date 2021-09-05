@@ -7,7 +7,6 @@ import time
 from collections import deque
 from json import dumps
 from pathlib import Path
-from pprint import pformat
 from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event, Thread
