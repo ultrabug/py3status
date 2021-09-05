@@ -562,11 +562,7 @@ class Py3statusWrapper:
         if log_file:
             handler = logging.FileHandler(log_file, encoding="utf8")
         else:
-<<<<<<< HEAD
             handler = logging.handlers.SysLogHandler()
-=======
-            logging.handlers.SysLogHandler()
->>>>>>> 3ed7e940 (Use standard logging infrastructure on "debug" statements.)
         handler.setFormatter(
             logging.Formatter(
                 fmt="%(asctime)s %(levelname)s %(module)s %(message)s",
