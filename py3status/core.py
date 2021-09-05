@@ -532,7 +532,7 @@ class Py3statusWrapper:
         if self.config.get("debug"):
             root.setLevel(logging.DEBUG)
         else:
-            root.setLevel(logging.DEBUG)
+            root.setLevel(logging.INFO)
 
         log_file = self.config.get("log_file")
         if log_file:
