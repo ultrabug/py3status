@@ -42,7 +42,7 @@ Configuration parameters:
     status_string_charging: a string to put in {status} when charging (default "CHG")
     status_string_degraded: a string to put in {status} when degraded (default "LOW")
     status_string_discharging: a string to put in {status} when discharging (default "BAT")
-    status_string_full: a string to put in {status} when charging (default "FULL")
+    status_string_full: a string to put in {status} when full (default "FULL")
     sys_battery_path: set the path to your battery(ies), without including its
         number
         (default "/sys/class/power_supply/")
