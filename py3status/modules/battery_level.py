@@ -38,6 +38,11 @@ Configuration parameters:
     on_udev_power_supply: dynamic variable to watch for `power_supply` udev subsystem
         events to trigger specified action.
         (default "refresh")
+    status_string_bad: a string to put in {status} when bad (default "CRIT")
+    status_string_charging: a string to put in {status} when charging (default "CHG")
+    status_string_degraded: a string to put in {status} when degraded (default "LOW")
+    status_string_discharging: a string to put in {status} when discharging (default "BAT")
+    status_string_full: a string to put in {status} when charging (default "FULL")
     sys_battery_path: set the path to your battery(ies), without including its
         number
         (default "/sys/class/power_supply/")
@@ -59,6 +64,7 @@ Format placeholders:
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
     {power} - the current power consumption in Watts. Not working with acpi.
+    {status} - the current battery status string as defined by 'status_string_*'
 
 Color options:
     color_bad: Battery level is below threshold_bad
@@ -96,6 +102,11 @@ FULL_BLOCK = "█"
 FORMAT = "{icon}"
 FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+STATUS_STRING_BAD = "CRIT"
+STATUS_STRING_CHARGING = "CHG"
+STATUS_STRING_DEGRADED = "LOW"
+STATUS_STRING_DISCHARGING = "BAT"
+STATUS_STRING_FULL = "FULL"
 SYS_BATTERY_PATH = "/sys/class/power_supply/"
 MEASUREMENT_MODE = None
 FULLY_CHARGED = "?"
@@ -118,6 +129,11 @@ class Py3status:
     notification = False
     notify_low_level = False
     on_udev_power_supply = "refresh"
+    status_string_bad = STATUS_STRING_BAD
+    status_string_charging = STATUS_STRING_CHARGING
+    status_string_discharging = STATUS_STRING_DISCHARGING
+    status_string_degraded = STATUS_STRING_DEGRADED
+    status_string_full = STATUS_STRING_FULL
     sys_battery_path = SYS_BATTERY_PATH
     threshold_bad = 10
     threshold_degraded = 30
@@ -183,6 +199,7 @@ class Py3status:
         self._refresh_battery_info(battery_list)
         self._update_icon()
         self._update_ascii_bar()
+        self._update_status()
         self._update_full_text()
 
         return self._build_response()
@@ -440,6 +457,18 @@ class Py3status:
                 10 - self.percent_charged // 10
             )
 
+    def _update_status(self):
+        if self.charging:
+            self.status_string = self.status_string_charging
+        elif self.percent_charged < self.threshold_bad:
+            self.status_string = self.status_string_bad
+        elif self.percent_charged < self.threshold_degraded:
+            self.status_string = self.status_string_degraded
+        elif self.percent_charged >= self.threshold_full:
+            self.status_string = self.status_string_full
+        else:
+            self.status_string = self.status_string_discharging
+
     def _update_icon(self):
         if self.charging:
             self.icon = self.charging_character
@@ -460,6 +489,7 @@ class Py3status:
                 percent=self.percent_charged,
                 time_remaining=self.time_remaining,
                 power=self.power_now,
+                status=self.status_string,
             ),
         )
 
