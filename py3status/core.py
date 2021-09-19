@@ -530,6 +530,28 @@ class Py3statusWrapper:
 
     def _setup_logging(self):
         """Set up the global logger."""
+        log_config = self.config.get("log_config")
+        if log_config:
+            if self.config.get("debug"):
+                self.report_exception("--debug is invalid when --log-config is passed")
+            if self.config.get("log_file"):
+                self.report_exception(
+                    "--log-file is invalid when --log-config is passed"
+                )
+            import json
+
+            with log_config.open() as f:
+                import logging.config
+
+                try:
+                    config_dict = json.load(f, strict=False)
+                    logging.config.dictConfig(config_dict)
+                except json.JSONDecodeError as e:
+                    self.report_exception(str(e))
+            # Nothing else to do. All logging config is provided by the config
+            # dictionary.
+            return
+
         root = logging.getLogger(name=None)
         if self.config.get("debug"):
             root.setLevel(logging.DEBUG)
