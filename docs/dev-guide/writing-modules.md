@@ -811,6 +811,49 @@ Loadavg 1.41 1.61 1.82
 Loadavg 1.41 1.61 1.82
 ^C
 ```
+
+## Logging
+
+Modules are encouraged to use Python's standard
+[`logging`](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema)
+module for debugging. By default, logs will be written to
+[`syslog`](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema)
+with a minimum level of `INFO`.
+
+Several existing modules will write to logs, with varying levels of details.
+Therefore, when debugging a specific module, it may be useful to show only the
+one you're interested in. This can be done by using the `--log-config` flag to
+pass a JSON file that configures logging. This file must be in the format
+specified in
+[`logging`'s configuration schema](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema).
+For example, to show only logs from your module in a `DEBUG` level, while
+keeping all others at `WARNING`, you can use:
+
+```json
+{
+    "version": 1,
+    "handlers": {
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "/tmp/py3status_log.log",
+            "maxBytes": 2048,
+            "formatter": "default"
+        }
+    },
+    "formatters": {
+        "default": {
+            "validate": true,
+            "format":"%(asctime)s %(levelname)s %(module)s %(message)s",
+            "datefmt":"%Y-%m-%d %H:%M:%S"
+        }
+    },
+    "loggers": {
+        "root": {"handlers": ["file"], "level": "WARNING"},
+        "<my_module>": {"level": "DEBUG"}
+    }
+}
+```
+
 ## Publishing custom modules on PyPI
 
 You can share your custom modules and make them available for py3status
