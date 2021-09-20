@@ -5,7 +5,7 @@ import sys
 import time
 
 from collections import deque
-from json import dumps
+from json import load, dumps, JSONDecodeError
 from pathlib import Path
 from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
@@ -538,15 +538,14 @@ class Py3statusWrapper:
                 self.report_exception(
                     "--log-file is invalid when --log-config is passed"
                 )
-            import json
 
             with log_config.open() as f:
                 import logging.config
 
                 try:
-                    config_dict = json.load(f, strict=False)
+                    config_dict = load(f, strict=False)
                     logging.config.dictConfig(config_dict)
-                except json.JSONDecodeError as e:
+                except JSONDecodeError as e:
                     self.report_exception(str(e))
             # Nothing else to do. All logging config is provided by the config
             # dictionary.
