@@ -1,5 +1,6 @@
 import logging
 import logging.handlers
+import logging.config
 import pkg_resources
 import sys
 import time
@@ -541,8 +542,6 @@ class Py3statusWrapper:
                 )
 
             with log_config.open() as f:
-                import logging.config
-
                 try:
                     config_dict = load(f, strict=False)
                     logging.config.dictConfig(config_dict)
@@ -562,7 +561,8 @@ class Py3statusWrapper:
         if log_file:
             handler = logging.FileHandler(log_file, encoding="utf8")
         else:
-            handler = logging.handlers.SysLogHandler()
+            # https://stackoverflow.com/a/3969772/340862
+            handler = logging.handlers.SysLogHandler(address='/dev/log')
         handler.setFormatter(
             logging.Formatter(
                 fmt="%(asctime)s %(levelname)s %(module)s %(message)s",
