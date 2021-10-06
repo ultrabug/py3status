@@ -21,6 +21,16 @@ Configuration parameters:
     format_notify_discharging: format of the notification received when you
         click on the module while your computer is not plugged in
         (default "{time_remaining}")
+    format_status_string_bad: a string to put in {status} when bad
+        (default "CRIT")
+    format_status_string_charging: a string to put in {status} when charging
+        (default "CHG")
+    format_status_string_degraded: a string to put in {status} when degraded
+        (default "LOW")
+    format_status_string_discharging: a string to put in {status} when
+        discharging
+        (default "BAT")
+    format_status_string_full: a string to put in {status} when full (default "FULL")
     hide_seconds: hide seconds in remaining time
         (default False)
     hide_when_full: hide any information when battery is fully charged (when
@@ -38,11 +48,6 @@ Configuration parameters:
     on_udev_power_supply: dynamic variable to watch for `power_supply` udev subsystem
         events to trigger specified action.
         (default "refresh")
-    status_string_bad: a string to put in {status} when bad (default "CRIT")
-    status_string_charging: a string to put in {status} when charging (default "CHG")
-    status_string_degraded: a string to put in {status} when degraded (default "LOW")
-    status_string_discharging: a string to put in {status} when discharging (default "BAT")
-    status_string_full: a string to put in {status} when full (default "FULL")
     sys_battery_path: set the path to your battery(ies), without including its
         number
         (default "/sys/class/power_supply/")
@@ -64,7 +69,8 @@ Format placeholders:
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
     {power} - the current power consumption in Watts. Not working with acpi.
-    {status} - the current battery status string as defined by 'status_string_*'
+    {status} - the current battery status string as defined by
+        'format_status_string_*'
 
 Color options:
     color_bad: Battery level is below threshold_bad
@@ -102,11 +108,11 @@ FULL_BLOCK = "█"
 FORMAT = "{icon}"
 FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
-STATUS_STRING_BAD = "CRIT"
-STATUS_STRING_CHARGING = "CHG"
-STATUS_STRING_DEGRADED = "LOW"
-STATUS_STRING_DISCHARGING = "BAT"
-STATUS_STRING_FULL = "FULL"
+FORMAT_STATUS_STRING_BAD = "CRIT"
+FORMAT_STATUS_STRING_CHARGING = "CHG"
+FORMAT_STATUS_STRING_DEGRADED = "LOW"
+FORMAT_STATUS_STRING_DISCHARGING = "BAT"
+FORMAT_STATUS_STRING_FULL = "FULL"
 SYS_BATTERY_PATH = "/sys/class/power_supply/"
 MEASUREMENT_MODE = None
 FULLY_CHARGED = "?"
@@ -123,17 +129,17 @@ class Py3status:
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
+    format_status_string_bad = FORMAT_STATUS_STRING_BAD
+    format_status_string_charging = FORMAT_STATUS_STRING_CHARGING
+    format_status_string_degraded = FORMAT_STATUS_STRING_DEGRADED
+    format_status_string_discharging = FORMAT_STATUS_STRING_DISCHARGING
+    format_status_string_full = FORMAT_STATUS_STRING_FULL
     hide_seconds = False
     hide_when_full = False
     measurement_mode = MEASUREMENT_MODE
     notification = False
     notify_low_level = False
     on_udev_power_supply = "refresh"
-    status_string_bad = STATUS_STRING_BAD
-    status_string_charging = STATUS_STRING_CHARGING
-    status_string_discharging = STATUS_STRING_DISCHARGING
-    status_string_degraded = STATUS_STRING_DEGRADED
-    status_string_full = STATUS_STRING_FULL
     sys_battery_path = SYS_BATTERY_PATH
     threshold_bad = 10
     threshold_degraded = 30
@@ -459,15 +465,15 @@ class Py3status:
 
     def _update_status(self):
         if self.charging:
-            self.status_string = self.status_string_charging
+            self.status_string = self.format_status_string_charging
         elif self.percent_charged < self.threshold_bad:
-            self.status_string = self.status_string_bad
+            self.status_string = self.format_status_string_bad
         elif self.percent_charged < self.threshold_degraded:
-            self.status_string = self.status_string_degraded
+            self.status_string = self.format_status_string_degraded
         elif self.percent_charged >= self.threshold_full:
-            self.status_string = self.status_string_full
+            self.status_string = self.format_status_string_full
         else:
-            self.status_string = self.status_string_discharging
+            self.status_string = self.format_status_string_discharging
 
     def _update_icon(self):
         if self.charging:
