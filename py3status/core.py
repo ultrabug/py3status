@@ -562,7 +562,7 @@ class Py3statusWrapper:
             handler = logging.FileHandler(log_file, encoding="utf8")
         else:
             # https://stackoverflow.com/a/3969772/340862
-            handler = logging.handlers.SysLogHandler(address='/dev/log')
+            handler = logging.handlers.SysLogHandler(address="/dev/log")
         handler.setFormatter(
             logging.Formatter(
                 fmt="%(asctime)s %(levelname)s %(module)s %(message)s",
