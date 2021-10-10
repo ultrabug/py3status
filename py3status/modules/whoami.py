@@ -36,8 +36,9 @@ class Py3status:
     def whoami(self):
         return {
             "cached_until": self.py3.CACHE_FOREVER,
-            "full_text": self.py3.safe_format(self.format, {"username": getuser(),
-                                                            "hostname": gethostname()}),
+            "full_text": self.py3.safe_format(
+                self.format, {"username": getuser(), "hostname": gethostname()}
+            ),
         }
 
 
