@@ -75,14 +75,17 @@ class Py3status:
         # Loop forever
         loop.run()
 
-    def _vpn_signal_handler(self, args):
+    def _vpn_signal_handler(
+        self, interface_name, changed_properties, invalidated_properties
+    ):
         """Called on NetworkManager PropertiesChanged signal"""
-        # Args is a dictionary of changed properties
         # We only care about changes in ActiveConnections
         active = "ActiveConnections"
         # Compare current ActiveConnections to last seen ActiveConnections
-        if active in args and sorted(self.active) != sorted(args[active]):
-            self.active = args[active]
+        if active in changed_properties and sorted(self.active) != sorted(
+            changed_properties[active]
+        ):
+            self.active = changed_properties[active]
             self.py3.update()
 
     def _get_vpn_status(self):
