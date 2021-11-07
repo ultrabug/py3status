@@ -35,6 +35,14 @@ Dunst Miscellaneous:
     This means that by default (pause = False), all notifications sent while
     DND is active will NOT be queued and displayed when DND is deactivated.
 
+Mako Miscellaneous:
+    Mako requires that you manually create a 'do-not-disturb' mode as shown
+    in https://man.voidlinux.org/mako.5#MODES.
+    This module expects this mode to be configured by the user as suggested by
+    the mako documentation:
+    [mode=do-not-disturb]
+    invisible=1
+
 
 Examples:
 ```
@@ -121,8 +129,14 @@ class Mako(Notification):
     Mako Notification.
     """
 
+    def setup(self, parent):
+        self.toggle(parent.state)
+
     def toggle(self, state):
-        self.parent.py3.command_run("makoctl set invisible={}".format(int(state)))
+        if state is True:
+            self.parent.py3.command_run("makoctl set-mode do-not-disturb")
+        else:
+            self.parent.py3.command_run("makoctl set-mode default")
 
 
 class Xfce4_notifyd(Notification):
