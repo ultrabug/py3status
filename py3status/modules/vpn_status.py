@@ -72,6 +72,9 @@ class Py3status:
         manager = bus.get(".NetworkManager")
         manager.onPropertiesChanged = self._vpn_signal_handler
 
+        # initialize active connections, some of them might be VPNs
+        self.active = manager.ActiveConnections
+
         # Loop forever
         loop.run()
 
