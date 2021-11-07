@@ -5,6 +5,7 @@ Configuration parameters:
     format: display format for this module (default '{username}')
 
 Format placeholders:
+    {hostname} display current hostname
     {username} display current username
 
 Inspired by i3 FAQ:
@@ -17,6 +18,7 @@ SAMPLE OUTPUT
 """
 
 from getpass import getuser
+from socket import gethostname
 
 
 class Py3status:
@@ -34,7 +36,9 @@ class Py3status:
     def whoami(self):
         return {
             "cached_until": self.py3.CACHE_FOREVER,
-            "full_text": self.py3.safe_format(self.format, {"username": getuser()}),
+            "full_text": self.py3.safe_format(
+                self.format, {"username": getuser(), "hostname": gethostname()}
+            ),
         }
 
 
