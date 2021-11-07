@@ -19,7 +19,7 @@ def parse_cli_args():
 
     # get window manager
     with Path(os.devnull).open("w") as devnull:
-        if subprocess.call(["pgrep", "i3"], stdout=devnull) == 0:
+        if subprocess.call(["pgrep", "-x", "i3"], stdout=devnull) == 0:
             wm = "i3"
         else:
             wm = "sway"
