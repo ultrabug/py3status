@@ -337,11 +337,15 @@ class Py3status:
         if self._data.get("error_occurred"):
             color = self.py3.COLOR_BAD
 
-        try:
-            ptime_ms = self._player.Position
-            ptime = _get_time_str(ptime_ms)
-        except Exception:
-            ptime = None
+
+
+        ptime = None
+        if hasattr(self._player, "Position"):
+            try:
+                ptime_ms = self._player.Position
+                ptime = _get_time_str(ptime_ms)
+            except:
+                pass
 
         if (
             self.py3.format_contains(self.format, "time")
@@ -484,14 +488,14 @@ class Py3status:
         """
         # Fixes chromium/google-chrome mpris
         try:
-            player = self._pydbus.get(player_id, SERVICE_BUS_URL)
-        except KeyError:
             if "chromium" in player_id:
                 player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chromium")
             elif "chrome" in player_id:
                 player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chrome")
             else:
-                return False
+                player = self._pydbus.get(player_id, SERVICE_BUS_URL)
+        except KeyError:
+            return False
 
         if player.Identity not in self._mpris_names:
             self._mpris_names[player.Identity] = player_id.split(".")[-1]
