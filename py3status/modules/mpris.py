@@ -102,7 +102,7 @@ from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
-from pydbus import SessionBus
+from pydbus import SessionBus as pydbusSessionBus
 
 
 SERVICE_BUS = "org.mpris.MediaPlayer2"
@@ -126,20 +126,20 @@ def _get_time_str(microseconds):
 
 class BrokenDBusMpris:
     class PropertiesChanged:
-        def __init__(self, parent, dbus):
-            self._dbus = dbus
-            self._parent = parent
+        def __init__(self, _parent, _pydbus):
+            self._pydbus = _pydbus
+            self._parent = _parent
 
         def connect(self, callback):
             def combined_function(*args):
                 callback(*self.filter_messages(*args))
 
-            self._subscription = self._dbus.subscribe(signal_fired=combined_function)
+            self._subscription = self._pydbus.subscribe(signal_fired=combined_function)
 
         def disconnect(self):
             self._subscription.disconnect()
 
-        # For some reason the dbus subscribe filtering doesn't work
+        # For some reason the pydbus subscribe filtering doesn't work
         def filter_messages(self, *args):
             dbus_params = [
                 "/org/mpris/MediaPlayer2",
@@ -164,11 +164,11 @@ class BrokenDBusMpris:
                     pass
             return args[4]
 
-    def __init__(self, dbus, identity, playback_status):
-        self._dbus = dbus
+    def __init__(self, _pydbus, identity, playback_status):
+        self._pydbus = _pydbus
         self.Identity = identity
         self.PlaybackStatus = playback_status
-        self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, dbus)
+        self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, _pydbus)
         self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
 
     def get(self, key):
@@ -200,7 +200,7 @@ class Py3status:
     def post_config_hook(self):
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
-        self._dbus = None
+        self._pydbus = None
         self._data = {}
         self._control_states = {}
         self._kill = False
@@ -211,7 +211,7 @@ class Py3status:
         self._player_details = {}
         self._tries = 0
         # start last
-        self._dbus = SessionBus()
+        self._pydbus = pydbusSessionBus()
         self._start_listener()
         self._states = {
             "pause": {
@@ -448,12 +448,12 @@ class Py3status:
 
         # Fixes chromium/google-chrome mpris
         try:
-            player = self._dbus.get(player_id, SERVICE_BUS_URL)
+            player = self._pydbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
             if "chromium" in player_id:
-                player = BrokenDBusMpris(self._dbus, "Chromium", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, "Chromium", "Stopped")
             elif "chrome" in player_id:
-                player = BrokenDBusMpris(self._dbus, "Chrome", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, "Chrome", "Stopped")
             else:
                 return False
 
@@ -512,14 +512,14 @@ class Py3status:
             del self._mpris_players[player_id]
 
     def _get_players(self):
-        bus = self._dbus.get("org.freedesktop.DBus")
+        bus = self._pydbus.get("org.freedesktop.DBus")
         for player in bus.ListNames():
             self._add_player(player)
 
         self._set_player()
 
     def _start_listener(self):
-        self._dbus.con.signal_subscribe(
+        self._pydbus.con.signal_subscribe(
             None,
             "org.freedesktop.DBus",
             "NameOwnerChanged",
