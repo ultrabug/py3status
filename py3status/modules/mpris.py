@@ -104,6 +104,8 @@ import re
 import sys
 from pydbus import SessionBus as pydbusSessionBus
 
+DBUS_SEND_CMD = """dbus-send --print-reply --dest={dbus_client}
+                 /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
 
 SERVICE_BUS = "org.mpris.MediaPlayer2"
 SERVICE_BUS_URL = "/org/mpris/MediaPlayer2"
@@ -164,8 +166,10 @@ class BrokenDBusMpris:
                     pass
             return args[4]
 
-    def __init__(self, _pydbus, identity, playback_status):
+    def __init__(self, _pydbus, py3, player_id, identity, playback_status):
         self._pydbus = _pydbus
+        self.py3 = py3
+        self.player_id = player_id
         self.Identity = identity
         self.PlaybackStatus = playback_status
         self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, _pydbus)
@@ -175,6 +179,23 @@ class BrokenDBusMpris:
         data = {"subscription": self.PropertiesChanged._subscription}
         return data[key]
 
+    def Play(self):
+        self.py3.command_run(self._dbus_send_cmd("Play"))
+
+    def Pause(self):
+        self.py3.command_run(self._dbus_send_cmd("Pause"))
+
+    def Next(self):
+        self.py3.command_run(self._dbus_send_cmd("Next"))
+
+    def Previous(self):
+        self.py3.command_run(self._dbus_send_cmd("Previous"))
+
+    def Stop(self):
+        self.py3.command_run(self._dbus_send_cmd("Stop"))
+
+    def _dbus_send_cmd(self, action):
+        return DBUS_SEND_CMD.format(dbus_client=self.player_id, cmd=action)
 
 class Py3status:
     """
@@ -451,9 +472,9 @@ class Py3status:
             player = self._pydbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
             if "chromium" in player_id:
-                player = BrokenDBusMpris(self._pydbus, "Chromium", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, self.py3, player_id, "Chromium", "Stopped")
             elif "chrome" in player_id:
-                player = BrokenDBusMpris(self._pydbus, "Chrome", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, self.py3, player_id, "Chrome", "Stopped")
             else:
                 return False
 
