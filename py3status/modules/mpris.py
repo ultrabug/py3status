@@ -103,6 +103,7 @@ from threading import Thread
 import re
 import sys
 from pydbus import SessionBus as pydbusSessionBus
+import dbus
 
 DBUS_SEND_CMD = """dbus-send --print-reply --dest={dbus_client}
                  /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
@@ -166,14 +167,23 @@ class BrokenDBusMpris:
                     pass
             return args[4]
 
-    def __init__(self, _pydbus, py3, player_id, identity, playback_status):
+    def __init__(self, _pydbus, _dbus, py3, player_id, identity):
         self._pydbus = _pydbus
+        self._dbus = _dbus
         self.py3 = py3
         self.player_id = player_id
         self.Identity = identity
-        self.PlaybackStatus = playback_status
         self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, _pydbus)
-        self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
+
+        player_obj = self._dbus.get_object(player_id, SERVICE_BUS_URL)
+        player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
+        props = dict(player_properties.GetAll('org.mpris.MediaPlayer2.Player'))
+        self.PlaybackStatus = props.get("PlaybackStatus")
+        metadata = props.get("Metadata")
+        if metadata:
+            self.Metadata = {"xesam:album": metadata.get("xesam:album") , "xesam:artist": metadata.get("xesam:artist")[0], "xesam:title": metadata.get("xesam:title")}
+        else:
+            self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
 
     def get(self, key):
         data = {"subscription": self.PropertiesChanged._subscription}
@@ -222,6 +232,7 @@ class Py3status:
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
         self._pydbus = None
+        self._dbus = None
         self._data = {}
         self._control_states = {}
         self._kill = False
@@ -233,6 +244,7 @@ class Py3status:
         self._tries = 0
         # start last
         self._pydbus = pydbusSessionBus()
+        self._dbus = dbus.SessionBus()
         self._start_listener()
         self._states = {
             "pause": {
@@ -472,9 +484,9 @@ class Py3status:
             player = self._pydbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
             if "chromium" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self.py3, player_id, "Chromium", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chromium")
             elif "chrome" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self.py3, player_id, "Chrome", "Stopped")
+                player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chrome")
             else:
                 return False
 
