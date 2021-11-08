@@ -398,8 +398,14 @@ class Py3status:
             # This branch is only needed for the test mode
             self._kill = True
 
+    def _is_mediaplayer(self, player_id):
+        return player_id.startswith(SERVICE_BUS)
+
     def _name_owner_changed(self, *args):
         player_id = args[5][0]
+        if not self._is_mediaplayer(player_id):
+            return
+
         player_add = args[5][2]
         player_remove = args[5][1]
         if player_add:
@@ -476,9 +482,6 @@ class Py3status:
         """
         Add player to mpris_players
         """
-        if not player_id.startswith(SERVICE_BUS):
-            return False
-
         # Fixes chromium/google-chrome mpris
         try:
             player = self._pydbus.get(player_id, SERVICE_BUS_URL)
@@ -549,7 +552,7 @@ class Py3status:
 
     def _get_players(self):
         bus = self._pydbus.get("org.freedesktop.DBus")
-        for player in bus.ListNames():
+        for player in filter(self._is_mediaplayer, bus.ListNames()):
             self._add_player(player)
 
         self._set_player()
