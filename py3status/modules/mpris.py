@@ -528,8 +528,11 @@ class Py3status:
         """
         player = self._mpris_players.get(player_id)
         if player:
-            if player.get("subscription"):
-                player["subscription"].disconnect()
+            if isinstance(player.get("_dbus_player"), BrokenDBusMpris):
+                player.get("_dbus_player").PropertiesChanged.disconnect()
+            else:
+                if player.get("subscription"):
+                    player["subscription"].disconnect()
             del self._mpris_players[player_id]
 
     def _get_players(self):
