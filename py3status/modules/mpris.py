@@ -105,9 +105,6 @@ import sys
 from pydbus import SessionBus as pydbusSessionBus
 import dbus
 
-DBUS_SEND_CMD = """dbus-send --print-reply --dest={dbus_client}
-                 /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
-
 SERVICE_BUS = "org.mpris.MediaPlayer2"
 SERVICE_BUS_URL = "/org/mpris/MediaPlayer2"
 STRING_GEVENT = "this module does not work with gevent"
@@ -167,16 +164,15 @@ class BrokenDBusMpris:
                     pass
             return args[4]
 
-    def __init__(self, _pydbus, _dbus, py3, player_id, identity):
+    def __init__(self, _pydbus, _dbus, player_id, identity):
         self._pydbus = _pydbus
         self._dbus = _dbus
-        self.py3 = py3
         self.player_id = player_id
         self.Identity = identity
         self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, _pydbus)
+        self._dbus_player_obj = self._dbus.get_object(player_id, SERVICE_BUS_URL)
 
-        player_obj = self._dbus.get_object(player_id, SERVICE_BUS_URL)
-        player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
+        player_properties = dbus.Interface(self._dbus_player_obj, 'org.freedesktop.DBus.Properties')
         props = dict(player_properties.GetAll('org.mpris.MediaPlayer2.Player'))
         self.PlaybackStatus = props.get("PlaybackStatus")
         metadata = props.get("Metadata")
@@ -189,23 +185,14 @@ class BrokenDBusMpris:
         data = {"subscription": self.PropertiesChanged._subscription}
         return data[key]
 
-    def Play(self):
-        self.py3.command_run(self._dbus_send_cmd("Play"))
-
-    def Pause(self):
-        self.py3.command_run(self._dbus_send_cmd("Pause"))
-
-    def Next(self):
-        self.py3.command_run(self._dbus_send_cmd("Next"))
-
-    def Previous(self):
-        self.py3.command_run(self._dbus_send_cmd("Previous"))
-
-    def Stop(self):
-        self.py3.command_run(self._dbus_send_cmd("Stop"))
-
-    def _dbus_send_cmd(self, action):
-        return DBUS_SEND_CMD.format(dbus_client=self.player_id, cmd=action)
+    def media_button_action(self, action):
+        getattr(
+            dbus.Interface(
+                self._dbus_player_obj,
+                dbus_interface='org.mpris.MediaPlayer2.Player'
+            ),
+            action
+        )()
 
 class Py3status:
     """
@@ -489,9 +476,9 @@ class Py3status:
         # Fixes chromium/google-chrome mpris
         try:
             if "chromium" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chromium")
+                player = BrokenDBusMpris(self._pydbus, self._dbus, player_id, "Chromium")
             elif "chrome" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self._dbus, self.py3, player_id, "Chrome")
+                player = BrokenDBusMpris(self._pydbus, self._dbus, player_id, "Chrome")
             else:
                 player = self._pydbus.get(player_id, SERVICE_BUS_URL)
         except KeyError:
@@ -687,7 +674,10 @@ class Py3status:
         try:
             control_state = self._control_states.get(index)
             if self._player and self._get_button_state(control_state):
-                getattr(self._player, self._control_states[index]["action"])()
+                if isinstance(self._player, BrokenDBusMpris):
+                    self._player.media_button_action(self._control_states[index]["action"])
+                else:
+                    getattr(self._player, self._control_states[index]["action"])()
         except GError as err:
             self.py3.log(str(err).split(":", 1)[-1])
 
