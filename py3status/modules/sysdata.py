@@ -292,12 +292,13 @@ class Py3status:
             chips_and_sensors = [
                 ("coretemp-isa-0000", "Core"),  # Intel
                 ("k10temp-pci-00c3", "Tdie"),  # AMD
-                ("cpu_thermal-virtual-0", "temp"),  # RPi
+                ("k10temp-pci-00c3", "Tctl"),  # AMD without Tdie (4700U)
+                ("cpu_thermal-virtual-0", "temp"),  # RP
             ]
 
             chips = loads(self.py3.command_output([command, args]))
             for chip, sensor in chips_and_sensors:
-                if chip in chips:
+                if chip in chips and any(sensor in i for i in chips[chip]):
                     self.lm_sensors = {
                         "command": [command, args, chip],
                         "chip": chip,
@@ -430,7 +431,7 @@ class Py3status:
                         sensor_total += value
                         break
 
-        cpu_temp = sensor_total / sensor_count
+        cpu_temp = sensor_total / sensor_count if sensor_count else sensor_total
 
         if cpu_temp_unit == "K":
             cpu_temp += 273.15
