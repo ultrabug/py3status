@@ -290,19 +290,23 @@ class Py3status:
                 args += "f"  # print fahrenheit
 
             chips_and_sensors = [
-                ("coretemp-isa-0000", "Core"),  # Intel
-                ("k10temp-pci-00c3", "Tdie"),  # AMD
-                ("cpu_thermal-virtual-0", "temp"),  # RPi
+                ("coretemp-isa-0000", ["Core"]),  # Intel
+                ("k10temp-pci-00c3", ["Tdie", "Tctl"]),  # AMD
+                ("cpu_thermal-virtual-0", ["temp"]),  # RPi
             ]
 
             chips = loads(self.py3.command_output([command, args]))
-            for chip, sensor in chips_and_sensors:
+            for chip, sensors in chips_and_sensors:
                 if chip in chips:
-                    self.lm_sensors = {
-                        "command": [command, args, chip],
-                        "chip": chip,
-                        "sensor": sensor,
-                    }
+                    for sensor in sensors:
+                        for temp_sensor in chips[chip]:
+                            if sensor in temp_sensor:
+                                self.lm_sensors = {
+                                    "command": [command, args, chip],
+                                    "chip": chip,
+                                    "sensor": sensor,
+                                }
+                                break
                     break
             else:
                 self.init["cpu_temp"] = []
