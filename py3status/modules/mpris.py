@@ -54,7 +54,8 @@ Color options:
     color_stopped: song is stopped, defaults to color_bad
 
 Requires:
-    pydbus: pythonic d-bus library
+    mpris2: Python usable definiton of MPRIS2
+    dbus: Python bindings for dbus
 
 Tested players:
     bomi: powerful and easy-to-use gui multimedia player based on mpv
@@ -97,16 +98,15 @@ SAMPLE OUTPUT
 
 from datetime import timedelta
 import time
+from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
 from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
-from pydbus import SessionBus as pydbusSessionBus
-import dbus
+from dbus import SessionBus as dbusSessionBus, DBusException
+from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
 
-SERVICE_BUS = "org.mpris.MediaPlayer2"
-SERVICE_BUS_URL = "/org/mpris/MediaPlayer2"
 STRING_GEVENT = "this module does not work with gevent"
 
 WORKING_STATES = ["Playing", "Paused", "Stopped"]
@@ -124,79 +124,8 @@ def _get_time_str(microseconds):
     return delta_str
 
 
-class BrokenDBusMpris:
-    class PropertiesChanged:
-        def __init__(self, _parent, _pydbus):
-            self._pydbus = _pydbus
-            self._parent = _parent
-
-        def connect(self, callback):
-            def combined_function(*args):
-                callback(*self.filter_messages(*args))
-
-            self._subscription = self._pydbus.subscribe(signal_fired=combined_function)
-
-        def disconnect(self):
-            self._subscription.disconnect()
-
-        # For some reason the pydbus subscribe filtering doesn't work
-        def filter_messages(self, *args):
-            dbus_params = [
-                "/org/mpris/MediaPlayer2",
-                "org.freedesktop.DBus.Properties",
-                "PropertiesChanged",
-            ]
-
-            for i in range(1, 3):
-                if args[i] != dbus_params[i - 1]:
-                    return ("", {}, [])
-            # The 6th is a tuple, where the actual data is in the 2nd field
-            msg = args[4][1]
-
-            if msg:
-                try:
-                    if "PlaybackStatus" in msg:
-                        self._parent.PlaybackStatus = msg["PlaybackStatus"]
-                    if "Metadata" in msg:
-                        self._parent.Metadata = msg["Metadata"]
-
-                except KeyError:
-                    pass
-            return args[4]
-
-    def __init__(self, _pydbus, _dbus, player_id, identity):
-        self._pydbus = _pydbus
-        self._dbus = _dbus
-        self.player_id = player_id
-        self.Identity = identity
-        self.PropertiesChanged = BrokenDBusMpris.PropertiesChanged(self, _pydbus)
-        self._dbus_player_obj = self._dbus.get_object(player_id, SERVICE_BUS_URL)
-
-        player_properties = dbus.Interface(self._dbus_player_obj, 'org.freedesktop.DBus.Properties')
-        props = dict(player_properties.GetAll('org.mpris.MediaPlayer2.Player'))
-        self.PlaybackStatus = props.get("PlaybackStatus")
-        metadata = props.get("Metadata")
-        if metadata:
-            self.Metadata = {"xesam:album": metadata.get("xesam:album") , "xesam:artist": metadata.get("xesam:artist")[0], "xesam:title": metadata.get("xesam:title")}
-        else:
-            self.Metadata = {"xesam:album": None, "xesam:artist": None, "xesam:title": None}
-
-    def get(self, key):
-        data = {"subscription": self.PropertiesChanged._subscription}
-        return data[key]
-
-    def media_button_action(self, action):
-        getattr(
-            dbus.Interface(
-                self._dbus_player_obj,
-                dbus_interface='org.mpris.MediaPlayer2.Player'
-            ),
-            action
-        )()
-
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_next = None
@@ -218,10 +147,10 @@ class Py3status:
     def post_config_hook(self):
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
-        self._pydbus = None
         self._dbus = None
         self._data = {}
         self._control_states = {}
+        self.ownerToPlayerId = {}
         self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
@@ -230,8 +159,8 @@ class Py3status:
         self._player_details = {}
         self._tries = 0
         # start last
-        self._pydbus = pydbusSessionBus()
-        self._dbus = dbus.SessionBus()
+        self._dbus_loop = DBusGMainLoop()
+        self._dbus = dbusSessionBus(mainloop=self._dbus_loop)
         self._start_listener()
         self._states = {
             "pause": {
@@ -274,7 +203,7 @@ class Py3status:
             return
 
         try:
-            self._data["player"] = self._player.Identity
+            self._data["player"] = self._media_player.Identity
             playback_status = self._player.PlaybackStatus
             self._data["state"] = self._get_state(playback_status)
             metadata = self._player.Metadata
@@ -324,19 +253,18 @@ class Py3status:
         if self._data.get("error_occurred"):
             color = self.py3.COLOR_BAD
 
-
-
         ptime = None
-        if hasattr(self._player, "Position"):
-            try:
+
+        if hasattr(self._player, "Position") and self.py3.format_contains(
+                self.format, "time"
+        ):
+            if self._player.Position:
                 ptime_ms = self._player.Position
                 ptime = _get_time_str(ptime_ms)
-            except:
-                pass
 
         if (
-            self.py3.format_contains(self.format, "time")
-            and self._data.get("state") == PLAYING
+                self.py3.format_contains(self.format, "time")
+                and self._data.get("state") == PLAYING
         ):
             # Don't get trapped in aliasing errors!
             update = time.perf_counter() + 0.5
@@ -390,19 +318,15 @@ class Py3status:
             self._kill = True
 
     def _is_mediaplayer(self, player_id):
-        return player_id.startswith(SERVICE_BUS)
+        return player_id.startswith(Interfaces.MEDIA_PLAYER)
 
-    def _name_owner_changed(self, *args):
-        player_id = args[5][0]
-        if not self._is_mediaplayer(player_id):
+    def _dbus_name_owner_changed(self, name, old_owner, new_owner):
+        if not self._is_mediaplayer(name):
             return
-
-        player_add = args[5][2]
-        player_remove = args[5][1]
-        if player_add:
-            self._add_player(player_id)
-        if player_remove:
-            self._remove_player(player_id)
+        if new_owner:
+            self._add_player(name, new_owner)
+        if old_owner:
+            self._remove_player(name, old_owner)
         self._set_player()
 
     def _set_player(self):
@@ -436,86 +360,80 @@ class Py3status:
             top_player = {}
 
         self._player = top_player.get("_dbus_player")
+        self._media_player = top_player.get("_dbus_media_player")
         self._player_details = top_player
 
         self.py3.update()
 
-    def _player_monitor(self, player_id):
-        def player_on_change(*args):
-            """
-            Monitor a player and update its status.
-            """
-            data = args[1]
+    def _player_on_change(self, interface_name, data, invalidated_properties, sender):
+        """
+        Monitor a player and update its status.
+        """
+        # TODO: Handle other player_on_change events.
+        if interface_name == Interfaces.PLAYER:
+
+            sender_player_id = self.ownerToPlayerId.get(sender)
+            if not sender_player_id:
+                return
+            sender_player = self._mpris_players.get(sender_player_id)
+
+            data = dict(data)
             status = data.get("PlaybackStatus")
+
             if status:
-                player = self._mpris_players[player_id]
+                if sender_player:
+                    # Needed because vlc may send PlaybackStatus stopped when pressing next/prev button on vlc.
+                    if sender_player["_dbus_player"].PlaybackStatus == status:
+                        sender_player["status"] = status
+                        sender_player["_state_priority"] = WORKING_STATES.index(status)
+                        return self._set_player()
 
-                # Note: Workaround. Since all players get noted if playback
-                #       status has been changed we have to check if we are the
-                #       chosen one
-                try:
-                    dbus_status = player["_dbus_player"].PlaybackStatus
-                except GError:
-                    # Prevent errors when calling methods of deleted dbus
-                    # objects
+            metadata = data.get("Metadata")
+            is_active_player = sender_player_id == self._player_details.get("_id")
+            if metadata:
+                # TODO: Decide if caching not active player metadata or not.
+                if is_active_player:
+                    self._update_metadata(metadata)
+                    return self.py3.update()
+                else:
                     return
-                if status != dbus_status:
-                    # FIXME: WE DON'T RECOGNIZE ANY TITLE CHANGE
-                    return
 
-                player["status"] = status
-                player["_state_priority"] = WORKING_STATES.index(status)
-            self._set_player()
-
-        return player_on_change
-
-    def _add_player(self, player_id):
+    def _add_player(self, player_id, owner):
         """
         Add player to mpris_players
         """
-        # Fixes chromium/google-chrome mpris
-        try:
-            if "chromium" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self._dbus, player_id, "Chromium")
-            elif "chrome" in player_id:
-                player = BrokenDBusMpris(self._pydbus, self._dbus, player_id, "Chrome")
-            else:
-                player = self._pydbus.get(player_id, SERVICE_BUS_URL)
-        except KeyError:
-            return False
+        self.ownerToPlayerId[owner] = player_id
 
-        if player.Identity not in self._mpris_names:
-            self._mpris_names[player.Identity] = player_id.split(".")[-1]
+        dPlayer = Player(dbus_interface_info={"dbus_uri": player_id})
+        dMediaPlayer = MediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
+        identity = str(dMediaPlayer.Identity)
+
+        if identity not in self._mpris_names:
+            self._mpris_names[identity] = player_id.split(".")[-1]
             for p in self._mpris_players.values():
                 if not p["name"] and p["identity"] in self._mpris_names:
                     p["name"] = self._mpris_names[p["identity"]]
                     p["full_name"] = "{} {}".format(p["name"], p["index"])
 
-        identity = player.Identity
-        name = self._mpris_names.get(identity)
+        name = str(self._mpris_names.get(identity))
         if (
-            self.player_priority != []
-            and name not in self.player_priority
-            and "*" not in self.player_priority
+                self.player_priority != []
+                and name not in self.player_priority
+                and "*" not in self.player_priority
         ):
             return False
 
         if identity not in self._mpris_name_index:
             self._mpris_name_index[identity] = 0
 
-        status = player.PlaybackStatus
+        status = dPlayer.PlaybackStatus
         state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
-        try:
-            subscription = player.PropertiesChanged.connect(
-                self._player_monitor(player_id)
-            )
-        except AttributeError:
-            subscription = {}
 
         self._mpris_players[player_id] = {
-            "_dbus_player": player,
+            "_dbus_player": dPlayer,
+            "_dbus_media_player": dMediaPlayer,
             "_id": player_id,
             "_state_priority": state_priority,
             "index": index,
@@ -523,42 +441,47 @@ class Py3status:
             "name": name,
             "full_name": f"{name} {index}",
             "status": status,
-            "subscription": subscription,
         }
 
         return True
 
-    def _remove_player(self, player_id):
+    def _remove_player(self, player_id, owner):
         """
         Remove player from mpris_players
         """
-        player = self._mpris_players.get(player_id)
-        if player:
-            if isinstance(player.get("_dbus_player"), BrokenDBusMpris):
-                player.get("_dbus_player").PropertiesChanged.disconnect()
-            else:
-                if player.get("subscription"):
-                    player["subscription"].disconnect()
+        if self.ownerToPlayerId.get(owner):
+            del self.ownerToPlayerId[owner]
+
+        if self._mpris_players.get(player_id):
             del self._mpris_players[player_id]
 
     def _get_players(self):
-        bus = self._pydbus.get("org.freedesktop.DBus")
-        for player in filter(self._is_mediaplayer, bus.ListNames()):
-            self._add_player(player)
+        get_players_uris = list(get_players_uri())
+        for player in get_players_uris:
+            try:
+                self._add_player(player, self._dbus.get_name_owner(player))
+            except DBusException:
+                continue
 
         self._set_player()
 
     def _start_listener(self):
-        self._pydbus.con.signal_subscribe(
-            None,
-            "org.freedesktop.DBus",
-            "NameOwnerChanged",
-            None,
-            None,
-            0,
-            self._name_owner_changed,
+        self._dbus.add_signal_receiver(
+            handler_function=self._dbus_name_owner_changed,
+            dbus_interface="org.freedesktop.DBus",
+            signal_name="NameOwnerChanged",
         )
         self._get_players()
+
+        # Start listening things after initiating players.
+
+        self._dbus.add_signal_receiver(
+            self._player_on_change,
+            dbus_interface=Interfaces.PROPERTIES,
+            signal_name=Interfaces.SIGNAL,
+            sender_keyword="sender",
+        )
+
         t = Thread(target=self._start_loop)
         t.daemon = True
         t.start()
@@ -609,7 +532,7 @@ class Py3status:
         if self._kill:
             raise KeyboardInterrupt
 
-        current_player_id = self._player_details.get("id")
+        current_player_id = self._player_details.get("_id")
         cached_until = self.py3.CACHE_FOREVER
 
         if self._player is None:
@@ -625,8 +548,8 @@ class Py3status:
             composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
         if self._data.get(
-            "error_occurred"
-        ) or current_player_id != self._player_details.get("id"):
+                "error_occurred"
+        ) or current_player_id != self._player_details.get("_id"):
             # Something went wrong or the player changed during our processing
             # This is usually due to something like a player being killed
             # whilst we are checking its details
@@ -674,10 +597,7 @@ class Py3status:
         try:
             control_state = self._control_states.get(index)
             if self._player and self._get_button_state(control_state):
-                if isinstance(self._player, BrokenDBusMpris):
-                    self._player.media_button_action(self._control_states[index]["action"])
-                else:
-                    getattr(self._player, self._control_states[index]["action"])()
+                getattr(self._player, self._control_states[index]["action"])()
         except GError as err:
             self.py3.log(str(err).split(":", 1)[-1])
 
