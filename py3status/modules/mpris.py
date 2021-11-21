@@ -256,15 +256,15 @@ class Py3status:
         ptime = None
 
         if hasattr(self._player, "Position") and self.py3.format_contains(
-                self.format, "time"
+            self.format, "time"
         ):
             if self._player.Position:
                 ptime_ms = self._player.Position
                 ptime = _get_time_str(ptime_ms)
 
         if (
-                self.py3.format_contains(self.format, "time")
-                and self._data.get("state") == PLAYING
+            self.py3.format_contains(self.format, "time")
+            and self._data.get("state") == PLAYING
         ):
             # Don't get trapped in aliasing errors!
             update = time.perf_counter() + 0.5
@@ -417,9 +417,9 @@ class Py3status:
 
         name = str(self._mpris_names.get(identity))
         if (
-                self.player_priority != []
-                and name not in self.player_priority
-                and "*" not in self.player_priority
+            self.player_priority != []
+            and name not in self.player_priority
+            and "*" not in self.player_priority
         ):
             return False
 
@@ -548,7 +548,7 @@ class Py3status:
             composite = self.py3.safe_format(self.format, dict(text, **buttons))
 
         if self._data.get(
-                "error_occurred"
+            "error_occurred"
         ) or current_player_id != self._player_details.get("_id"):
             # Something went wrong or the player changed during our processing
             # This is usually due to something like a player being killed
