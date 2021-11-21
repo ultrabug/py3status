@@ -104,7 +104,7 @@ from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
-from dbus import SessionBus as dbusSessionBus, DBusException
+from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
 
 STRING_GEVENT = "this module does not work with gevent"
@@ -160,7 +160,7 @@ class Py3status:
         self._tries = 0
         # start last
         self._dbus_loop = DBusGMainLoop()
-        self._dbus = dbusSessionBus(mainloop=self._dbus_loop)
+        self._dbus = SessionBus(mainloop=self._dbus_loop)
         self._start_listener()
         self._states = {
             "pause": {
