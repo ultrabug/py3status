@@ -254,22 +254,18 @@ class Py3status:
             color = self.py3.COLOR_BAD
 
         ptime = None
-
-        if hasattr(self._player, "Position") and self.py3.format_contains(
-            self.format, "time"
-        ):
-            if self._player.Position:
-                ptime_ms = self._player.Position
-                ptime = _get_time_str(ptime_ms)
+        cache_timeout = self.py3.CACHE_FOREVER
 
         if (
             self.py3.format_contains(self.format, "time")
-            and self._data.get("state") == PLAYING
+            and self._data.get("error_occurred")
         ):
-            # Don't get trapped in aliasing errors!
-            update = time.perf_counter() + 0.5
-        else:
-            update = self.py3.CACHE_FOREVER
+            ptime_ms = self._player.get("Position")
+            if ptime_ms:
+                ptime = _get_time_str(ptime_ms)
+
+            if self._data.get("state") == PLAYING:
+                cache_timeout = time.perf_counter() + 0.5
 
         placeholders = {
             "player": self._data.get("player"),
@@ -284,7 +280,7 @@ class Py3status:
             "full_name": self._player_details.get("full_name"),
         }
 
-        return (placeholders, color, update)
+        return (placeholders, color, cache_timeout)
 
     def _get_control_states(self):
         state = "pause" if self._data.get("state") == PLAYING else "play"
