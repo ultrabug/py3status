@@ -259,8 +259,9 @@ class Py3status:
         if (
             self.py3.format_contains(self.format, "time")
             and not self._data.get("error_occurred")
+            and hasattr(self._player, "Position")
         ):
-            ptime_ms = self._player.get("Position")
+            ptime_ms = self._player.Position
             if ptime_ms:
                 ptime = _get_time_str(ptime_ms)
 
