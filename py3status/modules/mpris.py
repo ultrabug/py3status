@@ -190,7 +190,6 @@ class Py3status:
         self._data = {
             "album": None,
             "artist": None,
-            "error_occurred": False,
             "length": None,
             "player": None,
             "state": STOPPED,
@@ -198,18 +197,16 @@ class Py3status:
             "nowplaying": None,
         }
 
-        if self._player is None:
-            self._control_states = {}
-            return
-
         try:
             self._data["player"] = self._media_player.Identity
             playback_status = self._player.PlaybackStatus
             self._data["state"] = self._get_state(playback_status)
             metadata = self._player.Metadata
             self._update_metadata(metadata)
+            return True
+
         except Exception:
-            self._data["error_occurred"] = True
+            return False
 
     def _get_button_state(self, control_state):
         try:
@@ -250,23 +247,18 @@ class Py3status:
             color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             state_symbol = self.state_stop
 
-        if self._data.get("error_occurred"):
-            color = self.py3.COLOR_BAD
-
         ptime = None
-        cache_timeout = self.py3.CACHE_FOREVER
+        cache_until = self.py3.CACHE_FOREVER
 
-        if (
-            self.py3.format_contains(self.format, "time")
-            and not self._data.get("error_occurred")
-            and hasattr(self._player, "Position")
+        if self.py3.format_contains(self.format, "time") and hasattr(
+            self._player, "Position"
         ):
             ptime_ms = self._player.Position
             if ptime_ms:
                 ptime = _get_time_str(ptime_ms)
 
             if self._data.get("state") == PLAYING:
-                cache_timeout = time.perf_counter() + 0.5
+                cache_until = time.perf_counter() + 0.5
 
         placeholders = {
             "player": self._data.get("player"),
@@ -281,7 +273,7 @@ class Py3status:
             "full_name": self._player_details.get("full_name"),
         }
 
-        return (placeholders, color, cache_timeout)
+        return (placeholders, color, cache_until)
 
     def _get_control_states(self):
         state = "pause" if self._data.get("state") == PLAYING else "play"
@@ -532,33 +524,42 @@ class Py3status:
         current_player_id = self._player_details.get("_id")
         cached_until = self.py3.CACHE_FOREVER
 
-        if self._player is None:
+        if self._player:
+            init_data_succeeded = self._init_data()
+            if init_data_succeeded and current_player_id == self._player_details.get(
+                "_id"
+            ):
+                (text, color, cached_until) = self._get_text()
+                self._control_states = self._get_control_states()
+                buttons = self._get_response_buttons()
+                composite = self.py3.safe_format(self.format, dict(text, **buttons))
+            else:
+                # Something went wrong or the player changed during our processing
+                # This is usually due to something like a player being killed
+                # whilst we are checking its details
+                # Retry but limit the number of attempts
+                self._tries += 1
+                if self._tries < 3:
+                    return self.mpris()
+
+                # Max retries hit we need to output something
+                composite = [
+                    {"full_text": "Something went wrong", "color": self.py3.COLOR_BAD}
+                ]
+                # Can't decide what is good time to restart 3 retry cycle
+                cached_until = self.py3.time_in(10)
+                return {
+                    "cached_until": cached_until,
+                    "color": self.py3.COLOR_BAD,
+                    "composite": composite,
+                }
+
+        else:
             text = self.format_none
             color = self.py3.COLOR_BAD
             composite = [{"full_text": text, "color": color}]
             self._data = {}
-        else:
-            self._init_data()
-            (text, color, cached_until) = self._get_text()
-            self._control_states = self._get_control_states()
-            buttons = self._get_response_buttons()
-            composite = self.py3.safe_format(self.format, dict(text, **buttons))
-
-        if self._data.get(
-            "error_occurred"
-        ) or current_player_id != self._player_details.get("_id"):
-            # Something went wrong or the player changed during our processing
-            # This is usually due to something like a player being killed
-            # whilst we are checking its details
-            # Retry but limit the number of attempts
-            self._tries += 1
-            if self._tries < 3:
-                return self.mpris()
-            # Max retries hit we need to output something
-            composite = [
-                {"full_text": "Something went wrong", "color": self.py3.COLOR_BAD}
-            ]
-            cached_until = self.py3.time_in(1)
+            self._control_states = {}
 
         response = {
             "cached_until": cached_until,
