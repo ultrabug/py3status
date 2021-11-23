@@ -399,8 +399,6 @@ class Py3status:
         """
         Add player to mpris_players
         """
-        self.ownerToPlayerId[owner] = player_id
-
         dPlayer = Player(dbus_interface_info={"dbus_uri": player_id})
         dMediaPlayer = MediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
         identity = str(dMediaPlayer.Identity)
@@ -427,6 +425,8 @@ class Py3status:
         state_priority = WORKING_STATES.index(status)
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
+
+        self.ownerToPlayerId[owner] = player_id
 
         self._mpris_players[player_id] = {
             "_dbus_player": dPlayer,
