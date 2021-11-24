@@ -543,15 +543,16 @@ class Py3status:
                     return self.mpris()
 
                 # Max retries hit we need to output something
-                composite = [
-                    {"full_text": "Something went wrong", "color": self.py3.COLOR_BAD}
-                ]
-                # Can't decide what is good time to restart 3 retry cycle
-                cached_until = self.py3.time_in(10)
                 return {
-                    "cached_until": cached_until,
+                    # Can't decide what is good time to restart 3 retry cycle
+                    "cached_until": self.py3.time_in(10),
                     "color": self.py3.COLOR_BAD,
-                    "composite": composite,
+                    "composite": [
+                        {
+                            "full_text": "Something went wrong",
+                            "color": self.py3.COLOR_BAD,
+                        }
+                    ],
                 }
 
         else:
