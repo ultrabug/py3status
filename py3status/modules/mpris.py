@@ -250,15 +250,12 @@ class Py3status:
         ptime = None
         cache_until = self.py3.CACHE_FOREVER
 
-        if self.py3.format_contains(self.format, "time") and hasattr(
-            self._player, "Position"
-        ):
-            ptime_ms = self._player.Position
-            if ptime_ms:
+        if self.py3.format_contains(self.format, "time"):
+            ptime_ms = getattr(self._player, "Position", None)
+            if ptime_ms is not None:
                 ptime = _get_time_str(ptime_ms)
-
-            if self._data.get("state") == PLAYING:
-                cache_until = time.perf_counter() + 0.5
+                if self._data.get("state") == PLAYING:
+                    cache_until = time.perf_counter() + 0.5
 
         placeholders = {
             "player": self._data.get("player"),
