@@ -76,7 +76,7 @@ class Py3status:
     remove_empty = True
 
     def post_config_hook(self):
-        self.iface_re = re.compile(r"\d+: (?P<iface>[\w\-]+):")
+        self.iface_re = re.compile(r"\d+: (?P<iface>[\w\-@]+):")
         self.ip_re = re.compile(r"\s+inet (?P<ip4>[\d.]+)(?:/| )")
         self.ip6_re = re.compile(
             r"\s+inet6 (?P<ip6>[\da-f:]+)(?:/\d{1,3}| ) scope global dynamic"
