@@ -106,6 +106,7 @@ import re
 import sys
 from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
+from datetime import datetime
 
 STRING_GEVENT = "this module does not work with gevent"
 
@@ -522,10 +523,10 @@ class Py3status:
         cached_until = self.py3.CACHE_FOREVER
 
         if self._player:
-            init_data_succeeded = self._init_data()
-            if init_data_succeeded and current_player_id == self._player_details.get(
-                "_id"
-            ):
+            self._init_data()
+            if not self._data.get(
+                "exception"
+            ) and current_player_id == self._player_details.get("_id"):
                 (text, color, cached_until) = self._get_text()
                 self._control_states = self._get_control_states()
                 buttons = self._get_response_buttons()
@@ -559,15 +560,18 @@ class Py3status:
             self._data = {}
             self._control_states = {}
 
-        response = {
-            "cached_until": cached_until,
-            "color": color,
-            "composite": composite,
-        }
-
         # we are outputting so reset tries
         self._tries = 0
-        return response
+        if self._data.get("exception"):
+            self.py3.log(self._data.get("exception"))
+            self.py3.error(str(self._data.get("exception")), 10)
+        else:
+            response = {
+                "cached_until": cached_until,
+                "color": color,
+                "composite": composite,
+            }
+            return response
 
     def on_click(self, event):
         """
