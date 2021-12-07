@@ -605,9 +605,10 @@ class Module:
             try:
                 # containers have items attribute set to a list of contained
                 # module instance names.  If there are no contained items then
-                # ensure that we have a empty list.
-                if class_inst.Meta.container:
-                    class_inst.items = []
+                # ensure that we have a empty list
+                if hasattr(class_inst, "Meta"):
+                    if class_inst.Meta.container:
+                        class_inst.items = []
             except AttributeError:
                 pass
 
@@ -751,8 +752,10 @@ class Module:
                     setattr(self.module_class, config, value)
 
             # process any update_config settings
+            update_config = None
             try:
-                update_config = class_inst.Meta.update_config
+                if hasattr(class_inst, "Meta"):
+                    update_config = class_inst.Meta.update_config
             except AttributeError:
                 update_config = None
 

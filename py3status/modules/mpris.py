@@ -191,6 +191,7 @@ class Py3status:
         self._data = {
             "album": None,
             "artist": None,
+            "exception": None,
             "length": None,
             "player": None,
             "state": STOPPED,
@@ -204,7 +205,6 @@ class Py3status:
             self._data["state"] = self._get_state(playback_status)
             metadata = self._player.Metadata
             self._update_metadata(metadata)
-            return True
 
         except Exception as e:
             self._data["exception"] = e
@@ -521,6 +521,8 @@ class Py3status:
 
         current_player_id = self._player_details.get("_id")
         cached_until = self.py3.CACHE_FOREVER
+        color = self.py3.COLOR_BAD
+        composite = []
 
         if self._player:
             self._init_data()
