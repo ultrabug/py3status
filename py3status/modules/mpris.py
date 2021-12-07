@@ -206,8 +206,8 @@ class Py3status:
             self._update_metadata(metadata)
             return True
 
-        except Exception:
-            return False
+        except Exception as e:
+            self._data["exception"] = e
 
     def _get_button_state(self, control_state):
         try:
@@ -554,9 +554,7 @@ class Py3status:
                 }
 
         else:
-            text = self.format_none
-            color = self.py3.COLOR_BAD
-            composite = [{"full_text": text, "color": color}]
+            composite = [{"full_text": self.format_none, "color": self.py3.COLOR_BAD}]
             self._data = {}
             self._control_states = {}
 
@@ -577,7 +575,6 @@ class Py3status:
         """
         Handles click events
         """
-        index = event["index"]
         button = event["button"]
 
         if index not in self._control_states:
