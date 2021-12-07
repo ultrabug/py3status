@@ -542,19 +542,6 @@ class Py3status:
                 if self._tries < 3:
                     return self.mpris()
 
-                # Max retries hit we need to output something
-                return {
-                    # Can't decide what is good time to restart 3 retry cycle
-                    "cached_until": self.py3.time_in(10),
-                    "color": self.py3.COLOR_BAD,
-                    "composite": [
-                        {
-                            "full_text": "Something went wrong",
-                            "color": self.py3.COLOR_BAD,
-                        }
-                    ],
-                }
-
         else:
             composite = [{"full_text": self.format_none, "color": self.py3.COLOR_BAD}]
             self._data = {}
