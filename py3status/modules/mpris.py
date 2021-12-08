@@ -106,7 +106,6 @@ import re
 import sys
 from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
-from datetime import datetime
 
 STRING_GEVENT = "this module does not work with gevent"
 
@@ -577,6 +576,7 @@ class Py3status:
         """
         Handles click events
         """
+        index = event["index"]
         button = event["button"]
 
         if index not in self._control_states:
