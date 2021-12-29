@@ -106,6 +106,7 @@ import re
 import sys
 from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
+from datetime import datetime
 
 STRING_GEVENT = "this module does not work with gevent"
 
@@ -140,6 +141,7 @@ class Py3status:
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
     player_priority = []
+    hide_non_canplay = ["chrome", "chromium"]
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"
@@ -150,7 +152,7 @@ class Py3status:
         self._dbus = None
         self._data = {}
         self._control_states = {}
-        self.ownerToPlayerId = {}
+        self._ownerToPlayerId = {}
         self._kill = False
         self._mpris_players = {}
         self._mpris_names = {}
@@ -303,11 +305,11 @@ class Py3status:
             # This branch is only needed for the test mode
             self._kill = True
 
-    def _is_mediaplayer(self, player_id):
+    def _is_mediaplayer_interface(self, player_id):
         return player_id.startswith(Interfaces.MEDIA_PLAYER)
 
     def _dbus_name_owner_changed(self, name, old_owner, new_owner):
-        if not self._is_mediaplayer(name):
+        if not self._is_mediaplayer_interface(name):
             return
         if new_owner:
             self._add_player(name, new_owner)
@@ -338,7 +340,7 @@ class Py3status:
                     priority = 0
                 if priority is not None:
                     p["_priority"] = priority
-            if p.get("_priority") is not None:
+            if p.get("_priority") is not None and not p.get("_hide"):
                 players.append((p["_state_priority"], p["_priority"], p["index"], name))
         if players:
             top_player = self._mpris_players.get(sorted(players)[0][3])
@@ -351,38 +353,69 @@ class Py3status:
 
         self.py3.update()
 
+    def _should_hide_mediaplayer(self, player_id, canPlay):
+        return (
+            not canPlay
+            and self._mpris_players[player_id]["name_from_id"] in self.hide_non_canplay
+        )
+
     def _player_on_change(self, interface_name, data, invalidated_properties, sender):
         """
         Monitor a player and update its status.
         """
-        # TODO: Handle other player_on_change events.
+
+        if not self._is_mediaplayer_interface(interface_name):
+            return
+
+        sender_player_id = self._ownerToPlayerId.get(sender)
+        if not sender_player_id:
+            return
+        sender_player = self._mpris_players.get(sender_player_id)
+        if not sender_player:
+            return
+
+        data = dict(data)
+        data_keys = data.keys()
+        data_keys_debug = ", ".join(data_keys)
+        is_active_player = sender_player_id == self._player_details.get("_id")
+
         if interface_name == Interfaces.PLAYER:
-
-            sender_player_id = self.ownerToPlayerId.get(sender)
-            if not sender_player_id:
-                return
-            sender_player = self._mpris_players.get(sender_player_id)
-
-            data = dict(data)
-            status = data.get("PlaybackStatus")
-
-            if status:
-                if sender_player:
+            if "PlaybackStatus" in data_keys:
+                status = data.get("PlaybackStatus")
+                if status:
                     # Needed because vlc may send PlaybackStatus stopped when pressing next/prev button on vlc.
                     if sender_player["_dbus_player"].PlaybackStatus == status:
                         sender_player["status"] = status
                         sender_player["_state_priority"] = WORKING_STATES.index(status)
-                        return self._set_player()
+                        self._set_player()
 
-            metadata = data.get("Metadata")
-            is_active_player = sender_player_id == self._player_details.get("_id")
-            if metadata:
+            # it usually comes with Rate and Rate can come without metadata.
+            elif "Metadata" in data_keys:
                 # TODO: Decide if caching not active player metadata or not.
                 if is_active_player:
-                    self._update_metadata(metadata)
-                    return self.py3.update()
+                    metadata = data.get("Metadata")
+                    if metadata:
+                        self.py3.update()
+
+            elif "CanPlay" in data_keys:
+                can_play = data.get("CanPlay")
+                if can_play is not None:
+                    sender_player["_hide"] = self._should_hide_mediaplayer(
+                        sender_player_id, can_play
+                    )
+                    self._set_player()
+
+            else:
+
+                if "Rate" in data_keys:
+                    pass
                 else:
+                    # For catching unimplemented stuff
                     return
+
+        else:
+            # For catching unimplemented stuff
+            return
 
     def _add_player(self, player_id, owner):
         """
@@ -399,7 +432,7 @@ class Py3status:
                     p["name"] = self._mpris_names[p["identity"]]
                     p["full_name"] = "{} {}".format(p["name"], p["index"])
 
-        name = str(self._mpris_names.get(identity))
+        name = self._mpris_names.get(identity)
         if (
             self.player_priority != []
             and name not in self.player_priority
@@ -415,19 +448,24 @@ class Py3status:
         index = self._mpris_name_index[identity]
         self._mpris_name_index[identity] += 1
 
-        self.ownerToPlayerId[owner] = player_id
+        self._ownerToPlayerId[owner] = player_id
 
         self._mpris_players[player_id] = {
             "_dbus_player": dPlayer,
             "_dbus_media_player": dMediaPlayer,
+            "_hide": None,
             "_id": player_id,
             "_state_priority": state_priority,
+            "name_from_id": player_id.split(".")[3],
             "index": index,
             "identity": identity,
             "name": name,
             "full_name": f"{name} {index}",
             "status": status,
         }
+        self._mpris_players[player_id]["_hide"] = self._should_hide_mediaplayer(
+            player_id, dPlayer.CanPlay
+        )
 
         return True
 
@@ -435,17 +473,17 @@ class Py3status:
         """
         Remove player from mpris_players
         """
-        if self.ownerToPlayerId.get(owner):
-            del self.ownerToPlayerId[owner]
+        if self._ownerToPlayerId.get(owner):
+            del self._ownerToPlayerId[owner]
 
         if self._mpris_players.get(player_id):
             del self._mpris_players[player_id]
 
     def _get_players(self):
-        get_players_uris = list(get_players_uri())
-        for player in get_players_uris:
+        for player in get_players_uri():
             try:
-                self._add_player(player, self._dbus.get_name_owner(player))
+                # str(player) helps avoid to use dbus.Str(*) as dict key
+                self._add_player(str(player), self._dbus.get_name_owner(player))
             except DBusException:
                 continue
 
