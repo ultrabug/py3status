@@ -21,6 +21,16 @@ Configuration parameters:
     format_notify_discharging: format of the notification received when you
         click on the module while your computer is not plugged in
         (default "{time_remaining}")
+    format_status_bad: a string to put in {status} when bad
+        (default "CRIT")
+    format_status_charging: a string to put in {status} when charging
+        (default "CHG")
+    format_status_degraded: a string to put in {status} when degraded
+        (default "LOW")
+    format_status_discharging: a string to put in {status} when discharging
+        (default "BAT")
+    format_status_full: a string to put in {status} when full
+        (default "FULL")
     hide_seconds: hide seconds in remaining time
         (default False)
     hide_when_full: hide any information when battery is fully charged (when
@@ -59,6 +69,7 @@ Format placeholders:
     {percent} - the remaining battery percentage (previously '{}')
     {time_remaining} - the remaining time until the battery is empty
     {power} - the current power consumption in Watts. Not working with acpi.
+    {status} - the current battery status string as defined by 'format_status_*'
 
 Color options:
     color_bad: Battery level is below threshold_bad
@@ -96,6 +107,11 @@ FULL_BLOCK = "█"
 FORMAT = "{icon}"
 FORMAT_NOTIFY_CHARGING = "Charging ({percent}%)"
 FORMAT_NOTIFY_DISCHARGING = "{time_remaining}"
+FORMAT_STATUS_BAD = "CRIT"
+FORMAT_STATUS_CHARGING = "CHG"
+FORMAT_STATUS_DEGRADED = "LOW"
+FORMAT_STATUS_DISCHARGING = "BAT"
+FORMAT_STATUS_FULL = "FULL"
 SYS_BATTERY_PATH = "/sys/class/power_supply/"
 MEASUREMENT_MODE = None
 FULLY_CHARGED = "?"
@@ -112,6 +128,11 @@ class Py3status:
     format = FORMAT
     format_notify_charging = FORMAT_NOTIFY_CHARGING
     format_notify_discharging = FORMAT_NOTIFY_DISCHARGING
+    format_status_bad = FORMAT_STATUS_BAD
+    format_status_charging = FORMAT_STATUS_CHARGING
+    format_status_degraded = FORMAT_STATUS_DEGRADED
+    format_status_discharging = FORMAT_STATUS_DISCHARGING
+    format_status_full = FORMAT_STATUS_FULL
     hide_seconds = False
     hide_when_full = False
     measurement_mode = MEASUREMENT_MODE
@@ -183,6 +204,7 @@ class Py3status:
         self._refresh_battery_info(battery_list)
         self._update_icon()
         self._update_ascii_bar()
+        self._update_status()
         self._update_full_text()
 
         return self._build_response()
@@ -440,6 +462,18 @@ class Py3status:
                 10 - self.percent_charged // 10
             )
 
+    def _update_status(self):
+        if self.charging:
+            self.status = self.format_status_charging
+        elif self.percent_charged < self.threshold_bad:
+            self.status = self.format_status_bad
+        elif self.percent_charged < self.threshold_degraded:
+            self.status = self.format_status_degraded
+        elif self.percent_charged >= self.threshold_full:
+            self.status = self.format_status_full
+        else:
+            self.status = self.format_status_discharging
+
     def _update_icon(self):
         if self.charging:
             self.icon = self.charging_character
@@ -460,6 +494,7 @@ class Py3status:
                 percent=self.percent_charged,
                 time_remaining=self.time_remaining,
                 power=self.power_now,
+                status=self.status,
             ),
         )
 

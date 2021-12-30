@@ -258,6 +258,7 @@ class Py3statusWrapper:
         """
         self.config = vars(options)
         self.i3bar_running = True
+        self.i3bar_inhibit_stp = time.time()
         self.last_refresh_ts = time.perf_counter()
         self.lock = Event()
         self.modules = {}
@@ -972,14 +973,18 @@ class Py3statusWrapper:
         return ",".join(dumps(x) for x in outputs)
 
     def i3bar_stop(self, signum, frame):
-        self.log("received SIGTSTP")
-        self.i3bar_running = False
-        # i3status should be stopped
-        self.i3status_thread.suspend_i3status()
-        self.sleep_modules()
+        if time.time() - self.i3bar_inhibit_stp > 1:
+            self.log("received SIGTSTP")
+            self.i3bar_running = False
+            # i3status should be stopped
+            self.i3status_thread.suspend_i3status()
+            self.sleep_modules()
+        else:
+            self.log("received inhibited SIGTSTP")
 
     def i3bar_start(self, signum, frame):
         self.log("received SIGCONT")
+        self.i3bar_inhibit_stp = time.time()
         self.i3bar_running = True
         self.wake_modules()
 

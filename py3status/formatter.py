@@ -700,4 +700,9 @@ class Block:
                 out[0]["full_text"] = " " * min_length + out[0]["full_text"]
                 min_length = 0
 
+        # support pango special characters
+        for item in out:
+            if item.get("markup") == "pango" and "&" in item.get("full_text", ""):
+                item["full_text"] = item["full_text"].replace("&", "&amp;")
+
         return valid, out
