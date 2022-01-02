@@ -1026,9 +1026,6 @@ class Py3statusWrapper:
         while True:
             # process the timeout_queue and get interval till next update due
             update_due = self.timeout_queue_process()
-            if update_due is not None and update_due < 0:
-                self.log(f"Negative update_due occured {update_due}. Reseting to None")
-                update_due = None
 
             # wait until an update is requested
             if self.update_request.wait(timeout=update_due):
