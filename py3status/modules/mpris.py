@@ -188,6 +188,14 @@ class Py3status:
             },
         }
 
+        self._format_contains_metadata = False
+        for key in ["album", "artist", "titile", "length"]:
+            if self.py3.format_contains(self.format, key):
+                self._format_contains_metadata = True
+                break
+
+        self._format_contains_time = self.py3.format_contains(self.format, "time")
+
     def _init_data(self):
         self._data = {
             "album": None,
@@ -204,8 +212,8 @@ class Py3status:
             self._data["player"] = self._media_player.Identity
             playback_status = self._player.PlaybackStatus
             self._data["state"] = self._get_state(playback_status)
-            metadata = self._player.Metadata
-            self._update_metadata(metadata)
+            if self._format_contains_metadata:
+                self._update_metadata(self._player.Metadata)
 
         except Exception as e:
             self._data["exception"] = e
@@ -252,7 +260,7 @@ class Py3status:
         ptime = None
         cache_until = self.py3.CACHE_FOREVER
 
-        if self.py3.format_contains(self.format, "time"):
+        if self._format_contains_time:
             ptime_ms = getattr(self._player, "Position", None)
             if ptime_ms is not None:
                 ptime = _get_time_str(ptime_ms)
@@ -350,7 +358,6 @@ class Py3status:
         self._player = top_player.get("_dbus_player")
         self._media_player = top_player.get("_dbus_media_player")
         self._player_details = top_player
-
         self.py3.update()
 
     def _should_hide_mediaplayer(self, player_id, canPlay):
@@ -378,6 +385,8 @@ class Py3status:
         data_keys = data.keys()
         data_keys_debug = ", ".join(data_keys)
         is_active_player = sender_player_id == self._player_details.get("_id")
+        call_update = False
+        call_set_player = False
 
         if interface_name == Interfaces.PLAYER:
             if "PlaybackStatus" in data_keys:
@@ -387,23 +396,18 @@ class Py3status:
                     if sender_player["_dbus_player"].PlaybackStatus == status:
                         sender_player["status"] = status
                         sender_player["_state_priority"] = WORKING_STATES.index(status)
-                        self._set_player()
+                        call_set_player = True
 
             # it usually comes with Rate and Rate can come without metadata.
             elif "Metadata" in data_keys:
-                # TODO: Decide if caching not active player metadata or not.
-                if is_active_player:
-                    metadata = data.get("Metadata")
-                    if metadata:
-                        self.py3.update()
+                call_update = is_active_player and self._format_contains_metadata
 
             elif "CanPlay" in data_keys:
                 can_play = data.get("CanPlay")
-                if can_play is not None:
-                    sender_player["_hide"] = self._should_hide_mediaplayer(
-                        sender_player_id, can_play
-                    )
-                    self._set_player()
+                sender_player["_hide"] = self._should_hide_mediaplayer(
+                    sender_player_id, can_play
+                )
+                call_set_player = True
 
             else:
 
@@ -416,6 +420,11 @@ class Py3status:
         else:
             # For catching unimplemented stuff
             return
+
+        if call_update and not call_set_player:
+            self.py3.update()
+        elif call_set_player:
+            self._set_player()
 
     def _add_player(self, player_id, owner):
         """
@@ -559,7 +568,6 @@ class Py3status:
         current_player_id = self._player_details.get("_id")
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
-        composite = []
 
         if self._player:
             self._init_data()
