@@ -544,7 +544,7 @@ class Py3statusWrapper:
             with log_config.open() as f:
                 try:
                     config_dict = load(f, strict=False)
-                    config_dict.setdefault('disable_existing_loggers', False)
+                    config_dict.setdefault("disable_existing_loggers", False)
                     logging.config.dictConfig(config_dict)
                 except JSONDecodeError as e:
                     self.report_exception(str(e))
