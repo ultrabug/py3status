@@ -272,7 +272,7 @@ class Events(Thread):
                     continue
 
                 if event_str == "[":
-                    event_str = self.poller_inp.readline()
+                    continue
 
                 try:
                     # remove leading comma if present

@@ -624,6 +624,7 @@ class Py3status:
         """
         index = event["index"]
         button = event["button"]
+        self.py3.prevent_refresh()
 
         if index not in self._control_states:
             if button == self.button_toggle:
