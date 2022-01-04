@@ -100,7 +100,6 @@ from datetime import timedelta
 import time
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject
-from gi.repository.GLib import GError
 from threading import Thread
 import re
 import sys
@@ -261,11 +260,16 @@ class Py3status:
         cache_until = self.py3.CACHE_FOREVER
 
         if self._format_contains_time:
-            ptime_ms = getattr(self._player, "Position", None)
-            if ptime_ms is not None:
+            try:
+                ptime_ms = getattr(self._player, "Position", None)
+            except DBusException:
+                ptime_ms = None
+
+            if ptime_ms is not None and ptime_ms != 0:
                 ptime = _get_time_str(ptime_ms)
                 if self._data.get("state") == PLAYING:
-                    cache_until = time.perf_counter() + 0.5
+                    # cache_until = 63238
+                    cache_until = time.perf_counter() + 4
 
         placeholders = {
             "player": self._data.get("player"),
@@ -400,7 +404,7 @@ class Py3status:
 
             # it usually comes with Rate and Rate can come without metadata.
             elif "Metadata" in data_keys:
-                call_update = is_active_player and self._format_contains_metadata
+                call_update = is_active_player
 
             elif "CanPlay" in data_keys:
                 can_play = data.get("CanPlay")
@@ -618,34 +622,128 @@ class Py3status:
             }
             return response
 
+    def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
+        if new_active_player_key == self._player_details:
+            return
+
+        top_player = self._mpris_players.get(new_active_player_key) or {}
+        self._player = top_player.get("_dbus_player")
+        self._media_player = top_player.get("_dbus_media_player")
+        self._player_details = top_player
+
+
     def on_click(self, event):
         """
         Handles click events
         """
         index = event["index"]
         button = event["button"]
-        self.py3.prevent_refresh()
 
-        if index not in self._control_states:
-            if button == self.button_toggle:
-                index = "toggle"
-            elif button == self.button_stop:
-                index = "stop"
-            elif button == self.button_next:
-                index = "next"
-            elif button == self.button_previous:
-                index = "previous"
-            else:
-                return
-        elif button != 1:
-            return
 
-        try:
-            control_state = self._control_states.get(index)
-            if self._player and self._get_button_state(control_state):
-                getattr(self._player, self._control_states[index]["action"])()
-        except GError as err:
-            self.py3.log(str(err).split(":", 1)[-1])
+
+        if button == 1:
+            # self.py3.prevent_refresh() #Data update depends on mediaplayer which calls player_on_change.
+            if index not in self._control_states:
+                if button == self.button_toggle:
+                    index = "toggle"
+                elif button == self.button_stop:
+                    index = "stop"
+                elif button == self.button_next:
+                    index = "next"
+                elif button == self.button_previous:
+                    index = "previous"
+                else:
+                    return
+
+            try:
+                control_state = self._control_states.get(index)
+                if self._player and self._get_button_state(control_state):
+                    getattr(self._player, self._control_states[index]["action"])()
+            except DBusException as err:
+                self.py3.log(f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}")
+
+        elif button == 8 or button == 9:
+            self.py3.prevent_refresh()
+            action = "previous" if button == 8 else "next"
+
+            try:
+                getattr(self._player, self._control_states[action]["action"])()
+            except DBusException as err:
+                self.py3.log(f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}")
+
+        # elif button in [2, 3]:  # 2 -middle 3-left switch between current paused/playing players.
+        #     status_lookup = "Playing" if button == 3 else "Paused"
+        #     switchable_players = []
+        #     current_player_in_list = False
+        #     for player in self._mpris_players.values():
+        #
+        #         if player["status"] == status_lookup:
+        #             if player["_hide"]:
+        #                 continue
+        #
+        #             switchable_players.append(player)
+        #             if not current_player_in_list:
+        #                 current_player_in_list = (
+        #                         self._player_details["_id"] == player["_id"]
+        #                 )
+        #
+        #     if len(switchable_players):
+        #         try:
+        #             if current_player_in_list:
+        #                 if len(switchable_players) == 1:
+        #                     return
+        #                 next_player_index = (
+        #                                             switchable_players.index(self._player_details["_id"]) + 1
+        #                                     ) % len(switchable_players)
+        #             else:
+        #                 next_player_index = 0
+        #
+        #             next_player = switchable_players[next_player_index]
+        #
+        #             self._set_data_entry_point_by_name_key(next_player["_id"])
+        #         except ValueError:
+        #             pass
+
+        elif button == 4 or button == 5:
+            switchable_players = []
+            order_asc = button == 4
+            current_player_index = False
+            for player in self._mpris_players.keys():
+                if (
+                        self._mpris_players[player]["status"]
+                        == self._player_details.get("status")
+                        and not self._mpris_players[player]["_hide"]
+                ):
+                    if not current_player_index:
+                        if self._mpris_players[player]["_id"] == self._player_details.get("_id"):
+                            current_player_index = len(switchable_players)
+                            if order_asc:
+                                continue
+
+                    switchable_players.append(player)
+                    if current_player_index:
+                        if order_asc:
+                            break
+                        else:
+                            if current_player_index != 0:
+                                break
+
+            if len(switchable_players):
+                try:
+                    if order_asc:
+                        next_index = (current_player_index % len(switchable_players))
+                    else:
+                        next_index = ((current_player_index - 1) % len(switchable_players))
+
+                    self._set_data_entry_point_by_name_key(switchable_players[next_index])
+
+                except KeyError:
+                    pass
+
+        else:
+            self.py3.update()
+
+
 
 
 if __name__ == "__main__":
@@ -654,4 +752,5 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    config = {"player_priority": "[*, vlc]"}
+    module_test(Py3status, config)
