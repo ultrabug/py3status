@@ -816,7 +816,8 @@ Loadavg 1.41 1.61 1.82
 
 Modules are encouraged to use Python's standard
 [`logging`](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema)
-module for debugging. By default, logs will be written to
+module for debugging -- see the `xrandr` module as an example. By default, logs
+will be written to
 [`syslog`](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema)
 with a minimum level of `INFO`.
 
@@ -826,7 +827,7 @@ one you're interested in. This can be done by using the `--log-config` flag to
 pass a JSON file that configures logging. This file must be in the format
 specified in
 [`logging`'s configuration schema](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema).
-For example, to show only logs from your module in a `DEBUG` level, while
+For example, to show only logs from the `xrandr` module in a `DEBUG` level, while
 keeping all others at `WARNING`, you can use:
 
 ```json
@@ -849,10 +850,14 @@ keeping all others at `WARNING`, you can use:
     },
     "loggers": {
         "root": {"handlers": ["file"], "level": "WARNING"},
-        "<my_module>": {"level": "DEBUG"}
+        "xrandr": {"level": "DEBUG"}
     }
 }
 ```
+
+In this example, logs will be written to the `/tmp/py3status_log.log` file,
+but you can configure the logging library to log to other destinations like
+stderr or syslog.
 
 ## Publishing custom modules on PyPI
 
