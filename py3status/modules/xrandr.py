@@ -143,7 +143,10 @@ single_2
 from collections import deque
 from collections import OrderedDict
 from itertools import combinations
+import logging
 from time import sleep
+
+_logger = logging.getLogger("xrandr")
 
 
 class Py3status:
@@ -226,7 +229,7 @@ class Py3status:
                 else:
                     continue
             except Exception as err:
-                self.py3.log(f'xrandr error="{err}"')
+                _logger.exception("xrandr error", err)
             else:
                 layout[state][output] = {"infos": infos, "mode": mode, "state": state}
 
@@ -313,7 +316,7 @@ class Py3status:
             if force_refresh:
                 self.displayed = self.available_combinations[0]
             else:
-                self.py3.log('xrandr error="displayed combination is not available"')
+                _logger.warning('xrandr error="displayed combination is not available"')
 
     def _center(self, s):
         """
@@ -349,7 +352,7 @@ class Py3status:
                 resolution = f"--mode {resolution}" if resolution else "--auto"
                 rotation = getattr(self, f"{output}_rotate", "normal")
                 if rotation not in ["inverted", "left", "normal", "right"]:
-                    self.py3.log(f"configured rotation {rotation} is not valid")
+                    _logger.warning("configured rotation %s is not valid", rotation)
                     rotation = "normal"
                 #
                 if primary is True and not primary_added:
@@ -378,7 +381,7 @@ class Py3status:
             self.active_comb = combination
             self.active_layout = self.displayed
             self.active_mode = mode
-        self.py3.log(f'command "{cmd}" exit code {code}')
+        _logger.info('command "%s" exit code %s', cmd, code)
 
         if self.command:
             self.py3.command_run(self.command)
@@ -410,7 +413,7 @@ class Py3status:
                     )
                     self.py3.command_run(cmd)
                     # log this
-                    self.py3.log(f"moved workspace {workspace} to output {output}")
+                    _logger.info("moved workspace %s to output %s", workspace, output)
 
     def _fallback_to_available_output(self):
         """
@@ -513,7 +516,7 @@ class Py3status:
             and self.force_on_change
             and self._layout_changed()
         ):
-            self.py3.log("detected change of monitor setup")
+            _logger.info("detected change of monitor setup")
             self._force_on_change()
 
         # this was a click event triggered update
