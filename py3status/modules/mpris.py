@@ -661,50 +661,11 @@ class Py3status:
                     f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
                 )
 
-        elif button == 8 or button == 9:
+        elif button == 3:
+            #left click brings back top player
             self.py3.prevent_refresh()
-            action = "previous" if button == 8 else "next"
+            self._set_player()
 
-            try:
-                getattr(self._player, self._control_states[action]["action"])()
-            except DBusException as err:
-                self.py3.log(
-                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
-                )
-
-        elif button == 2 or button == 3:
-            # 2 -middle 3-left switch between current paused/playing players.
-            status_lookup = "Playing" if button == 3 else "Paused"
-            switchable_players = []
-            current_player_in_list = False
-            for player in self._mpris_players.values():
-
-                if player["status"] == status_lookup:
-                    if player["_hide"]:
-                        continue
-
-                    switchable_players.append(player)
-                    if not current_player_in_list:
-                        current_player_in_list = (
-                            self._player_details["_id"] == player["_id"]
-                        )
-
-            if len(switchable_players):
-                try:
-                    if current_player_in_list:
-                        if len(switchable_players) == 1:
-                            return
-                        next_player_index = (
-                            switchable_players.index(self._player_details["_id"]) + 1
-                        ) % len(switchable_players)
-                    else:
-                        next_player_index = 0
-
-                    next_player = switchable_players[next_player_index]
-
-                    self._set_data_entry_point_by_name_key(next_player["_id"])
-                except ValueError:
-                    pass
 
         elif button == 4 or button == 5:
             switchable_players = []
@@ -748,8 +709,17 @@ class Py3status:
                 except KeyError:
                     pass
 
-        else:
-            self.py3.update()
+        elif button == 8 or button == 9:
+            # mouse prev/next button changes track
+
+            action = "previous" if button == 8 else "next"
+
+            try:
+                getattr(self._player, self._control_states[action]["action"])()
+            except DBusException as err:
+                self.py3.log(
+                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
+                )
 
 
 if __name__ == "__main__":
