@@ -269,7 +269,7 @@ class Py3status:
                 ptime = _get_time_str(ptime_ms)
                 if self._data.get("state") == PLAYING:
                     # cache_until = 63238
-                    cache_until = time.perf_counter() + 4
+                    cache_until = time.perf_counter() + 0.5
 
         placeholders = {
             "player": self._data.get("player"),
