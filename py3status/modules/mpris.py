@@ -374,7 +374,7 @@ class Py3status:
         Monitor a player and update its status.
         """
 
-        if not self._is_mediaplayer_interface(interface_name):
+        if interface_name != Interfaces.PLAYER:
             return
 
         sender_player_id = self._ownerToPlayerId.get(sender)
@@ -386,42 +386,31 @@ class Py3status:
 
         data = dict(data)
         data_keys = data.keys()
-        is_active_player = sender_player_id == self._player_details.get("_id")
         call_update = False
         call_set_player = False
 
-        if interface_name == Interfaces.PLAYER:
-            if "PlaybackStatus" in data_keys:
-                status = data.get("PlaybackStatus")
-                if status:
-                    # Needed because vlc may send PlaybackStatus stopped when pressing next/prev button on vlc.
-                    if sender_player["_dbus_player"].PlaybackStatus == status:
-                        sender_player["status"] = status
-                        sender_player["_state_priority"] = WORKING_STATES.index(status)
-                        call_set_player = True
-
-            # it usually comes with Rate and Rate can come without metadata.
-            elif "Metadata" in data_keys:
-                call_update = is_active_player
-
-            elif "CanPlay" in data_keys:
-                can_play = data.get("CanPlay")
-                sender_player["_hide"] = self._should_hide_mediaplayer(
-                    sender_player_id, can_play
-                )
+        if "PlaybackStatus" in data_keys:
+            status = data.get("PlaybackStatus")
+            if status:
+                # Needed because vlc may send PlaybackStatus stopped when pressing next/prev button on vlc.
+                sender_player["status"] = status
+                sender_player["_state_priority"] = WORKING_STATES.index(status)
                 call_set_player = True
 
-            else:
+        # it usually comes with Rate and Rate can come without metadata.
+        elif "Metadata" in data_keys:
+            is_active_player = sender_player_id == self._player_details.get("_id")
+            call_update = is_active_player
 
-                if "Rate" in data_keys:
-                    pass
-                else:
-                    # For catching unimplemented stuff
-                    return
+        elif "CanPlay" in data_keys:
+            sender_player["_hide"] = self._should_hide_mediaplayer(
+                sender_player_id, data.get("CanPlay")
+            )
+            call_set_player = True
 
         else:
-            # For catching unimplemented stuff
-            return
+            if "Rate" in data_keys:
+                pass
 
         if call_update and not call_set_player:
             self.py3.update()
