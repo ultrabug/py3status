@@ -342,7 +342,7 @@ class Py3status:
             if "_priority" not in p:
                 if self.player_priority:
                     try:
-                        priority = self.player_priority.index(p["name"])
+                        priority = self.player_priority.index(p["name_from_id"])
                     except ValueError:
                         try:
                             priority = self.player_priority.index("*")
