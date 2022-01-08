@@ -95,7 +95,6 @@ SAMPLE OUTPUT
     {'color': '#00FF00', 'full_text': u'Happy Mondays - Fat Lady Wrestlers'}
 ]
 """
-
 from datetime import timedelta
 import time
 from dbus.mainloop.glib import DBusGMainLoop
@@ -105,7 +104,6 @@ import re
 import sys
 from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
-from datetime import datetime
 
 STRING_GEVENT = "this module does not work with gevent"
 
@@ -146,6 +144,7 @@ class Py3status:
     state_stop = "\u25a1"
 
     def post_config_hook(self):
+        # TODO: Look again if it is needed
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
         self._dbus = None
@@ -387,7 +386,6 @@ class Py3status:
 
         data = dict(data)
         data_keys = data.keys()
-        data_keys_debug = ", ".join(data_keys)
         is_active_player = sender_player_id == self._player_details.get("_id")
         call_update = False
         call_set_player = False
@@ -631,7 +629,6 @@ class Py3status:
         self._media_player = top_player.get("_dbus_media_player")
         self._player_details = top_player
 
-
     def on_click(self, event):
         """
         Handles click events
@@ -639,10 +636,10 @@ class Py3status:
         index = event["index"]
         button = event["button"]
 
-
-
         if button == 1:
-            # self.py3.prevent_refresh() #Data update depends on mediaplayer which calls player_on_change.
+            # Data update depends on mediaplayer which calls player_on_change.  (needs more tesing)
+            # self.py3.prevent_refresh()
+            # FIXME: with prevent refresh u could get state (while fast clicking): py3status shows paused state while mediaplayer is playing.
             if index not in self._control_states:
                 if button == self.button_toggle:
                     index = "toggle"
@@ -660,7 +657,9 @@ class Py3status:
                 if self._player and self._get_button_state(control_state):
                     getattr(self._player, self._control_states[index]["action"])()
             except DBusException as err:
-                self.py3.log(f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}")
+                self.py3.log(
+                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
+                )
 
         elif button == 8 or button == 9:
             self.py3.prevent_refresh()
@@ -669,40 +668,43 @@ class Py3status:
             try:
                 getattr(self._player, self._control_states[action]["action"])()
             except DBusException as err:
-                self.py3.log(f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}")
+                self.py3.log(
+                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
+                )
 
-        # elif button in [2, 3]:  # 2 -middle 3-left switch between current paused/playing players.
-        #     status_lookup = "Playing" if button == 3 else "Paused"
-        #     switchable_players = []
-        #     current_player_in_list = False
-        #     for player in self._mpris_players.values():
-        #
-        #         if player["status"] == status_lookup:
-        #             if player["_hide"]:
-        #                 continue
-        #
-        #             switchable_players.append(player)
-        #             if not current_player_in_list:
-        #                 current_player_in_list = (
-        #                         self._player_details["_id"] == player["_id"]
-        #                 )
-        #
-        #     if len(switchable_players):
-        #         try:
-        #             if current_player_in_list:
-        #                 if len(switchable_players) == 1:
-        #                     return
-        #                 next_player_index = (
-        #                                             switchable_players.index(self._player_details["_id"]) + 1
-        #                                     ) % len(switchable_players)
-        #             else:
-        #                 next_player_index = 0
-        #
-        #             next_player = switchable_players[next_player_index]
-        #
-        #             self._set_data_entry_point_by_name_key(next_player["_id"])
-        #         except ValueError:
-        #             pass
+        elif button == 2 or button == 3:
+            # 2 -middle 3-left switch between current paused/playing players.
+            status_lookup = "Playing" if button == 3 else "Paused"
+            switchable_players = []
+            current_player_in_list = False
+            for player in self._mpris_players.values():
+
+                if player["status"] == status_lookup:
+                    if player["_hide"]:
+                        continue
+
+                    switchable_players.append(player)
+                    if not current_player_in_list:
+                        current_player_in_list = (
+                            self._player_details["_id"] == player["_id"]
+                        )
+
+            if len(switchable_players):
+                try:
+                    if current_player_in_list:
+                        if len(switchable_players) == 1:
+                            return
+                        next_player_index = (
+                            switchable_players.index(self._player_details["_id"]) + 1
+                        ) % len(switchable_players)
+                    else:
+                        next_player_index = 0
+
+                    next_player = switchable_players[next_player_index]
+
+                    self._set_data_entry_point_by_name_key(next_player["_id"])
+                except ValueError:
+                    pass
 
         elif button == 4 or button == 5:
             switchable_players = []
@@ -710,12 +712,14 @@ class Py3status:
             current_player_index = False
             for player in self._mpris_players.keys():
                 if (
-                        self._mpris_players[player]["status"]
-                        == self._player_details.get("status")
-                        and not self._mpris_players[player]["_hide"]
+                    self._mpris_players[player]["status"]
+                    == self._player_details.get("status")
+                    and not self._mpris_players[player]["_hide"]
                 ):
                     if not current_player_index:
-                        if self._mpris_players[player]["_id"] == self._player_details.get("_id"):
+                        if self._mpris_players[player][
+                            "_id"
+                        ] == self._player_details.get("_id"):
                             current_player_index = len(switchable_players)
                             if order_asc:
                                 continue
@@ -731,19 +735,21 @@ class Py3status:
             if len(switchable_players):
                 try:
                     if order_asc:
-                        next_index = (current_player_index % len(switchable_players))
+                        next_index = current_player_index % len(switchable_players)
                     else:
-                        next_index = ((current_player_index - 1) % len(switchable_players))
+                        next_index = (current_player_index - 1) % len(
+                            switchable_players
+                        )
 
-                    self._set_data_entry_point_by_name_key(switchable_players[next_index])
+                    self._set_data_entry_point_by_name_key(
+                        switchable_players[next_index]
+                    )
 
                 except KeyError:
                     pass
 
         else:
             self.py3.update()
-
-
 
 
 if __name__ == "__main__":
