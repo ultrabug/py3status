@@ -10,6 +10,9 @@ Configuration parameters:
     button_previous: mouse button to play the previous entry (default None)
     button_stop: mouse button to stop the player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
+    button_switch_to_top_player: mouse button to switch to toop player (Default None)
+    prev_player: mouse button to switch previous player in list (Same status as top player) (Default None)
+    next_player: mouse button to switch next player in list (Same status as top player) (Default None)
     format: see placeholders below
     format: display format for this module
         (default '[{artist} - ][{title}] {previous} {toggle} {next}')
@@ -130,6 +133,9 @@ class Py3status:
     button_previous = None
     button_stop = None
     button_toggle = 1
+    button_switch_to_top_player = None
+    prev_player = None
+    next_player = None
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
     icon_next = "\u25b9"
@@ -618,6 +624,22 @@ class Py3status:
         self._media_player = top_player.get("_dbus_media_player")
         self._player_details = top_player
 
+    def _send_mpris_action(self, index):
+        if index == "toggle":
+            playback_status = self._player.PlaybackStatus
+            self._data["state"] = self._get_state(playback_status)
+            control_state = self._get_control_states().get(index)
+        else:
+            control_state = self._control_states.get(index)
+
+        try:
+            if self._player and self._get_button_state(control_state):
+                getattr(self._player, self._control_states[index]["action"])()
+        except DBusException as err:
+            self.py3.log(
+                f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
+            )
+
     def on_click(self, event):
         """
         Handles click events
@@ -625,90 +647,66 @@ class Py3status:
         index = event["index"]
         button = event["button"]
 
-        if button == 1:
-            # Data update depends on mediaplayer which calls player_on_change.  (needs more tesing)
-            # self.py3.prevent_refresh()
-            # FIXME: with prevent refresh u could get state (while fast clicking): py3status shows paused state while mediaplayer is playing.
-            if index not in self._control_states:
-                if button == self.button_toggle:
-                    index = "toggle"
-                elif button == self.button_stop:
-                    index = "stop"
-                elif button == self.button_next:
-                    index = "next"
-                elif button == self.button_previous:
-                    index = "previous"
-                else:
-                    return
-
-            try:
-                control_state = self._control_states.get(index)
-                if self._player and self._get_button_state(control_state):
-                    getattr(self._player, self._control_states[index]["action"])()
-            except DBusException as err:
-                self.py3.log(
-                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
-                )
-
-        elif button == 3:
-            #left click brings back top player
+        if index not in self._control_states:
             self.py3.prevent_refresh()
-            self._set_player()
+            if button == self.button_toggle:
+                return self._send_mpris_action("toggle")
+            elif button == self.button_stop:
+                return self._send_mpris_action("stop")
+            elif button == self.button_next:
+                return self._send_mpris_action("next")
+            elif button == self.button_previous:
+                return self._send_mpris_action("previous")
+            elif button == self.button_switch_to_top_player:
+                return self._set_player()
 
+            elif button == self.prev_player or button == self.next_player:
+                switchable_players = []
+                order_asc = button == self.next_player
+                current_player_index = False
+                for player in self._mpris_players.keys():
+                    if (
+                        self._mpris_players[player]["status"]
+                        == self._player_details.get("status")
+                        and not self._mpris_players[player]["_hide"]
+                    ):
+                        if not current_player_index:
+                            if self._mpris_players[player][
+                                "_id"
+                            ] == self._player_details.get("_id"):
+                                current_player_index = len(switchable_players)
+                                if order_asc:
+                                    continue
 
-        elif button == 4 or button == 5:
-            switchable_players = []
-            order_asc = button == 4
-            current_player_index = False
-            for player in self._mpris_players.keys():
-                if (
-                    self._mpris_players[player]["status"]
-                    == self._player_details.get("status")
-                    and not self._mpris_players[player]["_hide"]
-                ):
-                    if not current_player_index:
-                        if self._mpris_players[player][
-                            "_id"
-                        ] == self._player_details.get("_id"):
-                            current_player_index = len(switchable_players)
+                        switchable_players.append(player)
+                        if current_player_index:
                             if order_asc:
-                                continue
-
-                    switchable_players.append(player)
-                    if current_player_index:
-                        if order_asc:
-                            break
-                        else:
-                            if current_player_index != 0:
                                 break
+                            else:
+                                if current_player_index != 0:
+                                    break
 
-            if len(switchable_players):
-                try:
-                    if order_asc:
-                        next_index = current_player_index % len(switchable_players)
-                    else:
-                        next_index = (current_player_index - 1) % len(
-                            switchable_players
+                if len(switchable_players):
+                    try:
+                        if order_asc:
+                            next_index = current_player_index % len(switchable_players)
+                        else:
+                            next_index = (current_player_index - 1) % len(
+                                switchable_players
+                            )
+
+                        self._set_data_entry_point_by_name_key(
+                            switchable_players[next_index]
                         )
 
-                    self._set_data_entry_point_by_name_key(
-                        switchable_players[next_index]
-                    )
+                    except KeyError:
+                        pass
 
-                except KeyError:
-                    pass
+            else:
+                return
 
-        elif button == 8 or button == 9:
-            # mouse prev/next button changes track
-
-            action = "previous" if button == 8 else "next"
-
-            try:
-                getattr(self._player, self._control_states[action]["action"])()
-            except DBusException as err:
-                self.py3.log(
-                    f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
-                )
+        elif button == 1:
+            self._send_mpris_action(index)
 
 
 if __name__ == "__main__":
