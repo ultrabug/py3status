@@ -370,7 +370,6 @@ class Py3statusWrapper:
             # when is next timeout due?
             try:
                 self.timeout_due = self.timeout_keys[0]
-                a = ""
             except IndexError:
                 self.timeout_due = None
 
