@@ -107,6 +107,7 @@ import re
 import sys
 from dbus import SessionBus, DBusException
 from mpris2 import Player, MediaPlayer2, get_players_uri, Interfaces
+from mpris2.types import Metadata_Map
 
 STRING_GEVENT = "this module does not work with gevent"
 
@@ -190,10 +191,15 @@ class Py3status:
                 "clickable": "CanGoPrevious",
                 "icon": self.icon_previous,
             },
+            "toggle": {
+                "action": "PlayPause",
+                "clickable": "True",
+                "icon": None
+            }
         }
 
         self._format_contains_metadata = False
-        for key in ["album", "artist", "titile", "length"]:
+        for key in ["album", "artist", "titile"]:
             if self.py3.format_contains(self.format, key):
                 self._format_contains_metadata = True
                 break
@@ -224,7 +230,7 @@ class Py3status:
 
     def _get_button_state(self, control_state):
         try:
-            # Workaround: The last parameter returns True for the Stop button.
+            # Workaround: The last parameter returns True for the Stop / Toggle button.
             clickable = getattr(self._player, control_state["clickable"], True)
         except Exception:
             clickable = False
@@ -293,7 +299,7 @@ class Py3status:
 
     def _get_control_states(self):
         state = "pause" if self._data.get("state") == PLAYING else "play"
-        self._states["toggle"] = self._states[state]
+        self._states["toggle"]["icon"] = self._states[state]["icon"]
         return self._states
 
     def _get_response_buttons(self):
@@ -398,15 +404,15 @@ class Py3status:
         if "PlaybackStatus" in data_keys:
             status = data.get("PlaybackStatus")
             if status:
-                # Needed because vlc may send PlaybackStatus stopped when pressing next/prev button on vlc.
                 sender_player["status"] = status
                 sender_player["_state_priority"] = WORKING_STATES.index(status)
                 call_set_player = True
 
         # it usually comes with Rate and Rate can come without metadata.
         elif "Metadata" in data_keys:
-            is_active_player = sender_player_id == self._player_details.get("_id")
-            call_update = is_active_player
+            if self._format_contains_metadata:
+                is_active_player = sender_player_id == self._player_details.get("_id")
+                call_update = is_active_player
 
         elif "CanPlay" in data_keys:
             sender_player["_hide"] = self._should_hide_mediaplayer(
@@ -526,19 +532,19 @@ class Py3status:
 
         try:
             if len(metadata) > 0:
-                url = metadata.get("xesam:url")
+                url = metadata.get(Metadata_Map.URL)
                 is_stream = url is not None and "file://" not in url
-                self._data["title"] = metadata.get("xesam:title")
-                self._data["album"] = metadata.get("xesam:album")
+                self._data["title"] = metadata.get(Metadata_Map.TITLE)
+                self._data["album"] = metadata.get(Metadata_Map.ALBUM)
 
-                if metadata.get("xesam:artist"):
-                    self._data["artist"] = metadata.get("xesam:artist")[0]
+                if metadata.get(Metadata_Map.ARTIST):
+                    self._data["artist"] = metadata.get(Metadata_Map.ARTIST)[0]
                 else:
                     # we assume here that we playing a video and these types of
                     # media we handle just like streams
                     is_stream = True
 
-                length_ms = metadata.get("mpris:length")
+                length_ms = metadata.get(Metadata_Map.LENGTH)
                 if length_ms is not None:
                     self._data["length"] = _get_time_str(length_ms)
             else:
@@ -625,12 +631,7 @@ class Py3status:
         self._player_details = top_player
 
     def _send_mpris_action(self, index):
-        if index == "toggle":
-            playback_status = self._player.PlaybackStatus
-            self._data["state"] = self._get_state(playback_status)
-            control_state = self._get_control_states().get(index)
-        else:
-            control_state = self._control_states.get(index)
+        control_state = self._control_states.get(index)
 
         try:
             if self._player and self._get_button_state(control_state):
