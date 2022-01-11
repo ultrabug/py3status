@@ -17,12 +17,12 @@ Configuration parameters:
     format: display format for this module
         (default '[{artist} - ][{title}] {previous} {toggle} {next}')
     format_none: define output if no player is running (default 'no player running')
-    hide_non_canplay: Used to hide chrome/chomium players on idle state. (default ['chrome', 'chromium'])
     icon_next: specify icon for next button (default u'\u25b9')
     icon_pause: specify icon for pause button (default u'\u25eb')
     icon_play: specify icon for play button (default u'\u25b7')
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
+    player_hide_non_canplay: Used to hide chrome/chomium players on idle state. (default ['chrome', 'chromium'])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
@@ -139,12 +139,12 @@ class Py3status:
     button_toggle = 1
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
-    hide_non_canplay = ["chrome", "chromium"]
     icon_next = "\u25b9"
     icon_pause = "\u25eb"
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
+    player_hide_non_canplay = ["chrome", "chromium"]
     player_priority = []
     state_pause = "\u25eb"
     state_play = "\u25b7"
@@ -374,7 +374,8 @@ class Py3status:
     def _should_hide_mediaplayer(self, player_id, canPlay):
         return (
             not canPlay
-            and self._mpris_players[player_id]["name_from_id"] in self.hide_non_canplay
+            and self._mpris_players[player_id]["name_from_id"]
+            in self.player_hide_non_canplay
         )
 
     def _player_on_change(self, interface_name, data, invalidated_properties, sender):
