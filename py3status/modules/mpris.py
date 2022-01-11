@@ -139,13 +139,13 @@ class Py3status:
     next_player = None
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
+    player_priority = []
+    hide_non_canplay = []
     icon_next = "\u25b9"
     icon_pause = "\u25eb"
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
-    player_priority = []
-    hide_non_canplay = ["chrome", "chromium"]
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"
@@ -558,6 +558,26 @@ class Py3status:
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
             self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
+    def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
+        if new_active_player_key == self._player_details:
+            return
+
+        top_player = self._mpris_players.get(new_active_player_key) or {}
+        self._player = top_player.get("_dbus_player")
+        self._media_player = top_player.get("_dbus_media_player")
+        self._player_details = top_player
+
+    def _send_mpris_action(self, index):
+        control_state = self._control_states.get(index)
+
+        try:
+            if self._player and self._get_button_state(control_state):
+                getattr(self._player, self._control_states[index]["action"])()
+        except DBusException as err:
+            self.py3.log(
+                f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
+            )
+
     def kill(self):
         self._kill = True
 
@@ -620,26 +640,6 @@ class Py3status:
                 "composite": composite,
             }
             return response
-
-    def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
-        if new_active_player_key == self._player_details:
-            return
-
-        top_player = self._mpris_players.get(new_active_player_key) or {}
-        self._player = top_player.get("_dbus_player")
-        self._media_player = top_player.get("_dbus_media_player")
-        self._player_details = top_player
-
-    def _send_mpris_action(self, index):
-        control_state = self._control_states.get(index)
-
-        try:
-            if self._player and self._get_button_state(control_state):
-                getattr(self._player, self._control_states[index]["action"])()
-        except DBusException as err:
-            self.py3.log(
-                f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
-            )
 
     def on_click(self, event):
         """
