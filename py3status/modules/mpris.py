@@ -7,17 +7,17 @@ to define the button parameters in your config.
 
 Configuration parameters:
     button_next: mouse button to play the next entry (default None)
+    button_next_player: (Experimental) mouse button to switch next player in list (Same status as top player) (default None)
+    button_prev_player: (Experimental) mouse button to switch previous player in list (Same status as top player) (default None)
     button_previous: mouse button to play the previous entry (default None)
     button_stop: mouse button to stop the player (default None)
+    button_switch_to_top_player: (Experimental) mouse button to switch to toop player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
-    button_switch_to_top_player: mouse button to switch to toop player (Default None)
-    prev_player: mouse button to switch previous player in list (Same status as top player) (Default None)
-    next_player: mouse button to switch next player in list (Same status as top player) (Default None)
     format: see placeholders below
     format: display format for this module
         (default '[{artist} - ][{title}] {previous} {toggle} {next}')
-    format_none: define output if no player is running
-        (default 'no player running')
+    format_none: define output if no player is running (default 'no player running')
+    hide_non_canplay: Used to hide chrome/chomium players on idle state. (default ['chrome', 'chromium'])
     icon_next: specify icon for next button (default u'\u25b9')
     icon_pause: specify icon for pause button (default u'\u25eb')
     icon_play: specify icon for play button (default u'\u25b7')
@@ -131,21 +131,21 @@ class Py3status:
 
     # available configuration parameters
     button_next = None
+    button_next_player = None
+    button_prev_player = None
     button_previous = None
     button_stop = None
-    button_toggle = 1
     button_switch_to_top_player = None
-    prev_player = None
-    next_player = None
+    button_toggle = 1
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
-    player_priority = []
-    hide_non_canplay = []
+    hide_non_canplay = ["chrome", "chromium"]
     icon_next = "\u25b9"
     icon_pause = "\u25eb"
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
+    player_priority = []
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"
@@ -657,9 +657,9 @@ class Py3status:
             elif button == self.button_switch_to_top_player:
                 return self._set_player()
 
-            elif button == self.prev_player or button == self.next_player:
+            elif button == self.button_prev_player or button == self.button_next_player:
                 switchable_players = []
-                order_asc = button == self.next_player
+                order_asc = button == self.button_next_player
                 current_player_index = False
                 for player in self._mpris_players.keys():
                     if (
