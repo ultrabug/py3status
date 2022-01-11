@@ -191,11 +191,7 @@ class Py3status:
                 "clickable": "CanGoPrevious",
                 "icon": self.icon_previous,
             },
-            "toggle": {
-                "action": "PlayPause",
-                "clickable": "True",
-                "icon": None
-            }
+            "toggle": {"action": "PlayPause", "clickable": "True", "icon": None},
         }
 
         self._format_contains_metadata = False
