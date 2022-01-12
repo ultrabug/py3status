@@ -396,10 +396,9 @@ class Py3status:
 
         if "PlaybackStatus" in data_keys:
             status = data.get("PlaybackStatus")
-            if status:
-                sender_player["status"] = status
-                sender_player["_state_priority"] = WORKING_STATES.index(status)
-                call_set_player = True
+            sender_player["status"] = status
+            sender_player["_state_priority"] = WORKING_STATES.index(status)
+            call_set_player = True
 
         # it usually comes with Rate and Rate can come without metadata.
         elif "Metadata" in data_keys:
