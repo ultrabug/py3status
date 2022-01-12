@@ -382,10 +382,6 @@ class Py3status:
         """
         Monitor a player and update its status.
         """
-
-        if interface_name != Interfaces.PLAYER:
-            return
-
         sender_player_id = self._ownerToPlayerId.get(sender)
         if not sender_player_id:
             return
@@ -511,6 +507,7 @@ class Py3status:
         self._dbus.add_signal_receiver(
             self._player_on_change,
             dbus_interface=Interfaces.PROPERTIES,
+            path=Interfaces.OBJECT_PATH,
             signal_name=Interfaces.SIGNAL,
             sender_keyword="sender",
         )
