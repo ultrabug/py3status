@@ -566,6 +566,7 @@ class Py3status:
         try:
             if self._player and self._get_button_state(control_state):
                 getattr(self._player, self._control_states[index]["action"])()
+                self.py3.prevent_refresh()
         except DBusException as err:
             self.py3.log(
                 f"Player {self._player_details['identity']} responded {str(err).split(':', 1)[-1]}"
@@ -642,7 +643,6 @@ class Py3status:
         button = event["button"]
 
         if index not in self._control_states:
-            self.py3.prevent_refresh()
             if button == self.button_toggle:
                 return self._send_mpris_action("toggle")
             elif button == self.button_stop:
