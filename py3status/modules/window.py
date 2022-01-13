@@ -59,6 +59,8 @@ class I3ipc(Ipc):
     i3ipc - an improved python library to control i3wm and sway
     """
 
+    _last_workspace = None
+
     def setup(self, parent):
         from threading import Thread
 
@@ -69,43 +71,61 @@ class I3ipc(Ipc):
         t.daemon = True
         t.start()
 
+    # noinspection PyTypeChecker
     def start(self):
-        from i3ipc import Connection
+        from i3ipc import Connection, Event
 
         i3 = Connection()
-        self.change_title(i3)
-        for event in ["workspace::focus", "window::close"]:
-            i3.on(event, self.clear_title)
-        for event in ["window::title", "window::focus", "binding"]:
-            i3.on(event, self.change_title)
-        i3.main()
 
-    def clear_title(self, i3, event=None):
         self.update(i3.get_tree().find_focused())
 
-    def change_title(self, i3, event=None):
-        focused = i3.get_tree().find_focused()
+        i3.on(Event.WORKSPACE_FOCUS, self._on_workplace_focus)
+        i3.on(Event.WINDOW_CLOSE, self._on_window_close)
+        i3.on(Event.WINDOW_TITLE, self._on_window_title)
+        i3.on(Event.WINDOW_FOCUS, self._on_window_focus)
+        i3.on(Event.BINDING, self._on_binding)
+        i3.main()
+
+    def _on_workplace_focus(self, i3, event):
+        self._last_workspace = event.current
+        self.update(self._last_workspace)
+
+    def _on_window_close(self, i3, event):
+        self.update(self._last_workspace)
+
+    def _on_binding(self, i3, event):
+        self.update(i3.get_tree().find_focused())
+
+    def _on_window_title(self, i3, event):
+        if event.container.focused:
+            self.update(event.container)
+
+    def _on_window_focus(self, i3, event):
+        self.update(event.container)
+
+    def update(self, event_element):
+        if not event_element:
+            return
 
         # hide title on containers with window title
         if self.parent.hide_title:
             if (
-                focused.border == "normal"
-                or focused.type == "workspace"
+                event_element.border == "normal"
+                or event_element.type == "workspace"
                 or (
-                    focused.parent.layout in ("stacked", "tabbed")
-                    and len(focused.parent.nodes) > 1
+                    event_element.parent.layout in ("stacked", "tabbed")
+                    and len(event_element.parent.nodes) > 1
                 )
             ):
-                focused.name = None
-        self.update(focused)
+                event_element.name = None
 
-    def update(self, window_properties):
         window_properties = {
-            "title": window_properties.name,
-            "class": window_properties.window_class,
-            "instance": window_properties.window_instance,
+            "title": event_element.name,
+            "class": event_element.window_class,
+            "instance": event_element.window_instance,
         }
         window_properties = self.compatibility(window_properties)
+
         if self.window_properties != window_properties:
             self.window_properties = window_properties
             self.parent.py3.update()
