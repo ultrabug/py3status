@@ -526,19 +526,24 @@ class Py3status:
             if len(metadata) > 0:
                 url = metadata.get(Metadata_Map.URL)
                 is_stream = url is not None and "file://" not in url
-                self._data["title"] = metadata.get(Metadata_Map.TITLE)
-                self._data["album"] = metadata.get(Metadata_Map.ALBUM)
+                if self.py3.format_contains("title"):
+                    self._data["title"] = metadata.get(Metadata_Map.TITLE)
+                if self.py3.format_contains("album"):
+                    self._data["album"] = metadata.get(Metadata_Map.ALBUM)
 
-                if metadata.get(Metadata_Map.ARTIST):
-                    self._data["artist"] = metadata.get(Metadata_Map.ARTIST)[0]
+                # Currently cant use self.py3.format_contains("artist") check because is_stream detection logic.
+                artist = metadata.get(Metadata_Map.ARTIST)
+                if artist:
+                    self._data["artist"] = artist[0]
                 else:
                     # we assume here that we playing a video and these types of
                     # media we handle just like streams
                     is_stream = True
 
-                length_ms = metadata.get(Metadata_Map.LENGTH)
-                if length_ms is not None:
-                    self._data["length"] = _get_time_str(length_ms)
+                if self.py3.format_contains("length"):
+                    length_ms = metadata.get(Metadata_Map.LENGTH)
+                    if length_ms is not None:
+                        self._data["length"] = _get_time_str(length_ms)
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -548,7 +553,9 @@ class Py3status:
         if is_stream and self._data.get("title"):
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
-            self._data["nowplaying"] = metadata.get("vlc:nowplaying")
+
+            if self._player_details["name_from_id"] == "vlc":
+                self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
         if new_active_player_key == self._player_details:
