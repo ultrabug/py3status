@@ -81,10 +81,14 @@ class I3ipc(Ipc):
         i3.main()
 
     def clear_title(self, i3, event=None):
-        self.update(i3.get_tree().find_focused())
+        focused = i3.get_tree().find_focused()
+        if focused:
+            self.update(focused)
 
     def change_title(self, i3, event=None):
         focused = i3.get_tree().find_focused()
+        if not focused:
+            return
 
         # hide title on containers with window title
         if self.parent.hide_title:
