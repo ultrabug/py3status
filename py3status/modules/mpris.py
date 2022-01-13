@@ -423,11 +423,11 @@ class Py3status:
         Add player to mpris_players
         """
         player_id_parts_list = player_id.split(".")
-        generic_name_from_id = player_id_parts_list[3]
+        name_from_id = player_id_parts_list[3]
 
         if (
             self.player_priority != []
-            and generic_name_from_id not in self.player_priority
+            and name_from_id not in self.player_priority
             and "*" not in self.player_priority
         ):
             return False
@@ -435,33 +435,32 @@ class Py3status:
         dMediaPlayer = MediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
         dPlayer = Player(dbus_interface_info={"dbus_uri": player_id})
 
-        name_with_instance = generic_name_from_id
+        name_with_instance = name_from_id
         if len(player_id_parts_list) > 4:
             name_with_instance += f".{player_id_parts_list[4]}"
 
-        name = self._mpris_names.get(generic_name_from_id)
+        name = self._mpris_names.get(name_from_id)
         if not name:
             name = str(dMediaPlayer.Identity)
-            self._mpris_names[generic_name_from_id] = name
+            self._mpris_names[name_from_id] = name
 
-        if generic_name_from_id not in self._mpris_name_index:
-            self._mpris_name_index[generic_name_from_id] = 0
+        if name_from_id not in self._mpris_name_index:
+            self._mpris_name_index[name_from_id] = 0
 
         status = dPlayer.PlaybackStatus
         state_priority = WORKING_STATES.index(status)
 
-        index = self._mpris_name_index[generic_name_from_id]
-        self._mpris_name_index[generic_name_from_id] += 1
+        index = self._mpris_name_index[name_from_id]
+        self._mpris_name_index[name_from_id] += 1
 
         self._ownerToPlayerId[owner] = player_id
 
         self._mpris_players[player_id] = {
+            "_id": player_id,
             "_dbus_player": dPlayer,
             "_dbus_media_player": dMediaPlayer,
-            "_hide": None,
-            "_id": player_id,
             "_state_priority": state_priority,
-            "name_from_id": generic_name_from_id,
+            "name_from_id": name_from_id,
             "index": index,
             "full_name": f"{name_with_instance} {index}",
             "status": status,
