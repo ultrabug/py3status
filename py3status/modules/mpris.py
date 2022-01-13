@@ -553,7 +553,10 @@ class Py3status:
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
 
-            if self.py3.format_contains("nowplaying") and self._player_details["name_from_id"] == "vlc":
+            if (
+                self.py3.format_contains("nowplaying")
+                and self._player_details["name_from_id"] == "vlc"
+            ):
                 self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
