@@ -215,9 +215,10 @@ class Py3status:
         }
 
         try:
-            self._data["player"] = self._media_player.Identity
-            playback_status = self._player.PlaybackStatus
-            self._data["state"] = self._get_state(playback_status)
+            self._data["player"] = self._mpris_names.get(
+                self._player_details["name_from_id"]
+            )
+            self._data["state"] = self._get_state(self._player_details["status"])
             if self._format_contains_metadata:
                 self._update_metadata(self._player.Metadata)
 
@@ -335,7 +336,7 @@ class Py3status:
             self._remove_player(name, old_owner)
         self._set_player()
 
-    def _set_player(self):
+    def _set_player(self, update=True):
         """
         Sort the current players into priority order and set self._player
         Players are ordered by working state, then by preference supplied by
@@ -360,15 +361,12 @@ class Py3status:
                     p["_priority"] = priority
             if p.get("_priority") is not None and not p.get("_hide"):
                 players.append((p["_state_priority"], p["_priority"], p["index"], name))
-        if players:
-            top_player = self._mpris_players.get(sorted(players)[0][3])
-        else:
-            top_player = {}
 
-        self._player = top_player.get("_dbus_player")
-        self._media_player = top_player.get("_dbus_media_player")
-        self._player_details = top_player
-        self.py3.update()
+        new_top_player_id = None
+        if players:
+            new_top_player_id = sorted(players)[0][3]
+
+        self._set_data_entry_point_by_name_key(new_top_player_id, update)
 
     def _should_hide_mediaplayer(self, player_id, canPlay):
         return (
@@ -424,32 +422,36 @@ class Py3status:
         """
         Add player to mpris_players
         """
-        dPlayer = Player(dbus_interface_info={"dbus_uri": player_id})
-        dMediaPlayer = MediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
-        identity = str(dMediaPlayer.Identity)
+        player_id_parts_list = player_id.split(".")
+        generic_name_from_id = player_id_parts_list[3]
 
-        if identity not in self._mpris_names:
-            self._mpris_names[identity] = player_id.split(".")[-1]
-            for p in self._mpris_players.values():
-                if not p["name"] and p["identity"] in self._mpris_names:
-                    p["name"] = self._mpris_names[p["identity"]]
-                    p["full_name"] = "{} {}".format(p["name"], p["index"])
-
-        name = self._mpris_names.get(identity)
         if (
             self.player_priority != []
-            and name not in self.player_priority
+            and generic_name_from_id not in self.player_priority
             and "*" not in self.player_priority
         ):
             return False
 
-        if identity not in self._mpris_name_index:
-            self._mpris_name_index[identity] = 0
+        dMediaPlayer = MediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
+        dPlayer = Player(dbus_interface_info={"dbus_uri": player_id})
+
+        name_with_instance = generic_name_from_id
+        if len(player_id_parts_list) > 4:
+            name_with_instance += f".{player_id_parts_list[4]}"
+
+        name = self._mpris_names.get(generic_name_from_id)
+        if not name:
+            name = str(dMediaPlayer.Identity)
+            self._mpris_names[generic_name_from_id] = name
+
+        if generic_name_from_id not in self._mpris_name_index:
+            self._mpris_name_index[generic_name_from_id] = 0
 
         status = dPlayer.PlaybackStatus
         state_priority = WORKING_STATES.index(status)
-        index = self._mpris_name_index[identity]
-        self._mpris_name_index[identity] += 1
+
+        index = self._mpris_name_index[generic_name_from_id]
+        self._mpris_name_index[generic_name_from_id] += 1
 
         self._ownerToPlayerId[owner] = player_id
 
@@ -459,11 +461,9 @@ class Py3status:
             "_hide": None,
             "_id": player_id,
             "_state_priority": state_priority,
-            "name_from_id": player_id.split(".")[3],
+            "name_from_id": generic_name_from_id,
             "index": index,
-            "identity": identity,
-            "name": name,
-            "full_name": f"{name} {index}",
+            "full_name": f"{name_with_instance} {index}",
             "status": status,
         }
         self._mpris_players[player_id]["_hide"] = self._should_hide_mediaplayer(
@@ -566,6 +566,9 @@ class Py3status:
         self._media_player = top_player.get("_dbus_media_player")
         self._player_details = top_player
 
+        if update:
+            self.py3.update()
+
     def _send_mpris_action(self, index):
         control_state = self._control_states.get(index)
 
@@ -658,7 +661,7 @@ class Py3status:
             elif button == self.button_previous:
                 return self._send_mpris_action("previous")
             elif button == self.button_switch_to_top_player:
-                return self._set_player()
+                return self._set_player(update=False)
 
             elif button == self.button_prev_player or button == self.button_next_player:
                 switchable_players = []
@@ -696,7 +699,7 @@ class Py3status:
                             )
 
                         self._set_data_entry_point_by_name_key(
-                            switchable_players[next_index]
+                            switchable_players[next_index], update=False
                         )
 
                     except KeyError:
