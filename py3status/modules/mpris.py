@@ -368,11 +368,9 @@ class Py3status:
 
         self._set_data_entry_point_by_name_key(new_top_player_id, update)
 
-    def _should_hide_mediaplayer(self, player_id, canPlay):
-        return (
-            not canPlay
-            and self._mpris_players[player_id]["name_from_id"]
-            in self.player_hide_non_canplay
+    def _hide_mediaplayer_by_canplay(self, player, can_play):
+        player["_hide"] = (
+            not can_play and player["name_from_id"] in self.player_hide_non_canplay
         )
 
     def _player_on_change(self, interface_name, data, invalidated_properties, sender):
@@ -404,9 +402,7 @@ class Py3status:
                 call_update = is_active_player
 
         elif "CanPlay" in data_keys:
-            sender_player["_hide"] = self._should_hide_mediaplayer(
-                sender_player_id, data.get("CanPlay")
-            )
+            self._hide_mediaplayer_by_canplay(sender_player, data.get("CanPlay"))
             call_set_player = True
 
         else:
@@ -455,7 +451,7 @@ class Py3status:
 
         self._ownerToPlayerId[owner] = player_id
 
-        self._mpris_players[player_id] = {
+        player = {
             "_id": player_id,
             "_dbus_player": dPlayer,
             "_dbus_media_player": dMediaPlayer,
@@ -465,9 +461,9 @@ class Py3status:
             "full_name": f"{name_with_instance} {index}",
             "status": status,
         }
-        self._mpris_players[player_id]["_hide"] = self._should_hide_mediaplayer(
-            player_id, dPlayer.CanPlay
-        )
+
+        self._hide_mediaplayer_by_canplay(player, dPlayer.CanPlay)
+        self._mpris_players[player_id] = player
 
         return True
 
