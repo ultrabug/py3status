@@ -275,7 +275,6 @@ class Py3status:
             if ptime_ms is not None and ptime_ms != 0:
                 ptime = _get_time_str(ptime_ms)
                 if self._data.get("state") == PLAYING:
-                    # cache_until = 63238
                     cache_until = time.perf_counter() + 0.5
 
         placeholders = {
