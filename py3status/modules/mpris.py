@@ -195,7 +195,7 @@ class Py3status:
         }
 
         self._format_contains_metadata = False
-        for key in ["album", "artist", "titile"]:
+        for key in ["album", "artist", "titile", "nowplaying"]:
             if self.py3.format_contains(self.format, key):
                 self._format_contains_metadata = True
                 break
@@ -554,7 +554,7 @@ class Py3status:
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
 
-            if self._player_details["name_from_id"] == "vlc":
+            if self.py3.format_contains("nowplaying") and self._player_details["name_from_id"] == "vlc":
                 self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
@@ -718,5 +718,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    config = {"player_priority": "[*, vlc]"}
-    module_test(Py3status, config)
+    module_test(Py3status)
