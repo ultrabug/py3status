@@ -91,7 +91,8 @@ class I3ipc(Ipc):
         self.update(self._last_workspace)
 
     def _on_window_close(self, i3, event):
-        self.update(self._last_workspace)
+        if event.container.focused:
+            self.update(self._last_workspace)
 
     def _on_binding(self, i3, event):
         self.update(i3.get_tree().find_focused())
