@@ -78,7 +78,7 @@ class I3ipc(Ipc):
 
         self.i3 = Connection()
 
-        self.update(self.i3.get_tree().find_focused())
+        self._update(self.i3.get_tree().find_focused())
 
         self.i3.on(Event.WORKSPACE_FOCUS, self._on_workplace_focus)
         self.i3.on(Event.WINDOW_CLOSE, self._on_window_close)
@@ -91,25 +91,25 @@ class I3ipc(Ipc):
         self._focused_workspace = event.current
         if event.current.nodes or event.current.floating_nodes:
             return
-        self.update(event.current)
+        self._update(event.current)
 
     def _on_window_close(self, i3, event):
         if event.container.window == self._focused_window:
             self._focused_window = None
-            self.update(self._focused_workspace)
+            self._update(self._focused_workspace)
 
     def _on_binding(self, i3, event):
-        self.update(i3.get_tree().find_focused())
+        self._update(i3.get_tree().find_focused())
 
     def _on_window_title(self, i3, event):
         if event.container.focused:
-            self.update(event.container)
+            self._update(event.container)
 
     def _on_window_focus(self, i3, event):
         self._focused_window = event.container.window
-        self.update(event.container)
+        self._update(event.container)
 
-    def update(self, event_element):
+    def _update(self, event_element):
         if not event_element:
             return
 
