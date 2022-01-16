@@ -59,6 +59,9 @@ class I3ipc(Ipc):
     i3ipc - an improved python library to control i3wm and sway
     """
 
+    _focused_workspace = None
+    _focused_window = None
+
     def setup(self, parent):
         from threading import Thread
 
@@ -85,13 +88,15 @@ class I3ipc(Ipc):
         i3.main()
 
     def _on_workplace_focus(self, i3, event):
+        self._focused_workspace = event.current
         if event.current.nodes or event.current.floating_nodes:
             return
         self.update(event.current)
 
     def _on_window_close(self, i3, event):
-        # Event data based update needs more work. Checking just container.focus is not enough
-        self.update(i3.get_tree().find_focused())
+        if event.container.window == self._focused_window:
+            self._focused_window = None
+            self.update(self._focused_workspace)
 
     def _on_binding(self, i3, event):
         self.update(i3.get_tree().find_focused())
@@ -101,6 +106,7 @@ class I3ipc(Ipc):
             self.update(event.container)
 
     def _on_window_focus(self, i3, event):
+        self._focused_window = event.container.window
         self.update(event.container)
 
     def update(self, event_element):
