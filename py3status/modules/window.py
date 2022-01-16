@@ -85,6 +85,8 @@ class I3ipc(Ipc):
         i3.main()
 
     def _on_workplace_focus(self, i3, event):
+        if event.current.nodes or event.current.floating_nodes:
+            return
         self.update(event.current)
 
     def _on_window_close(self, i3, event):
