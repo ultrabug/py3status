@@ -48,7 +48,7 @@ class Ipc:
         # specify width to truncate title with ellipsis
         if self.parent.max_width:
             title = window_properties["title"]
-            if len(title or "") > self.parent.max_width:
+            if title and title > self.parent.max_width:
                 window_properties["title"] = title[: self.parent.max_width - 1] + "…"
 
         return window_properties
@@ -76,16 +76,16 @@ class I3ipc(Ipc):
     def start(self):
         from i3ipc import Connection, Event
 
-        i3 = Connection()
+        self.i3 = Connection()
 
-        self.update(i3.get_tree().find_focused())
+        self.update(self.i3.get_tree().find_focused())
 
-        i3.on(Event.WORKSPACE_FOCUS, self._on_workplace_focus)
-        i3.on(Event.WINDOW_CLOSE, self._on_window_close)
-        i3.on(Event.WINDOW_TITLE, self._on_window_title)
-        i3.on(Event.WINDOW_FOCUS, self._on_window_focus)
-        i3.on(Event.BINDING, self._on_binding)
-        i3.main()
+        self.i3.on(Event.WORKSPACE_FOCUS, self._on_workplace_focus)
+        self.i3.on(Event.WINDOW_CLOSE, self._on_window_close)
+        self.i3.on(Event.WINDOW_TITLE, self._on_window_title)
+        self.i3.on(Event.WINDOW_FOCUS, self._on_window_focus)
+        self.i3.on(Event.BINDING, self._on_binding)
+        self.i3.main()
 
     def _on_workplace_focus(self, i3, event):
         self._focused_workspace = event.current
@@ -115,21 +115,33 @@ class I3ipc(Ipc):
 
         # hide title on containers with window title
         if self.parent.hide_title:
-            if (
-                event_element.border == "normal"
-                or event_element.type == "workspace"
-                or (
-                    event_element.parent.layout in ("stacked", "tabbed")
-                    and len(event_element.parent.nodes) > 1
+            show_name = True
+            if event_element.border == "normal" or event_element.type == "workspace":
+                show_name = False
+            else:
+                event_element_parent = event_element.parent or getattr(
+                    self.i3.get_tree().find_by_id(event_element.id), "parent", None
                 )
-            ):
-                event_element.name = None
+                if (
+                    event_element_parent
+                    and event_element_parent.layout in ("stacked", "tabbed")
+                    and len(event_element_parent.nodes) > 1
+                ):
+                    show_name = False
 
-        window_properties = {
-            "title": event_element.name,
-            "class": event_element.window_class,
-            "instance": event_element.window_instance,
-        }
+            window_properties = {
+                "title": event_element.name if show_name else None,
+                "class": event_element.window_class,
+                "instance": event_element.window_instance,
+            }
+
+        else:
+            window_properties = {
+                "title": event_element.name,
+                "class": event_element.window_class,
+                "instance": event_element.window_instance,
+            }
+
         window_properties = self.compatibility(window_properties)
 
         if self.window_properties != window_properties:
