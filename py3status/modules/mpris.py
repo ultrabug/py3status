@@ -195,7 +195,7 @@ class Py3status:
         }
 
         self._format_contains_metadata = False
-        for key in ["album", "artist", "titile", "nowplaying"]:
+        for key in ["album", "artist", "title", "nowplaying"]:
             if self.py3.format_contains(self.format, key):
                 self._format_contains_metadata = True
                 break
@@ -391,23 +391,25 @@ class Py3status:
 
         if "PlaybackStatus" in data_keys:
             status = data.get("PlaybackStatus")
+            if status == "Stopped":
+                status = sender_player.PlaybackStatus
+
             sender_player["status"] = status
             sender_player["_state_priority"] = WORKING_STATES.index(status)
             call_set_player = True
 
         # it usually comes with Rate and Rate can come without metadata.
-        elif "Metadata" in data_keys:
+        if "Metadata" in data_keys:
             if self._format_contains_metadata:
                 is_active_player = sender_player_id == self._player_details.get("_id")
                 call_update = is_active_player
 
-        elif "CanPlay" in data_keys:
+        if "CanPlay" in data_keys:
             self._hide_mediaplayer_by_canplay(sender_player, data.get("CanPlay"))
             call_set_player = True
 
-        else:
-            if "Rate" in data_keys:
-                pass
+        if "Rate" in data_keys:
+            pass
 
         if call_update and not call_set_player:
             self.py3.update()
