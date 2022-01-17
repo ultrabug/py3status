@@ -95,6 +95,8 @@ class I3ipc(Ipc):
 
     def update(self, i3, event=None):
         scratchpad = i3.get_tree().scratchpad()
+        if not scratchpad:
+            return
 
         # Workaround for I3ipc 2.2.1 not finding leaves() in sway. Fixing: #2038
         leaves = getattr(scratchpad, "floating_nodes", [])
