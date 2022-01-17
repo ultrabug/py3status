@@ -48,7 +48,7 @@ class Ipc:
         # specify width to truncate title with ellipsis
         if self.parent.max_width:
             title = window_properties["title"]
-            if title and title > self.parent.max_width:
+            if title and len(title) > self.parent.max_width:
                 window_properties["title"] = title[: self.parent.max_width - 1] + "…"
 
         return window_properties
