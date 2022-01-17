@@ -48,7 +48,7 @@ class Ipc:
         # specify width to truncate title with ellipsis
         if self.parent.max_width:
             title = window_properties["title"]
-            if len(title or "") > self.parent.max_width:
+            if title and len(title) > self.parent.max_width:
                 window_properties["title"] = title[: self.parent.max_width - 1] + "…"
 
         return window_properties
@@ -58,6 +58,9 @@ class I3ipc(Ipc):
     """
     i3ipc - an improved python library to control i3wm and sway
     """
+
+    _focused_workspace = None
+    _focused_window = None
 
     def setup(self, parent):
         from threading import Thread
@@ -69,43 +72,79 @@ class I3ipc(Ipc):
         t.daemon = True
         t.start()
 
+    # noinspection PyTypeChecker
     def start(self):
-        from i3ipc import Connection
+        from i3ipc import Connection, Event
 
-        i3 = Connection()
-        self.change_title(i3)
-        for event in ["workspace::focus", "window::close"]:
-            i3.on(event, self.clear_title)
-        for event in ["window::title", "window::focus", "binding"]:
-            i3.on(event, self.change_title)
-        i3.main()
+        self.i3 = Connection()
 
-    def clear_title(self, i3, event=None):
-        self.update(i3.get_tree().find_focused())
+        self._update(self.i3.get_tree().find_focused())
 
-    def change_title(self, i3, event=None):
-        focused = i3.get_tree().find_focused()
+        self.i3.on(Event.WORKSPACE_FOCUS, self._on_workplace_focus)
+        self.i3.on(Event.WINDOW_CLOSE, self._on_window_close)
+        self.i3.on(Event.WINDOW_TITLE, self._on_window_title)
+        self.i3.on(Event.WINDOW_FOCUS, self._on_window_focus)
+        self.i3.on(Event.BINDING, self._on_binding)
+        self.i3.main()
+
+    def _on_workplace_focus(self, i3, event):
+        self._focused_workspace = event.current
+        self._focused_window = None
+        if event.current.nodes or event.current.floating_nodes:
+            return
+        self._update(event.current)
+
+    def _on_window_close(self, i3, event):
+        if event.container.window == self._focused_window:
+            self._focused_window = None
+            self._update(i3.get_tree().find_focused())
+
+    def _on_binding(self, i3, event):
+        self._update(i3.get_tree().find_focused())
+
+    def _on_window_title(self, i3, event):
+        if event.container.focused:
+            self._update(event.container)
+
+    def _on_window_focus(self, i3, event):
+        self._focused_window = event.container.window
+        self._update(event.container)
+
+    def _update(self, event_element):
+        if not event_element:
+            return
 
         # hide title on containers with window title
         if self.parent.hide_title:
-            if (
-                focused.border == "normal"
-                or focused.type == "workspace"
-                or (
-                    focused.parent.layout in ("stacked", "tabbed")
-                    and len(focused.parent.nodes) > 1
+            show_name = True
+            if event_element.border == "normal" or event_element.type == "workspace":
+                show_name = False
+            else:
+                event_element_parent = event_element.parent or getattr(
+                    self.i3.get_tree().find_by_id(event_element.id), "parent", None
                 )
-            ):
-                focused.name = None
-        self.update(focused)
+                if (
+                    event_element_parent
+                    and event_element_parent.layout in ("stacked", "tabbed")
+                    and len(event_element_parent.nodes) > 1
+                ):
+                    show_name = False
 
-    def update(self, window_properties):
-        window_properties = {
-            "title": window_properties.name,
-            "class": window_properties.window_class,
-            "instance": window_properties.window_instance,
-        }
+            window_properties = {
+                "title": event_element.name if show_name else None,
+                "class": event_element.window_class,
+                "instance": event_element.window_instance,
+            }
+
+        else:
+            window_properties = {
+                "title": event_element.name,
+                "class": event_element.window_class,
+                "instance": event_element.window_instance,
+            }
+
         window_properties = self.compatibility(window_properties)
+
         if self.window_properties != window_properties:
             self.window_properties = window_properties
             self.parent.py3.update()
