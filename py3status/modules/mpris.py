@@ -187,7 +187,11 @@ class Py3status:
                 "clickable": "CanGoPrevious",
                 "icon": self.icon_previous,
             },
-            "toggle": {"action": "PlayPause", "clickable": ALWAYS_CLICKABLE, "icon": None},
+            "toggle": {
+                "action": "PlayPause",
+                "clickable": ALWAYS_CLICKABLE,
+                "icon": None,
+            },
         }
 
         self._format_contains_metadata = False
@@ -197,10 +201,19 @@ class Py3status:
                 break
 
         self._format_contains_control_buttons = False
+        self._used_can_properties = []
         for key, value in self._states.items():
-            if value["clickable"] != ALWAYS_CLICKABLE and self.py3.format_contains(self.format, key):
+            if value["clickable"] != ALWAYS_CLICKABLE and self.py3.format_contains(
+                self.format, key
+            ):
                 self._format_contains_control_buttons = True
-                break
+                self._used_can_properties.append(value["clickable"])
+
+        if (
+            len(self.player_hide_non_canplay)
+            and "CanPlay" not in self._used_can_properties
+        ):
+            self._used_can_properties.append("CanPlay")
 
         self._format_contains_time = self.py3.format_contains(self.format, "time")
 
@@ -238,7 +251,7 @@ class Py3status:
             return True
 
         try:
-            clickable = getattr(self._player, control_state["clickable"], True)
+            clickable = self._player_details.get(control_state, True)
         except Exception:
             clickable = False
 
@@ -379,9 +392,10 @@ class Py3status:
 
         self._set_data_entry_point_by_name_key(new_top_player_id, update)
 
-    def _hide_mediaplayer_by_canplay(self, player, can_play):
+    def _hide_mediaplayer_by_canplay(self, player):
         player["_hide"] = (
-            not can_play and player["name_from_id"] in self.player_hide_non_canplay
+            not player["CanPlay"]
+            and player["name_from_id"] in self.player_hide_non_canplay
         )
 
     def _player_on_change(self, interface_name, data, invalidated_properties, sender):
@@ -395,7 +409,6 @@ class Py3status:
         if not sender_player:
             return
 
-        data = dict(data)
         call_update = False
         call_set_player = False
         is_active_player = sender_player_id == self._player_details.get("_id")
@@ -418,9 +431,15 @@ class Py3status:
                     if is_active_player:
                         call_update = True
 
-            elif key == "CanPlay":
-                self._hide_mediaplayer_by_canplay(sender_player, new_value)
-                call_set_player = True
+            elif str(key).startswith("Can"):
+                if key in self._used_can_properties:
+                    sender_player[key] = new_value
+                    if is_active_player:
+                        call_update = True
+
+                    if key == "CanPlay":
+                        self._hide_mediaplayer_by_canplay(sender_player)
+                        call_set_player = True
 
         if call_update and not call_set_player:
             self.py3.update()
@@ -470,6 +489,7 @@ class Py3status:
             "_dbus_media_player": dMediaPlayer,
             "_state_priority": state_priority,
             "_metadata": None,
+            "_hide": None,
             "name_from_id": name_from_id,
             "index": index,
             "full_name": f"{name_with_instance} {index}",
@@ -479,7 +499,11 @@ class Py3status:
         if self._format_contains_metadata:
             player["_metadata"] = dPlayer.Metadata
 
-        self._hide_mediaplayer_by_canplay(player, dPlayer.CanPlay)
+        for canProperty in self._used_can_properties:
+            player[canProperty] = getattr(dPlayer, canProperty)
+
+        if len(self.player_hide_non_canplay):
+            self._hide_mediaplayer_by_canplay(player)
         self._mpris_players[player_id] = player
 
     def _remove_player(self, player_id, owner):
