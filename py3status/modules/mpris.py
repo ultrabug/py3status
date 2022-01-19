@@ -165,6 +165,13 @@ class Py3status:
         self._player = None
         self._player_details = {}
         self._tries = 0
+        self._format_contains_metadata = False
+        for key in ["album", "artist", "title", "nowplaying"]:
+            if self.py3.format_contains(self.format, key):
+                self._format_contains_metadata = True
+                break
+
+        self._format_contains_time = self.py3.format_contains(self.format, "time")
         # start last
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus(mainloop=self._dbus_loop)
@@ -194,14 +201,6 @@ class Py3status:
             "toggle": {"action": "PlayPause", "clickable": "True", "icon": None},
         }
 
-        self._format_contains_metadata = False
-        for key in ["album", "artist", "title", "nowplaying"]:
-            if self.py3.format_contains(self.format, key):
-                self._format_contains_metadata = True
-                break
-
-        self._format_contains_time = self.py3.format_contains(self.format, "time")
-
     def _init_data(self):
         self._data = {
             "album": None,
@@ -220,7 +219,7 @@ class Py3status:
             )
             self._data["state"] = self._get_state(self._player_details["status"])
             if self._format_contains_metadata:
-                self._update_metadata(self._player.Metadata)
+                self._update_metadata(self._player_details["_metadata"])
 
         except Exception as e:
             self._data["exception"] = e
@@ -388,20 +387,22 @@ class Py3status:
         data_keys = data.keys()
         call_update = False
         call_set_player = False
+        is_active_player = sender_player_id == self._player_details.get("_id")
 
         if "PlaybackStatus" in data_keys:
             status = data.get("PlaybackStatus")
             if status == "Stopped":
-                status = sender_player.PlaybackStatus
+                status = sender_player["_dbus_player"].PlaybackStatus
 
-            sender_player["status"] = status
-            sender_player["_state_priority"] = WORKING_STATES.index(status)
-            call_set_player = True
+            if sender_player["status"] != status:
+                sender_player["status"] = status
+                sender_player["_state_priority"] = WORKING_STATES.index(status)
+                call_set_player = True
 
         # it usually comes with Rate and Rate can come without metadata.
         if "Metadata" in data_keys:
             if self._format_contains_metadata:
-                is_active_player = sender_player_id == self._player_details.get("_id")
+                sender_player["_metadata"] = data.get("Metadata")
                 call_update = is_active_player
 
         if "CanPlay" in data_keys:
@@ -458,11 +459,15 @@ class Py3status:
             "_dbus_player": dPlayer,
             "_dbus_media_player": dMediaPlayer,
             "_state_priority": state_priority,
+            "_metadata": None,
             "name_from_id": name_from_id,
             "index": index,
             "full_name": f"{name_with_instance} {index}",
             "status": status,
         }
+
+        if self._format_contains_metadata:
+            player["_metadata"] = dPlayer.Metadata
 
         self._hide_mediaplayer_by_canplay(player, dPlayer.CanPlay)
         self._mpris_players[player_id] = player
@@ -523,24 +528,20 @@ class Py3status:
             if len(metadata) > 0:
                 url = metadata.get(Metadata_Map.URL)
                 is_stream = url is not None and "file://" not in url
-                if self.py3.format_contains("title"):
-                    self._data["title"] = metadata.get(Metadata_Map.TITLE)
-                if self.py3.format_contains("album"):
-                    self._data["album"] = metadata.get(Metadata_Map.ALBUM)
+                self._data["title"] = metadata.get(Metadata_Map.TITLE)
+                self._data["album"] = metadata.get(Metadata_Map.ALBUM)
 
-                # Currently cant use self.py3.format_contains("artist") check because is_stream detection logic.
                 artist = metadata.get(Metadata_Map.ARTIST)
-                if artist:
+                if len(artist):
                     self._data["artist"] = artist[0]
                 else:
                     # we assume here that we playing a video and these types of
                     # media we handle just like streams
                     is_stream = True
 
-                if self.py3.format_contains("length"):
-                    length_ms = metadata.get(Metadata_Map.LENGTH)
-                    if length_ms is not None:
-                        self._data["length"] = _get_time_str(length_ms)
+                length_ms = metadata.get(Metadata_Map.LENGTH)
+                if length_ms is not None:
+                    self._data["length"] = _get_time_str(length_ms)
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -550,17 +551,9 @@ class Py3status:
         if is_stream and self._data.get("title"):
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
-
-            if (
-                self.py3.format_contains("nowplaying")
-                and self._player_details["name_from_id"] == "vlc"
-            ):
-                self._data["nowplaying"] = metadata.get("vlc:nowplaying")
+            self._data["nowplaying"] = metadata.get("vlc:nowplaying")
 
     def _set_data_entry_point_by_name_key(self, new_active_player_key, update=True):
-        if new_active_player_key == self._player_details:
-            return
-
         top_player = self._mpris_players.get(new_active_player_key) or {}
         self._player = top_player.get("_dbus_player")
         self._media_player = top_player.get("_dbus_media_player")
