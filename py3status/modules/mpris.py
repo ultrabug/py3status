@@ -236,6 +236,7 @@ class Py3status:
 
         try:
             self._data["player"] = self._player["player_name"]
+            self._set_player_new_state(self._player, self._player["_dbus"].PlaybackStatus)
             self._data["state"] = self._get_state(self._player["status"])
             if self._format_contains_metadata:
                 self._update_metadata(self._player["_metadata"])
@@ -249,7 +250,7 @@ class Py3status:
             return True
 
         try:
-            clickable = self._player.get(control_state, True)
+            clickable = self._player.get(control_state["clickable"], True)
         except Exception:
             clickable = False
 
@@ -396,6 +397,10 @@ class Py3status:
             and player["_name"] in self.player_hide_non_canplay
         )
 
+    def _set_player_new_state(self, player, new_value):
+        player["status"] = new_value
+        player["_state_priority"] = WORKING_STATES.index(new_value)
+
     def _player_on_change(self, interface_name, data, invalidated_properties, sender):
         """
         Monitor a player and update its status.
@@ -418,8 +423,7 @@ class Py3status:
                     new_value = sender_player["_dbus"].PlaybackStatus
 
                 if sender_player["status"] != new_value or not sender_is_active_player:
-                    sender_player["status"] = new_value
-                    sender_player["_state_priority"] = WORKING_STATES.index(new_value)
+                    self._set_player_new_state(sender_player, new_value)
                     call_set_player = True
 
             elif key == "Metadata":
@@ -469,29 +473,26 @@ class Py3status:
         if name_from_id not in self._mpris_name_index:
             self._mpris_name_index[name_from_id] = 0
 
-        status = dPlayer.PlaybackStatus
-        state_priority = WORKING_STATES.index(status)
-
         index = self._mpris_name_index[name_from_id]
         self._mpris_name_index[name_from_id] += 1
-
-        self._ownerToPlayerId[owner] = player_id
 
         player = {
             "_id": player_id,
             "_dbus": dPlayer,
-            "_state_priority": state_priority,
+            "_state_priority": None,
             "_metadata": None,
             "_hide": None,
             "_name": name_from_id,
             "index": index,
             "player_name": name,
             "full_name": f"{name_with_instance} {index}",
-            "status": status,
+            "status": None,
         }
 
         if self._format_contains_metadata:
             player["_metadata"] = dPlayer.Metadata
+
+        self._set_player_new_state(player, dPlayer.PlaybackStatus)
 
         for canProperty in self._used_can_properties:
             player[canProperty] = getattr(dPlayer, canProperty)
@@ -500,6 +501,7 @@ class Py3status:
             self._hide_mediaplayer_by_canplay(player)
 
         self._mpris_players[player_id] = player
+        self._ownerToPlayerId[owner] = player_id
 
     def _remove_player(self, player_id, owner):
         """
