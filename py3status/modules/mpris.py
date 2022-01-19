@@ -112,6 +112,7 @@ from mpris2.types import Metadata_Map
 STRING_GEVENT = "this module does not work with gevent"
 
 WORKING_STATES = ["Playing", "Paused", "Stopped"]
+ALWAYS_CLICKABLE = "always"
 
 PLAYING = 0
 PAUSED = 1
@@ -154,7 +155,6 @@ class Py3status:
         # TODO: Look again if it is needed
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
-        self._dbus = None
         self._data = {}
         self._control_states = {}
         self._ownerToPlayerId = {}
@@ -165,17 +165,6 @@ class Py3status:
         self._player = None
         self._player_details = {}
         self._tries = 0
-        self._format_contains_metadata = False
-        for key in ["album", "artist", "title", "nowplaying"]:
-            if self.py3.format_contains(self.format, key):
-                self._format_contains_metadata = True
-                break
-
-        self._format_contains_time = self.py3.format_contains(self.format, "time")
-        # start last
-        self._dbus_loop = DBusGMainLoop()
-        self._dbus = SessionBus(mainloop=self._dbus_loop)
-        self._start_listener()
         self._states = {
             "pause": {
                 "action": "Pause",
@@ -185,7 +174,7 @@ class Py3status:
             "play": {"action": "Play", "clickable": "CanPlay", "icon": self.icon_play},
             "stop": {
                 "action": "Stop",
-                "clickable": "True",  # The MPRIS API lacks 'CanStop' function.
+                "clickable": ALWAYS_CLICKABLE,  # The MPRIS API lacks 'CanStop' function.
                 "icon": self.icon_stop,
             },
             "next": {
@@ -198,8 +187,27 @@ class Py3status:
                 "clickable": "CanGoPrevious",
                 "icon": self.icon_previous,
             },
-            "toggle": {"action": "PlayPause", "clickable": "True", "icon": None},
+            "toggle": {"action": "PlayPause", "clickable": ALWAYS_CLICKABLE, "icon": None},
         }
+
+        self._format_contains_metadata = False
+        for key in ["album", "artist", "title", "nowplaying"]:
+            if self.py3.format_contains(self.format, key):
+                self._format_contains_metadata = True
+                break
+
+        self._format_contains_control_buttons = False
+        for key, value in self._states.items():
+            if value["clickable"] != ALWAYS_CLICKABLE and self.py3.format_contains(self.format, key):
+                self._format_contains_control_buttons = True
+                break
+
+        self._format_contains_time = self.py3.format_contains(self.format, "time")
+
+        # start last
+        self._dbus_loop = DBusGMainLoop()
+        self._dbus = SessionBus(mainloop=self._dbus_loop)
+        self._start_listener()
 
     def _init_data(self):
         self._data = {
@@ -225,8 +233,11 @@ class Py3status:
             self._data["exception"] = e
 
     def _get_button_state(self, control_state):
+        # Toggle and Stop are always clickable
+        if control_state["clickable"] == ALWAYS_CLICKABLE:
+            return True
+
         try:
-            # Workaround: The last parameter returns True for the Stop / Toggle button.
             clickable = getattr(self._player, control_state["clickable"], True)
         except Exception:
             clickable = False
@@ -301,16 +312,17 @@ class Py3status:
         response = {}
 
         for button, control_state in self._control_states.items():
-            if self._get_button_state(control_state):
-                color = self.py3.COLOR_CONTROL_ACTIVE or self.py3.COLOR_GOOD
-            else:
-                color = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
+            if self.py3.format_contains(self.format, button):
+                if self._get_button_state(control_state):
+                    color = self.py3.COLOR_CONTROL_ACTIVE or self.py3.COLOR_GOOD
+                else:
+                    color = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
 
-            response[button] = {
-                "color": color,
-                "full_text": control_state["icon"],
-                "index": button,
-            }
+                response[button] = {
+                    "color": color,
+                    "full_text": control_state["icon"],
+                    "index": button,
+                }
 
         return response
 
@@ -384,33 +396,31 @@ class Py3status:
             return
 
         data = dict(data)
-        data_keys = data.keys()
         call_update = False
         call_set_player = False
         is_active_player = sender_player_id == self._player_details.get("_id")
 
-        if "PlaybackStatus" in data_keys:
-            status = data.get("PlaybackStatus")
-            if status == "Stopped":
-                status = sender_player["_dbus_player"].PlaybackStatus
+        for key, new_value in data.items():
 
-            if sender_player["status"] != status:
-                sender_player["status"] = status
-                sender_player["_state_priority"] = WORKING_STATES.index(status)
+            if key == "PlaybackStatus":
+                # Additional check needed because VLC sends Stopped state but actually is playing media.
+                if new_value == "Stopped":
+                    new_value = sender_player["_dbus_player"].PlaybackStatus
+
+                if sender_player["status"] != new_value or not is_active_player:
+                    sender_player["status"] = new_value
+                    sender_player["_state_priority"] = WORKING_STATES.index(new_value)
+                    call_set_player = True
+
+            elif key == "Metadata":
+                if self._format_contains_metadata:
+                    sender_player["_metadata"] = new_value
+                    if is_active_player:
+                        call_update = True
+
+            elif key == "CanPlay":
+                self._hide_mediaplayer_by_canplay(sender_player, new_value)
                 call_set_player = True
-
-        # it usually comes with Rate and Rate can come without metadata.
-        if "Metadata" in data_keys:
-            if self._format_contains_metadata:
-                sender_player["_metadata"] = data.get("Metadata")
-                call_update = is_active_player
-
-        if "CanPlay" in data_keys:
-            self._hide_mediaplayer_by_canplay(sender_player, data.get("CanPlay"))
-            call_set_player = True
-
-        if "Rate" in data_keys:
-            pass
 
         if call_update and not call_set_player:
             self.py3.update()
@@ -471,8 +481,6 @@ class Py3status:
 
         self._hide_mediaplayer_by_canplay(player, dPlayer.CanPlay)
         self._mpris_players[player_id] = player
-
-        return True
 
     def _remove_player(self, player_id, owner):
         """
@@ -595,7 +603,11 @@ class Py3status:
             ) and current_player_id == self._player_details.get("_id"):
                 (text, color, cached_until) = self._get_text()
                 self._control_states = self._get_control_states()
-                buttons = self._get_response_buttons()
+                if self._format_contains_control_buttons:
+                    buttons = self._get_response_buttons()
+                else:
+                    buttons = {}
+
                 composite = self.py3.safe_format(self.format, dict(text, **buttons))
             else:
                 # Something went wrong or the player changed during our processing
