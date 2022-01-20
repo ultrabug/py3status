@@ -602,7 +602,7 @@ class Py3status:
         try:
             if self._player and self._get_button_state(control_state):
                 getattr(self._player["_dbus"], self._control_states[index]["action"])()
-                self.py3.prevent_refresh()
+                self._ask_player_new_state(self._player)
         except DBusException as err:
             self.py3.log(
                 f"Player {self._player['_name']} responded {str(err).split(':', 1)[-1]}"
