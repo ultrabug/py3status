@@ -236,8 +236,8 @@ class Py3status:
 
         try:
             self._data["player"] = self._player["player_name"]
-            self._set_player_new_state(self._player, self._player["_dbus"].PlaybackStatus)
             self._data["state"] = self._get_state(self._player["status"])
+
             if self._format_contains_metadata:
                 self._update_metadata(self._player["_metadata"])
 
@@ -295,7 +295,7 @@ class Py3status:
             except DBusException:
                 ptime_ms = None
 
-            if ptime_ms is not None and ptime_ms != 0:
+            if ptime_ms is not None:
                 ptime = _get_time_str(ptime_ms)
                 if self._data.get("state") == PLAYING:
                     cache_until = time.perf_counter() + 0.5
@@ -397,6 +397,10 @@ class Py3status:
             and player["_name"] in self.player_hide_non_canplay
         )
 
+    def _ask_player_new_state(self, player):
+        if player:
+            return self._set_player_new_state(player, player["_dbus"].PlaybackStatus)
+
     def _set_player_new_state(self, player, new_value):
         player["status"] = new_value
         player["_state_priority"] = WORKING_STATES.index(new_value)
@@ -414,34 +418,38 @@ class Py3status:
         sender_is_active_player = sender_player_id == self._player.get("_id")
 
         call_set_player = False
+        call_update = False
 
         for key, new_value in data.items():
 
             if key == "PlaybackStatus":
-                # Additional check needed because VLC sends Stopped state but actually is playing media.
-                if new_value == "Stopped":
-                    new_value = sender_player["_dbus"].PlaybackStatus
-
-                if sender_player["status"] != new_value or not sender_is_active_player:
-                    self._set_player_new_state(sender_player, new_value)
-                    call_set_player = True
+                self._set_player_new_state(sender_player, new_value)
+                call_set_player = True
 
             elif key == "Metadata":
                 if self._format_contains_metadata:
                     sender_player["_metadata"] = new_value
+                    call_update = True
 
             elif key.startswith("Can"):
                 if key in self._used_can_properties:
                     sender_player[key] = new_value
+                    call_update = True
 
                     if key == "CanPlay":
                         self._hide_mediaplayer_by_canplay(sender_player)
                         call_set_player = True
 
+            elif key == "Rate":
+                sender_player[key] = new_value
+                if sender_is_active_player:
+                    self._ask_player_new_state(sender_player)
+                    call_update = True
+
         if call_set_player:
             return self._set_player()
 
-        if sender_is_active_player:
+        if sender_is_active_player and call_update:
             return self.py3.update()
 
     def _add_player(self, player_id, owner):
@@ -492,7 +500,7 @@ class Py3status:
         if self._format_contains_metadata:
             player["_metadata"] = dPlayer.Metadata
 
-        self._set_player_new_state(player, dPlayer.PlaybackStatus)
+        self._ask_player_new_state(player)
 
         for canProperty in self._used_can_properties:
             player[canProperty] = getattr(dPlayer, canProperty)
