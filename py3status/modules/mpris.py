@@ -165,10 +165,6 @@ class Player:
         return self._name_in_player_hide_non_canplay and not self._can.get("CanPlay")
 
     @property
-    def can(self):
-        return self._can
-
-    @property
     def buttons(self):
         return self._buttons
 
@@ -264,10 +260,10 @@ class Player:
                 self.prepare_output()
 
     def send_mpris_action(self, index):
-        control_state = self.self._states.get(index)
+        control_state = self._states.get(index)
         try:
             if self.get_button_state(control_state):
-                getattr(self._dbus, self.self._states[index]["action"])()
+                getattr(self._dbus, self._states[index]["action"])()
                 self.state = None
         except DBusException as err:
             self.parent.py3.log(
@@ -284,18 +280,11 @@ class Player:
             return True
 
         try:
-            clickable = getattr(self.can, control_state["clickable"], True)
+            clickable = getattr(self._can, control_state["clickable"], True)
         except Exception:
             clickable = False
 
-        if control_state["action"] == "Play" and self.state == STATE.Playing:
-            clickable = False
-        elif control_state["action"] == "Pause" and self.state in [
-            STATE.Stopped,
-            STATE.Paused,
-        ]:
-            clickable = False
-        elif control_state["action"] == "Stop" and self.state == STATE.Stopped:
+        if control_state.get("inactive") == self.state:
             clickable = False
 
         return clickable
@@ -395,17 +384,20 @@ class Py3status:
             # for debugging ;p
             "full_name": None,
         }
+
         self._states = {
             "pause": {
                 "action": "Pause",
                 "clickable": "CanPause",
                 "icon": self.icon_pause,
+                "inactive": [STATE.Stopped, STATE.Paused]
             },
-            "play": {"action": "Play", "clickable": "CanPlay", "icon": self.icon_play},
+            "play": {"action": "Play", "clickable": "CanPlay", "icon": self.icon_play, "inactive": [STATE.Playing]},
             "stop": {
                 "action": "Stop",
                 "clickable": ALWAYS_CLICKABLE,  # The MPRIS API lacks 'CanStop' function.
                 "icon": self.icon_stop,
+                "inactive": [STATE.Stopped]
             },
             "next": {
                 "action": "Next",
@@ -680,16 +672,13 @@ class Py3status:
         exception = None
 
         if current_player:
-            try:
-                state_map = self._state_icon_color_map[self._player.state]
-                placeholders = {
-                    "state": state_map["state_icon"]
-                }
-                self._states["toggle"]["icon"] = state_map["toggle_icon"]
-                color = state_map["color"]
-                (text, cached_until) = current_player.get_text()
-            except Exception as e:
-                exception = e
+            state_map = self._state_icon_color_map[self._player.state]
+            placeholders = {
+                "state": state_map["state_icon"]
+            }
+            current_player.states["toggle"]["icon"] = state_map["toggle_icon"]
+            color = state_map["color"]
+            (text, cached_until) = current_player.get_text()
 
             if not exception and current_player_id == self._player.id:
                 composite = self.py3.safe_format(
