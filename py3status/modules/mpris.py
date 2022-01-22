@@ -115,7 +115,7 @@ STRING_GEVENT = "this module does not work with gevent"
 ALWAYS_CLICKABLE = "always"
 
 
-class WORKING_STATES(IntEnum):
+class STATE(IntEnum):
     Playing = 0
     Paused = 1
     Stopped = 2
@@ -131,27 +131,34 @@ def _get_time_str(microseconds):
 
 # noinspection PyProtectedMember
 class Player:
-
     def __init__(self, parent, player_id, name_from_id, name_with_instance):
+        self.id = player_id
         self.parent = parent
+        self.name_with_instance = name_with_instance
+        self._states = parent._states
+        self._name = name_from_id
         self._dbus = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._metadata = {}
-        self._state = None
-        self.state = None
         self._can = {}
-        self._name = name_from_id
-        self.id = player_id
+        self._buttons = {}
+        self._state = None
         self.player_name, self._index = self.parent._get_mpris_name(self)
-        self._name_in_player_hide_non_canplay = (
-                self._name in self.parent.player_hide_non_canplay
-        )
-        self._set_priority()
-        self.name_with_instance = name_with_instance
         self.full_name = f"{name_with_instance} {self._index}"
+        self._name_in_player_hide_non_canplay = (
+            self._name in self.parent.player_hide_non_canplay
+        )
+        self.state = None
         self.metadata = None
+        self._set_priority()
 
         for canProperty in self.parent._used_can_properties:
             self._can[canProperty] = getattr(self._dbus, canProperty)
+
+        self._placeholders = {
+            "player": self.player_name,
+            # for debugging ;p
+            "full_name": self.full_name,
+        }
 
     @property
     def hide(self):
@@ -160,6 +167,10 @@ class Player:
     @property
     def can(self):
         return self._can
+
+    @property
+    def buttons(self):
+        return self._buttons
 
     def _set_priority(self):
         if self.parent.player_priority:
@@ -188,7 +199,6 @@ class Player:
 
     def set_can_property(self, key, value):
         self._can[key] = value
-        self.update_buttons()
 
     @property
     def name(self):
@@ -249,38 +259,24 @@ class Player:
             new_value = self._dbus.PlaybackStatus
 
         if new_value != self._state:
-            self._state = getattr(WORKING_STATES, new_value)
+            self._state = getattr(STATE, new_value)
             if self.parent._player == self:
                 self.prepare_output()
 
     def send_mpris_action(self, index):
-        control_state = self.parent._states.get(index)
+        control_state = self.self._states.get(index)
         try:
             if self.get_button_state(control_state):
-                getattr(self._dbus, self.parent._states[index]["action"])()
+                getattr(self._dbus, self.self._states[index]["action"])()
                 self.state = None
         except DBusException as err:
-            self.parent.py3.log(f"Player {self._name} responded {str(err).split(':', 1)[-1]}")
+            self.parent.py3.log(
+                f"Player {self._name} responded {str(err).split(':', 1)[-1]}"
+            )
 
     def prepare_output(self):
-        if self.state == WORKING_STATES.Playing:
-            color = self.parent.py3.COLOR_PLAYING or self.parent.py3.COLOR_GOOD
-            state_symbol = self.parent.state_play
-        elif self.state == WORKING_STATES.Paused:
-            color = self.parent.py3.COLOR_PAUSED or self.parent.py3.COLOR_DEGRADED
-            state_symbol = self.parent.state_pause
-        else:
-            color = self.parent.py3.COLOR_STOPPED or self.parent.py3.COLOR_BAD
-            state_symbol = self.parent.state_stop
-
-        self.color = color
-        self.state_symbol = state_symbol
-        togglestate = "pause" if self._state == WORKING_STATES.Playing else "play"
-        self.toggle_icon = self.parent._states[togglestate]["icon"]
-
-
-    def update_buttons(self):
-        pass
+        if self.parent._format_contains_control_buttons:
+            self._set_response_buttons()
 
     def get_button_state(self, control_state):
         # Toggle and Stop are always clickable
@@ -292,32 +288,35 @@ class Player:
         except Exception:
             clickable = False
 
-        if control_state["action"] == "Play" and self.state == WORKING_STATES.Playing:
+        if control_state["action"] == "Play" and self.state == STATE.Playing:
             clickable = False
-        elif control_state["action"] == "Pause" and self.state in [WORKING_STATES.Stopped, WORKING_STATES.Paused]:
+        elif control_state["action"] == "Pause" and self.state in [
+            STATE.Stopped,
+            STATE.Paused,
+        ]:
             clickable = False
-        elif control_state["action"] == "Stop" and self.state == WORKING_STATES.Stopped:
+        elif control_state["action"] == "Stop" and self.state == STATE.Stopped:
             clickable = False
 
         return clickable
 
-    def get_response_buttons(self):
-        response = {}
+    def _set_response_buttons(self):
+        buttons = {}
 
         for button, control_state in self.parent._states.items():
             if self.parent.py3.format_contains(self.parent.format, button):
                 if self.get_button_state(control_state):
-                    color = self.parent.py3.COLOR_CONTROL_ACTIVE or self.parent.py3.COLOR_GOOD
+                    color = self.parent._color_active
                 else:
-                    color = self.parent.py3.COLOR_CONTROL_INACTIVE or self.parent.py3.COLOR_BAD
+                    color = self.parent._color_inactive
 
-                response[button] = {
+                buttons[button] = {
                     "color": color,
                     "full_text": control_state["icon"],
                     "index": button,
                 }
 
-        return response
+        self._buttons = buttons
 
     def get_text(self):
         """
@@ -334,22 +333,17 @@ class Player:
 
             if ptime_ms is not None:
                 ptime = _get_time_str(ptime_ms)
-                if self.state == WORKING_STATES.Playing:
+                if self.state == STATE.Playing:
                     cache_until = time.perf_counter() + 0.5
 
         placeholders = {
             "time": ptime,
-            "state": self.state_symbol,
-            "player": self.player_name,
-            # for debugging ;p
-            "full_name": self.full_name,
         }
 
-        return dict(self.parent._empty_response, **placeholders, **self.metadata), cache_until
-
-
-
-
+        return (
+            dict(self._placeholders, **placeholders, **self.metadata, **self.buttons),
+            cache_until,
+        )
 
 
 class Py3status:
@@ -431,6 +425,27 @@ class Py3status:
             },
         }
 
+        self._state_icon_color_map = {
+            STATE.Playing: {
+                "state_icon": self.state_play,
+                "color": self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD,
+                "toggle_icon": self.state_pause,
+            },
+            STATE.Paused: {
+                "state_icon": self.state_pause,
+                "color": self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED,
+                "toggle_icon": self.state_play,
+            },
+            STATE.Stopped: {
+                "state_icon": self.state_stop,
+                "color": self.py3.COLOR_STOPPED or self.py3.COLOR_BAD,
+                "toggle_icon": self.state_play,
+            },
+        }
+
+        self._color_active = self.py3.COLOR_CONTROL_ACTIVE or self.py3.COLOR_GOOD
+        self._color_inactive = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
+
         self._format_contains_metadata = False
         self._metadata_keys = ["album", "artist", "title", "nowplaying"]
         for key in self._metadata_keys:
@@ -442,20 +457,29 @@ class Py3status:
         self._used_can_properties = []
         for key, value in self._states.items():
             if value["clickable"] != ALWAYS_CLICKABLE and self.py3.format_contains(
-                    self.format, key
+                self.format, key
             ):
                 self._format_contains_control_buttons = True
                 self._used_can_properties.append(value["clickable"])
 
         if (
-                len(self.player_hide_non_canplay)
-                and "CanPlay" not in self._used_can_properties
+            len(self.player_hide_non_canplay)
+            and "CanPlay" not in self._used_can_properties
         ):
             self._used_can_properties.append("CanPlay")
 
         self._format_contains_time = self.py3.format_contains(self.format, "time")
-        self._button_cache_flush = 2 if 2 not in [self.button_next, self.button_next_player, self.button_prev_player, self.button_previous, self.button_stop, self.button_switch_to_top_player, self.button_toggle] else None
-
+        self._button_cache_flush = None
+        if 2 not in [
+            self.button_next,
+            self.button_next_player,
+            self.button_prev_player,
+            self.button_previous,
+            self.button_stop,
+            self.button_switch_to_top_player,
+            self.button_toggle,
+        ]:
+            self._button_cache_flush = 2
 
         # start last
         self._dbus_loop = DBusGMainLoop()
@@ -476,18 +500,6 @@ class Py3status:
         self._mpris_name_index[player.name] += 1
 
         return (name, index)
-
-    def _init_data(self, current_player):
-        self._data = {
-            "exception": None,
-            "player": None,
-        }
-
-        try:
-            self._data["player"] = self._mpris_names.get(current_player.id, None)
-        except Exception as e:
-            self._data["exception"] = e
-
 
     def _start_loop(self):
         self._loop = GObject.MainLoop()
@@ -582,9 +594,9 @@ class Py3status:
         name_from_id = player_id_parts_list[3]
 
         if (
-                self.player_priority != []
-                and name_from_id not in self.player_priority
-                and "*" not in self.player_priority
+            self.player_priority != []
+            and name_from_id not in self.player_priority
+            and "*" not in self.player_priority
         ):
             return False
 
@@ -662,21 +674,26 @@ class Py3status:
             raise KeyboardInterrupt
 
         current_player = self._player
+        current_player_id = current_player.id
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
+        exception = None
 
         if current_player:
-            self._init_data(current_player)
-            color = current_player.color
-            (text, cached_until) = current_player.get_text()
-            if self._format_contains_control_buttons:
-                self._states["toggle"]["icon"] = current_player.toggle_icon
-                buttons = current_player.get_response_buttons()
-            else:
-                buttons = {}
-            if not self._data.get("exception") and current_player.id == self._player.id:
+            try:
+                state_map = self._state_icon_color_map[self._player.state]
+                placeholders = {
+                    "state": state_map["state_icon"]
+                }
+                self._states["toggle"]["icon"] = state_map["toggle_icon"]
+                color = state_map["color"]
+                (text, cached_until) = current_player.get_text()
+            except Exception as e:
+                exception = e
+
+            if not exception and current_player_id == self._player.id:
                 composite = self.py3.safe_format(
-                    self.format, dict(text, **buttons)
+                    self.format, dict(self._empty_response, **placeholders, **text)
                 )
             else:
                 # Something went wrong or the player changed during our processing
@@ -701,15 +718,13 @@ class Py3status:
                 }
 
         else:
-            composite = [{"full_text": self.format_none, "color": self.py3.COLOR_BAD}]
-            self._data = {}
-            self._control_states = {}
+            composite = [{"full_text": self.format_none, "color": color}]
 
         # we are outputting so reset tries
         self._tries = 0
-        if self._data.get("exception"):
-            self.py3.log(self._data.get("exception"))
-            self.py3.error(str(self._data.get("exception")), 10)
+        if exception:
+            self.py3.log(exception)
+            self.py3.error(exception, 10)
         else:
             response = {
                 "cached_until": cached_until,
@@ -732,7 +747,7 @@ class Py3status:
             self._player.metadata = None
             self._player.state = None
 
-        elif index not in self._control_states:
+        elif index not in self._states:
             if button == self.button_toggle:
                 return self._player.send_mpris_action("toggle")
             elif button == self.button_stop:
