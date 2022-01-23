@@ -136,7 +136,7 @@ def _get_time_str(microseconds):
 # noinspection PyProtectedMember
 class Player:
     def __init__(self, parent, player_id, name_from_id, name_with_instance):
-        self.id = player_id
+        self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
         self._name = name_from_id
@@ -145,15 +145,15 @@ class Player:
         self._can = {}
         self._buttons = {}
         self._state = None
-        self.player_name, self._name_index = self.parent._get_mpris_name(self)
-        self.full_name = f"{name_with_instance} {self._name_index}"
+        self._player_name, self._name_index = self.parent._get_mpris_name(self)
+        self._full_name = f"{name_with_instance} {self._name_index}"
         self._hide_non_canplay = (
             self._name in self.parent.player_hide_non_canplay
         )
         self._placeholders = {
-            "player": self.player_name,
+            "player": self._player_name,
             # for debugging ;p
-            "full_name": self.full_name,
+            "full_name": self._full_name,
         }
 
         # Init data from dbus interface
@@ -167,6 +167,10 @@ class Player:
     @property
     def hide(self):
         return self._hide_non_canplay and not self._can.get("CanPlay")
+
+    @property
+    def id(self):
+        return self._id
 
     def _set_player_name_priority(self):
         if self.parent.player_priority:
