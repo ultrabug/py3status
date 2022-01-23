@@ -305,7 +305,9 @@ class Player:
                 }
 
         if buttons.get("toggle"):
-            buttons["toggle"]["full_text"] = self.parent._state_icon_color_map[self.state]["toggle_icon"]
+            buttons["toggle"]["full_text"] = self.parent._state_icon_color_map[
+                self.state
+            ]["toggle_icon"]
 
         self._buttons = buttons
 
@@ -392,14 +394,19 @@ class Py3status:
                 "action": "Pause",
                 "clickable": "CanPause",
                 "icon": self.icon_pause,
-                "inactive": [STATE.Stopped, STATE.Paused]
+                "inactive": [STATE.Stopped, STATE.Paused],
             },
-            "play": {"action": "Play", "clickable": "CanPlay", "icon": self.icon_play, "inactive": [STATE.Playing]},
+            "play": {
+                "action": "Play",
+                "clickable": "CanPlay",
+                "icon": self.icon_play,
+                "inactive": [STATE.Playing],
+            },
             "stop": {
                 "action": "Stop",
                 "clickable": ALWAYS_CLICKABLE,  # The MPRIS API lacks 'CanStop' function.
                 "icon": self.icon_stop,
-                "inactive": [STATE.Stopped]
+                "inactive": [STATE.Stopped],
             },
             "next": {
                 "action": "Next",
@@ -676,9 +683,7 @@ class Py3status:
         if current_player:
             current_player_id = current_player.id
             state_map = self._state_icon_color_map[self._player.state]
-            placeholders = {
-                "state": state_map["state_icon"]
-            }
+            placeholders = {"state": state_map["state_icon"]}
             color = state_map["color"]
             (text, cached_until) = current_player.get_text()
 
