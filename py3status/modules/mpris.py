@@ -102,7 +102,7 @@ SAMPLE OUTPUT
 from datetime import timedelta
 import time
 from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GObject
+from gi.repository import GLib
 from threading import Thread
 import re
 import sys
@@ -539,8 +539,8 @@ class Py3status:
         return (name, index)
 
     def _start_loop(self):
-        self._loop = GObject.MainLoop()
-        GObject.timeout_add(1000, self._timeout)
+        self._loop = GLib.MainLoop()
+        GLib.timeout_add(1000, self._timeout)
         try:
             self._loop.run()
         except KeyboardInterrupt:
