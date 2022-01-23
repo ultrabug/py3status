@@ -675,24 +675,21 @@ class Py3status:
             raise KeyboardInterrupt
 
         current_player = self._player
-
+        current_player_id = str(getattr(current_player, "id"))
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
-        exception = None
-
         if current_player:
-            current_player_id = current_player.id
-            state_map = self._state_icon_color_map[self._player.state]
-            placeholders = {"state": state_map["state_icon"]}
-            color = state_map["color"]
+            current_state_map = self._state_icon_color_map[self._player.state]
+            placeholders = {"state": current_state_map["state_icon"]}
+            color = current_state_map["color"]
             (text, cached_until) = current_player.get_text()
 
-            if not exception and current_player_id == self._player.id:
+            if current_player_id == self._player.id:
                 composite = self.py3.safe_format(
                     self.format, dict(self._empty_response, **placeholders, **text)
                 )
             else:
-                # Something went wrong or the player changed during our processing
+                # The player changed during our processing
                 # This is usually due to something like a player being killed
                 # whilst we are checking its details
                 # Retry but limit the number of attempts
@@ -718,16 +715,13 @@ class Py3status:
 
         # we are outputting so reset tries
         self._tries = 0
-        if exception:
-            self.py3.log(exception)
-            self.py3.error(exception, 10)
-        else:
-            response = {
-                "cached_until": cached_until,
-                "color": color,
-                "composite": composite,
-            }
-            return response
+
+        response = {
+            "cached_until": cached_until,
+            "color": color,
+            "composite": composite,
+        }
+        return response
 
     def on_click(self, event):
         """
