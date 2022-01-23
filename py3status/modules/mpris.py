@@ -13,6 +13,7 @@ Configuration parameters:
     button_stop: mouse button to stop the player (default None)
     button_switch_to_top_player: (Experimental) mouse button to switch to toop player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
+    cache_timeout: time (s) between Position update (default 0.5)
     format: see placeholders below
     format: display format for this module
         (default '[{artist} - ][{title}] {previous} {toggle} {next}')
@@ -327,7 +328,7 @@ class Player:
             if ptime_ms is not None:
                 ptime = _get_time_str(ptime_ms)
                 if self.state == STATE.Playing:
-                    cache_until = time.perf_counter() + 0.5
+                    cache_until = time.perf_counter() + self.parent.cache_timeout
 
         placeholders = {
             "time": ptime,
@@ -343,6 +344,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
+    cache_timeout = 0.5
     button_next = None
     button_next_player = None
     button_prev_player = None
