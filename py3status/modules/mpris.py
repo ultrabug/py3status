@@ -283,7 +283,7 @@ class Player:
         except Exception:
             clickable = False
 
-        if control_state.get("inactive") == self.state:
+        if self.state in control_state.get("inactive", []):
             clickable = False
 
         return clickable
@@ -803,5 +803,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-
-    module_test(Py3status)
+    format = "{toggle} {state} {player} {previous} {next} {pause} {play} {stop}"
+    module_test(Py3status, {"format": format})
