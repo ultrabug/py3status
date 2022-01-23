@@ -135,7 +135,6 @@ class Player:
         self.id = player_id
         self.parent = parent
         self.name_with_instance = name_with_instance
-        self._states = parent._states
         self._name = name_from_id
         self._dbus = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._metadata = {}
@@ -260,10 +259,10 @@ class Player:
                 self.prepare_output()
 
     def send_mpris_action(self, index):
-        control_state = self._states.get(index)
+        control_state = self.parent._states.get(index)
         try:
             if self.get_button_state(control_state):
-                getattr(self._dbus, self._states[index]["action"])()
+                getattr(self._dbus, self.parent._states[index]["action"])()
                 self.state = None
         except DBusException as err:
             self.parent.py3.log(
@@ -304,6 +303,9 @@ class Player:
                     "full_text": control_state["icon"],
                     "index": button,
                 }
+
+        if buttons.get("toggle"):
+            buttons["toggle"]["full_text"] = self.parent._state_icon_color_map[self.state]["toggle_icon"]
 
         self._buttons = buttons
 
@@ -666,17 +668,17 @@ class Py3status:
             raise KeyboardInterrupt
 
         current_player = self._player
-        current_player_id = current_player.id
+
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
         exception = None
 
         if current_player:
+            current_player_id = current_player.id
             state_map = self._state_icon_color_map[self._player.state]
             placeholders = {
                 "state": state_map["state_icon"]
             }
-            current_player.states["toggle"]["icon"] = state_map["toggle_icon"]
             color = state_map["color"]
             (text, cached_until) = current_player.get_text()
 
