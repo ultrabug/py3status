@@ -336,7 +336,7 @@ class Player:
             cache_until,
         )
 
-    def on_player_change(self, data):
+    def player_on_change(self, data):
         is_active_player = self == self.parent._player
         call_set_player = False
         call_update = False
