@@ -123,6 +123,9 @@ class STATE(IntEnum):
 
 
 def _get_time_str(microseconds):
+    if microseconds is None:
+        return None
+
     delta = timedelta(seconds=microseconds // 1_000_000)
     delta_str = str(delta).lstrip("0").lstrip(":")
     if delta_str.startswith("0"):
@@ -135,36 +138,37 @@ class Player:
     def __init__(self, parent, player_id, name_from_id, name_with_instance):
         self.id = player_id
         self.parent = parent
-        self.name_with_instance = name_with_instance
+        self._name_with_instance = name_with_instance
         self._name = name_from_id
         self._dbus = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._metadata = {}
         self._can = {}
         self._buttons = {}
         self._state = None
-        self.player_name, self._index = self.parent._get_mpris_name(self)
-        self.full_name = f"{name_with_instance} {self._index}"
-        self._name_in_player_hide_non_canplay = (
+        self.player_name, self._name_index = self.parent._get_mpris_name(self)
+        self.full_name = f"{name_with_instance} {self._name_index}"
+        self._hide_non_canplay = (
             self._name in self.parent.player_hide_non_canplay
         )
-        self.state = None
-        self.metadata = None
-        self._set_priority()
-
-        for canProperty in self.parent._used_can_properties:
-            self._can[canProperty] = getattr(self._dbus, canProperty)
-
         self._placeholders = {
             "player": self.player_name,
             # for debugging ;p
             "full_name": self.full_name,
         }
 
+        # Init data from dbus interface
+        self.state = None
+        self.metadata = None
+        self._set_player_name_priority()
+
+        for canProperty in self.parent._used_can_properties:
+            self._can[canProperty] = getattr(self._dbus, canProperty)
+
     @property
     def hide(self):
-        return self._name_in_player_hide_non_canplay and not self._can.get("CanPlay")
+        return self._hide_non_canplay and not self._can.get("CanPlay")
 
-    def _set_priority(self):
+    def _set_player_name_priority(self):
         if self.parent.player_priority:
             try:
                 priority = self.parent.player_priority.index(self._name)
@@ -176,14 +180,14 @@ class Player:
         else:
             priority = 0
 
-        self._priority = priority
+        self._name_priority = priority
 
     @property
     def priority_tuple(self):
         if self.hide:
             return None
 
-        return self._state, self._priority, self._index, self.id
+        return self._state, self._name_priority, self._name_index, self.id
 
 
     def set_can_property(self, key, value):
@@ -264,7 +268,7 @@ class Player:
                 self.state = None
         except DBusException as err:
             self.parent.py3.log(
-                f"Player {self._name} responded {str(err).split(':', 1)[-1]}"
+                f"Player {self._name_with_instance} responded {str(err).split(':', 1)[-1]}"
             )
 
     def prepare_output(self):
@@ -309,32 +313,21 @@ class Player:
 
         self._buttons = buttons
 
-    def get_text(self):
+    @property
+    def data(self):
         """
-        Get the current metadata
+        Output player specific data
         """
-        ptime = None
-        cache_until = self.parent.py3.CACHE_FOREVER
-
         if self.parent._format_contains_time:
             try:
-                ptime_ms = getattr(self._dbus, "Position", None)
+                ptime = _get_time_str(self._dbus.Position)
             except DBusException:
-                ptime_ms = None
+                ptime = None
 
-            if ptime_ms is not None:
-                ptime = _get_time_str(ptime_ms)
-                if self.state == STATE.Playing:
-                    cache_until = time.perf_counter() + self.parent.cache_timeout
+            self._placeholders["time"] = ptime
 
-        placeholders = {
-            "time": ptime,
-        }
 
-        return (
-            dict(self._placeholders, **placeholders, **self.metadata, **self._buttons),
-            cache_until,
-        )
+        return dict(self._placeholders, **self.metadata, **self._buttons)
 
     def player_on_change(self, data):
         is_active_player = self == self.parent._player
@@ -467,16 +460,19 @@ class Py3status:
                 "state_icon": self.state_play,
                 "color": self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD,
                 "toggle_icon": self.state_pause,
+                "cached_until": self.cache_timeout,
             },
             STATE.Paused: {
                 "state_icon": self.state_pause,
                 "color": self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED,
                 "toggle_icon": self.state_play,
+                "cached_until": self.py3.CACHE_FOREVER,
             },
             STATE.Stopped: {
                 "state_icon": self.state_stop,
                 "color": self.py3.COLOR_STOPPED or self.py3.COLOR_BAD,
                 "toggle_icon": self.state_play,
+                "cached_until": self.py3.CACHE_FOREVER,
             },
         }
 
@@ -484,7 +480,7 @@ class Py3status:
         self._color_inactive = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
 
         self._format_contains_metadata = False
-        self._metadata_keys = ["album", "artist", "title", "nowplaying"]
+        self._metadata_keys = ["album", "artist", "title", "nowplaying", "length"]
         for key in self._metadata_keys:
             if self.py3.format_contains(self.format, key):
                 self._format_contains_metadata = True
@@ -679,18 +675,22 @@ class Py3status:
             raise KeyboardInterrupt
 
         current_player = self._player
-        current_player_id = str(getattr(current_player, "id"))
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
+
         if current_player:
+            current_player_id = str(current_player.id)
             current_state_map = current_player.state_map
-            placeholders = {"state": current_state_map["state_icon"]}
-            color = current_state_map["color"]
-            (text, cached_until) = current_player.get_text()
+            data = current_player.data
 
             if current_player_id == self._player.id:
+                if self._format_contains_time:
+                    cached_until = self.py3.time_in(current_state_map.get("cached_until"))
+
+                placeholders = {"state": current_state_map["state_icon"]}
+                color = current_state_map["color"]
                 composite = self.py3.safe_format(
-                    self.format, dict(self._empty_response, **placeholders, **text)
+                    self.format, dict(self._empty_response, **placeholders, **data)
                 )
             else:
                 # The player changed during our processing
@@ -801,5 +801,5 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
-    format = "{toggle} {state} {player} {previous} {next} {pause} {play} {stop}"
+    format = "{toggle} {state} {player} {previous} {next} {pause} {play} {stop} {length}"
     module_test(Py3status, {"format": format})
