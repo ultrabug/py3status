@@ -164,10 +164,6 @@ class Player:
     def hide(self):
         return self._name_in_player_hide_non_canplay and not self._can.get("CanPlay")
 
-    @property
-    def buttons(self):
-        return self._buttons
-
     def _set_priority(self):
         if self.parent.player_priority:
             try:
@@ -189,9 +185,6 @@ class Player:
 
         return self._state, self._priority, self._index, self.id
 
-    @property
-    def metadata(self):
-        return self._metadata
 
     def set_can_property(self, key, value):
         self._can[key] = value
@@ -199,6 +192,10 @@ class Player:
     @property
     def name(self):
         return self._name
+
+    @property
+    def metadata(self):
+        return self._metadata
 
     @metadata.setter
     def metadata(self, metadata=None):
@@ -335,9 +332,46 @@ class Player:
         }
 
         return (
-            dict(self._placeholders, **placeholders, **self.metadata, **self.buttons),
+            dict(self._placeholders, **placeholders, **self.metadata, **self._buttons),
             cache_until,
         )
+
+    def on_player_change(self, data):
+        is_active_player = self == self.parent._player
+        call_set_player = False
+        call_update = False
+
+        for key, new_value in data.items():
+            if key == "PlaybackStatus":
+                self.state = new_value
+                call_set_player = True
+
+            elif key == "Metadata":
+                if self.parent._format_contains_metadata:
+                    self.metadata = new_value
+                    call_update = True
+
+            elif key.startswith("Can"):
+                self.set_can_property(key, new_value)
+                call_update = True
+
+                if key == "CanPlay":
+                    call_set_player = True
+
+            elif key == "Rate":
+                if is_active_player:
+                    self.state = None
+                    call_update = True
+
+        if call_set_player:
+            return self.parent._set_player()
+
+        if is_active_player and call_update:
+            return self.parent.py3.update()
+
+    @property
+    def state_map(self):
+        return self.parent._state_icon_color_map[self.state]
 
 
 class Py3status:
@@ -553,41 +587,9 @@ class Py3status:
         if not sender_player_id:
             return
         sender_player: [Player, None] = self._mpris_players.get(sender_player_id)
-        if not sender_player:
-            return
-        sender_is_active_player = sender_player_id == self._player.id
 
-        call_set_player = False
-        call_update = False
-
-        for key, new_value in data.items():
-
-            if key == "PlaybackStatus":
-                sender_player.state = new_value
-                call_set_player = True
-
-            elif key == "Metadata":
-                if self._format_contains_metadata:
-                    sender_player.metadata = new_value
-                    call_update = True
-
-            elif key.startswith("Can"):
-                sender_player.set_can_property(key, new_value)
-                call_update = True
-
-                if key == "CanPlay":
-                    call_set_player = True
-
-            elif key == "Rate":
-                if sender_is_active_player:
-                    sender_player.state = None
-                    call_update = True
-
-        if call_set_player:
-            return self._set_player()
-
-        if sender_is_active_player and call_update:
-            return self.py3.update()
+        if sender_player:
+            sender_player.player_on_change(data)
 
     def _add_player(self, player_id, owner):
         """
@@ -681,7 +683,7 @@ class Py3status:
         cached_until = self.py3.CACHE_FOREVER
         color = self.py3.COLOR_BAD
         if current_player:
-            current_state_map = self._state_icon_color_map[self._player.state]
+            current_state_map = current_player.state_map
             placeholders = {"state": current_state_map["state_icon"]}
             color = current_state_map["color"]
             (text, cached_until) = current_player.get_text()
