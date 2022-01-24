@@ -518,6 +518,7 @@ class Py3status:
         ]:
             self._button_cache_flush = 2
 
+        self._accept_all_players = not self.player_priority or "*" in self.player_priority
         # start last
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus(mainloop=self._dbus_loop)
@@ -591,7 +592,7 @@ class Py3status:
         if sender_player:
             sender_player.player_on_change(data)
 
-    def _add_player(self, player_id, owner):
+    def _add_player(self, player_id, owner=None):
         """
         Add player to mpris_players
         """
@@ -599,11 +600,16 @@ class Py3status:
         name_from_id = player_id_parts_list[3]
 
         if (
-            self.player_priority != []
+            not self._accept_all_players
             and name_from_id not in self.player_priority
-            and "*" not in self.player_priority
         ):
-            return False
+            return
+
+        if not owner:
+            try:
+                owner = self._dbus.get_name_owner(player_id)
+            except DBusException:
+                return
 
         name_with_instance = ".".join(player_id_parts_list[3:])
 
@@ -623,10 +629,11 @@ class Py3status:
             del self._mpris_players[player_id]
 
     def _get_players(self):
-        for player in get_players_uri():
+        players_list = "|".join(self.player_priority) if not self._accept_all_players else ''
+        for player in get_players_uri(players_list):
             try:
                 # str(player) helps avoid to use dbus.Str(*) as dict key
-                self._add_player(str(player), self._dbus.get_name_owner(player))
+                self._add_player(str(player))
             except DBusException:
                 continue
 
