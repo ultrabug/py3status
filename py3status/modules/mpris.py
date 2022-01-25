@@ -113,7 +113,6 @@ from mpris2.types import Metadata_Map
 from enum import IntEnum
 
 STRING_GEVENT = "this module does not work with gevent"
-ALWAYS_CLICKABLE = "always"
 
 
 class STATE(IntEnum):
@@ -275,10 +274,6 @@ class Player:
             self._set_response_buttons()
 
     def get_button_state(self, control_state):
-        # Toggle and Stop are always clickable
-        if control_state["clickable"] == ALWAYS_CLICKABLE:
-            return True
-
         try:
             clickable = getattr(self._can, control_state["clickable"], True)
         except Exception:
@@ -431,7 +426,7 @@ class Py3status:
             },
             "stop": {
                 "action": "Stop",
-                "clickable": ALWAYS_CLICKABLE,  # The MPRIS API lacks 'CanStop' function.
+                "clickable": "CanControl",
                 "icon": self.icon_stop,
                 "inactive": [STATE.Stopped],
             },
@@ -447,8 +442,7 @@ class Py3status:
             },
             "toggle": {
                 "action": "PlayPause",
-                # By mpris spec it recommends CanPause check, but works well withoit it
-                "clickable": ALWAYS_CLICKABLE,
+                "clickable": "CanPause",
                 "icon": None,
             },
         }
@@ -487,7 +481,7 @@ class Py3status:
         self._format_contains_control_buttons = False
         self._used_can_properties = []
         for key, value in self._states.items():
-            if value["clickable"] != ALWAYS_CLICKABLE and self.py3.format_contains(
+            if self.py3.format_contains(
                 self.format, key
             ):
                 self._format_contains_control_buttons = True
@@ -806,5 +800,6 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from py3status.module_test import module_test
+
     format = "{toggle} {state} {player} {previous} {next} {pause} {play} {stop} {length}"
     module_test(Py3status, {"format": format})
