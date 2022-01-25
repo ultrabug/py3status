@@ -139,11 +139,11 @@ class Player:
             # for debugging ;p
             "full_name": self._full_name,
         }
+        self._set_player_name_priority()
 
         # Init data from dbus interface
         self.state = None
         self.metadata = None
-        self._set_player_name_priority()
 
         for canProperty in self.parent._used_can_properties:
             self._set_can_property(canProperty, getattr(self._dbus, canProperty))
@@ -206,7 +206,6 @@ class Player:
     @metadata.setter
     def metadata(self, metadata=None):
         if not self.parent._format_contains_metadata:
-            self._metadata = {}
             return
 
         if metadata is None:
@@ -556,8 +555,6 @@ class Py3status:
         """
         players = []
         for name, player in self._mpris_players.items():
-            # we set the priority here as we need to establish the player name
-            # which might not be immediately available.
             player_priority_tuple = player.priority_tuple
             if player_priority_tuple:
                 players.append(player_priority_tuple)
