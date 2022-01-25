@@ -100,7 +100,6 @@ SAMPLE OUTPUT
 ]
 """
 from datetime import timedelta
-import time
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from threading import Thread
@@ -364,7 +363,6 @@ class Py3status:
     """ """
 
     # available configuration parameters
-    cache_timeout = 0.5
     button_next = None
     button_next_player = None
     button_prev_player = None
@@ -372,6 +370,7 @@ class Py3status:
     button_stop = None
     button_switch_to_top_player = None
     button_toggle = 1
+    cache_timeout = 0.5
     format = "[{artist} - ][{title}] {previous} {toggle} {next}"
     format_none = "no player running"
     icon_next = "\u25b9"
