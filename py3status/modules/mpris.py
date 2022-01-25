@@ -517,7 +517,7 @@ class Py3status:
             name = str(dMediaPlayer.Identity)
             self._mpris_names[player.name] = name
 
-        index = self._mpris_name_index.get(name)
+        index = self._mpris_name_index.get(player.name, 0)
         if index:
             self._mpris_name_index[player.name] += 1
         else:
