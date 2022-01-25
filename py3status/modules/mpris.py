@@ -624,8 +624,7 @@ class Py3status:
             del self._mpris_players[player_id]
 
     def _get_players(self):
-        players_list = "|".join(self.player_priority) if not self._accept_all_players else ''
-        for player in get_players_uri(players_list):
+        for player in get_players_uri():
             try:
                 # str(player) helps avoid to use dbus.Str(*) as dict key
                 self._add_player(str(player))
