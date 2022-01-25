@@ -147,15 +147,18 @@ class Player:
         self._set_player_name_priority()
 
         for canProperty in self.parent._used_can_properties:
-            self.set_can_property(canProperty, getattr(self._dbus, canProperty))
+            self._set_can_property(canProperty, getattr(self._dbus, canProperty))
 
-    @property
-    def hide(self):
-        return self._hide_non_canplay and not self._can.get("CanPlay")
+    @staticmethod
+    def _get_time_str(microseconds):
+        if microseconds is None:
+            return None
 
-    @property
-    def id(self):
-        return self._id
+        delta = timedelta(seconds=microseconds // 1_000_000)
+        delta_str = str(delta).lstrip("0").lstrip(":")
+        if delta_str.startswith("0"):
+            delta_str = delta_str[1:]
+        return delta_str
 
     def _set_player_name_priority(self):
         if self.parent.player_priority:
@@ -171,34 +174,35 @@ class Player:
 
         self._name_priority = priority
 
-    @property
-    def priority_tuple(self):
-        if self.hide:
-            return None
+    def _set_response_buttons(self):
+        buttons = {}
 
-        return self._state, self._name_priority, self._name_index, self.id
+        for button, control_state in self.parent._states.items():
+            if self.parent.py3.format_contains(self.parent.format, button):
+                if self.get_button_state(control_state):
+                    color = self.parent._color_active
+                else:
+                    color = self.parent._color_inactive
 
-    def set_can_property(self, key, value):
-        self._can[key] = value
+                buttons[button] = {
+                    "color": color,
+                    "full_text": control_state["icon"],
+                    "index": button,
+                }
 
-    @property
-    def name(self):
-        return self._name
+        if buttons.get("toggle"):
+            buttons["toggle"]["full_text"] = self.parent._state_icon_color_map[
+                self.state
+            ]["toggle_icon"]
+
+        self._buttons = buttons
+
+    def _set_can_property(self, key, value):
+            self._can[key] = value
 
     @property
     def metadata(self):
         return self._metadata
-
-    @staticmethod
-    def _get_time_str(microseconds):
-        if microseconds is None:
-            return None
-
-        delta = timedelta(seconds=microseconds // 1_000_000)
-        delta_str = str(delta).lstrip("0").lstrip(":")
-        if delta_str.startswith("0"):
-            delta_str = delta_str[1:]
-        return delta_str
 
     @metadata.setter
     def metadata(self, metadata=None):
@@ -283,43 +287,6 @@ class Player:
 
         return clickable
 
-    def _set_response_buttons(self):
-        buttons = {}
-
-        for button, control_state in self.parent._states.items():
-            if self.parent.py3.format_contains(self.parent.format, button):
-                if self.get_button_state(control_state):
-                    color = self.parent._color_active
-                else:
-                    color = self.parent._color_inactive
-
-                buttons[button] = {
-                    "color": color,
-                    "full_text": control_state["icon"],
-                    "index": button,
-                }
-
-        if buttons.get("toggle"):
-            buttons["toggle"]["full_text"] = self.parent._state_icon_color_map[
-                self.state
-            ]["toggle_icon"]
-
-        self._buttons = buttons
-
-    @property
-    def data(self):
-        """
-        Output player specific data
-        """
-        if self.parent._format_contains_time:
-            try:
-                ptime = self._get_time_str(self._dbus.Position)
-            except DBusException:
-                ptime = None
-
-            self._placeholders["time"] = ptime
-
-        return dict(self._placeholders, **self.metadata, **self._buttons)
 
     def player_on_change(self, data):
         is_active_player = self == self.parent._player
@@ -337,7 +304,7 @@ class Player:
                     call_update = True
 
             elif key.startswith("Can"):
-                self.set_can_property(key, new_value)
+                self._set_can_property(key, new_value)
                 call_update = True
 
                 if key == "CanPlay":
@@ -357,6 +324,41 @@ class Player:
     @property
     def state_map(self):
         return self.parent._state_icon_color_map[self.state]
+
+    @property
+    def data(self):
+        """
+        Output player specific data
+        """
+        if self.parent._format_contains_time:
+            try:
+                ptime = self._get_time_str(self._dbus.Position)
+            except DBusException:
+                ptime = None
+
+            self._placeholders["time"] = ptime
+
+        return dict(self._placeholders, **self.metadata, **self._buttons)
+
+    @property
+    def hide(self):
+        return self._hide_non_canplay and not self._can.get("CanPlay")
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def priority_tuple(self):
+        if self.hide:
+            return None
+
+        return self._state, self._name_priority, self._name_index, self.id
+
+    @property
+    def name(self):
+        return self._name
+
 
 
 class Py3status:
