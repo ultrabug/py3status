@@ -275,7 +275,7 @@ class Player:
 
     def get_button_state(self, control_state):
         try:
-            clickable = getattr(self._can, control_state["clickable"], True)
+            clickable = self._can.get(control_state["clickable"], True)
         except Exception:
             clickable = False
 
@@ -443,6 +443,7 @@ class Py3status:
             "toggle": {
                 "action": "PlayPause",
                 "clickable": "CanPause",
+                # Not used, but it will be set dynamically with player state map.
                 "icon": None,
             },
         }
