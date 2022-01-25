@@ -198,7 +198,7 @@ class Player:
         self._buttons = buttons
 
     def _set_can_property(self, key, value):
-            self._can[key] = value
+        self._can[key] = value
 
     @property
     def metadata(self):
@@ -287,7 +287,6 @@ class Player:
 
         return clickable
 
-
     def player_on_change(self, data):
         is_active_player = self == self.parent._player
         call_set_player = False
@@ -358,7 +357,6 @@ class Player:
     @property
     def name(self):
         return self._name
-
 
 
 class Py3status:
