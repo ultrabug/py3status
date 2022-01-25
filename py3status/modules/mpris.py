@@ -135,9 +135,7 @@ class Player:
         self._state = None
         self._player_name, self._name_index = self.parent._get_mpris_name(self)
         self._full_name = f"{name_with_instance} {self._name_index}"
-        self._hide_non_canplay = (
-            self._name in self.parent.player_hide_non_canplay
-        )
+        self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
         self._placeholders = {
             "player": self._player_name,
             # for debugging ;p
@@ -229,7 +227,9 @@ class Player:
                     # media we handle just like streams
                     is_stream = True
 
-                self._metadata["length"] = self._get_time_str(metadata.get(Metadata_Map.LENGTH))
+                self._metadata["length"] = self._get_time_str(
+                    metadata.get(Metadata_Map.LENGTH)
+                )
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -482,9 +482,7 @@ class Py3status:
         self._format_contains_control_buttons = False
         self._used_can_properties = []
         for key, value in self._states.items():
-            if self.py3.format_contains(
-                self.format, key
-            ):
+            if self.py3.format_contains(self.format, key):
                 self._format_contains_control_buttons = True
                 self._used_can_properties.append(value["clickable"])
 
@@ -507,7 +505,9 @@ class Py3status:
         ]:
             self._button_cache_flush = 2
 
-        self._accept_all_players = not self.player_priority or "*" in self.player_priority
+        self._accept_all_players = (
+            not self.player_priority or "*" in self.player_priority
+        )
         # start last
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus(mainloop=self._dbus_loop)
@@ -589,10 +589,7 @@ class Py3status:
         player_id_parts_list = player_id.split(".")
         name_from_id = player_id_parts_list[3]
 
-        if (
-            not self._accept_all_players
-            and name_from_id not in self.player_priority
-        ):
+        if not self._accept_all_players and name_from_id not in self.player_priority:
             return
 
         if not owner:
@@ -685,7 +682,9 @@ class Py3status:
 
             if current_player_id == self._player.id:
                 if self._format_contains_time:
-                    cached_until = self.py3.time_in(current_state_map.get("cached_until"))
+                    cached_until = self.py3.time_in(
+                        current_state_map.get("cached_until")
+                    )
 
                 placeholders = {"state": current_state_map["state_icon"]}
                 color = current_state_map["color"]
@@ -802,5 +801,7 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    format = "{toggle} {state} {player} {previous} {next} {pause} {play} {stop} {length}"
+    format = (
+        "{toggle} {state} {player} {previous} {next} {pause} {play} {stop} {length}"
+    )
     module_test(Py3status, {"format": format})
