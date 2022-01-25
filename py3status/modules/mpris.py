@@ -122,17 +122,6 @@ class STATE(IntEnum):
     Stopped = 2
 
 
-def _get_time_str(microseconds):
-    if microseconds is None:
-        return None
-
-    delta = timedelta(seconds=microseconds // 1_000_000)
-    delta_str = str(delta).lstrip("0").lstrip(":")
-    if delta_str.startswith("0"):
-        delta_str = delta_str[1:]
-    return delta_str
-
-
 # noinspection PyProtectedMember
 class Player:
     def __init__(self, parent, player_id, name_from_id, name_with_instance):
@@ -162,7 +151,7 @@ class Player:
         self._set_player_name_priority()
 
         for canProperty in self.parent._used_can_properties:
-            self._can[canProperty] = getattr(self._dbus, canProperty)
+            self.set_can_property(canProperty, getattr(self._dbus, canProperty))
 
     @property
     def hide(self):
@@ -193,7 +182,6 @@ class Player:
 
         return self._state, self._name_priority, self._name_index, self.id
 
-
     def set_can_property(self, key, value):
         self._can[key] = value
 
@@ -204,6 +192,17 @@ class Player:
     @property
     def metadata(self):
         return self._metadata
+
+    @staticmethod
+    def _get_time_str(microseconds):
+        if microseconds is None:
+            return None
+
+        delta = timedelta(seconds=microseconds // 1_000_000)
+        delta_str = str(delta).lstrip("0").lstrip(":")
+        if delta_str.startswith("0"):
+            delta_str = delta_str[1:]
+        return delta_str
 
     @metadata.setter
     def metadata(self, metadata=None):
@@ -231,11 +230,7 @@ class Player:
                     # media we handle just like streams
                     is_stream = True
 
-                length_ms = metadata.get(Metadata_Map.LENGTH)
-                if length_ms:
-                    self._metadata["length"] = _get_time_str(length_ms)
-                else:
-                    self._metadata["length"] = None
+                self._metadata["length"] = self._get_time_str(metadata.get(Metadata_Map.LENGTH))
             else:
                 # use stream format if no metadata is available
                 is_stream = True
@@ -324,12 +319,11 @@ class Player:
         """
         if self.parent._format_contains_time:
             try:
-                ptime = _get_time_str(self._dbus.Position)
+                ptime = self._get_time_str(self._dbus.Position)
             except DBusException:
                 ptime = None
 
             self._placeholders["time"] = ptime
-
 
         return dict(self._placeholders, **self.metadata, **self._buttons)
 
@@ -548,7 +542,8 @@ class Py3status:
             # This branch is only needed for the test mode
             self._kill = True
 
-    def _is_mediaplayer_interface(self, player_id):
+    @staticmethod
+    def _is_mediaplayer_interface(player_id):
         return player_id.startswith(Interfaces.MEDIA_PLAYER)
 
     def _dbus_name_owner_changed(self, name, old_owner, new_owner):
