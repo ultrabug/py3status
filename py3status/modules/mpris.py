@@ -395,8 +395,6 @@ class Py3status:
         # TODO: Look again if it is needed
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
-        self._data = {}
-        self._control_states = {}
         self._name_owner_change_match = None
         self._kill = False
         self._mpris_players: dict[Player] = {}
@@ -665,7 +663,7 @@ class Py3status:
             if current_player_id == self._player.id:
                 if self._format_contains_time:
                     cached_until = self.py3.time_in(
-                        seconds=current_state_map.get("cached_until"), sync_to=0.5
+                        seconds=current_state_map.get("cached_until"), sync_to=0
                     )
 
                 placeholders = {"state": current_state_map["state_icon"]}
