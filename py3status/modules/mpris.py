@@ -133,7 +133,7 @@ class Player:
         self._buttons = {}
         self._state = None
         self._player_name, self._name_index = self.parent._get_mpris_name(self)
-        self._full_name = f"{name_with_instance} {self._name_index}"
+        self._full_name = f"{self._player_name} {self._name_index}"
         self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
         self._placeholders = {
             "player": self._player_name,
@@ -215,6 +215,40 @@ class Player:
     def _set_can_property(self, key, value):
         self._can[key] = value
 
+    def _player_on_change(self, interface_name, data, invalidated_properties):
+        is_active_player = self == self.parent._player
+        call_set_player = False
+        call_update = False
+
+        for key, new_value in data.items():
+            if key == "PlaybackStatus":
+                self.state = new_value
+                call_set_player = True
+
+            elif key == "Metadata":
+                if self.parent._format_contains_metadata:
+                    self.metadata = new_value
+                    call_update = True
+
+            elif key.startswith("Can"):
+                self._set_can_property(key, new_value)
+                call_update = True
+
+                if key == "CanPlay":
+                    call_set_player = True
+
+            elif key == "Rate":
+                if is_active_player:
+                    self.state = None
+                    call_update = True
+
+        if call_set_player:
+            return self.parent._set_player()
+
+        if is_active_player and call_update:
+            return self.parent.py3.update()
+
+
     @property
     def metadata(self):
         return self._metadata
@@ -227,7 +261,6 @@ class Player:
         if metadata is None:
             metadata = self._dPlayer.Metadata
 
-        is_stream = False
         self._metadata = {}
 
         if metadata:
@@ -293,39 +326,6 @@ class Player:
             clickable = False
 
         return clickable
-
-    def _player_on_change(self, interface_name, data, invalidated_properties):
-        is_active_player = self == self.parent._player
-        call_set_player = False
-        call_update = False
-
-        for key, new_value in data.items():
-            if key == "PlaybackStatus":
-                self.state = new_value
-                call_set_player = True
-
-            elif key == "Metadata":
-                if self.parent._format_contains_metadata:
-                    self.metadata = new_value
-                    call_update = True
-
-            elif key.startswith("Can"):
-                self._set_can_property(key, new_value)
-                call_update = True
-
-                if key == "CanPlay":
-                    call_set_player = True
-
-            elif key == "Rate":
-                if is_active_player:
-                    self.state = None
-                    call_update = True
-
-        if call_set_player:
-            return self.parent._set_player()
-
-        if is_active_player and call_update:
-            return self.parent.py3.update()
 
     @property
     def state_map(self):
