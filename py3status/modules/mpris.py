@@ -212,34 +212,25 @@ class Player:
             metadata = self._dbus.Metadata
 
         is_stream = False
+        self._metadata = {}
 
-        try:
-            if len(metadata) > 0:
-                url = metadata.get(Metadata_Map.URL)
-                is_stream = url is not None and "file://" not in url
-                self._metadata["title"] = metadata.get(Metadata_Map.TITLE, None)
-                self._metadata["album"] = metadata.get(Metadata_Map.ALBUM, None)
-
-                artist = metadata.get(Metadata_Map.ARTIST, None)
-                if len(artist):
-                    self._metadata["artist"] = artist[0] or None
-                else:
-                    # we assume here that we playing a video and these types of
-                    # media we handle just like streams
-                    is_stream = True
-
-                self._metadata["length"] = self._get_time_str(
-                    metadata.get(Metadata_Map.LENGTH)
-                )
+        if metadata:
+            url = metadata.get(Metadata_Map.URL)
+            is_stream = url is not None and "file://" not in url
+            if is_stream:
+                self._metadata["title"] = re.sub(r"\....$", "", metadata.get("title"))
             else:
-                # use stream format if no metadata is available
-                is_stream = True
-        except Exception:
-            self._metadata["error_occurred"] = True
+                self._metadata["title"] = metadata.get(Metadata_Map.TITLE, None)
+            self._metadata["album"] = metadata.get(Metadata_Map.ALBUM, None)
 
-        if is_stream and self._metadata.get("title"):
-            # delete the file extension
-            self._metadata["title"] = re.sub(r"\....$", "", self._metadata.get("title"))
+            artist = metadata.get(Metadata_Map.ARTIST, None)
+            if artist:
+                self._metadata["artist"] = artist[0]
+
+            self._metadata["length"] = self._get_time_str(
+                metadata.get(Metadata_Map.LENGTH)
+            )
+
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
         if not self._metadata.get("title"):
