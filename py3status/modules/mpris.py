@@ -132,15 +132,16 @@ class Player:
         self._can = {}
         self._buttons = {}
         self._state = None
-        self._player_name, self._name_index = self.parent._get_mpris_name(self)
+        self._set_mpris_name()
+        self._set_player_name_priority()
         self._full_name = f"{self._player_name} {self._name_index}"
         self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
+
         self._placeholders = {
             "player": self._player_name,
             # for debugging ;p
             "full_name": self._full_name,
         }
-        self._set_player_name_priority()
 
         # Init data from dbus interface
         self.state = None
@@ -248,6 +249,21 @@ class Player:
         if is_active_player and call_update:
             return self.parent.py3.update()
 
+    def _set_mpris_name(self):
+        name = self.parent._mpris_names.get(self._name)
+        if not name:
+            dMediaPlayer = dMediaPlayer2(dbus_interface_info={"dbus_uri": self.id})
+            name = str(dMediaPlayer.Identity)
+            self.parent._mpris_names[self._name] = name
+
+        index = self.parent._mpris_name_index.get(self._name, 0)
+        if index:
+            self.parent._mpris_name_index[self._name] += 1
+        else:
+            self.parent._mpris_name_index[self._name] = 0
+
+        self._player_name = name
+        self._name_index = index
 
     @property
     def metadata(self):
@@ -360,10 +376,6 @@ class Player:
             return None
 
         return self._state, self._name_priority, self._name_index, self.id
-
-    @property
-    def name(self):
-        return self._name
 
 
 class Py3status:
@@ -516,21 +528,6 @@ class Py3status:
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus(mainloop=self._dbus_loop)
         self._start_listener()
-
-    def _get_mpris_name(self, player):
-        name = self._mpris_names.get(player.id)
-        if not name:
-            dMediaPlayer = dMediaPlayer2(dbus_interface_info={"dbus_uri": player.id})
-            name = str(dMediaPlayer.Identity)
-            self._mpris_names[player.name] = name
-
-        index = self._mpris_name_index.get(player.name, 0)
-        if index:
-            self._mpris_name_index[player.name] += 1
-        else:
-            self._mpris_name_index[player.name] = 0
-
-        return (name, index)
 
     def _start_loop(self):
         self._loop = GLib.MainLoop()
