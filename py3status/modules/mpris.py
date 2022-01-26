@@ -18,12 +18,12 @@ Configuration parameters:
     format: display format for this module
         (default '[{artist} - ][{title}] {previous} {toggle} {next}')
     format_none: define output if no player is running (default 'no player running')
-    hide_non_canplay: Used to hide chrome/chomium players on idle state. (default True)
     icon_next: specify icon for next button (default u'\u25b9')
     icon_pause: specify icon for pause button (default u'\u25eb')
     icon_play: specify icon for play button (default u'\u25b7')
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
+    player_hide_non_canplay: Used to hide chrome/chomium players on idle state. (default ['chrome', 'chromium'])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
@@ -134,6 +134,7 @@ class Player:
         self._state = None
         self._player_name, self._name_index = self.parent._get_mpris_name(self)
         self._full_name = f"{name_with_instance} {self._name_index}"
+        self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
         self._placeholders = {
             "player": self._player_name,
             # for debugging ;p
@@ -343,7 +344,7 @@ class Player:
 
     @property
     def hide(self):
-        return self.parent.hide_non_canplay and not self._can.get("CanPlay")
+        return self._hide_non_canplay and not self._can.get("CanPlay")
 
     @property
     def id(self):
@@ -380,7 +381,7 @@ class Py3status:
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
-    hide_non_canplay = True
+    player_hide_non_canplay = ["chrome", "chromium"]
     player_priority = []
     state_pause = "\u25eb"
     state_play = "\u25b7"
@@ -487,7 +488,7 @@ class Py3status:
                 self._used_can_properties.append(value["clickable"])
 
         if (
-            self.hide_non_canplay
+            len(self.player_hide_non_canplay)
             and "CanPlay" not in self._used_can_properties
         ):
             self._used_can_properties.append("CanPlay")
