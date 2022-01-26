@@ -149,7 +149,7 @@ class Player:
         for canProperty in self.parent._used_can_properties:
             self._set_can_property(canProperty, getattr(self._dPlayer, canProperty))
 
-        # Workaround for bug which prevents to use self._player.propertiesChanged = hadler.
+        # Workaround for bug which prevents to use self._dPlayer.propertiesChanged = handler.
         self._properties_changed_match = self.parent._dbus.add_signal_receiver(
             self._player_on_change,
             dbus_interface=Interfaces.PROPERTIES,
