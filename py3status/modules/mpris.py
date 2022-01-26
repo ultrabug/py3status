@@ -150,7 +150,7 @@ class Player:
             self._set_can_property(canProperty, getattr(self._dbus, canProperty))
 
         # Workaround for bug which prevents to use self._player.propertiesChanged = hadler.
-        self.properties_changed_subsciption = self.parent._dbus.add_signal_receiver(
+        self._properties_changed_match = self.parent._dbus.add_signal_receiver(
             self._player_on_change,
             dbus_interface=Interfaces.PROPERTIES,
             path=Interfaces.OBJECT_PATH,
@@ -158,6 +158,8 @@ class Player:
             bus_name=player_id,
         )
 
+    def __del__(self):
+        self.parent._dbus._clean_up_signal_match(self._properties_changed_match)
 
     def handler(self, *args, **kw):
         print(args, kw)
@@ -232,7 +234,9 @@ class Player:
             url = metadata.get(Metadata_Map.URL)
             is_stream = url is not None and "file://" not in url
             if is_stream:
-                self._metadata["title"] = re.sub(r"\....$", "", metadata.get(Metadata_Map.TITLE, ''))
+                self._metadata["title"] = re.sub(
+                    r"\....$", "", metadata.get(Metadata_Map.TITLE, "")
+                )
             else:
                 self._metadata["title"] = metadata.get(Metadata_Map.TITLE, None)
             self._metadata["album"] = metadata.get(Metadata_Map.ALBUM, None)
@@ -393,6 +397,7 @@ class Py3status:
             raise Exception(STRING_GEVENT)
         self._data = {}
         self._control_states = {}
+        self._name_owner_change_match = None
         self._kill = False
         self._mpris_players: dict[Player] = {}
         self._mpris_names = {}
@@ -575,7 +580,6 @@ class Py3status:
         """
         pass
 
-
     def _add_player(self, player_id):
         """
         Add player to mpris_players
@@ -610,12 +614,13 @@ class Py3status:
         self._set_player()
 
     def _start_listener(self):
-        self._dbus.add_signal_receiver(
+        self._get_players()
+
+        self._name_owner_change_match = self._dbus.add_signal_receiver(
             handler_function=self._dbus_name_owner_changed,
             dbus_interface="org.freedesktop.DBus",
             signal_name="NameOwnerChanged",
         )
-        self._get_players()
 
         # Start listening things after initiating players.
         t = Thread(target=self._start_loop)
@@ -638,6 +643,8 @@ class Py3status:
 
     def kill(self):
         self._kill = True
+        if self._name_owner_change_match:
+            self.parent._dbus._clean_up_signal_match(self._name_owner_change_match)
 
     def mpris(self):
         """
