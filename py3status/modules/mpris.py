@@ -665,7 +665,7 @@ class Py3status:
             if current_player_id == self._player.id:
                 if self._format_contains_time:
                     cached_until = self.py3.time_in(
-                        current_state_map.get("cached_until")
+                        seconds=current_state_map.get("cached_until"), sync_to=0.5
                     )
 
                 placeholders = {"state": current_state_map["state_icon"]}
