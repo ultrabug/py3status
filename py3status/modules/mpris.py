@@ -127,7 +127,7 @@ class Player:
         self.parent = parent
         self._name_with_instance = name_with_instance
         self._name = name_from_id
-        self._dbus = dPlayer(dbus_interface_info={"dbus_uri": player_id})
+        self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._metadata = {}
         self._can = {}
         self._buttons = {}
@@ -147,7 +147,7 @@ class Player:
         self.metadata = None
 
         for canProperty in self.parent._used_can_properties:
-            self._set_can_property(canProperty, getattr(self._dbus, canProperty))
+            self._set_can_property(canProperty, getattr(self._dPlayer, canProperty))
 
         # Workaround for bug which prevents to use self._player.propertiesChanged = hadler.
         self._properties_changed_match = self.parent._dbus.add_signal_receiver(
@@ -225,7 +225,7 @@ class Player:
             return
 
         if metadata is None:
-            metadata = self._dbus.Metadata
+            metadata = self._dPlayer.Metadata
 
         is_stream = False
         self._metadata = {}
@@ -261,7 +261,7 @@ class Player:
     @state.setter
     def state(self, new_value):
         if new_value is None:
-            new_value = self._dbus.PlaybackStatus
+            new_value = self._dPlayer.PlaybackStatus
 
         if new_value != self._state:
             self._state = getattr(STATE, new_value)
@@ -272,7 +272,7 @@ class Player:
         control_state = self.parent._states.get(index)
         try:
             if self.get_button_state(control_state):
-                getattr(self._dbus, self.parent._states[index]["action"])()
+                getattr(self._dPlayer, self.parent._states[index]["action"])()
                 self.state = None
         except DBusException as err:
             self.parent.py3.log(
@@ -338,7 +338,7 @@ class Player:
         """
         if self.parent._format_contains_time:
             try:
-                ptime = self._get_time_str(self._dbus.Position)
+                ptime = self._get_time_str(self._dPlayer.Position)
             except DBusException:
                 ptime = None
 
