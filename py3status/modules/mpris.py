@@ -232,7 +232,7 @@ class Player:
             url = metadata.get(Metadata_Map.URL)
             is_stream = url is not None and "file://" not in url
             if is_stream:
-                self._metadata["title"] = re.sub(r"\....$", "", metadata.get("title"))
+                self._metadata["title"] = re.sub(r"\....$", "", metadata.get(Metadata_Map.TITLE, ''))
             else:
                 self._metadata["title"] = metadata.get(Metadata_Map.TITLE, None)
             self._metadata["album"] = metadata.get(Metadata_Map.ALBUM, None)
