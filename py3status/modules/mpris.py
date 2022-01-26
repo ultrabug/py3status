@@ -122,7 +122,7 @@ class STATE(IntEnum):
 
 # noinspection PyProtectedMember
 class Player:
-    def __init__(self, parent, player_id, name_from_id, name_with_instance):
+    def __init__(self, parent, player_id, name_from_id, name_with_instance, owner_id):
         self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
@@ -147,6 +147,19 @@ class Player:
 
         for canProperty in self.parent._used_can_properties:
             self._set_can_property(canProperty, getattr(self._dbus, canProperty))
+
+        # Workaround for bug which prevents to use self._player.propertiesChanged = hadler.
+        self.properties_changed_subsciption = self.parent._dbus.add_signal_receiver(
+            self._player_on_change,
+            dbus_interface=Interfaces.PROPERTIES,
+            path=Interfaces.OBJECT_PATH,
+            signal_name=Interfaces.SIGNAL,
+            bus_name=owner_id,
+        )
+
+
+    def handler(self, *args, **kw):
+        print(args, kw)
 
     @staticmethod
     def _get_time_str(microseconds):
@@ -276,7 +289,7 @@ class Player:
 
         return clickable
 
-    def player_on_change(self, data):
+    def _player_on_change(self, interface_name, data, invalidated_properties):
         is_active_player = self == self.parent._player
         call_set_player = False
         call_update = False
@@ -379,7 +392,6 @@ class Py3status:
             raise Exception(STRING_GEVENT)
         self._data = {}
         self._control_states = {}
-        self._ownerToPlayerId = {}
         self._kill = False
         self._mpris_players: dict[Player] = {}
         self._mpris_names = {}
@@ -560,13 +572,8 @@ class Py3status:
         """
         Monitor a player and update its status.
         """
-        sender_player_id = self._ownerToPlayerId.get(sender)
-        if not sender_player_id:
-            return
-        sender_player: [Player, None] = self._mpris_players.get(sender_player_id)
+        pass
 
-        if sender_player:
-            sender_player.player_on_change(data)
 
     def _add_player(self, player_id, owner=None):
         """
@@ -586,18 +593,14 @@ class Py3status:
 
         name_with_instance = ".".join(player_id_parts_list[3:])
 
-        player = Player(self, player_id, name_from_id, name_with_instance)
+        player = Player(self, player_id, name_from_id, name_with_instance, owner)
 
         self._mpris_players[player_id] = player
-        self._ownerToPlayerId[owner] = player_id
 
     def _remove_player(self, player_id, owner):
         """
         Remove player from mpris_players
         """
-        if self._ownerToPlayerId.get(owner):
-            del self._ownerToPlayerId[owner]
-
         if self._mpris_players.get(player_id):
             del self._mpris_players[player_id]
 
@@ -620,15 +623,6 @@ class Py3status:
         self._get_players()
 
         # Start listening things after initiating players.
-
-        self._dbus.add_signal_receiver(
-            self._player_on_change,
-            dbus_interface=Interfaces.PROPERTIES,
-            path=Interfaces.OBJECT_PATH,
-            signal_name=Interfaces.SIGNAL,
-            sender_keyword="sender",
-        )
-
         t = Thread(target=self._start_loop)
         t.daemon = True
         t.start()
