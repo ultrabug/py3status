@@ -122,7 +122,7 @@ class STATE(IntEnum):
 
 # noinspection PyProtectedMember
 class Player:
-    def __init__(self, parent, player_id, name_from_id, name_with_instance, owner_id):
+    def __init__(self, parent, player_id, name_from_id, name_with_instance):
         self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
@@ -155,7 +155,7 @@ class Player:
             dbus_interface=Interfaces.PROPERTIES,
             path=Interfaces.OBJECT_PATH,
             signal_name=Interfaces.SIGNAL,
-            bus_name=owner_id,
+            bus_name=player_id,
         )
 
 
@@ -546,9 +546,9 @@ class Py3status:
         if not self._is_mediaplayer_interface(name):
             return
         if new_owner:
-            self._add_player(name, new_owner)
+            self._add_player(name)
         if old_owner:
-            self._remove_player(name, old_owner)
+            self._remove_player(name)
         self._set_player()
 
     def _set_player(self, update=True):
@@ -576,7 +576,7 @@ class Py3status:
         pass
 
 
-    def _add_player(self, player_id, owner=None):
+    def _add_player(self, player_id):
         """
         Add player to mpris_players
         """
@@ -586,19 +586,13 @@ class Py3status:
         if not self._accept_all_players and name_from_id not in self.player_priority:
             return
 
-        if not owner:
-            try:
-                owner = self._dbus.get_name_owner(player_id)
-            except DBusException:
-                return
-
         name_with_instance = ".".join(player_id_parts_list[3:])
 
-        player = Player(self, player_id, name_from_id, name_with_instance, owner)
+        player = Player(self, player_id, name_from_id, name_with_instance)
 
         self._mpris_players[player_id] = player
 
-    def _remove_player(self, player_id, owner):
+    def _remove_player(self, player_id):
         """
         Remove player from mpris_players
         """
