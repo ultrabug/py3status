@@ -212,7 +212,7 @@ class Player:
         self._can[key] = value
 
     def _player_on_change(self, interface_name, data, invalidated_properties):
-        is_active_player = self == self.parent._player
+        is_active_player = self is self.parent._player
         call_set_player = False
         call_update = False
 
@@ -293,7 +293,7 @@ class Player:
 
         if new_value != self._state:
             self._state = getattr(STATE, new_value)
-            if self.parent._player == self:
+            if self is self.parent._player:
                 self.prepare_output()
 
     def send_mpris_action(self, index):
