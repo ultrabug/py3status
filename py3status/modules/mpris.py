@@ -122,10 +122,22 @@ class STATE(IntEnum):
 
 # noinspection PyProtectedMember
 class Player:
-    def __init__(self, parent, player_id, name_from_id, name_with_instance):
+    def __init__(
+        self,
+        parent,
+        player_id,
+        name_from_id,
+        name_with_instance,
+        name_priority,
+        identity,
+        identity_index,
+    ):
         self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
+        self._player_name = identity
+        self._identity_index = identity_index
+        self._name_priority = name_priority
         self._metadata = {}
         self._can = {}
         self._buttons = {}
@@ -133,9 +145,7 @@ class Player:
         self._state = None
         self._name = name_from_id
         self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
-        self._set_mpris_name()
-        self._set_player_name_priority()
-        self._full_name = f"{self._player_name} {self._name_index}"
+        self._full_name = f"{self._player_name} {self._identity_index}"
         self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
 
         self._placeholders = {
@@ -164,9 +174,6 @@ class Player:
         if self._properties_changed_match:
             self.parent._dbus._clean_up_signal_match(self._properties_changed_match)
 
-    def handler(self, *args, **kw):
-        print(args, kw)
-
     @staticmethod
     def _get_time_str(microseconds):
         if microseconds is None:
@@ -177,21 +184,6 @@ class Player:
         if delta_str.startswith("0"):
             delta_str = delta_str[1:]
         return delta_str
-
-    def _set_player_name_priority(self):
-        if self.parent.player_priority:
-            try:
-                priority = self.parent.player_priority.index(self._name)
-            except ValueError:
-                try:
-                    priority = self.parent.player_priority.index("*")
-                except ValueError:
-                    # It should never reach here because before player init we check if "*" or self._name are in list.
-                    priority = None
-        else:
-            priority = 0
-
-        self._name_priority = priority
 
     def _set_response_buttons(self):
         buttons = {}
@@ -251,22 +243,6 @@ class Player:
 
         if is_active_player and call_update:
             return self.parent.py3.update()
-
-    def _set_mpris_name(self):
-        name = self.parent._mpris_names.get(self._name)
-        if not name:
-            dMediaPlayer = dMediaPlayer2(dbus_interface_info={"dbus_uri": self.id})
-            name = str(dMediaPlayer.Identity)
-            self.parent._mpris_names[self._name] = name
-
-        name_index = self.parent._mpris_name_index.get(name, 0)
-        if name_index:
-            self.parent._mpris_name_index[name] = name_index + 1
-        else:
-            self.parent._mpris_name_index[name] = 1
-
-        self._player_name = name
-        self._name_index = name_index
 
     @property
     def metadata(self):
@@ -378,7 +354,7 @@ class Player:
         if self.hide:
             return None
 
-        return self._state, self._name_priority, self._name_index, self.id
+        return self._state, self._name_priority, self._identity_index, self.id
 
 
 class Py3status:
@@ -412,8 +388,9 @@ class Py3status:
         self._name_owner_change_match = None
         self._kill = False
         self._mpris_players: dict[Player] = {}
-        self._mpris_names = {}
-        self._mpris_name_index = {}
+        self._identity_cache = {}
+        self._identity_index = {}
+        self._priority_cache = {}
         self._player: [Player, None] = None
         self._tries = 0
         self._empty_response = {
@@ -523,9 +500,14 @@ class Py3status:
         ]:
             self._button_cache_flush = 2
 
-        self._accept_all_players = (
-            not self.player_priority or "*" in self.player_priority
-        )
+        if self.player_priority:
+            try:
+                self._random_player_priority = self.player_priority.index("*")
+            except ValueError:
+                self._random_player_priority = False
+        else:
+            self._random_player_priority = 0
+
         # start last
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus(mainloop=self._dbus_loop)
@@ -584,12 +566,50 @@ class Py3status:
         player_id_parts_list = player_id.split(".")
         name_from_id = player_id_parts_list[3]
 
-        if self._accept_all_players or name_from_id in self.player_priority:
-            name_with_instance = ".".join(player_id_parts_list[3:])
+        identity = self._identity_cache.get(name_from_id)
+        if not identity:
+            dMediaPlayer = dMediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
+            identity = str(dMediaPlayer.Identity)
+            self._identity_cache[name_from_id] = identity
 
-            player = Player(self, player_id, name_from_id, name_with_instance)
+        if self.player_priority:
+            # Expected value: numeric / False, None is cache miss.
+            priority = self._priority_cache.get(name_from_id, None)
+            if priority is None:
+                for i, _player in enumerate(self.player_priority):
+                    if _player == name_from_id or _player == identity:
+                        priority = i
+                        break
 
-            self._mpris_players[player_id] = player
+                if priority is None:
+                    priority = self._random_player_priority
+                self._priority_cache[identity] = priority
+
+            if not isinstance(priority, int):
+                return
+
+        else:
+            priority = 0
+
+        identity_index = self._identity_index.get(identity, 0)
+        if identity_index:
+            self._identity_index[identity] += 1
+        else:
+            self._identity_index[identity] = 1
+
+        name_with_instance = ".".join(player_id_parts_list[3:])
+
+        player = Player(
+            self,
+            player_id=player_id,
+            name_from_id=name_from_id,
+            name_with_instance=name_with_instance,
+            name_priority=priority,
+            identity=identity,
+            identity_index=identity_index,
+        )
+
+        self._mpris_players[player_id] = player
 
     def _remove_player(self, player_id):
         """
