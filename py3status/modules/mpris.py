@@ -126,12 +126,13 @@ class Player:
         self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
-        self._name = name_from_id
-        self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._metadata = {}
         self._can = {}
         self._buttons = {}
+        self._properties_changed_match = None
         self._state = None
+        self._name = name_from_id
+        self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._set_mpris_name()
         self._set_player_name_priority()
         self._full_name = f"{self._player_name} {self._name_index}"
@@ -160,7 +161,8 @@ class Player:
         )
 
     def __del__(self):
-        self.parent._dbus._clean_up_signal_match(self._properties_changed_match)
+        if self._properties_changed_match:
+            self.parent._dbus._clean_up_signal_match(self._properties_changed_match)
 
     def handler(self, *args, **kw):
         print(args, kw)
@@ -184,7 +186,8 @@ class Player:
                 try:
                     priority = self.parent.player_priority.index("*")
                 except ValueError:
-                    priority = 0
+                    # It should never reach here because before player init we check if "*" or self._name are in list.
+                    priority = None
         else:
             priority = 0
 
@@ -404,7 +407,6 @@ class Py3status:
     state_stop = "\u25a1"
 
     def post_config_hook(self):
-        # TODO: Look again if it is needed
         if self.py3.is_gevent():
             raise Exception(STRING_GEVENT)
         self._name_owner_change_match = None
@@ -582,14 +584,12 @@ class Py3status:
         player_id_parts_list = player_id.split(".")
         name_from_id = player_id_parts_list[3]
 
-        if not self._accept_all_players and name_from_id not in self.player_priority:
-            return
+        if self._accept_all_players or name_from_id in self.player_priority:
+            name_with_instance = ".".join(player_id_parts_list[3:])
 
-        name_with_instance = ".".join(player_id_parts_list[3:])
+            player = Player(self, player_id, name_from_id, name_with_instance)
 
-        player = Player(self, player_id, name_from_id, name_with_instance)
-
-        self._mpris_players[player_id] = player
+            self._mpris_players[player_id] = player
 
     def _remove_player(self, player_id):
         """
