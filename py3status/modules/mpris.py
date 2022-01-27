@@ -23,7 +23,7 @@ Configuration parameters:
     icon_play: specify icon for play button (default u'\u25b7')
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
-    player_hide_non_canplay: Used to hide chrome/chomium players on idle state. (default ['chrome', 'chromium'])
+    player_hide_non_canplay: Experimental. Used to hide chrome/chomium players on idle state. (default [])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
@@ -397,7 +397,7 @@ class Py3status:
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
-    player_hide_non_canplay = ["chrome", "chromium"]
+    player_hide_non_canplay = []
     player_priority = []
     state_pause = "\u25eb"
     state_play = "\u25b7"
