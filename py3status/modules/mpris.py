@@ -23,7 +23,7 @@ Configuration parameters:
     icon_play: specify icon for play button (default u'\u25b7')
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
-    player_hide_non_canplay: Experimental. Used to hide chrome/chomium players on idle state. (default [])
+    player_hide_non_canplay: Experimental. Used to hide chrome/chromium players on idle state. Add 'chromium' into list and try. (default [])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
