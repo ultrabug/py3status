@@ -256,14 +256,14 @@ class Player:
             name = str(dMediaPlayer.Identity)
             self.parent._mpris_names[self._name] = name
 
-        index = self.parent._mpris_name_index.get(self._name, 0)
-        if index:
-            self.parent._mpris_name_index[self._name] += 1
+        name_index = self.parent._mpris_name_index.get(name, 0)
+        if name_index:
+            self.parent._mpris_name_index[name] = name_index + 1
         else:
-            self.parent._mpris_name_index[self._name] = 0
+            self.parent._mpris_name_index[name] = 1
 
         self._player_name = name
-        self._name_index = index
+        self._name_index = name_index
 
     @property
     def metadata(self):
