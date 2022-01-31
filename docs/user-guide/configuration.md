@@ -73,6 +73,15 @@ This special section holds py3status specific configuration. Settings
 here will affect all py3status modules. Many settings e.g. colors can
 still be overridden by also defining in the individual module.
 
+- `stop_signal`. Specify a signal number to be used by i3bar to stop/resume the bar refresh. This is useful if you want to prevent i3bar from stopping py3status when the bar is not visible (hidden/fullscreen).
+
+```
+# prevent i3bar from stopping py3status when hidden/fullscreen
+py3status {
+    stop_signal = 0
+}
+```
+
 - `nagbar_font`. Specify a font for `i3-nagbar -f <font>`.
 
 ```
