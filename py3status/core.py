@@ -641,14 +641,19 @@ class Py3statusWrapper:
             self.config["py3_config"].get("py3status", {}).get("stop_signal")
         )
         if custom_stop_signal is not None:
-            if isinstance(custom_stop_signal, int):
+            try:
                 # 0 is a special value for i3bar protocol, use it as-is
                 if custom_stop_signal == 0:
                     self.stop_signal = custom_stop_signal
                 else:
                     self.stop_signal = Signals(custom_stop_signal)
-            else:
-                self.stop_signal = Signals[custom_stop_signal]
+            except ValueError:
+                error = (
+                    f"py3status.stop_signal '{custom_stop_signal}' is invalid "
+                    f"and should be a number between 0 (disable) and 31"
+                )
+                self.log(error, level="error")
+                raise Exception(error)
 
         # SIGTSTP can be received and indicates that all output should
         # stop and we should consider py3status suspended.  It is however
@@ -969,13 +974,13 @@ class Py3statusWrapper:
 
     def i3bar_stop(self, signum, frame):
         if time.time() - self.i3bar_inhibit_stp > 1:
-            self.log(f"received stop signal {Signals(signum).name}")
+            self.log(f"received stop_signal {Signals(signum).name}")
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
             self.sleep_modules()
         else:
-            self.log(f"inhibited stop signal {Signals(signum).name}")
+            self.log(f"inhibited stop_signal {Signals(signum).name}")
 
     def i3bar_start(self, signum, frame):
         self.log(f"received resume signal {Signals(signum).name}")
