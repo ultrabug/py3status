@@ -266,6 +266,7 @@ import datetime
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
+OWM_ONECALL_ENDPOINT = "https://api.openweathermap.org/data/2.5/onecall?"
 IP_ENDPOINT = "http://geo.ultrabug.fr"
 
 # Paths of information to extract from JSON
@@ -282,9 +283,11 @@ OWM_RAIN = "//rain/1h"
 OWM_SNOW = "//snow/1h"
 OWM_SUNRISE = "//sys/sunrise"
 OWM_SUNSET = "//sys/sunset"
-OWM_TEMP = "//main"
+OWM_TEMP = "//temp"
 OWM_WEATHER_ICON = "//weather:0/id"
-OWM_WIND = "//wind"
+OWM_WIND_SPEED = "//wind_speed"
+OWM_WIND_GUST = "//wind_gust"
+OWM_WIND_DEG = "//wind_deg"
 
 # Units constants
 RAIN_UNITS = {"mm", "cm", "in"}
@@ -556,6 +559,12 @@ class Py3status:
         weathers = data["list"]
         return weathers[:-1] if self.forecast_include_today else weathers[1:]
 
+    def _get_onecall(self, extras):
+        # Get and process the current weather
+        params = {"appid": self.api_key, "lang": self.lang}
+        extras.update(params)
+        return self._make_req(OWM_ONECALL_ENDPOINT, extras)
+
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)
         return self.icons[self._jpath(wthr, OWM_WEATHER_ICON, 800)]
@@ -617,7 +626,11 @@ class Py3status:
         )
 
     def _format_wind(self, wthr):
-        wind = self._jpath(wthr, OWM_WIND, dict())
+        wind = {
+            "deg": self._jpath(wthr, OWM_WIND_DEG, ""),
+            "gust": self._jpath(wthr, OWM_WIND_GUST, ""),
+            "speed": self._jpath(wthr, OWM_WIND_SPEED, ""),
+        }
 
         # Speed and Gust
         msec_speed = wind["speed"] if ("speed" in wind) else 0
@@ -703,19 +716,19 @@ class Py3status:
 
         options = {
             "c": {
-                "current": kToC(kelvin["temp"]),
-                "max": kToC(kelvin["temp_max"]),
-                "min": kToC(kelvin["temp_min"]),
+                "current": kToC(kelvin["day"]),
+                "max": kToC(kelvin["max"]),
+                "min": kToC(kelvin["min"]),
             },
             "f": {
-                "current": kToF(kelvin["temp"]),
-                "max": kToF(kelvin["temp_max"]),
-                "min": kToF(kelvin["temp_min"]),
+                "current": kToF(kelvin["day"]),
+                "max": kToF(kelvin["max"]),
+                "min": kToF(kelvin["min"]),
             },
             "k": {
-                "current": kelvin["temp"],
-                "max": kelvin["temp_max"],
-                "min": kelvin["temp_min"],
+                "current": kelvin["day"],
+                "max": kelvin["max"],
+                "min": kelvin["min"],
             },
         }
 
@@ -800,17 +813,21 @@ class Py3status:
                 extras = {"lat": coords[0], "lon": coords[1]}
             elif city:
                 extras = {"q": city}
-            wthr = self._get_weather(extras)
-            fcsts = self._get_forecast(extras)
 
             # try to get a nice city name
+            wthr = self._get_weather(extras)
             city = wthr.get("name") or city or "unknown"
             # get the best country we can
             if not country:
                 sys = wthr.get("sys", {})
                 country = sys.get("country", "unknown")
 
-            text = self._format(wthr, fcsts, city, country)
+            onecall = self._get_onecall(extras)
+            onecall_daily = onecall["daily"]
+            fcsts_days = self.forecast_days + 1
+            text = self._format(
+                onecall_daily[0], onecall_daily[1:fcsts_days], city, country,
+            )
 
         return {
             "full_text": text,
