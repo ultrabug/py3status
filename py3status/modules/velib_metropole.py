@@ -224,7 +224,7 @@ class Py3status:
 
     def velib_metropole(self):
         # refresh
-        current_time = time.perf_counter()
+        current_time = time.monotonic()
         refresh = current_time >= self.idle_time
 
         # time
