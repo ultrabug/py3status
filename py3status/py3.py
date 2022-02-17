@@ -626,7 +626,7 @@ class Py3:
                     seconds -= 0.1
 
         current_time = time.time()
-        requested = time.perf_counter() + seconds - offset
+        requested = time.monotonic() + seconds - offset
 
         # if sync_to then we find the sync time for the requested time
         if sync_to:

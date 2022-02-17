@@ -158,12 +158,12 @@ class Py3status:
         if event["button"] == 1:
             if self._running:
                 self._running = False
-                self._time_left = self._end_time - time.perf_counter()
+                self._time_left = self._end_time - time.monotonic()
                 if self._timer:
                     self._timer.cancel()
             else:
                 self._running = True
-                self._end_time = time.perf_counter() + self._time_left
+                self._end_time = time.monotonic() + self._time_left
                 if self._timer:
                     self._timer.cancel()
                 self._timer = Timer(self._time_left, self._time_up)
@@ -207,7 +207,7 @@ class Py3status:
 
         cached_until = self.py3.time_in(0)
         if self._running:
-            self._time_left = ceil(self._end_time - time.perf_counter())
+            self._time_left = ceil(self._end_time - time.monotonic())
             time_left = ceil(self._time_left)
         else:
             time_left = ceil(self._time_left)

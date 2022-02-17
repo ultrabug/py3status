@@ -103,7 +103,7 @@ class Py3status:
         # last
         self.last_interface = None
         self.last_stat = self._get_stat()
-        self.last_time = time.perf_counter()
+        self.last_time = time.monotonic()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
@@ -112,7 +112,7 @@ class Py3status:
         deltas = {}
         try:
             # time from previous check
-            current_time = time.perf_counter()
+            current_time = time.monotonic()
             timedelta = current_time - self.last_time
 
             # calculate deltas for all interfaces
