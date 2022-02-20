@@ -7,6 +7,7 @@ Configuration parameters:
     date_end: Until which datetime the module searches for events (default 'eod')
     format: display format for this module (default '{appointments}')
     output_format: khal conform format for displaying event output (default '{start-time} {title}')
+    limit: limit the number of returned calendar entries (default: no limit)
 
 Format placeholders:
     {appointments} list of events in time range
@@ -38,6 +39,7 @@ class Py3status:
     date_end = "eod"
     format = "{appointments}"
     output_format = "{start-time} {title}"
+    limit = None
 
     def _format_output(self, output):
         ansi_escape = re_compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
@@ -54,7 +56,7 @@ class Py3status:
             str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
         )
         output = khal_list(self.collection, daterange, self.config, self.output_format)
-        output = [self._format_output(x) for x in output[1:]]
+        output = [self._format_output(x) for x in output[1:]][:self.limit]
 
         output = " ".join(output)
         khal_data = {"appointments": output}
