@@ -747,8 +747,8 @@ class Py3statusWrapper:
         else:
             msg = f"py3status: {msg}"
         if level != "info" and module_name == "":
-            fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
-            msg = fix_msg.format(msg)
+            fix_msg = "{} Please try to fix this and reload {}"
+            msg = fix_msg.format(msg, config['wm_name'])
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
         # A simple chunked time model where a message cannot be repeated in a
@@ -790,7 +790,7 @@ class Py3statusWrapper:
                 py3_config = self.config.get("py3_config", {})
                 nagbar_font = py3_config.get("py3status", {}).get("nagbar_font")
                 wm_nag = self.config["wm"]["nag"]
-                cmd = [wm_nag, "-m", msg, "-t", level]
+                cmd = wm_nag + ["-m", msg, "-t", level]
                 if nagbar_font:
                     cmd += ["-f", nagbar_font]
             Popen(
@@ -1015,11 +1015,15 @@ class Py3statusWrapper:
                     # Color: substitute the config defined color
                     if "color" not in output:
                         output["color"] = color
+        # Create the tmux string output.
+        if self.options.wm_name == 'tmux':
+            for output in outputs:
+                if 'color' in output:
+                    output['full_text'] = f"#[fg={output['color']}]{output['full_text']}#[fg=white]"
+            return "".join(x['full_text'] for x in outputs)
         # Create the json string output.
-        for output in outputs:
-            if 'color' in output:
-                output['full_text'] = f"#[fg={output['color']}]{output['full_text']}#[fg=white]"
-        return "".join(x['full_text'] for x in outputs)
+        else:
+            return ",".join(dumps(x) for x in outputs)
 
 
 
@@ -1103,8 +1107,9 @@ class Py3statusWrapper:
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        #write(dumps(header))
-        #write("\n[[]\n")
+        if self.options.wm_name != "tmux":
+            write(dumps(header))
+            write("\n[[]\n")
 
         update_due = None
         # main loop
@@ -1131,8 +1136,12 @@ class Py3statusWrapper:
                         # store the output as json
                         output[index] = out
 
-                # build output string
-                out = "#[fg=brightblack]|#[fg=white]".join(x for x in output if x)
-                # dump the line to stdout
-                write(f"{out}\n")
+                # build output string and dump to stdout
+                out = ""
+                if self.options.wm_name == "tmux":
+                    out = "#[fg=brightblack]|#[fg=white]".join(x for x in output if x)
+                    write(f"{out}\n")
+                else:
+                    out = ",".join(x for x in output if x)
+                    write(f",[{out}]\n")
                 flush()
