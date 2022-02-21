@@ -6,8 +6,8 @@ Configuration parameters:
     config_path: Path to khal configuration file. The default None resolves to /home/$USER/.config/khal/config (default None)
     date_end: Until which datetime the module searches for events (default 'eod')
     format: display format for this module (default '{appointments}')
-    output_format: khal conform format for displaying event output (default '{start-time} {title}')
     limit: limit the number of returned calendar entries (default: no limit)
+    output_format: khal conform format for displaying event output (default '{start-time} {title}')
 
 Format placeholders:
     {appointments} list of events in time range
@@ -38,8 +38,8 @@ class Py3status:
     config_path = None
     date_end = "eod"
     format = "{appointments}"
-    output_format = "{start-time} {title}"
     limit = None
+    output_format = "{start-time} {title}"
 
     def _format_output(self, output):
         ansi_escape = re_compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
