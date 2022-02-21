@@ -1016,7 +1016,12 @@ class Py3statusWrapper:
                     if "color" not in output:
                         output["color"] = color
         # Create the json string output.
-        return ",".join(dumps(x) for x in outputs)
+        for output in outputs:
+            if 'color' in output:
+                output['full_text'] = f"#[fg={output['color']}]{output['full_text']}#[fg=white]"
+        return "".join(x['full_text'] for x in outputs)
+
+
 
     def i3bar_stop(self, signum, frame):
         if (
@@ -1098,8 +1103,8 @@ class Py3statusWrapper:
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        write(dumps(header))
-        write("\n[[]\n")
+        #write(dumps(header))
+        #write("\n[[]\n")
 
         update_due = None
         # main loop
@@ -1127,7 +1132,7 @@ class Py3statusWrapper:
                         output[index] = out
 
                 # build output string
-                out = ",".join(x for x in output if x)
+                out = "#[fg=brightblack]|#[fg=white]".join(x for x in output if x)
                 # dump the line to stdout
-                write(f",[{out}]\n")
+                write(f"{out}\n")
                 flush()
