@@ -1019,7 +1019,7 @@ class Py3statusWrapper:
         if self.options.wm_name == 'tmux':
             for output in outputs:
                 if 'color' in output:
-                    output['full_text'] = f"#[fg={output['color']}]{output['full_text']}#[fg=white]"
+                    output['full_text'] = f"#[fg={output['color'].lower()}]{output['full_text']}#[default]"
             return "".join(x['full_text'] for x in outputs)
         # Create the json string output.
         else:
@@ -1139,7 +1139,7 @@ class Py3statusWrapper:
                 # build output string and dump to stdout
                 out = ""
                 if self.options.wm_name == "tmux":
-                    out = "#[fg=brightblack]|#[fg=white]".join(x for x in output if x)
+                    out = "#[fg=brightblack]|#[default]".join(x for x in output if x)
                     write(f"{out}\n")
                 else:
                     out = ",".join(x for x in output if x)
