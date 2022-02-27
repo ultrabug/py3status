@@ -747,8 +747,8 @@ class Py3statusWrapper:
         else:
             msg = f"py3status: {msg}"
         if level != "info" and module_name == "":
-            fix_msg = "{} Please try to fix this and reload {}"
-            msg = fix_msg.format(msg, config['wm_name'])
+            fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
+            msg = fix_msg.format(msg)
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
         # A simple chunked time model where a message cannot be repeated in a
@@ -790,7 +790,7 @@ class Py3statusWrapper:
                 py3_config = self.config.get("py3_config", {})
                 nagbar_font = py3_config.get("py3status", {}).get("nagbar_font")
                 wm_nag = self.config["wm"]["nag"]
-                cmd = wm_nag + ["-m", msg, "-t", level]
+                cmd = [wm_nag, "-m", msg, "-t", level]
                 if nagbar_font:
                     cmd += ["-f", nagbar_font]
             Popen(
@@ -1016,7 +1016,7 @@ class Py3statusWrapper:
                     if "color" not in output:
                         output["color"] = color
         # Create the tmux string output.
-        if self.options.wm_name == 'tmux':
+        if self.config["py3_config"]["general"].get("output_format") == 'tmux':
             for output in outputs:
                 if 'color' in output:
                     output['full_text'] = f"#[fg={output['color'].lower()}]{output['full_text']}#[default]"
@@ -1107,7 +1107,7 @@ class Py3statusWrapper:
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        if self.options.wm_name != "tmux":
+        if self.config["py3_config"]["general"].get("output_format") == 'tmux':
             write(dumps(header))
             write("\n[[]\n")
 
@@ -1138,7 +1138,7 @@ class Py3statusWrapper:
 
                 # build output string and dump to stdout
                 out = ""
-                if self.options.wm_name == "tmux":
+                if self.config["py3_config"]["general"].get("output_format") == 'tmux':
                     out = "#[fg=brightblack]|#[default]".join(x for x in output if x)
                     write(f"{out}\n")
                 else:

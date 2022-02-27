@@ -18,14 +18,11 @@ def parse_cli_args():
     xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
     # get window manager
-    # defaults to i3, if running, otherwise sway, if running, otherwise i3.
     with Path(os.devnull).open("w") as devnull:
         if subprocess.call(["pgrep", "-x", "i3"], stdout=devnull) == 0:
             wm = "i3"
-        elif subprocess.call(["pgrep", "-x", "sway"], stdout=devnull) == 0:
-            wm = "sway"
         else:
-            wm = "i3"
+            wm = "sway"
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
@@ -163,8 +160,8 @@ def parse_cli_args():
         dest="wm",
         metavar="WINDOW_MANAGER",
         default=wm,
-        choices=["i3", "sway", "tmux"],
-        help="specify window manager i3, sway or tmux",
+        choices=["i3", "sway"],
+        help="specify window manager i3 or sway",
     )
 
     # deprecations
@@ -184,9 +181,8 @@ def parse_cli_args():
     # get wm
     options.wm_name = options.wm
     options.wm = {
-        "i3": {"msg": ["i3-msg"], "nag": ["i3-nagbar"]},
-        "sway": {"msg": ["swaymsg"], "nag": ["swaynag"]},
-        "tmux": {"msg": ["tmux", "display-message"], "nag": ["tmux", "display-message"]},
+        "i3": {"msg": "i3-msg", "nag": "i3-nagbar"},
+        "sway": {"msg": "swaymsg", "nag": "swaynag"},
     }[options.wm]
 
     # make include path to search for user modules if None
