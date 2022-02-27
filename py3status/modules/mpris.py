@@ -484,7 +484,7 @@ class Py3status:
         if (
             len(self.player_hide_non_canplay)
             and "CanPlay" not in self._used_can_properties
-     
+        ):
             self._used_can_properties.append("CanPlay")
 
         self._format_contains_time = self.py3.format_contains(self.format, "time")
