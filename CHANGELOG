@@ -1,3 +1,19 @@
+version 3.41 (2022-02-27)
+* core: drop and log negative new_update_due which causes high cpu load and endless loop (closses #2085) (#2092), by Valdur Kana
+* core: switch from time.perf_counter to time.monotonic (#2099)
+* core: timeout due to return something >= 0 instead of None
+* new option py3status.stop_signal to disable i3bar stop/resume (#2095)
+* arch_updates module: paru exits with a non-zero status if there are no updates (#2098), by Stefan G
+* battery_level module: fallback to power_now if no current_now
+* events: fix pydevd.debugger first click caused "JSONDecodeError: Expecting value: line 1 column 2 (char 1)". (closes #2090) (#2091), by Valdur Kana
+* net_iplist module: support parsing iface name with "@" symbol (#2083), by Yikai Zhao
+* pomodoro module: pyglet and pygame are no longer needed after the merge of #1770 (#2094), by Stefan G
+* scratchpad module: workaround for i3ipc 2.2.1 not finding leaves() in sway (#2088), by Valdur Kana
+* sysdata module: add tctl sensor (#2082), by lasers
+* velib_metropole module: drop obsolete module
+* weather_owm module: fix forecast by using new onecall api endpoint (#2097)
+* window module: i3ipc backend uses incoming event data and relies less on get_tree.focused() data. (#2087), by Valdur Kana
+
 version 3.40 (2021-11-08)
 * README: update readthedocs links to new documentation thx to @oceyral
 * i3 contrib page: update readthedocs links to new documentation
