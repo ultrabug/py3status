@@ -11,7 +11,7 @@ Configuration parameters:
     button_prev_player: (Experimental) mouse button to switch previous player in list (Same status as top player) (default None)
     button_previous: mouse button to play the previous entry (default None)
     button_stop: mouse button to stop the player (default None)
-    button_switch_to_top_player: (Experimental) mouse button to switch to toop player (default None)
+    button_switch_to_top_player: mouse button to switch to top player (default None)
     button_toggle: mouse button to toggle between play and pause mode (default 1)
     cache_timeout: time (s) between Position update (default 0.5)
     format: see placeholders below
