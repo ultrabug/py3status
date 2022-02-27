@@ -120,7 +120,7 @@ class Py3status:
 
     def whatismyip(self):
         # refresh
-        current_time = time.perf_counter()
+        current_time = time.monotonic()
         refresh = current_time >= self.idle_time
 
         # time

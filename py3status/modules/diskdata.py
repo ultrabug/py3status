@@ -92,7 +92,7 @@ class Py3status:
 
         if self.init["diskstats"]:
             self.last_diskstats = self._get_diskstats(self.disk)
-            self.last_time = time.perf_counter()
+            self.last_time = time.monotonic()
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
@@ -146,7 +146,7 @@ class Py3status:
         return read, write
 
     def _calc_diskstats(self, diskstats):
-        current_time = time.perf_counter()
+        current_time = time.monotonic()
         timedelta = current_time - self.last_time
         read = (diskstats[0] - self.last_diskstats[0]) / timedelta
         write = (diskstats[1] - self.last_diskstats[1]) / timedelta

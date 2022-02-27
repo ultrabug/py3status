@@ -6,7 +6,7 @@ from collections import deque
 from json import dumps
 from pathlib import Path
 from pprint import pformat
-from signal import signal, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
+from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
 from subprocess import Popen
 from threading import Event, Thread
 from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
@@ -109,7 +109,7 @@ class CheckI3StatusThread(Task):
             self.notify_user(err)
         else:
             # check again in 5 seconds
-            self.timeout_queue_add(self, int(time.perf_counter()) + 5)
+            self.timeout_queue_add(self, int(time.monotonic()) + 5)
 
 
 class ModuleRunner(Task):
@@ -252,7 +252,7 @@ class Py3statusWrapper:
         self.config = vars(options)
         self.i3bar_running = True
         self.i3bar_inhibit_stp = time.time()
-        self.last_refresh_ts = time.perf_counter()
+        self.last_refresh_ts = time.monotonic()
         self.lock = Event()
         self.modules = {}
         self.notified_messages = set()
@@ -260,6 +260,7 @@ class Py3statusWrapper:
         self.output_modules = {}
         self.py3_modules = []
         self.running = True
+        self.stop_signal = SIGTSTP
         self.update_queue = deque()
         self.update_request = Event()
 
@@ -345,7 +346,7 @@ class Py3statusWrapper:
         # process any items that need adding to the queue
         while self.timeout_add_queue:
             self.timeout_process_add_queue(*self.timeout_add_queue.popleft())
-        now = time.perf_counter()
+        now = time.monotonic()
         due_timeouts = []
         # find any due timeouts
         for timeout in self.timeout_keys:
@@ -402,8 +403,9 @@ class Py3statusWrapper:
                 Runner(module, self, module_name)
 
         # we return how long till we next need to process the timeout_queue
+        # this value should not be negative to avoid cpu overwhelming loops
         if self.timeout_due is not None:
-            return self.timeout_due - time.perf_counter()
+            return max(0, self.timeout_due - time.monotonic())
 
     def gevent_monkey_patch_report(self):
         """
@@ -527,14 +529,6 @@ class Py3statusWrapper:
         Setup py3status and spawn i3status/events/modules threads.
         """
 
-        # SIGTSTP will be received from i3bar indicating that all output should
-        # stop and we should consider py3status suspended.  It is however
-        # important that any processes using i3 ipc should continue to receive
-        # those events otherwise it can lead to a stall in i3.
-        signal(SIGTSTP, self.i3bar_stop)
-        # SIGCONT indicates output should be resumed.
-        signal(SIGCONT, self.i3bar_start)
-
         # log py3status and python versions
         self.log("=" * 8)
         msg = "Starting py3status version {version} python {python_version}"
@@ -641,6 +635,35 @@ class Py3statusWrapper:
             sys.stdout = Path("/dev/null").open("w")
             sys.stderr = Path("/dev/null").open("w")
 
+        # make sure we honor custom i3bar protocol stop/resume signals
+        # while providing users a way to opt out from that feature
+        # using the 0 value as specified by the i3bar protocol
+        custom_stop_signal = (
+            self.config["py3_config"].get("py3status", {}).get("stop_signal")
+        )
+        if custom_stop_signal is not None:
+            try:
+                # 0 is a special value for i3bar protocol, use it as-is
+                if custom_stop_signal == 0:
+                    self.stop_signal = custom_stop_signal
+                else:
+                    self.stop_signal = Signals(custom_stop_signal)
+            except ValueError:
+                error = (
+                    f"py3status.stop_signal '{custom_stop_signal}' is invalid "
+                    f"and should be a number between 0 (disable) and 31"
+                )
+                self.log(error, level="error")
+                raise Exception(error)
+
+        # SIGTSTP can be received and indicates that all output should
+        # stop and we should consider py3status suspended.  It is however
+        # important that any processes using i3 ipc should continue to receive
+        # those events otherwise it can lead to a stall in i3.
+        signal(SIGTSTP, self.i3bar_stop)
+        # SIGCONT indicates output should be resumed.
+        signal(SIGCONT, self.i3bar_start)
+
         # get the list of py3status configured modules
         self.py3_modules = self.config["py3_config"]["py3_modules"]
 
@@ -690,7 +713,7 @@ class Py3statusWrapper:
         limit_key = ""
         if rate_limit:
             try:
-                limit_key = time.perf_counter() // rate_limit
+                limit_key = time.monotonic() // rate_limit
             except TypeError:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
@@ -765,8 +788,8 @@ class Py3statusWrapper:
         refreshes.
         """
         if not module_string:
-            if time.perf_counter() > (self.last_refresh_ts + 0.1):
-                self.last_refresh_ts = time.perf_counter()
+            if time.monotonic() > (self.last_refresh_ts + 0.1):
+                self.last_refresh_ts = time.monotonic()
             else:
                 # rate limiting
                 return
@@ -952,16 +975,16 @@ class Py3statusWrapper:
 
     def i3bar_stop(self, signum, frame):
         if time.time() - self.i3bar_inhibit_stp > 1:
-            self.log("received SIGTSTP")
+            self.log(f"received stop_signal {Signals(signum).name}")
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
             self.sleep_modules()
         else:
-            self.log("received inhibited SIGTSTP")
+            self.log(f"inhibited stop_signal {Signals(signum).name}")
 
     def i3bar_start(self, signum, frame):
-        self.log("received SIGCONT")
+        self.log(f"received resume signal {Signals(signum).name}")
         self.i3bar_inhibit_stp = time.time()
         self.i3bar_running = True
         self.wake_modules()
@@ -1016,7 +1039,7 @@ class Py3statusWrapper:
         header = {
             "version": 1,
             "click_events": self.config["click_events"],
-            "stop_signal": SIGTSTP,
+            "stop_signal": self.stop_signal or 0,
         }
         write(dumps(header))
         write("\n[[]\n")

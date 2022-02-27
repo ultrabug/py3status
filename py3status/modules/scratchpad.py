@@ -94,7 +94,13 @@ class I3ipc(Ipc):
         i3.main()
 
     def update(self, i3, event=None):
-        leaves = i3.get_tree().scratchpad().leaves()
+        scratchpad = i3.get_tree().scratchpad()
+        if not scratchpad:
+            return
+
+        # Workaround for I3ipc 2.2.1 not finding leaves() in sway. Fixing: #2038
+        leaves = getattr(scratchpad, "floating_nodes", [])
+
         temporary = {
             "ipc": self.parent.ipc,
             "scratchpad": len(leaves),

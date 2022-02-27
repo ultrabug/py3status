@@ -338,7 +338,9 @@ class Py3status:
             remaining_energy = r.get(
                 "POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW")
             )
-            current_now = r.get("POWER_SUPPLY_CURRENT_NOW", 0)
+            current_now = r.get(
+                "POWER_SUPPLY_CURRENT_NOW", r.get("POWER_SUPPLY_POWER_NOW", 0)
+            )
             voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
 
             # missing values may indicate this is not a battery and should be skipped

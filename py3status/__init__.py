@@ -28,21 +28,21 @@ def main():
 
     try:
         locale.setlocale(locale.LC_ALL, "")
-    except locale.Error:
-        print("No locale available")
+    except locale.Error as err:
+        print(f"No locale available ({err})")
         sys.exit(2)
 
     py3 = None
     try:
         py3 = Py3statusWrapper(options)
         py3.setup()
-    except (BrokenPipeError, KeyboardInterrupt):
+    except (BrokenPipeError, KeyboardInterrupt) as err:
         if py3:
-            py3.notify_user("Setup interrupted")
+            py3.notify_user(f"Setup interrupted ({err})")
         sys.exit(0)
-    except Exception:
+    except Exception as err:
         if py3:
-            py3.report_exception("Setup error")
+            py3.report_exception(f"Setup error ({err})")
         else:
             # we cannot report this Exception
             raise
@@ -52,8 +52,8 @@ def main():
         py3.run()
     except (BrokenPipeError, KeyboardInterrupt):
         pass
-    except Exception:
-        py3.report_exception("Runtime error")
+    except Exception as err:
+        py3.report_exception(f"Runtime error ({err})")
         sys.exit(3)
     finally:
         py3.stop()

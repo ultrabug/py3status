@@ -78,7 +78,7 @@ class Py3status:
 
         Using a helper property to make it easy to keep consistency.
         """
-        return time.perf_counter()
+        return time.monotonic()
 
     @staticmethod
     def secs_to_dhms(time_in_secs):

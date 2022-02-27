@@ -120,7 +120,7 @@ class Py3status:
 
         self.first_run = True
         self.active = 0
-        self.cycle_time = time.perf_counter() + self.cycle
+        self.cycle_time = time.monotonic() + self.cycle
         self.cycle_timeout = self.cycle
         self.last_active = 0
         self.urgent = False
@@ -223,7 +223,7 @@ class Py3status:
             self.first_run = False
             update_time = 1
         elif self.cycle_timeout and not urgent:
-            current_time = time.perf_counter()
+            current_time = time.monotonic()
             if current_time >= self.cycle_time - 0.1:
                 self._change_active(1)
                 output, update_time = self._get_output_and_time()
@@ -276,7 +276,7 @@ class Py3status:
                 return
 
         self.cycle = self.cycle_timeout
-        self.cycle_time = time.perf_counter() + self.cycle
+        self.cycle_time = time.monotonic() + self.cycle
 
         if button == self.button_next:
             if self.open:

@@ -136,7 +136,7 @@ class I3statusModule:
             self.item = item
         else:
             # If no timezone or a minute has passed update timezone
-            t = time.perf_counter()
+            t = time.monotonic()
             if self.time_zone_check_due < t:
                 # If we are late for our timezone update then schedule the next
                 # update to happen when we next get new data from i3status
@@ -238,7 +238,7 @@ class I3status(Thread):
         self.json_list = None
         self.json_list_ts = None
         self.last_output = None
-        self.last_refresh_ts = time.perf_counter()
+        self.last_refresh_ts = time.monotonic()
         self.lock = py3_wrapper.lock
         self.new_update = False
         self.py3_config = py3_wrapper.config["py3_config"]
@@ -343,12 +343,12 @@ class I3status(Thread):
 
     def refresh_i3status(self):
         # refresh i3status.  This is rate limited
-        if time.perf_counter() > (self.last_refresh_ts + 0.1):
+        if time.monotonic() > (self.last_refresh_ts + 0.1):
             if self.py3_wrapper.config["debug"]:
                 self.py3_wrapper.log("refreshing i3status")
             if self.i3status_pipe:
                 self.i3status_pipe.send_signal(SIGUSR1)
-            self.last_refresh_ts = time.perf_counter()
+            self.last_refresh_ts = time.monotonic()
 
     @profile
     def run(self):

@@ -109,7 +109,7 @@ class Py3status:
     def post_config_hook(self):
         self.last_transmitted_bytes = 0
         self.last_received_bytes = 0
-        self.last_time = time.perf_counter()
+        self.last_time = time.monotonic()
         # Get default gateway from /proc.
         if self.nic is None:
             with Path("/proc/net/route").open() as fh:
@@ -135,7 +135,7 @@ class Py3status:
     def netdata(self):
         received_bytes, transmitted_bytes = self._get_bytes()
         # speed
-        current_time = time.perf_counter()
+        current_time = time.monotonic()
         timedelta = current_time - self.last_time
         self.last_time = current_time
         down = (received_bytes - self.last_received_bytes) / 1024 / timedelta

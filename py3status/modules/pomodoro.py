@@ -20,12 +20,9 @@ Configuration parameters:
         (default 'Pomodoro ({format})')
     num_progress_bars: number of progress bars (default 5)
     pomodoros: specify a number of pomodoros (intervals) (default 4)
-    sound_break_end: break end sound (file path) (requires pyglet
-        or pygame) (default None)
-    sound_pomodoro_end: pomodoro end sound (file path) (requires pyglet
-        or pygame) (default None)
-    sound_pomodoro_start: pomodoro start sound (file path) (requires pyglet
-        or pygame) (default None)
+    sound_break_end: break end sound (file path) (default None)
+    sound_pomodoro_end: pomodoro end sound (file path) (default None)
+    sound_pomodoro_start: pomodoro start sound (file path) (default None)
     timer_break: normal break time (seconds) (default 300)
     timer_long_break: long break time (seconds) (default 900)
     timer_pomodoro: pomodoro time (seconds) (default 1500)
@@ -161,12 +158,12 @@ class Py3status:
         if event["button"] == 1:
             if self._running:
                 self._running = False
-                self._time_left = self._end_time - time.perf_counter()
+                self._time_left = self._end_time - time.monotonic()
                 if self._timer:
                     self._timer.cancel()
             else:
                 self._running = True
-                self._end_time = time.perf_counter() + self._time_left
+                self._end_time = time.monotonic() + self._time_left
                 if self._timer:
                     self._timer.cancel()
                 self._timer = Timer(self._time_left, self._time_up)
@@ -210,7 +207,7 @@ class Py3status:
 
         cached_until = self.py3.time_in(0)
         if self._running:
-            self._time_left = ceil(self._end_time - time.perf_counter())
+            self._time_left = ceil(self._end_time - time.monotonic())
             time_left = ceil(self._time_left)
         else:
             time_left = ceil(self._time_left)

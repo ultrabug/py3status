@@ -98,7 +98,7 @@ def module_test(module_class, config=None):
     while not m.error_messages:
         try:
             for my_method in m.methods.values():
-                my_method["cached_until"] = time.perf_counter()
+                my_method["cached_until"] = time.monotonic()
             m.run()
             output = m.get_latest()
             for item in output:

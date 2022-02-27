@@ -1,3 +1,16 @@
+version 3.40 (2021-11-08)
+* README: update readthedocs links to new documentation thx to @oceyral
+* i3 contrib page: update readthedocs links to new documentation
+* i3 contrib page: update to sync with i3.github.io
+* core: inhibit conflicting SIGCONT SIGTSTP that can be received too fast (#2068)
+* core: fix i3/sway detection thx to @steinex
+* formatter: support pango special & character
+* bump mkdocs from 1.2.1 to 1.2.3 in /requirements (#2073), by dependabot[bot]
+* battery_level module: add configurable status strings (#2065), by oghm2
+* do_not_disturb module: handle mako using makoctl (#2075) thx to @steinex
+* vpn_status module: fix changed dbus signal handler signature (#2074) thx to @oceyral
+* whoami module: add {hostname} placeholder to output (#2069), by oghm2
+
 version 3.39 (2021-08-30)
 * documentation was refactored to use MkDocs, lots of work has been done
 * add a makefile to ease tasks
