@@ -1107,7 +1107,7 @@ class Py3statusWrapper:
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        if self.config["py3_config"]["general"].get("output_format") == 'tmux':
+        if self.config["py3_config"]["general"].get("output_format") != 'tmux':
             write(dumps(header))
             write("\n[[]\n")
 
