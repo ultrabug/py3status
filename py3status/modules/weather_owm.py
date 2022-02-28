@@ -277,8 +277,8 @@ IP_LON = "//longitude"
 OWM_CLOUD_COVER = "//clouds/all"
 OWM_DESC = "//weather:0/main"
 OWM_DESC_LONG = "//weather:0/description"
-OWM_HUMIDITY = "//main/humidity"
-OWM_PRESSURE = "//main"
+OWM_HUMIDITY = "//humidity"
+OWM_PRESSURE = "//pressure"
 OWM_RAIN = "//rain/1h"
 OWM_SNOW = "//snow/1h"
 OWM_SUNRISE = "//sys/sunrise"
@@ -539,7 +539,7 @@ class Py3status:
 
     def _get_weather(self, extras):
         # Get and process the current weather
-        params = {"APPID": self.api_key, "lang": self.lang}
+        params = {"appid": self.api_key, "lang": self.lang}
         extras.update(params)
         return self._make_req(OWM_CURR_ENDPOINT, extras)
 
@@ -549,7 +549,7 @@ class Py3status:
             return []
         # Get raw data
         params = {
-            "APPID": self.api_key,
+            "appid": self.api_key,
             "lang": self.lang,
             "cnt": self.forecast_days + 1,
         }
@@ -697,8 +697,10 @@ class Py3status:
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
-        pressure = self._jpath(wthr, OWM_PRESSURE, dict())
-        pressure["icon"] = self.icon_pressure
+        pressure = {
+            "icon": self.icon_pressure,
+            "pressure": self._jpath(wthr, OWM_PRESSURE, 0),
+        }
 
         # Format the barometric pressure
         return self.py3.safe_format(self.format_pressure, pressure)
@@ -821,8 +823,12 @@ class Py3status:
             if not country:
                 sys = wthr.get("sys", {})
                 country = sys.get("country", "unknown")
-
-            onecall = self._get_onecall(extras)
+            try:
+                lat = wthr["coord"]["lat"]
+                lon = wthr["coord"]["lon"]
+            except Exception:
+                raise Exception("no latitude/longitude found for your config")
+            onecall = self._get_onecall({"lat": lat, "lon": lon})
             onecall_daily = onecall["daily"]
             fcsts_days = self.forecast_days + 1
             text = self._format(
