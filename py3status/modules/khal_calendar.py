@@ -6,7 +6,7 @@ Configuration parameters:
     config_path: Path to khal configuration file. The default None resolves to /home/$USER/.config/khal/config (default None)
     date_end: Until which datetime the module searches for events (default 'eod')
     format: display format for this module (default '{appointments}')
-    limit: limit the number of returned calendar entries (default: no limit)
+    max_results: an upper bound for the number of returned calendar entries (default None)
     output_format: khal conform format for displaying event output (default '{start-time} {title}')
 
 Format placeholders:
@@ -38,7 +38,7 @@ class Py3status:
     config_path = None
     date_end = "eod"
     format = "{appointments}"
-    limit = None
+    max_results = None
     output_format = "{start-time} {title}"
 
     def _format_output(self, output):
@@ -56,7 +56,7 @@ class Py3status:
             str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
         )
         output = khal_list(self.collection, daterange, self.config, self.output_format)
-        output = [self._format_output(x) for x in output[1:]][:self.limit]
+        output = [self._format_output(x) for x in output[1:]][: self.max_results]
 
         output = " ".join(output)
         khal_data = {"appointments": output}
