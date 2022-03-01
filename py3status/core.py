@@ -1016,16 +1016,15 @@ class Py3statusWrapper:
                     if "color" not in output:
                         output["color"] = color
         # Create the tmux string output.
-        if self.config["py3_config"]["general"].get("output_format") == 'tmux':
+        if self.config["py3_config"]["general"].get("output_format") == "tmux":
             for output in outputs:
-                if 'color' in output:
-                    output['full_text'] = f"#[fg={output['color'].lower()}]{output['full_text']}#[default]"
-            return "".join(x['full_text'] for x in outputs)
+                if "color" in output:
+                    tmux_full_text = f"#[fg={output['color'].lower()}]{output['full_text']}#[default]"
+                    output["full_text"] = tmux_full_text
+            return "".join(x["full_text"] for x in outputs)
         # Create the json string output.
         else:
             return ",".join(dumps(x) for x in outputs)
-
-
 
     def i3bar_stop(self, signum, frame):
         if (
@@ -1107,7 +1106,7 @@ class Py3statusWrapper:
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        if self.config["py3_config"]["general"].get("output_format") != 'tmux':
+        if self.config["py3_config"]["general"].get("output_format") != "tmux":
             write(dumps(header))
             write("\n[[]\n")
 
@@ -1138,7 +1137,7 @@ class Py3statusWrapper:
 
                 # build output string and dump to stdout
                 out = ""
-                if self.config["py3_config"]["general"].get("output_format") == 'tmux':
+                if self.config["py3_config"]["general"].get("output_format") == "tmux":
                     out = "#[fg=brightblack]|#[default]".join(x for x in output if x)
                     write(f"{out}\n")
                 else:
