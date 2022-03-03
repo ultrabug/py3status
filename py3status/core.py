@@ -13,6 +13,7 @@ from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
 from py3status.command import CommandServer
+from py3status.constants import DEFAULT_SEPARATORS
 from py3status.events import Events
 from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
@@ -722,9 +723,20 @@ class Py3statusWrapper:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-        self.output_format = self.config["py3_config"]["general"].get(
-            "output_format", "i3bar"
+        # determine the target output format (i3bar or tmux)
+        self.output_format = self.config["py3_config"]["general"]["output_format"]
+
+        # tmux allows configurable separators between bar entries.
+        # handle configured value or fall back to the matching default for output_format
+        self.output_format_separator = self.config["py3_config"]["py3status"].get(
+            "output_format_separator", DEFAULT_SEPARATORS[self.output_format]
         )
+
+        # inject the value of color_separator into the separator string
+        if self.output_format_separator is not None:
+            self.output_format_separator = self.output_format_separator.format(
+                color_separator=self.config["py3_config"]["general"]["color_separator"]
+            )
 
     def notify_user(
         self,
@@ -1142,7 +1154,7 @@ class Py3statusWrapper:
                 # build output string and dump to stdout
                 out = ""
                 if self.output_format == "tmux":
-                    out = "#[fg=brightblack]|#[default]".join(x for x in output if x)
+                    out = self.output_format_separator.join(x for x in output if x)
                     write(f"{out}\n")
                 else:
                     out = ",".join(x for x in output if x)

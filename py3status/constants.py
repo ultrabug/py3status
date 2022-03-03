@@ -10,6 +10,11 @@ GENERAL_DEFAULTS = {
     "output_format": "i3bar",
 }
 
+DEFAULT_SEPARATORS = {
+    "i3bar": None,
+    "tmux": "#[fg={color_separator}]|#[default]",
+}
+
 MAX_NESTING_LEVELS = 4
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
