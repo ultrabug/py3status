@@ -11,7 +11,6 @@ GENERAL_DEFAULTS = {
 }
 
 DEFAULT_SEPARATORS = {
-    "i3bar": None,
     "tmux": "#[fg={color_separator}]|#[default]",
 }
 

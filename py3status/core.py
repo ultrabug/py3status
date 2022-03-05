@@ -723,13 +723,13 @@ class Py3statusWrapper:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
-        # determine the target output format (i3bar or tmux)
+        # determine the target output format
         self.output_format = self.config["py3_config"]["general"]["output_format"]
 
-        # tmux allows configurable separators between bar entries.
-        # handle configured value or fall back to the matching default for output_format
+        # determine the separator between status entries, if needed
+        default_separator = DEFAULT_SEPARATORS.get(self.output_format, None)
         self.output_format_separator = self.config["py3_config"]["py3status"].get(
-            "output_format_separator", DEFAULT_SEPARATORS[self.output_format]
+            "output_format_separator", default_separator
         )
 
         # inject the value of color_separator into the separator string
