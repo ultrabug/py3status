@@ -10,8 +10,18 @@ GENERAL_DEFAULTS = {
     "output_format": "i3bar",
 }
 
-DEFAULT_SEPARATORS = {
-    "tmux": "#[fg={color_separator}]|#[default]",
+OUTPUT_FORMAT_NEEDS_SEPARATOR = [
+    "dzen2",
+    "xmobar",
+    "lemonbar",
+    "tmux",
+    "term",
+    "none",
+]
+
+DEFAULT_SEPARATOR = {
+    "dzen2": "^p(5;-2)^ro(2)^p()^p(5)",
+    # if it's not listed here, it defaults to " | "
 }
 
 MAX_NESTING_LEVELS = 4

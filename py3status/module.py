@@ -338,11 +338,17 @@ class Module:
 
         separator = fn(self.module_full_name, "separator")
         if not hasattr(separator, "none_setting"):
-            if not isinstance(separator, bool):
-                err = "Invalid `separator` attribute, should be a boolean. "
-                err += f"Got `{separator}`."
-                raise TypeError(err)
-            self.i3bar_module_options["separator"] = separator
+            # HACK: separator is a valid setting in the general section
+            # of the configuration. but it's a string, not a boolean.
+            # revisit how i3status and py3status differ in this regard.
+            # if not isinstance(separator, bool):
+
+            #     err = "Invalid `separator` attribute, should be a boolean. "
+            #     err += f"Got `{separator}`."
+            #     raise TypeError(err)
+            # self.i3bar_module_options["separator"] = separator
+            if isinstance(separator, bool):
+                self.i3bar_module_options["separator"] = separator
 
         separator_block_width = fn(self.module_full_name, "separator_block_width")
         if not hasattr(separator_block_width, "none_setting"):
