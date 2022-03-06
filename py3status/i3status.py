@@ -330,6 +330,10 @@ class I3status(Thread):
                         value = TZTIME_FORMAT
                     if key == "format_time":
                         continue
+                # Set output_format to i3bar for parsing regardless of what
+                # formatting we apply ourselves before printing
+                if key == "output_format":
+                    value = "i3bar"
                 if isinstance(value, bool):
                     value = f"{value}".lower()
                 self.write_in_tmpfile(f'    {key} = "{value}"\n', tmpfile)
