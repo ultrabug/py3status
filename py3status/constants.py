@@ -10,20 +10,6 @@ GENERAL_DEFAULTS = {
     "output_format": "i3bar",
 }
 
-OUTPUT_FORMAT_NEEDS_SEPARATOR = [
-    "dzen2",
-    "xmobar",
-    "lemonbar",
-    "tmux",
-    "term",
-    "none",
-]
-
-DEFAULT_SEPARATOR = {
-    "dzen2": "^p(5;-2)^ro(2)^p()^p(5)",
-    # if it's not listed here, it defaults to " | "
-}
-
 MAX_NESTING_LEVELS = 4
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"

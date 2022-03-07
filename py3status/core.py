@@ -3,7 +3,6 @@ import sys
 import time
 
 from collections import deque
-from json import dumps
 from pathlib import Path
 from pprint import pformat
 from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
@@ -13,13 +12,13 @@ from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
 from traceback import extract_tb, format_tb, format_stack
 
 from py3status.command import CommandServer
-from py3status.constants import OUTPUT_FORMAT_NEEDS_SEPARATOR, DEFAULT_SEPARATOR
 from py3status.events import Events
 from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
+from py3status.output import OutputFormat
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 
@@ -724,20 +723,18 @@ class Py3statusWrapper:
             self.load_modules(self.py3_modules, user_modules)
 
         # determine the target output format
-        self.output_format = self.config["py3_config"]["general"]["output_format"]
+        self.output_format = OutputFormat.instance_for(
+            self.config["py3_config"]["general"]["output_format"]
+        )
 
         # determine the output separator, if needed
-        self.separator = None
-        if self.output_format in OUTPUT_FORMAT_NEEDS_SEPARATOR:
-            default_separator = DEFAULT_SEPARATOR.get(self.output_format, " | ")
-            self.separator = self.config["py3_config"]["general"].get(
-                "separator", default_separator
-            )
-            if self.config["py3_config"]["general"]["colors"]:
-                self.separator = self.format_separator(
-                    self.separator,
-                    self.config["py3_config"]["general"]["color_separator"],
-                )
+        color_separator = None
+        if self.config["py3_config"]["general"]["colors"]:
+            color_separator = self.config["py3_config"]["general"]["color_separator"]
+        self.output_format.format_separator(
+            self.config["py3_config"]["general"].get("separator", None),
+            color_separator,
+        )
 
     def notify_user(
         self,
@@ -1016,53 +1013,6 @@ class Py3statusWrapper:
         # Store mappings for later use.
         self.mappings_color = mappings
 
-    def format_color(self, output):
-        """
-        Format the output of a module according to the value of output_format.
-        """
-        full_text = output["full_text"]
-        if "color" in output:
-            if self.output_format == "dzen2":
-                full_text = f"^fg({output['color']})" + output["full_text"]
-            if self.output_format == "xmobar":
-                full_text = f"<fc={output['color']}>{output['full_text']}</fc>"
-            if self.output_format == "lemonbar":
-                full_text = f"%{{F{output['color']}}}" + output["full_text"]
-            if self.output_format == "tmux":
-                full_text = f"#[fg={output['color'].lower()}]" + output["full_text"]
-            if self.output_format == "term":
-                col = int(output["color"][1:], 16)
-                r = (col & (0xFF << 0)) // 0x80
-                g = (col & (0xFF << 8)) // 0x8000
-                b = (col & (0xFF << 16)) // 0x800000
-                col = (r << 2) | (g << 1) | b
-                full_text = f"\033[3{col};1m" + output["full_text"]
-            if self.output_format == "none":
-                pass  # colors are ignored
-        return full_text
-
-    def format_separator(self, separator, color_separator):
-        """
-        Format the output separator according to the value of output_format.
-        """
-        if self.output_format == "dzen2":
-            return f"^fg({color_separator}){separator}^fg()"
-        if self.output_format == "xmobar":
-            return f"<fc={color_separator}>{separator}</fc>"
-        if self.output_format == "lemonbar":
-            return f"%{{F{color_separator}}}{separator}%{{F-}}"
-        if self.output_format == "tmux":
-            return f"#[fg={color_separator}]{separator}#[default]"
-        if self.output_format == "term":
-            col = int(color_separator[1:], 16)
-            r = (col & (0xFF << 0)) // 0x80
-            g = (col & (0xFF << 8)) // 0x8000
-            b = (col & (0xFF << 16)) // 0x800000
-            col = (r << 2) | (g << 1) | b
-            return f"\033[3{col};1m{separator}\033[0m"
-        else:  # output_format == "none"
-            return separator  # color_separator is ignored
-
     def process_module_output(self, module):
         """
         Process the output for a module and return a json string representing it.
@@ -1079,15 +1029,8 @@ class Py3statusWrapper:
                     # Color: substitute the config defined color
                     if "color" not in output:
                         output["color"] = color
-        # concatenate string output, if needed.
-        if self.output_format in OUTPUT_FORMAT_NEEDS_SEPARATOR:
-            # FIXME: `output_format = none` in config will default to i3bar.
-            # `output_format = "none"` is required instead. this is different
-            # in i3status, which behaves correctly for `output_status = none`
-            return "".join(self.format_color(x) for x in outputs)
-        # otherwise create the json string output.
-        else:
-            return ",".join(dumps(x) for x in outputs)
+        # format output and return
+        return self.output_format.format(outputs)
 
     def i3bar_stop(self, signum, frame):
         if (
@@ -1160,18 +1103,13 @@ class Py3statusWrapper:
         # items in the bar
         output = [None] * len(py3_config["order"])
 
-        write = sys.__stdout__.write
-        flush = sys.__stdout__.flush
-
         # start our output
         header = {
             "version": 1,
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        if self.output_format not in OUTPUT_FORMAT_NEEDS_SEPARATOR:
-            write(dumps(header))
-            write("\n[[]\n")
+        self.output_format.write_header(header)
 
         update_due = None
         # main loop
@@ -1199,10 +1137,4 @@ class Py3statusWrapper:
                         output[index] = out
 
                 # build output string and dump to stdout
-                if self.output_format in OUTPUT_FORMAT_NEEDS_SEPARATOR:
-                    out = self.separator.join(x for x in output if x)
-                    write(f"{out}\n")
-                else:
-                    out = ",".join(x for x in output if x)
-                    write(f",[{out}]\n")
-                flush()
+                self.output_format.write_line(output)
