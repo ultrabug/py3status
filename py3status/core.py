@@ -408,7 +408,8 @@ class Py3statusWrapper:
             new_update_due = self.timeout_due - time.monotonic()
             if new_update_due < 0:
                 self.log(
-                    f"prevented negative update time ({new_update_due})", level="warning"
+                    f"prevented negative update time ({new_update_due})",
+                    level="warning",
                 )
             else:
                 return new_update_due
