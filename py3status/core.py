@@ -277,6 +277,7 @@ class Py3statusWrapper:
         self.timeout_missed = {}
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
+        self.timeout_queue_lookup_previous = {}
         self.timeout_running = set()
         self.timeout_update_due = deque()
 
@@ -292,6 +293,14 @@ class Py3statusWrapper:
         # update request is due then trigger an update now.
         if self.timeout_due is None or cache_time < self.timeout_due:
             self.update_request.set()
+
+    def clear_timeout_due(self, module):
+        old = self.timeout_queue_lookup_previous.get(module, None)
+        if old and old == self.timeout_due:
+            if len(self.timeout_keys):
+                self.timeout_due = self.timeout_keys[0]
+            else:
+                self.timeout_due = None
 
     def timeout_process_add_queue(self, module, cache_time):
         """
@@ -338,6 +347,7 @@ class Py3statusWrapper:
                 self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
             self.timeout_queue_lookup[module] = cache_time
+            self.timeout_queue_lookup_previous[module] = cache_time
 
     def timeout_queue_process(self):
         """
