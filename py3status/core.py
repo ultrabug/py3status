@@ -296,10 +296,14 @@ class Py3statusWrapper:
 
     def clear_timeout_due(self, module):
         old = self.timeout_queue_lookup_previous.get(module, None)
-        if old and old == self.timeout_due:
-            self.set_new_timeout_due()
+        if old:
+            if old == self.timeout_due:
+                self._set_new_timeout_due()
+            elif old in self.timeout_keys:
+                self.timeout_keys.remove(old)
+                self._set_new_timeout_due()
 
-    def set_new_timeout_due(self):
+    def _set_new_timeout_due(self):
         # sort keys so earliest is first
         self.timeout_keys.sort()
 
@@ -343,7 +347,7 @@ class Py3statusWrapper:
                 self.timeout_queue[cache_time] = {module}
                 self.timeout_keys.append(cache_time)
 
-                self.set_new_timeout_due()
+                self._set_new_timeout_due()
             else:
                 self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
