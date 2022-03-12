@@ -12,7 +12,7 @@ Configuration parameters:
         (default None)
     cache_timeout: how often we refresh this module in seconds
         (default 15)
-    convert_decimal_number: convert numbers to a numeric type
+    convert_numbers: convert decimal numbers to a numeric type
         (default True)
     format: see placeholders below (default '{output}')
     localize: should script output be localized (if available)
@@ -55,7 +55,7 @@ class Py3status:
     # available configuration parameters
     button_show_notification = None
     cache_timeout = 15
-    convert_decimal_number = True
+    convert_numbers = True
     format = "{output}"
     localize = True
     script_path = None
@@ -94,7 +94,7 @@ class Py3status:
             #     format = "file is [\?if=output>10 big|small]"
             #     script_path = "cat /tmp/my_file | wc -l"
             # }
-            if self.convert_decimal_number is True:
+            if self.convert_numbers is True:
                 try:
                     output = int(output)
                 except ValueError:
