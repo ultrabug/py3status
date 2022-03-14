@@ -421,14 +421,7 @@ class Py3statusWrapper:
         # we return how long till we next need to process the timeout_queue
         # this value should not be negative to avoid cpu overwhelming loops
         if self.timeout_due is not None:
-            new_update_due = self.timeout_due - time.monotonic()
-            if new_update_due < 0:
-                self.log(
-                    f"prevented negative update time ({new_update_due})",
-                    level="warning",
-                )
-            else:
-                return new_update_due
+            return max(0, self.timeout_due - time.monotonic())
 
     def gevent_monkey_patch_report(self):
         """
