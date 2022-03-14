@@ -329,7 +329,7 @@ class Py3statusWrapper:
             return
 
         # remove if already in the queue
-        key = self.timeout_queue_lookup.get(module)
+        key = self.timeout_queue_lookup.get(module, None)
         if key:
             queue_item = self.timeout_queue[key]
             queue_item.remove(module)
@@ -340,7 +340,8 @@ class Py3statusWrapper:
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
             self.timeout_update_due.append(module)
-            self.timeout_queue_lookup[module] = None
+            if module in self.timeout_queue_lookup.keys():
+                del self.timeout_queue_lookup[module]
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
