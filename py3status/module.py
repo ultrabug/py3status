@@ -1055,6 +1055,7 @@ class Module:
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
             if cache_time == Py3.CACHE_FOREVER:
+                self._py3_wrapper.clear_timeout_due(self)
                 return
             # don't be hasty mate
             # set timeout to do update next time one is needed

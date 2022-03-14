@@ -277,6 +277,7 @@ class Py3statusWrapper:
         self.timeout_missed = {}
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
+        self.timeout_queue_lookup_previous = {}
         self.timeout_running = set()
         self.timeout_update_due = deque()
 
@@ -292,6 +293,25 @@ class Py3statusWrapper:
         # update request is due then trigger an update now.
         if self.timeout_due is None or cache_time < self.timeout_due:
             self.update_request.set()
+
+    def clear_timeout_due(self, module):
+        old = self.timeout_queue_lookup_previous.get(module, None)
+        if old:
+            if old == self.timeout_due:
+                self._set_new_timeout_due()
+            elif old in self.timeout_keys:
+                self.timeout_keys.remove(old)
+                self._set_new_timeout_due()
+
+    def _set_new_timeout_due(self):
+        # sort keys so earliest is first
+        self.timeout_keys.sort()
+
+        # when is next timeout due?
+        try:
+            self.timeout_due = self.timeout_keys[0]
+        except IndexError:
+            self.timeout_due = None
 
     def timeout_process_add_queue(self, module, cache_time):
         """
@@ -309,7 +329,7 @@ class Py3statusWrapper:
             return
 
         # remove if already in the queue
-        key = self.timeout_queue_lookup.get(module)
+        key = self.timeout_queue_lookup.get(module, None)
         if key:
             queue_item = self.timeout_queue[key]
             queue_item.remove(module)
@@ -320,24 +340,20 @@ class Py3statusWrapper:
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
             self.timeout_update_due.append(module)
-            self.timeout_queue_lookup[module] = None
+            if module in self.timeout_queue_lookup.keys():
+                del self.timeout_queue_lookup[module]
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
                 self.timeout_queue[cache_time] = {module}
                 self.timeout_keys.append(cache_time)
-                # sort keys so earliest is first
-                self.timeout_keys.sort()
 
-                # when is next timeout due?
-                try:
-                    self.timeout_due = self.timeout_keys[0]
-                except IndexError:
-                    self.timeout_due = None
+                self._set_new_timeout_due()
             else:
                 self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
             self.timeout_queue_lookup[module] = cache_time
+            self.timeout_queue_lookup_previous[module] = cache_time
 
     def timeout_queue_process(self):
         """
