@@ -1,3 +1,10 @@
+version 3.42 (2022-03-14)
+* core: fix root cause of negative update_due (#2109), by Valdur Kana
+* external_script module: add option 'convert_numbers' to preserve number formatting (#2101), by Nicolas Kuttler
+* khal_calendar module: add option to limit the number of returned calendar entries (#2103), by Andreas Grapentin
+* mpris module: total rework with bug fixes (#2077), by Valdur Kana
+* weather_own module: fix onecall when city is specified thx to @mlmatlock
+
 version 3.41 (2022-02-27)
 * core: drop and log negative new_update_due which causes high cpu load and endless loop (closses #2085) (#2092), by Valdur Kana
 * core: switch from time.perf_counter to time.monotonic (#2099)
