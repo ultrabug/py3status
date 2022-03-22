@@ -23,6 +23,7 @@ Configuration parameters:
     icon_play: specify icon for play button (default u'\u25b7')
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
+    max_width: maximum status length (default None)
     player_hide_non_canplay: Experimental. Used to hide chrome/chromium players on idle state. Add 'chromium' into list and try. (default [])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
@@ -376,6 +377,7 @@ class Py3status:
     icon_play = "\u25b7"
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
+    max_width = None
     player_hide_non_canplay = []
     player_priority = []
     state_pause = "\u25eb"
@@ -686,7 +688,9 @@ class Py3status:
                 placeholders = {"state": current_state_map["state_icon"]}
                 color = current_state_map["color"]
                 composite = self.py3.safe_format(
-                    self.format, dict(self._empty_response, **placeholders, **data)
+                    self.format,
+                    dict(self._empty_response, **placeholders, **data),
+                    max_width=self.max_width,
                 )
             else:
                 # The player changed during our processing
