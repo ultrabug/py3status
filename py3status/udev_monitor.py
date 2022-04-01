@@ -75,6 +75,8 @@ class UdevMonitor:
         """
         Refresh all modules which subscribed to the given subsystem.
         """
+        if not self.py3_wrapper.i3bar_running:
+            return
         for py3_module, trigger_action in self.udev_consumers[subsystem]:
             if trigger_action in ON_TRIGGER_ACTIONS:
                 self.py3_wrapper.log(
