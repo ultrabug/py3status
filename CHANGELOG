@@ -1,3 +1,12 @@
+version 3.43 (2022-04-01)
+* core: rework SIGSTP inhibition to support both #2068 and #2107
+* formatter: pango markup should escape all html character
+* py3.safe_format: add information about invalid format
+* py3.safe_format: implement a generic max_width parameter
+* requirements: fix click dependency with black
+* udev monitor: don't trigger actions when i3bar refresh is stopped
+* weather_owm module: dont use onecall for better current day forecast (#2112)
+
 version 3.42 (2022-03-14)
 * core: fix root cause of negative update_due (#2109), by Valdur Kana
 * external_script module: add option 'convert_numbers' to preserve number formatting (#2101), by Nicolas Kuttler
