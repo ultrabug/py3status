@@ -1,12 +1,11 @@
 import re
-
+from html import escape
 from math import ceil
 from numbers import Number
+from urllib.parse import parse_qsl
 
 from py3status.composite import Composite
 from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
-
-from urllib.parse import parse_qsl
 
 
 def expand_color(color, default=None, passthrough=False, block=None):
@@ -700,9 +699,9 @@ class Block:
                 out[0]["full_text"] = " " * min_length + out[0]["full_text"]
                 min_length = 0
 
-        # support pango special characters
+        # support pango special characters as HTML
         for item in out:
-            if item.get("markup") == "pango" and "&" in item.get("full_text", ""):
-                item["full_text"] = item["full_text"].replace("&", "&amp;")
+            if item.get("markup") == "pango":
+                item["full_text"] = escape(item["full_text"])
 
         return valid, out
