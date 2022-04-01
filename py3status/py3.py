@@ -864,9 +864,9 @@ class Py3:
                         chars_left -= len(composite["full_text"])
                         chars_left = max(0, chars_left)
             return result
-        except Exception:
-            self._report_exception(f"Invalid format `{format_string}`")
-            return "invalid format"
+        except Exception as err:
+            self._report_exception(f"Invalid format `{format_string}` ({err})")
+            return f"invalid format ({err})"
 
     def build_composite(
         self, format_string, param_dict=None, composites=None, attr_getter=None
