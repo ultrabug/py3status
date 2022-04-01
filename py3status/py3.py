@@ -858,6 +858,8 @@ class Py3:
                 elif isinstance(result, Composite):
                     chars_left = max_width
                     for composite in result:
+                        if "index" in composite:
+                            continue
                         composite["full_text"] = composite["full_text"][:chars_left]
                         chars_left -= len(composite["full_text"])
                         chars_left = max(0, chars_left)
