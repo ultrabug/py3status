@@ -251,7 +251,7 @@ class Py3statusWrapper:
         """
         self.config = vars(options)
         self.i3bar_running = True
-        self.i3bar_inhibit_stp = time.time()
+        self.last_loop_ts = time.monotonic()
         self.last_refresh_ts = time.monotonic()
         self.lock = Event()
         self.modules = {}
@@ -990,18 +990,17 @@ class Py3statusWrapper:
         return ",".join(dumps(x) for x in outputs)
 
     def i3bar_stop(self, signum, frame):
-        if time.time() - self.i3bar_inhibit_stp > 1:
+        if time.monotonic() - self.last_loop_ts < 1:
             self.log(f"received stop_signal {Signals(signum).name}")
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
             self.sleep_modules()
         else:
-            self.log(f"inhibited stop_signal {Signals(signum).name}")
+            self.log(f"inhibited stop_signal {Signals(signum).name}", level="warning")
 
     def i3bar_start(self, signum, frame):
-        self.log(f"received resume signal {Signals(signum).name}")
-        self.i3bar_inhibit_stp = time.time()
+        self.last_loop_ts = time.monotonic()
         self.i3bar_running = True
         self.wake_modules()
 
@@ -1073,6 +1072,8 @@ class Py3statusWrapper:
 
             while not self.i3bar_running:
                 time.sleep(0.1)
+
+            self.last_loop_ts = time.monotonic()
 
             # check if an update is needed
             if self.update_queue:
