@@ -1000,6 +1000,7 @@ class Py3statusWrapper:
             self.log(f"inhibited stop_signal {Signals(signum).name}", level="warning")
 
     def i3bar_start(self, signum, frame):
+        self.log(f"received resume signal {Signals(signum).name}")
         self.last_loop_ts = time.monotonic()
         self.i3bar_running = True
         self.wake_modules()
