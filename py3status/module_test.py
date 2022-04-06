@@ -54,6 +54,9 @@ class MockPy3statusWrapper:
     def timeout_queue_add(self, *arg, **kw):
         pass
 
+    def clear_timeout_due(self, *arg, **kw):
+        pass
+
     def log(self, *arg, **kw):
         print(arg[0])
 
