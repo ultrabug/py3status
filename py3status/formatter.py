@@ -1,5 +1,4 @@
 import re
-from html import escape
 from math import ceil
 from numbers import Number
 from urllib.parse import parse_qsl
@@ -698,10 +697,5 @@ class Block:
             if min_length > 0:
                 out[0]["full_text"] = " " * min_length + out[0]["full_text"]
                 min_length = 0
-
-        # support pango special characters as HTML
-        for item in out:
-            if item.get("markup") == "pango":
-                item["full_text"] = escape(item["full_text"])
 
         return valid, out
