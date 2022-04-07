@@ -148,11 +148,13 @@ class Player:
         self._player_shortname = name_from_id
         self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._full_name = f"{self._identity} {self._identity_index}"
-        self._hide_non_canplay = self._player_shortname in self.parent.player_hide_non_canplay
+        self._hide_non_canplay = (
+            self._player_shortname in self.parent.player_hide_non_canplay
+        )
 
         self._placeholders = {
             "player": self._identity,
-            'player_shortname': self._player_shortname,
+            "player_shortname": self._player_shortname,
             # for debugging ;p
             "full_name": self._full_name,
         }
