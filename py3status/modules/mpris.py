@@ -38,6 +38,7 @@ Format placeholders:
     {artist} artiste name (first one)
     {length} time duration of the song
     {player} show name of the player
+    {player_shortname} show name of the player from busname (usually command line name)
     {state} playback status of the player
     {time} played time of the song
     {title} name of the song
