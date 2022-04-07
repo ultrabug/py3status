@@ -136,7 +136,7 @@ class Player:
         self._id = player_id
         self.parent = parent
         self._name_with_instance = name_with_instance
-        self._player_name = identity
+        self._identity = identity
         self._identity_index = identity_index
         self._name_priority = name_priority
         self._metadata = {}
@@ -144,13 +144,14 @@ class Player:
         self._buttons = {}
         self._properties_changed_match = None
         self._state = None
-        self._name = name_from_id
+        self._player_shortname = name_from_id
         self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
-        self._full_name = f"{self._player_name} {self._identity_index}"
-        self._hide_non_canplay = self._name in self.parent.player_hide_non_canplay
+        self._full_name = f"{self._identity} {self._identity_index}"
+        self._hide_non_canplay = self._player_shortname in self.parent.player_hide_non_canplay
 
         self._placeholders = {
-            "player": self._player_name,
+            "player": self._identity,
+            'player_shortname': self._player_shortname,
             # for debugging ;p
             "full_name": self._full_name,
         }
