@@ -192,7 +192,7 @@ class Py3status:
             try:
                 import locale
                 self.locale = [locale.getdefaultlocale()[0].lower().replace('_', '-')]
-            except:
+            except (ModuleNotFoundError, IndexError):
                 pass
 
         if not 'en-us' in self.locale:
