@@ -154,6 +154,7 @@ import httplib2
 import datetime
 import time
 from pathlib import Path
+from html import escape
 
 try:
     from googleapiclient import discovery
@@ -411,7 +412,7 @@ class Py3status:
 
             event_dict = {}
 
-            event_dict["summary"] = event.get("summary")
+            event_dict["summary"] = escape(event.get("summary"))
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
             self.event_urls.append(
