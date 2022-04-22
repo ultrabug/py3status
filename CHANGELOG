@@ -1,3 +1,13 @@
+version 3.44 (2022-04-22)
+* IMPORTANT: python3.6 support will be removed on next release
+* core: handle SIGTSTP/SIGCONT better for after sleep freezes
+* formatter: stop escaping html characters on pango markup (#2122), by lasers
+* module_test: add clear_timeout_due (#2119), by lasers
+* udev monitor: implement udev events throttling with warnings
+* google_calendar module: escape html on event summary for pango
+* mpris module: add player_shortname placeholder for displaying player busname (#2120), by Valdur Kana
+* xrandr module: fix missing " at the end of documentation line. (#2121), by Valdur Kana
+
 version 3.43 (2022-04-01)
 * core: rework SIGSTP inhibition to support both #2068 and #2107
 * formatter: pango markup should escape all html character
