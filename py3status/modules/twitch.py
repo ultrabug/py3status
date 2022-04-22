@@ -12,14 +12,21 @@ Configuration parameters:
         (default "{display_name} is live!")
     format_offline: Display format when offline
         (default "{display_name} is offline.")
+    format_tag: Tag formatting
+        (default "[\\?color=low {name}]")
+    locale: List of locales to try for tag translations, eg. ["cs-cz", "en-uk", "en-us"]
+        (default auto-detect from environment, with a fallback to "en-us")
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
+    tag_delimiter: string to write between tags
+        (default " ")
     trace: enable trace level debugging
         (default False)
 
-Format placeholders:
+Stream format placeholders:
     {display_name} User's display name., eg Ultrabug
     {is_streaming} (bool) True if streaming, fields prefixed with stream_ are available.
+    {tags} List of tags
     {user_id} User's id
     {user_login} User's login name, eg xisumavoid
     {user_display_name} (same as {display_name})
@@ -41,6 +48,10 @@ Format placeholders:
     {stream_is_mature} Indicates if the broadcaster has specified their channel contains mature content that may be inappropriate for younger audiences.
     {stream_runtime} (string) Stream runtime as a human readable, non-localized string. eg "3h 5m"
     {stream_runtime_seconds} (int) Stream runtime in seconds.
+
+Tag format placeholders: (see locale)
+    {name} The tag name
+    {desc} The tag description
 
 Color options:
     color_bad: Stream offline
@@ -88,7 +99,10 @@ class Py3status:
     client_secret = None
     format = "{display_name} is live!"
     format_offline = "{display_name} is offline."
+    format_tag = "{name}"
+    locale = []
     stream_name = None
+    tag_delimiter = " "
     trace = False
 
     class Meta:
@@ -152,19 +166,37 @@ class Py3status:
         self.url = {
             "users": base_api + f"users/?login={self.stream_name}",
             "streams": base_api + f"streams/?user_login={self.stream_name}",
+            "tags": base_api + f"streams/tags",
         }
 
         self.user = {}
         self._token = self.py3.storage_get("oauth_token")
 
-        if not self.py3.format_contains(self.format, "tags") and not self.py3.format_contains(self.format_offline, "tags"):
+        if self.locale is False:
+            return
+
+        have_tags = (
+            self.py3.format_contains(self.format, "tags") or
+            # it doesn't make any sense here... but we'll check
+            self.py3.format_contains(self.format_offline, "tags")
+        )
+
+        if not have_tags:
             self.locale = False
-        elif len(self.locale) == 0:
+            return
+
+        if not isinstance(self.locale, list):
+            self.locale = [x for x in [str(self.locale)] if x]
+
+        if len(self.locale) == 0:
             try:
                 import locale
-                self.locale = [locale.getdefaultlocale()[0].lower().replace('_', '-'), 'en-us']
+                self.locale = [locale.getdefaultlocale()[0].lower().replace('_', '-')]
             except:
-                self.locale = ['en-us']
+                pass
+
+        if not 'en-us' in self.locale:
+            self.locale.append('en-us')
 
     def _get_twitch_data(self, url, first=True):
         try:
@@ -189,6 +221,35 @@ class Py3status:
             cursor = data["pagination"]["cursor"]
 
         return data["data"], cursor
+
+    def _get_tags(self, user_id, cursor=None):
+        if self.locale is False:
+            return self.py3.composite_create([])
+
+        url = self.url["tags"] + f"?broadcaster_id={user_id}"
+
+        if cursor is not None:
+            url = f"{url}&after={cursor}"
+
+        self._trace(f"fetching tags, page={cursor}")
+
+        tags = []
+        page, next_cursor = self._get_twitch_data(url, first=False)
+        if page:
+            for tag in page:
+                tag_data = {}
+                for l in self.locale:
+                    if l in tag["localization_names"] and "name" not in tag_data:
+                        tag_data["name"] = tag["localization_names"][l]
+                    if l in tag["localization_descriptions"] and "desc" not in tag_data:
+                        tag_data["desc"] = tag["localization_descriptions"][l]
+                if tag_data:
+                    tags.append(self.py3.safe_format(self.format_tag, tag_data))
+
+        if next_cursor:
+            tags.append(*self._get_tags(user_id, next_cursor))
+
+        return tags
 
     def twitch(self):
         if not self.user:
@@ -228,6 +289,7 @@ class Py3status:
             current_format = self.format_offline
 
         twitch_data = self.py3.flatten_dict(twitch_data, delimiter="_")
+        twitch_data["tags"] = self.py3.composite_join(self.tag_delimiter, self._get_tags(self.user["id"]))
 
         self._trace("fields available: {}".format(list(twitch_data.keys())))
 
@@ -252,7 +314,10 @@ if __name__ == "__main__":
         "client_id": getenv("TWITCH_CLIENT_ID"),
         "client_secret": getenv("TWITCH_CLIENT_SECRET"),
         "stream_name": "xisumavoid",
-        "format": "{display_name} is playing {stream_game_name} for {stream_runtime} with title '{stream_title}'\n\tlanguage: {stream_language}\n\tviewers: {stream_viewer_count}",
+        "format": "{display_name} is playing {stream_game_name} for {stream_runtime} with title '{stream_title}'\n\tlanguage: {stream_language}\n\tviewers: {stream_viewer_count}\n\ttags:\n{tags}",
+        "format_tag": "\t\t{name} -> {desc}",
+        "tag_delimiter": "\n",
+        "locale": 'invalid',
 
         "trace": True,
     }
