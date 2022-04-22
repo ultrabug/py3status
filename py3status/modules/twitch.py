@@ -80,14 +80,16 @@ STRING_MISSING = "missing {}"
 
 import time, datetime
 
+
 def time_since(s):
-    ts = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ').timestamp()
+    ts = datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").timestamp()
     seconds = int(datetime.datetime.utcnow().timestamp() - ts)
     if seconds > 3600:
-        return "%dh %dm" % (seconds/3600, (seconds%3600)/60), seconds
+        return "%dh %dm" % (seconds / 3600, (seconds % 3600) / 60), seconds
     if seconds > 60:
-        return "%dm" % (seconds/60), seconds
+        return "%dm" % (seconds / 60), seconds
     return "0m", seconds
+
 
 class Py3status:
     """
@@ -131,7 +133,7 @@ class Py3status:
         auth_request = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-            "grant_type": "client_credentials"
+            "grant_type": "client_credentials",
         }
 
         try:
@@ -176,7 +178,8 @@ class Py3status:
             return
 
         have_tags = (
-            self.py3.format_contains(self.format, "tags") or
+            self.py3.format_contains(self.format, "tags")
+            or
             # it doesn't make any sense here... but we'll check
             self.py3.format_contains(self.format_offline, "tags")
         )
@@ -191,12 +194,13 @@ class Py3status:
         if len(self.locale) == 0:
             try:
                 import locale
-                self.locale = [locale.getdefaultlocale()[0].lower().replace('_', '-')]
+
+                self.locale = [locale.getdefaultlocale()[0].lower().replace("_", "-")]
             except (ModuleNotFoundError, IndexError):
                 pass
 
-        if not 'en-us' in self.locale:
-            self.locale.append('en-us')
+        if not "en-us" in self.locale:
+            self.locale.append("en-us")
 
     def _get_twitch_data(self, url, first=True):
         try:
@@ -259,7 +263,7 @@ class Py3status:
         twitch_data = {
             "user": self.user,
             # ensure display name is still there, deprecate+remove later?
-            "display_name": self.user["display_name"]
+            "display_name": self.user["display_name"],
         }
         current_format = ""
         color = None
@@ -277,7 +281,9 @@ class Py3status:
             del stream["user_name"]
 
             # calculate runtime and  update data dict
-            stream["runtime"], stream["runtime_seconds"] = time_since(stream["started_at"])
+            stream["runtime"], stream["runtime_seconds"] = time_since(
+                stream["started_at"]
+            )
             twitch_data["stream"] = stream
             twitch_data["is_streaming"] = True
 
@@ -289,7 +295,9 @@ class Py3status:
             current_format = self.format_offline
 
         twitch_data = self.py3.flatten_dict(twitch_data, delimiter="_")
-        twitch_data["tags"] = self.py3.composite_join(self.tag_delimiter, self._get_tags(self.user["id"]))
+        twitch_data["tags"] = self.py3.composite_join(
+            self.tag_delimiter, self._get_tags(self.user["id"])
+        )
 
         self._trace("fields available: {}".format(list(twitch_data.keys())))
 
@@ -302,6 +310,7 @@ class Py3status:
             response["color"] = color
 
         return response
+
 
 if __name__ == "__main__":
     """
@@ -317,8 +326,7 @@ if __name__ == "__main__":
         "format": "{display_name} is playing {stream_game_name} for {stream_runtime} with title '{stream_title}'\n\tlanguage: {stream_language}\n\tviewers: {stream_viewer_count}\n\ttags:\n{tags}",
         "format_tag": "\t\t{name} -> {desc}",
         "tag_delimiter": "\n",
-        "locale": 'invalid',
-
+        "locale": "invalid",
         "trace": True,
     }
 
