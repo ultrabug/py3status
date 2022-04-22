@@ -13,9 +13,9 @@ Configuration parameters:
     format_offline: Display format when offline
         (default "{display_name} is offline.")
     format_tag: Tag formatting
-        (default "[\\?color=low {name}]")
-    locale: List of locales to try for tag translations, eg. ["cs-cz", "en-uk", "en-us"]
-        (default auto-detect from environment, with a fallback to "en-us")
+        (default "{name}")
+    locale: List of locales to try for tag translations, eg. ["cs-cz", "en-uk", "en-us"]. If none is specified, auto-detect from environment, with a fallback to "en-us".
+        (default [])
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
     tag_delimiter: string to write between tags
@@ -76,9 +76,10 @@ offline
 {'color': '#FF0000', 'full_text': 'exotic_bug is offline!'}
 """
 
-STRING_MISSING = "missing {}"
+import time
+import datetime
 
-import time, datetime
+STRING_MISSING = "missing {}"
 
 
 def time_since(s):
@@ -168,7 +169,7 @@ class Py3status:
         self.url = {
             "users": base_api + f"users/?login={self.stream_name}",
             "streams": base_api + f"streams/?user_login={self.stream_name}",
-            "tags": base_api + f"streams/tags",
+            "tags": base_api + "streams/tags",
         }
 
         self.user = {}
@@ -199,7 +200,7 @@ class Py3status:
             except (ModuleNotFoundError, IndexError):
                 pass
 
-        if not "en-us" in self.locale:
+        if "en-us" not in self.locale:
             self.locale.append("en-us")
 
     def _get_twitch_data(self, url, first=True):
@@ -242,11 +243,14 @@ class Py3status:
         if page:
             for tag in page:
                 tag_data = {}
-                for l in self.locale:
-                    if l in tag["localization_names"] and "name" not in tag_data:
-                        tag_data["name"] = tag["localization_names"][l]
-                    if l in tag["localization_descriptions"] and "desc" not in tag_data:
-                        tag_data["desc"] = tag["localization_descriptions"][l]
+                for loc in self.locale:
+                    if loc in tag["localization_names"] and "name" not in tag_data:
+                        tag_data["name"] = tag["localization_names"][loc]
+                    if (
+                        loc in tag["localization_descriptions"]
+                        and "desc" not in tag_data
+                    ):
+                        tag_data["desc"] = tag["localization_descriptions"][loc]
                 if tag_data:
                     tags.append(self.py3.safe_format(self.format_tag, tag_data))
 
@@ -257,7 +261,7 @@ class Py3status:
 
     def twitch(self):
         if not self.user:
-            self._trace(f"fetching user")
+            self._trace("fetching user")
             self.user = self._get_twitch_data(self.url["users"])
 
         twitch_data = {
@@ -268,7 +272,7 @@ class Py3status:
         current_format = ""
         color = None
 
-        self._trace(f"fetching stream data")
+        self._trace("fetching stream data")
         stream = self._get_twitch_data(self.url["streams"])
         if stream and "type" in stream and stream["type"] == "live":
             # this is always "live" if the stream is healthy
