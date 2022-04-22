@@ -6,15 +6,41 @@ Configuration parameters:
         (default 60)
     client_id: Your client id. Create your own key at https://dev.twitch.tv
         (default None)
+    client_secret: Your client secret.
+        (default None)
     format: Display format when online
         (default "{display_name} is live!")
     format_offline: Display format when offline
         (default "{display_name} is offline.")
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
+    trace: enable trace level debugging
+        (default False)
 
 Format placeholders:
-    {display_name} streamer display name, eg Ultrabug
+    {display_name} User's display name., eg Ultrabug
+    {is_streaming} (bool) True if streaming, fields prefixed with stream_ are available.
+    {user_id} User's id
+    {user_login} User's login name, eg xisumavoid
+    {user_display_name} (same as {display_name})
+    {user_type} "staff", "admin", "global_mod", or ""
+    {user_broadcaster_type} "partner", "affiliate", or "".
+    {user_description} User's channel description.
+    {user_profile_image_url} URL of the user's profile image.
+    {user_offline_image_url} URL of the user's offline image.
+    {user_view_count} Total number of views of the user's channel.
+    {user_created_at} Date when the user was created.
+    {stream_id} Stream ID.
+    {stream_game_id} ID of the game being played on the stream.
+    {stream_game_name} Name of the game being played.
+    {stream_title} Stream title.
+    {stream_viewer_count} Number of viewers watching the stream at the time of last update.
+    {stream_started_at} Stream start UTC timestamp.
+    {stream_language} Stream language. A language value is either the ISO 639-1 two-letter code or “other”.
+    {stream_thumbnail_url} Thumbnail URL of the stream. All image URLs have variable width and height. You can replace {width} and {height} with any values to get that size image
+    {stream_is_mature} Indicates if the broadcaster has specified their channel contains mature content that may be inappropriate for younger audiences.
+    {stream_runtime} (string) Stream runtime as a human readable, non-localized string. eg "3h 5m"
+    {stream_runtime_seconds} (int) Stream runtime in seconds.
 
 Color options:
     color_bad: Stream offline
@@ -29,6 +55,7 @@ Client ID:
 
 
 @author Alex Caswell horatioesf@virginmedia.com
+@author Julian Picht julian.picht@gmail.com
 @license BSD
 
 SAMPLE OUTPUT
@@ -40,6 +67,16 @@ offline
 
 STRING_MISSING = "missing {}"
 
+import time, datetime
+
+def time_since(s):
+    ts = datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ').timestamp()
+    seconds = int(datetime.datetime.utcnow().timestamp() - ts)
+    if seconds > 3600:
+        return "%dh %dm" % (seconds/3600, (seconds%3600)/60), seconds
+    if seconds > 60:
+        return "%dm" % (seconds/60), seconds
+    return "0m", seconds
 
 class Py3status:
     """
@@ -48,9 +85,11 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 60
     client_id = None
+    client_secret = None
     format = "{display_name} is live!"
     format_offline = "{display_name} is offline."
     stream_name = None
+    trace = False
 
     class Meta:
         deprecated = {
@@ -64,23 +103,74 @@ class Py3status:
             ],
         }
 
+    def _trace(self, msg):
+        if not self.trace:
+            return
+        self.py3.log(msg, self.py3.LOG_INFO)
+
+    def _refresh_token(self):
+        if self._token and self._token["expires"] > time.time():
+            return
+
+        self._trace("refreshing twitch oauth token")
+        auth_endpoint = "https://id.twitch.tv/oauth2/token"
+        auth_request = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "grant_type": "client_credentials"
+        }
+
+        try:
+            response = self.py3.request(auth_endpoint, data=auth_request)
+        except self.py3.RequestException:
+            return {}
+
+        data = response.json()
+        if not data:
+            data = vars(response)
+            error = data.get("_error_message")
+            if error:
+                self.py3.error("{} {}".format(error, data["_status_code"]))
+
+        self._token = data
+        self._token["expires"] = time.time() + self._token["expires_in"] - 60
+        self.py3.storage_set("oauth_token", self._token)
+
+    def _headers(self):
+        self._refresh_token()
+        return {
+            "Authorization": "Bearer " + self._token["access_token"],
+            "Client-ID": self.client_id,
+        }
+
     def post_config_hook(self):
-        for config_name in ["client_id", "stream_name"]:
+        for config_name in ["client_id", "client_secret", "stream_name"]:
             if not getattr(self, config_name, None):
                 raise Exception(STRING_MISSING.format(config_name))
 
-        self.headers = {"Client-ID": self.client_id}
-        base_api = "https://api.twitch.tv/kraken/"
+        base_api = "https://api.twitch.tv/helix/"
         self.url = {
-            "users": base_api + f"users/{self.stream_name}",
-            "streams": base_api + f"streams/{self.stream_name}",
+            "users": base_api + f"users/?login={self.stream_name}",
+            "streams": base_api + f"streams/?user_login={self.stream_name}",
         }
-        self.users = {}
 
-    def _get_twitch_data(self, url):
+        self.user = {}
+        self._token = self.py3.storage_get("oauth_token")
+
+        if not self.py3.format_contains(self.format, "tags") and not self.py3.format_contains(self.format_offline, "tags"):
+            self.locale = False
+        elif len(self.locale) == 0:
+            try:
+                import locale
+                self.locale = [locale.getdefaultlocale()[0].lower().replace('_', '-'), 'en-us']
+            except:
+                self.locale = ['en-us']
+
+    def _get_twitch_data(self, url, first=True):
         try:
-            response = self.py3.request(url, headers=self.headers)
-        except self.py3.RequestException:
+            response = self.py3.request(url, headers=self._headers())
+        except self.py3.RequestException as e:
+            self.py3.error(f"get({url}): exception={e}")
             return {}
         data = response.json()
         if not data:
@@ -88,40 +178,83 @@ class Py3status:
             error = data.get("_error_message")
             if error:
                 self.py3.error("{} {}".format(error, data["_status_code"]))
-        return data
+
+        if first:
+            if len(data["data"]) > 0:
+                return data["data"][0]
+            return {}
+
+        cursor = False
+        if "pagination" in data and "cursor" in data["pagination"]:
+            cursor = data["pagination"]["cursor"]
+
+        return data["data"], cursor
 
     def twitch(self):
-        twitch_data = self.users
+        if not self.user:
+            self._trace(f"fetching user")
+            self.user = self._get_twitch_data(self.url["users"])
+
+        twitch_data = {
+            "user": self.user,
+            # ensure display name is still there, deprecate+remove later?
+            "display_name": self.user["display_name"]
+        }
         current_format = ""
         color = None
 
-        if not twitch_data:
-            self.users = self._get_twitch_data(self.url["users"])
-            twitch_data.update(self.users)
+        self._trace(f"fetching stream data")
+        stream = self._get_twitch_data(self.url["streams"])
+        if stream and "type" in stream and stream["type"] == "live":
+            # this is always "live" if the stream is healthy
+            del stream["type"]
+            # remove useless UUIDs
+            del stream["tag_ids"]
+            # remove redundant data
+            del stream["user_id"]
+            del stream["user_login"]
+            del stream["user_name"]
 
-        streams = self._get_twitch_data(self.url["streams"])
-        if streams:
-            twitch_data.update(streams)
-            if twitch_data["stream"]:
-                color = self.py3.COLOR_GOOD
-                current_format = self.format
-            else:
-                color = self.py3.COLOR_BAD
-                current_format = self.format_offline
+            # calculate runtime and  update data dict
+            stream["runtime"], stream["runtime_seconds"] = time_since(stream["started_at"])
+            twitch_data["stream"] = stream
+            twitch_data["is_streaming"] = True
+
+            color = self.py3.COLOR_GOOD
+            current_format = self.format
+        else:
+            twitch_data["is_streaming"] = False
+            color = self.py3.COLOR_BAD
+            current_format = self.format_offline
+
+        twitch_data = self.py3.flatten_dict(twitch_data, delimiter="_")
+
+        self._trace("fields available: {}".format(list(twitch_data.keys())))
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": self.py3.safe_format(current_format, twitch_data),
         }
+
         if color:
             response["color"] = color
-        return response
 
+        return response
 
 if __name__ == "__main__":
     """
     Run module in test mode.
     """
     from py3status.module_test import module_test
+    from os import getenv
 
-    module_test(Py3status)
+    config = {
+        "client_id": getenv("TWITCH_CLIENT_ID"),
+        "client_secret": getenv("TWITCH_CLIENT_SECRET"),
+        "stream_name": "xisumavoid",
+        "format": "{display_name} is playing {stream_game_name} for {stream_runtime} with title '{stream_title}'\n\tlanguage: {stream_language}\n\tviewers: {stream_viewer_count}",
+
+        "trace": True,
+    }
+
+    module_test(Py3status, config)
