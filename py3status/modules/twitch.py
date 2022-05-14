@@ -14,7 +14,7 @@ Configuration parameters:
         (default "{display_name} is offline.")
     format_tag: Tag formatting
         (default "{name}")
-    locale: List of locales to try for tag translations, eg. ["cs-cz", "en-uk", "en-us"]. If none is specified, auto-detect from environment, with a fallback to "en-us".
+    locales: List of locales to try for tag translations, eg. ["cs-cz", "en-uk", "en-us"]. If none is specified, auto-detect from environment, with a fallback to "en-us".
         (default [])
     stream_name: name of streamer(twitch.tv/<stream_name>)
         (default None)
@@ -49,7 +49,7 @@ Stream format placeholders:
     {stream_runtime} (string) Stream runtime as a human readable, non-localized string. eg "3h 5m"
     {stream_runtime_seconds} (int) Stream runtime in seconds.
 
-Tag format placeholders: (see locale)
+Tag format placeholders: (see locales)
     {name} The tag name
     {desc} The tag description
 
@@ -103,7 +103,7 @@ class Py3status:
     format = "{display_name} is live!"
     format_offline = "{display_name} is offline."
     format_tag = "{name}"
-    locale = []
+    locales = []
     stream_name = None
     tag_delimiter = " "
     trace = False
@@ -175,7 +175,7 @@ class Py3status:
         self.user = {}
         self._token = self.py3.storage_get("oauth_token")
 
-        if self.locale is False:
+        if self.locales is False:
             return
 
         have_tags = (
@@ -186,22 +186,22 @@ class Py3status:
         )
 
         if not have_tags:
-            self.locale = False
+            self.locales = False
             return
 
-        if not isinstance(self.locale, list):
-            self.locale = [x for x in [str(self.locale)] if x]
+        if not isinstance(self.locales, list):
+            self.locales = [x for x in [str(self.locales)] if x]
 
-        if len(self.locale) == 0:
+        if len(self.locales) == 0:
             try:
                 import locale
 
-                self.locale = [locale.getdefaultlocale()[0].lower().replace("_", "-")]
+                self.locales = [locale.getdefaultlocale()[0].lower().replace("_", "-")]
             except (ModuleNotFoundError, IndexError):
                 pass
 
-        if "en-us" not in self.locale:
-            self.locale.append("en-us")
+        if "en-us" not in self.locales:
+            self.locales.append("en-us")
 
     def _get_twitch_data(self, url, first=True):
         try:
@@ -228,7 +228,7 @@ class Py3status:
         return data["data"], cursor
 
     def _get_tags(self, user_id, cursor=None):
-        if self.locale is False:
+        if self.locales is False:
             return self.py3.composite_create([])
 
         url = self.url["tags"] + f"?broadcaster_id={user_id}"
@@ -243,7 +243,7 @@ class Py3status:
         if page:
             for tag in page:
                 tag_data = {}
-                for loc in self.locale:
+                for loc in self.locales:
                     if loc in tag["localization_names"] and "name" not in tag_data:
                         tag_data["name"] = tag["localization_names"][loc]
                     if (
@@ -330,7 +330,7 @@ if __name__ == "__main__":
         "format": "{display_name} is playing {stream_game_name} for {stream_runtime} with title '{stream_title}'\n\tlanguage: {stream_language}\n\tviewers: {stream_viewer_count}\n\ttags:\n{tags}",
         "format_tag": "\t\t{name} -> {desc}",
         "tag_delimiter": "\n",
-        "locale": "invalid",
+        "locales": "invalid",
         "trace": True,
     }
 
