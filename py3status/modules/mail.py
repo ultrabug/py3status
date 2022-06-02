@@ -216,7 +216,8 @@ class Py3status:
                             if "path" not in account:
                                 raise Exception(STRING_MISSING.format(mail, "path"))
                             path = Path(
-                                os.path.expandvars(account["path"])).expanduser()
+                                os.path.expandvars(account["path"])
+                            ).expanduser()
                             if not path.exists():
                                 path = f"path: {path}"
                                 raise Exception(STRING_MISSING.format(mail, path))
