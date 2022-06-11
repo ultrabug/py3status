@@ -119,7 +119,8 @@ class Amixer(Audio):
         if self.card is None:
             self.card = "0"
         if self.channel is None:
-            self.channel = "Capture" if self.is_input else "Master"
+            controls = self.parent.py3.command_output(["amixer", "scontrols"]).splitlines()
+            self.channel = controls[-abs(int(self.is_input))].split("'")[1::2][0]
         if self.device is None:
             self.device = "default"
         self.cmd = [
