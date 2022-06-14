@@ -119,6 +119,7 @@ class Amixer(Audio):
             self.device = "default"
         self.cmd = [
             "amixer",
+            "-M",
             "-q",
             "-c",
             self.card,
