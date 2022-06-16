@@ -1,3 +1,9 @@
+version 3.45 (2022-06-16)
+* official python3.6 support removed
+* mail module: fix pathlib adoption (#2125), by Hunter Blanks
+* twitch module: migrate to new Twitch API, fix #2123 (#2124), by Julian Picht
+* volume_status module: use mapped volume with amixer backend. (#2128), by Jose Riha
+
 version 3.44 (2022-04-22)
 * IMPORTANT: python3.6 support will be removed on next release
 * core: handle SIGTSTP/SIGCONT better for after sleep freezes
