@@ -47,6 +47,14 @@ Check available USE flags if you need them!
 $ emerge -a py3status
 ```
 
+## Alpine Linux
+
+Currently available on Edge version of Alpine. Make sure you enabled the community repository, then:
+
+```bash
+$ apk add py3status
+```
+
 ## PyPi
 
 ```bash
