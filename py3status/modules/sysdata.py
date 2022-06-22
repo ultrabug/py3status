@@ -107,6 +107,7 @@ from fnmatch import fnmatch
 from json import loads
 from os import getloadavg
 from pathlib import Path
+import re
 
 INVALID_CPU_TEMP_UNIT = "invalid cpu_temp_unit"
 STRING_NOT_INSTALLED = "not installed"
@@ -365,12 +366,14 @@ class Py3status:
         of used memory, and units of mem (KiB, MiB, GiB).
         """
         if memory:
+            zfs_cache = self._get_zfs_arc_size()
             total_mem_kib = meminfo["MemTotal:"]
             used_mem_kib = (
                 total_mem_kib
                 - meminfo["MemFree:"]
                 - (
                     meminfo["Buffers:"]
+                    + zfs_cache
                     + meminfo["Cached:"]
                     + (meminfo["SReclaimable:"] - meminfo["Shmem:"])
                 )
@@ -407,6 +410,21 @@ class Py3status:
         with Path("/proc/meminfo").open() as f:
             info = [next(f).split() for _ in range(head)]
             return {fields[0]: float(fields[1]) for fields in info}
+
+    def _get_zfs_arc_size(self):
+        """will raise OSError on failures"""
+        ZFS_SIZE_REGEX = re.compile(r"^size\s+\d+\s+(\d+)")
+        try:
+            with Path("/proc/spl/kstat/zfs/arcstats").open() as f:
+                for line in f.readlines():
+                    m = ZFS_SIZE_REGEX.match(line)
+                    if m:
+                        return int(m.group(1)) / 1024
+        except (OSError, ValueError):
+            # skip errors if file is missing or inaccessible, or
+            # doesn't have the expected syntax
+            pass
+        return 0
 
     def _calc_cpu_percent(self, cpu):
         name, idle, total = cpu
