@@ -92,7 +92,7 @@ class Py3status:
 
     def audiosink(self):
         composites = [
-            {"full_text": self._to_string(self._get_state()),},
+            {"full_text": self._to_string(self._get_state()), },
         ]
         audiosink = self.py3.composite_create(composites)
         cached_until = self.py3.time_in(0, offset=1)
