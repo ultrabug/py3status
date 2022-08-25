@@ -1,3 +1,11 @@
+version 3.46 (2022-08-25)
+* INFORMATION: we plan to replace the bluetooth module with a more flexible one in coming releases (see #2114)
+* core: use git package for logging git commit information if available (#2138), by Austin Lund
+* docs: add Alpine Linux installation instructions (#2129), by raspbeguy
+* new audiosink module: switch between pulseaudio sinks from your bar (#2137), by Jens Brandt
+* sysdata module: ignore ZFS ARC cache in memory usage (#2131), by anarcat
+* volume_status module: add start_delay to address issue #2136 (#2139)
+
 version 3.45 (2022-06-16)
 * official python3.6 support removed
 * mail module: fix pathlib adoption (#2125), by Hunter Blanks
