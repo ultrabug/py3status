@@ -1,13 +1,21 @@
 r"""
-Display and toggle default audiosink
+Display and toggle default audiosink.
 
 Configuration parameters:
-    display_name_mapping: dictionary mapping devices names to display names (default empty)
-    format: display format for this module (default '{audiosink}')
-    sinks_to_ignore: list of devices names to ignore (default empty)
+    cache_timeout: How often we refresh this module in seconds
+        (default 10)
+    display_name_mapping: dictionary mapping devices names to display names
+        (default {})
+    format: display format for this module
+        (default '{audiosink}')
+    sinks_to_ignore: list of devices names to ignore
+        (default [])
 
-Format placeholder:
+Format placeholders:
     {audiosink} comma seperated list of (display) names of default sink(s)
+
+Requires:
+    pulseaudio: networked sound server
 
 Examples:
 ```
@@ -18,22 +26,20 @@ audiosink {
 }
 ```
 
-Requires:
-    pulseaudio: networked sound server
-
-@author Jens Brandt <py3status@brandt-george.de>
-@license BSD
-
 SAMPLE OUTPUT
 {'full_text': 'Dock'}
 {'full_text': 'Int'}
+
+@author Jens Brandt <py3status@brandt-george.de>
+@license BSD
 """
 
 import os
 
 
 class Py3status:
-
+    # available configuration parameters
+    cache_timeout = 10
     display_name_mapping = {}
     format = r"{audiosink}"
     sinks_to_ignore = []
@@ -80,7 +86,7 @@ class Py3status:
         return ", ".join([s["display_name"] for s in state if s["is_active"]])
 
     def _activate_input(self, input_id):
-        os.popen("pacmd set-default-sink " + str(input_id))
+        os.popen(f"pacmd set-default-sink {input_id}")
 
     # activates the next devices following the first currently active device
     def _toggle(self, state):
@@ -95,7 +101,7 @@ class Py3status:
             {"full_text": self._to_string(self._get_state()), },
         ]
         audiosink = self.py3.composite_create(composites)
-        cached_until = self.py3.time_in(0, offset=1)
+        cached_until = self.py3.time_in(self.cache_timeout)
         return {
             "cached_until": cached_until,
             "full_text": self.py3.safe_format(self.format, {"audiosink": audiosink}),
