@@ -542,6 +542,50 @@ class Py3statusWrapper:
                 msg = f'Loading module "{module}" failed ({err}).'
                 self.report_exception(msg, level="warning")
 
+    def _log_gitversion(self):
+        # A git repo is detected looking for the .git directory
+
+        git_path = Path(__file__).resolve().parent.parent / ".git"
+        if not git_path.exists():
+            return
+
+        self.log("Running within git repo")
+
+        try:
+            import git
+        except ImportError:
+            repo = None
+        else:
+            try:
+                repo = git.Repo(git_path.parent)
+            except Exception:
+                repo = None
+
+        if not repo:
+            try:
+                with (git_path / "HEAD").open() as f:
+                    out = f.readline()
+            except OSError:
+                self.log(
+                    "Unable to read git HEAD. "
+                    "Use python git package for more repo information"
+                )
+                return
+            branch = "/".join(out.strip().split("/")[2:])
+            self.log(f"git branch: {branch}")
+            # last commit
+            log_path = git_path / "logs" / "refs" / "heads" / branch
+            with log_path.open() as f:
+                out = f.readlines()[-1]
+            sha = out.split(" ")[1][:7]
+            msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
+            self.log(f"git commit: {sha}{msg}")
+        else:
+            commit = repo.head.commit
+            self.log(f"git branch: {repo.active_branch.name}")
+            self.log(f"git commit: {commit.hexsha[:7]} {commit.summary}")
+            self.log(f"git clean: {not repo.is_dirty()!s}")
+
     def setup(self):
         """
         Setup py3status and spawn i3status/events/modules threads.
@@ -552,24 +596,8 @@ class Py3statusWrapper:
         msg = "Starting py3status version {version} python {python_version}"
         self.log(msg.format(**self.config))
 
-        try:
-            # if running from git then log the branch and last commit
-            # we do this by looking in the .git directory
-            git_path = Path(__file__).resolve().parent.parent / ".git"
-            # branch
-            with (git_path / "HEAD").open() as f:
-                out = f.readline()
-            branch = "/".join(out.strip().split("/")[2:])
-            self.log(f"git branch: {branch}")
-            # last commit
-            log_path = git_path / "logs" / "refs" / "heads" / branch
-            with log_path.open() as f:
-                out = f.readlines()[-1]
-            sha = out.split(" ")[1][:7]
-            msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
-            self.log(f"git commit: {sha}{msg}")
-        except:  # noqa e722
-            pass
+        # if running from git then log the branch and last commit
+        self._log_gitversion()
 
         self.log("window manager: {}".format(self.config["wm_name"]))
 
