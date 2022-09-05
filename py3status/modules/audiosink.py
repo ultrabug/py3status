@@ -15,7 +15,7 @@ Format placeholders:
     {audiosink} comma seperated list of (display) names of default sink(s)
 
 Requires:
-    pulseaudio: networked sound server
+    libpulse: A featureful, general-purpose sound server (client library)
 
 Examples:
 ```
@@ -31,10 +31,12 @@ SAMPLE OUTPUT
 {'full_text': 'Int'}
 
 @author Jens Brandt <py3status@brandt-george.de>
+@author AnwariasEu
 @license BSD
 """
 
 import os
+import json
 
 
 class Py3status:
@@ -54,24 +56,19 @@ class Py3status:
     # - id: pulseaudio id of the device
     # - name: device name
     # - display_name: display name as given by display_name_mapping
-    # - is_active: boolean, if the device is currently the default output device
+    # - is_default: boolean, if the device is currently the default output device
     def _get_state(self):
-        # The following two commands are a very dirty way of getting the required information from the pacmd text output.
-        # I'd love to see pulseaudio / pacmd support in jc, so this can be done more pretty.
-        pacmd_output = (
-            os.popen("pacmd list-sinks | grep -e 'device.description' -e 'index:'")
-            .read()
-            .split("\n")
-        )
+        sinks = json.loads(os.popen("pactl -f json list sinks").read())
+        default_sink_name = os.popen("pactl get-default-sink").read().strip()
         state = [
             {
-                "id": int(pacmd_output[i][-1]),
-                "name": pacmd_output[i + 1].split('"')[1],
-                "is_active": ("*" in pacmd_output[i]),
+                "id": int(sink["index"]),
+                "name": sink["properties"]["alsa.card_name"],
+                "is_default": (sink["name"] == default_sink_name),
             }
-            for i in range(0, len(pacmd_output) - 1, 2)
+            for sink in sinks
         ]
-        # filter for not ignored (or active) devices
+        # filter for not ignored (or current default) sinks
         state = list(
             filter(
                 lambda d: (not d["name"] in self.sinks_to_ignore) or d["is_active"],
@@ -83,10 +80,15 @@ class Py3status:
         return state
 
     def _to_string(self, state):
-        return ", ".join([s["display_name"] for s in state if s["is_active"]])
+        default_sinkname = ""
+        for s in state:
+            if s["is_default"]:
+                default_sinkname = s["display_name"]
+                break
+        return default_sinkname
 
     def _activate_input(self, input_id):
-        os.popen(f"pacmd set-default-sink {input_id}")
+        os.popen(f"pactl set-default-sink {input_id}")
 
     # activates the next devices following the first currently active device
     def _toggle(self, state):
