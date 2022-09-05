@@ -7,12 +7,12 @@ Configuration parameters:
     display_name_mapping: dictionary mapping devices names to display names
         (default {})
     format: display format for this module
-        (default '{audiosink}')
+        (default '{sinkname}')
     sinks_to_ignore: list of devices names to ignore
         (default [])
 
 Format placeholders:
-    {audiosink} comma seperated list of (display) names of default sink(s)
+    {sinkname} short name of current default sink
 
 Requires:
     libpulse: A featureful, general-purpose sound server (client library)
@@ -21,7 +21,7 @@ Examples:
 ```
 audiosink {
     display_name_mapping = {"Family 17h/19h HD Audio Controller Analog Stereo": "Int", "ThinkPad Dock USB Audio Analog Stereo": "Dock"}
-    format = r"{audiosink}"
+    format = r"{sinkname}"
     sinks_to_ignore = ["Renoir Radeon High Definition Audio Controller Digital Stereo (HDMI)"]
 }
 ```
@@ -43,7 +43,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     display_name_mapping = {}
-    format = r"{audiosink}"
+    format = r"{sinkname}"
     sinks_to_ignore = []
 
     def _get_display_name(self, name):
@@ -102,11 +102,11 @@ class Py3status:
         composites = [
             {"full_text": self._to_string(self._get_state())},
         ]
-        audiosink = self.py3.composite_create(composites)
+        default_sink = self.py3.composite_create(composites)
         cached_until = self.py3.time_in(self.cache_timeout)
         return {
             "cached_until": cached_until,
-            "full_text": self.py3.safe_format(self.format, {"audiosink": audiosink}),
+            "full_text": self.py3.safe_format(self.format, {"sinkname": default_sink}),
         }
 
     def on_click(self, event):
