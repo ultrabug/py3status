@@ -5,6 +5,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     filter: specify one or more criteria to use (default 'status:pending')
     format: display format for this module (default '{descriptions}')
+    report: report to export, for TaskWarrior 2.6.0 and above (default '')
 
 Format placeholders:
     {descriptions} descriptions of active tasks
@@ -33,6 +34,7 @@ class Py3status:
     cache_timeout = 5
     filter = "status:pending"
     format = "{descriptions}"
+    report = ""
 
     class Meta:
         deprecated = {
@@ -53,6 +55,8 @@ class Py3status:
             self.taskwarrior_command = f"task {self.filter} export"
         else:
             self.taskwarrior_command = "task export"
+        if self.report:
+            self.taskwarrior_command += " " + self.report
 
     @staticmethod
     def descriptions(tasks_json):
