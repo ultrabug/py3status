@@ -1,4 +1,5 @@
 import re
+from html import escape
 from math import ceil
 from numbers import Number
 from urllib.parse import parse_qsl
@@ -322,6 +323,8 @@ class Placeholder:
                 # no remaining digits following it.  If the parameter cannot
                 # be successfully converted then the format will be removed.
                 try:
+                    if "escape" in self.format:
+                        value = escape(value)
                     if "ceil" in self.format:
                         value = ceil(float(value))
                     if "f" in self.format:
