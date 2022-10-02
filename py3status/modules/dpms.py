@@ -27,8 +27,7 @@ off
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_off = None

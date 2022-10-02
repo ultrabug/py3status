@@ -45,8 +45,7 @@ from boto.s3.connection import Key
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     aws_access_key_id = ""

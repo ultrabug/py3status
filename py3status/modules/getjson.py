@@ -55,8 +55,7 @@ STRING_ERROR = "missing url"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 30
@@ -82,8 +81,7 @@ class Py3status:
             raise Exception(STRING_ERROR)
 
     def getjson(self):
-        """
-        """
+        """ """
         try:
             if self.username is not None and self.password is not None:
                 auth = (self.username, self.password)

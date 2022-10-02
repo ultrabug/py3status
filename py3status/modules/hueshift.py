@@ -73,8 +73,7 @@ STRING_NOT_AVAILABLE = "no available command"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_down = 5

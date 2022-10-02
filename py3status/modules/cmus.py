@@ -88,8 +88,7 @@ STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_next = None
@@ -162,8 +161,7 @@ class Py3status:
         return temporary
 
     def cmus(self):
-        """
-        """
+        """ """
         is_paused = is_playing = is_stopped = None
         cached_until = self.sleep_timeout
         color = self.py3.COLOR_BAD

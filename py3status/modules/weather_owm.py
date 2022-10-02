@@ -322,8 +322,7 @@ THRESHOLDS = {"all": [(-100, "#0FF"), (0, "#00F"), (50, "#0F0"), (150, "#FF0")]}
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     api_key = None
@@ -867,7 +866,10 @@ class Py3status:
 
             fcsts_days = self.forecast_days + 1
             text = self._format(
-                current_wthr, onecall_daily[1:fcsts_days], owm_city, country,
+                current_wthr,
+                onecall_daily[1:fcsts_days],
+                owm_city,
+                country,
             )
 
         return {

@@ -54,8 +54,7 @@ import json
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     aggregator = "owncloud"

@@ -93,8 +93,7 @@ def time_since(s):
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 60

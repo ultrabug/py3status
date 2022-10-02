@@ -40,8 +40,7 @@ import requests
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     app_key = ""

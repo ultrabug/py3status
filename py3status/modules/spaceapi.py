@@ -38,8 +38,7 @@ STRING_UNAVAILABLE = "spaceapi: N/A"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_url = 3

@@ -71,8 +71,7 @@ SPOTIFY_CMD = """dbus-send --print-reply --dest={dbus_client}
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_next = None
@@ -101,8 +100,7 @@ class Py3status:
         return SPOTIFY_CMD.format(dbus_client=self.dbus_client, cmd=action)
 
     def post_config_hook(self):
-        """
-        """
+        """ """
         # Match string after hyphen, comma, semicolon or slash containing any metadata word
         # examples:
         # - Remastered 2012
@@ -203,8 +201,7 @@ class Py3status:
         return response
 
     def on_click(self, event):
-        """
-        """
+        """ """
         button = event["button"]
         if button == self.button_play_pause:
             # we do not use the 'PlayPause' command because of a bug

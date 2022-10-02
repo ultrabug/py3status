@@ -173,8 +173,7 @@ APPLICATION_NAME = "py3status google_calendar module"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     auth_token = "~/.config/py3status/google_calendar.auth_token"
@@ -343,15 +342,15 @@ class Py3status:
             self.py3.notify_user(warn_message, "warning", self.warn_timeout)
 
     def _gstr_to_date(self, date_str):
-        """ Returns a dateime object from calendar date string."""
+        """Returns a dateime object from calendar date string."""
         return parser.parse(date_str).replace(tzinfo=tzlocal())
 
     def _gstr_to_datetime(self, date_time_str):
-        """ Returns a datetime object from calendar date/time string."""
+        """Returns a datetime object from calendar date/time string."""
         return parser.parse(date_time_str)
 
     def _datetime_to_str(self, date_time, dt_format):
-        """ Returns a strftime formatted string from a datetime object."""
+        """Returns a strftime formatted string from a datetime object."""
         return date_time.strftime(dt_format)
 
     def _delta_time(self, date_time):

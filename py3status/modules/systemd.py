@@ -55,8 +55,7 @@ from pydbus import SessionBus, SystemBus
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 5

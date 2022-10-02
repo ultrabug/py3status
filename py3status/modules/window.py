@@ -37,8 +37,7 @@ STRING_ERROR = "invalid ipc `{}`"
 
 
 class Ipc:
-    """
-    """
+    """ """
 
     def __init__(self, parent):
         self.parent = parent
@@ -207,8 +206,7 @@ class Msg(Ipc):
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 0.5

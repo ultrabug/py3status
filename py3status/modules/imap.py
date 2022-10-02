@@ -356,7 +356,8 @@ class Py3status:
 
                 if self.debug:
                     self.py3.log(
-                        f"{error_type} error - {e}", level=self.py3.LOG_WARNING,
+                        f"{error_type} error - {e}",
+                        level=self.py3.LOG_WARNING,
                     )
                 self._disconnect()
 

@@ -31,8 +31,7 @@ from urllib.request import urlopen, URLError
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10

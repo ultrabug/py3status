@@ -110,8 +110,7 @@ REQUEST = {"method": "getbalance"}
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 30

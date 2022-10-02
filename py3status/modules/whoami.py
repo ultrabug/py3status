@@ -22,8 +22,7 @@ from socket import gethostname
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "{username}"

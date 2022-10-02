@@ -74,7 +74,7 @@ def get_color_for_name(module_name):
         module_name = module_name.encode("utf-8")
     except AttributeError:
         pass
-    hue = int(md5(module_name).hexdigest(), 16) / 16 ** 32
+    hue = int(md5(module_name).hexdigest(), 16) / 16**32
     hue *= 6
     hue += 3.708
     r, g, b = (

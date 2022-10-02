@@ -203,8 +203,7 @@ from multiprocessing import cpu_count
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 5

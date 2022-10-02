@@ -64,8 +64,7 @@ PROGRESS_BAR_ITEMS = "▏▎▍▌▋▊▉"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     display_bar = False

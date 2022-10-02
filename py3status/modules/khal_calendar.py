@@ -30,8 +30,7 @@ from khal.controllers import khal_list
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 60

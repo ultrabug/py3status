@@ -49,8 +49,7 @@ from threading import Timer
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "Timer {timer}"

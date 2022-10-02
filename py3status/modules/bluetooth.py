@@ -54,8 +54,7 @@ def get_connected_devices():
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10

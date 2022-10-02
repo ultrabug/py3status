@@ -46,8 +46,7 @@ STRING_NOT_CONFIGURED = "not configured"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     base_url = ""

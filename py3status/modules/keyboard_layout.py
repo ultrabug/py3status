@@ -55,8 +55,7 @@ VARIANTS_RE = re.compile(r".*variant:\s*(([\w-]+,?)+).*", flags=re.DOTALL)
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_next = 4

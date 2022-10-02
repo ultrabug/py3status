@@ -75,8 +75,7 @@ commands = {
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     brightness_delta = 8

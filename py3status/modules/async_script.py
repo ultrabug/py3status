@@ -41,8 +41,7 @@ from threading import Thread
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     force_nocolor = False

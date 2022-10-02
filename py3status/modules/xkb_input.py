@@ -172,8 +172,7 @@ class Listener:
 
 
 class Xkb:
-    """
-    """
+    """ """
 
     def __init__(self, parent):
         self.parent = parent
@@ -389,8 +388,7 @@ class Swaymsg(Xkb):
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_next = 4

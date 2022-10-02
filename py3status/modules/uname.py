@@ -22,8 +22,7 @@ from platform import uname
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "{system} {release}"

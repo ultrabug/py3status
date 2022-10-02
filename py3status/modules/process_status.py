@@ -30,8 +30,7 @@ STRING_ERROR = "missing process"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10

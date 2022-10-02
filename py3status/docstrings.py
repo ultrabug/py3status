@@ -174,7 +174,7 @@ def _to_docstring(doc):
     """
 
     def format_fn(line, status):
-        """ format function """
+        """format function"""
         # swap &lt; &gt; to < >
         line = re_to_tag.sub(r"<\1>", line)
         if re_to_data.match(line):
@@ -205,7 +205,7 @@ def _from_docstring_md(doc):
     """
 
     def format_fn(line, status):
-        """ format function """
+        """format function"""
 
         def fix_tags(line):
             # In markdown we need to escape < > and & for display
@@ -258,7 +258,7 @@ def _from_docstring_rst(doc):
     """
 
     def format_fn(line, status):
-        """ format function """
+        """format function"""
 
         if re_from_data.match(line):
             line = re_from_data.sub(r"**\1** ", line)

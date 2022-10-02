@@ -44,8 +44,7 @@ from pathlib import Path
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     file_length = 4

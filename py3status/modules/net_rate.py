@@ -56,8 +56,7 @@ import time
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     all_interfaces = True
@@ -79,8 +78,10 @@ class Py3status:
             # support old thresholds
             precision = config.get("precision", 1)
             padding = 3 + 1 + precision + 1 + 5
-            format_value = r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
-                padding=padding, precision=precision
+            format_value = (
+                r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
+                    padding=padding, precision=precision
+                )
             )
             return {"format_value": format_value}
 

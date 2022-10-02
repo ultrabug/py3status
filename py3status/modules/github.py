@@ -86,8 +86,7 @@ import urllib.parse as urlparse
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     auth_token = None

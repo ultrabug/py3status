@@ -54,8 +54,7 @@ URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_refresh = 2

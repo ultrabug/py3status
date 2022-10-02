@@ -67,8 +67,7 @@ from pathlib import Path
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "up {days} days {hours} hours {minutes} minutes"

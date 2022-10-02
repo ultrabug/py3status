@@ -49,8 +49,7 @@ SECS_IN_DAY = 24 * SECS_IN_HOUR  # 86400
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 5

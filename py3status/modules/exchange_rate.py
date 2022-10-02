@@ -21,8 +21,7 @@ SAMPLE OUTPUT
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     api_key = None
