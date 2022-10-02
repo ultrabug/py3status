@@ -1,3 +1,12 @@
+version 3.47 (2022-10-02)
+* INFORMATION: the upcoming bluetooth module has been merged as bluetooth2, users are encouraged to switch
+* core: simpler logic to inhibit out of order signaling (#2147)
+* formatter: add escape command to escape html, thx to lasers
+* new module from scratch: bluetooth2 (#2114), by lasers
+* mpris module: different players can use chromium busname, skip cache, by Valdur Kana
+* taskwarrior module: add report parameter (#2141), by Evan Chen
+* volume_status module: autoselect channel on amixer backend (#2143), by lasers
+
 version 3.46 (2022-08-25)
 * INFORMATION: we plan to replace the bluetooth module with a more flexible one in coming releases (see #2114)
 * core: use git package for logging git commit information if available (#2138), by Austin Lund
