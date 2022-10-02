@@ -572,7 +572,10 @@ class Py3status:
         player_id_parts_list = player_id.split(".")
         name_from_id = player_id_parts_list[3]
 
-        identity = self._identity_cache.get(name_from_id)
+        identity = None
+        if name_from_id != "chromium":
+            identity = self._identity_cache.get(name_from_id)
+
         if not identity:
             dMediaPlayer = dMediaPlayer2(dbus_interface_info={"dbus_uri": player_id})
             identity = str(dMediaPlayer.Identity)
