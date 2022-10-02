@@ -65,8 +65,7 @@ STRING_ERROR_AUTH = "missing auth_token"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     auth_token = None

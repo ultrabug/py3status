@@ -102,8 +102,7 @@ CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     block_hours = 12

@@ -94,8 +94,7 @@ STRING_ERROR = "missing modules"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     align = "center"

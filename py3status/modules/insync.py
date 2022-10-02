@@ -43,8 +43,7 @@ STRING_UNEXPECTED = "Insync: N/A"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10

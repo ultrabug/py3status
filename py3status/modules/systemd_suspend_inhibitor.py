@@ -35,8 +35,7 @@ STRING_BAD_LOCK_TYPES = "DBUS error, bad lock types used"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = r"[\?color=state SUSPEND [\?if=state OFF|ON]]"

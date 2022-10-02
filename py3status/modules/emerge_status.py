@@ -54,8 +54,7 @@ STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 30
@@ -124,8 +123,7 @@ class Py3status:
         return ret
 
     def emerge_status(self):
-        """
-        """
+        """ """
         response = {}
         ret = copy.deepcopy(self.ret_default)
         if self._emerge_running():

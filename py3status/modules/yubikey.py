@@ -76,8 +76,7 @@ class YubiKeyTouchDetectorListener(threading.Thread):
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = r"[YubiKey[\?if=is_gpg ][\?if=is_u2f ]]"

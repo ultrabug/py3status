@@ -37,8 +37,7 @@ STRING_UNAVAILABLE = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_activate = 3

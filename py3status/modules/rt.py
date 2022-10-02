@@ -40,8 +40,7 @@ except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # py2/py3
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 300

@@ -12,8 +12,7 @@ SAMPLE OUTPUT
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "Hello, world!"

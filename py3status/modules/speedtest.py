@@ -135,8 +135,7 @@ STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_share = None

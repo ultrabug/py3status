@@ -78,8 +78,7 @@ STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10
@@ -135,7 +134,7 @@ class Py3status:
             )
 
             for key in self.memory_properties:
-                value, unit_key = float(gpu[key]) * 1024 ** 2, key + "_unit"
+                value, unit_key = float(gpu[key]) * 1024**2, key + "_unit"
                 value, unit_value = self.py3.format_units(value, self.memory_unit)
                 gpu.update({key: value, unit_key: unit_value})
 

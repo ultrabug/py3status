@@ -145,8 +145,7 @@ STRING_NOT_INSTALLED = "transmission-remote not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     arguments = None

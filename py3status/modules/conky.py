@@ -333,8 +333,7 @@ STRING_MISSING_FORMAT = "missing format"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     config = {}

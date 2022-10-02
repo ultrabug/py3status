@@ -47,8 +47,7 @@ except:  # noqa e722 // (ImportError, ModuleNotFoundError):  # (py2, assumed py3
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10
@@ -65,8 +64,7 @@ class Py3status:
         self.icon = self.play_icon
 
     def on_click(self, event):
-        """
-        """
+        """ """
         buttons = (None, "left", "middle", "right", "up", "down")
         try:
             button = buttons[event["button"]]
@@ -134,15 +132,13 @@ class Py3status:
                 player.Pause()
 
     def _change_volume(self, increase):
-        """Change volume using amixer
-        """
+        """Change volume using amixer"""
         sign = "+" if increase else "-"
         delta = f"{self.volume_tick}%{sign}"
         self._run(["amixer", "-q", "sset", "Master", delta])
 
     def _detect_running_player(self):
-        """Detect running player process, if any
-        """
+        """Detect running player process, if any"""
         supported_players = self.supported_players.split(",")
         running_players = []
         for pid in Path("/proc").iterdir():

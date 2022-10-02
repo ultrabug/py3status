@@ -10,6 +10,5 @@ def print_line(line):
 
 
 def print_stderr(line):
-    """Print line to stderr
-    """
+    """Print line to stderr"""
     print(line, file=sys.stderr)

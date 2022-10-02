@@ -62,8 +62,7 @@ from time import sleep
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     baudrate = 115200

@@ -9,8 +9,7 @@ def profile(thread_run_fn):
         return thread_run_fn
 
     def wrapper_run(self):
-        """Wrap the Thread.run() method
-        """
+        """Wrap the Thread.run() method"""
         profiler = cProfile.Profile()
         try:
             return profiler.runcall(thread_run_fn, self)

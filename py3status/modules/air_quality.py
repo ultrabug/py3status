@@ -114,8 +114,7 @@ from datetime import datetime
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     auth_token = "demo"

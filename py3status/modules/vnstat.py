@@ -51,8 +51,7 @@ STRING_INVALID_TYPE = "invalid statistics_type"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 180
@@ -89,7 +88,7 @@ class Py3status:
         self.coloring = getattr(self, "coloring", None)
         if self.coloring and not self.thresholds:
             self.thresholds = [
-                (num * 1024 ** 2, col) for num, col in self.coloring.items()
+                (num * 1024**2, col) for num, col in self.coloring.items()
             ]
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)

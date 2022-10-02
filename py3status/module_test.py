@@ -8,8 +8,7 @@ from py3status.core import Common, Module
 
 
 class MockPy3statusWrapper:
-    """
-    """
+    """ """
 
     class EventThread:
         def process_event(self, *arg, **kw):

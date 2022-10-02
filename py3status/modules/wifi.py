@@ -65,8 +65,7 @@ STRING_NO_DEVICE = "no available device"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     bitrate_bad = 26

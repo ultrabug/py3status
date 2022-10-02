@@ -59,8 +59,7 @@ STRING_NO_PATHS = "missing paths"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10
@@ -101,7 +100,7 @@ class Py3status:
         # icon deprecation
         on = getattr(self, "icon_available", "\u25cf")
         off = getattr(self, "icon_unavailable", "\u25a0")
-        new_icon = fr"\?color=path [\?if=path {on}|{off}]"
+        new_icon = rf"\?color=path [\?if=path {on}|{off}]"
         self.format = self.format.replace("{icon}", new_icon)
 
         # convert str to list + expand path

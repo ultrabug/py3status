@@ -30,8 +30,7 @@ from typing import Dict, List, Union
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10

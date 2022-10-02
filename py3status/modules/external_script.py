@@ -49,8 +49,7 @@ STRING_ERROR = "missing script_path"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     button_show_notification = None

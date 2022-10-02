@@ -160,8 +160,7 @@ class Xfce4_notifyd(Notification):
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 30

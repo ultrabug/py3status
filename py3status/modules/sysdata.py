@@ -114,8 +114,7 @@ STRING_NOT_INSTALLED = "not installed"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     cache_timeout = 10
@@ -320,10 +319,10 @@ class Py3status:
         freq_avg, freq_max = None, None
         for key in keys:
             if key == "cpu_freq_avg":
-                value = sum(cpu_freqs) / len(cpu_freqs) * 10 ** 6
+                value = sum(cpu_freqs) / len(cpu_freqs) * 10**6
                 freq_avg, _ = self.py3.format_units(value, unit, si=True)
             elif key == "cpu_freq_max":
-                value = max(cpu_freqs) * 10 ** 6
+                value = max(cpu_freqs) * 10**6
                 freq_max, _ = self.py3.format_units(value, unit, si=True)
         return freq_avg, freq_max
 

@@ -367,7 +367,7 @@ class Py3status:
                     time_in_secs = remaining_energy / present_rate * 3600
                 battery["time_remaining"] = self._seconds_to_hms(time_in_secs)
 
-            battery["power"] = current_now * voltage_now / 10 ** 12
+            battery["power"] = current_now * voltage_now / 10**12
 
             battery_list.append(battery)
         return battery_list

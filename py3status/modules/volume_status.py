@@ -235,7 +235,7 @@ class Pactl(Audio):
         device_id = None
 
         # Find the default device for the device type
-        default_dev_pattern = re.compile(fr"^Default {self.device_type_cap}: (.*)$")
+        default_dev_pattern = re.compile(rf"^Default {self.device_type_cap}: (.*)$")
         output = self.command_output(["pactl", "info"])
         for info_line in output.splitlines():
             default_dev_match = default_dev_pattern.match(info_line)

@@ -52,8 +52,7 @@ STRING_USBGUARD_DBUS = "start usbguard-dbus.service"
 
 
 class Py3status:
-    """
-    """
+    """ """
 
     # available configuration parameters
     format = "{format_device}"
