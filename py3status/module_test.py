@@ -54,6 +54,9 @@ class MockPy3statusWrapper:
     def timeout_queue_add(self, *arg, **kw):
         pass
 
+    def clear_timeout_due(self, *arg, **kw):
+        pass
+
     def log(self, *arg, **kw):
         print(arg[0])
 
@@ -98,7 +101,7 @@ def module_test(module_class, config=None):
     while not m.error_messages:
         try:
             for my_method in m.methods.values():
-                my_method["cached_until"] = time.perf_counter()
+                my_method["cached_until"] = time.monotonic()
             m.run()
             output = m.get_latest()
             for item in output:

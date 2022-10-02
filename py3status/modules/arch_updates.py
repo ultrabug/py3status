@@ -114,8 +114,8 @@ class Py3status:
         try:
             updates = self.py3.command_output(["paru", "-Qua"])
             return len(updates.splitlines())
-        except self.py3.CommandError:
-            return None
+        except self.py3.CommandError as ce:
+            return None if ce.error else 0
 
     def arch_updates(self):
         pacman, aur, total, full_text = None, None, None, ""

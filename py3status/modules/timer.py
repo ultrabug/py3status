@@ -81,7 +81,7 @@ class Py3status:
 
     def timer(self):
         if self.running or self.done:
-            t = int(self.end_time - time.perf_counter())
+            t = int(self.end_time - time.monotonic())
             if t <= 0:
                 t = 0
         else:
@@ -143,7 +143,7 @@ class Py3status:
             if self.running:
                 # pause timer
                 self.running = False
-                self.time_left = int(self.end_time - time.perf_counter())
+                self.time_left = int(self.end_time - time.monotonic())
                 self.color = self.py3.COLOR_DEGRADED
                 if self.alarm_timer:
                     self.alarm_timer.cancel()
@@ -151,9 +151,9 @@ class Py3status:
                 # start/restart timer
                 self.running = True
                 if self.time_left:
-                    self.end_time = time.perf_counter() + self.time_left
+                    self.end_time = time.monotonic() + self.time_left
                 else:
-                    self.end_time = time.perf_counter() + self.time
+                    self.end_time = time.monotonic() + self.time
                 self.cache_offset = self.end_time % 1
                 self.color = self.py3.COLOR_GOOD
                 if self.alarm_timer:

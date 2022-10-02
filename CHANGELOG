@@ -1,3 +1,59 @@
+version 3.46 (2022-08-25)
+* INFORMATION: we plan to replace the bluetooth module with a more flexible one in coming releases (see #2114)
+* core: use git package for logging git commit information if available (#2138), by Austin Lund
+* docs: add Alpine Linux installation instructions (#2129), by raspbeguy
+* new audiosink module: switch between pulseaudio sinks from your bar (#2137), by Jens Brandt
+* sysdata module: ignore ZFS ARC cache in memory usage (#2131), by anarcat
+* volume_status module: add start_delay to address issue #2136 (#2139)
+
+version 3.45 (2022-06-16)
+* official python3.6 support removed
+* mail module: fix pathlib adoption (#2125), by Hunter Blanks
+* twitch module: migrate to new Twitch API, fix #2123 (#2124), by Julian Picht
+* volume_status module: use mapped volume with amixer backend. (#2128), by Jose Riha
+
+version 3.44 (2022-04-22)
+* IMPORTANT: python3.6 support will be removed on next release
+* core: handle SIGTSTP/SIGCONT better for after sleep freezes
+* formatter: stop escaping html characters on pango markup (#2122), by lasers
+* module_test: add clear_timeout_due (#2119), by lasers
+* udev monitor: implement udev events throttling with warnings
+* google_calendar module: escape html on event summary for pango
+* mpris module: add player_shortname placeholder for displaying player busname (#2120), by Valdur Kana
+* xrandr module: fix missing " at the end of documentation line. (#2121), by Valdur Kana
+
+version 3.43 (2022-04-01)
+* core: rework SIGSTP inhibition to support both #2068 and #2107
+* formatter: pango markup should escape all html character
+* py3.safe_format: add information about invalid format
+* py3.safe_format: implement a generic max_width parameter
+* requirements: fix click dependency with black
+* udev monitor: don't trigger actions when i3bar refresh is stopped
+* weather_owm module: dont use onecall for better current day forecast (#2112)
+
+version 3.42 (2022-03-14)
+* core: fix root cause of negative update_due (#2109), by Valdur Kana
+* external_script module: add option 'convert_numbers' to preserve number formatting (#2101), by Nicolas Kuttler
+* khal_calendar module: add option to limit the number of returned calendar entries (#2103), by Andreas Grapentin
+* mpris module: total rework with bug fixes (#2077), by Valdur Kana
+* weather_own module: fix onecall when city is specified thx to @mlmatlock
+
+version 3.41 (2022-02-27)
+* core: drop and log negative new_update_due which causes high cpu load and endless loop (closses #2085) (#2092), by Valdur Kana
+* core: switch from time.perf_counter to time.monotonic (#2099)
+* core: timeout due to return something >= 0 instead of None
+* new option py3status.stop_signal to disable i3bar stop/resume (#2095)
+* arch_updates module: paru exits with a non-zero status if there are no updates (#2098), by Stefan G
+* battery_level module: fallback to power_now if no current_now
+* events: fix pydevd.debugger first click caused "JSONDecodeError: Expecting value: line 1 column 2 (char 1)". (closes #2090) (#2091), by Valdur Kana
+* net_iplist module: support parsing iface name with "@" symbol (#2083), by Yikai Zhao
+* pomodoro module: pyglet and pygame are no longer needed after the merge of #1770 (#2094), by Stefan G
+* scratchpad module: workaround for i3ipc 2.2.1 not finding leaves() in sway (#2088), by Valdur Kana
+* sysdata module: add tctl sensor (#2082), by lasers
+* velib_metropole module: drop obsolete module
+* weather_owm module: fix forecast by using new onecall api endpoint (#2097)
+* window module: i3ipc backend uses incoming event data and relies less on get_tree.focused() data. (#2087), by Valdur Kana
+
 version 3.40 (2021-11-08)
 * README: update readthedocs links to new documentation thx to @oceyral
 * i3 contrib page: update readthedocs links to new documentation

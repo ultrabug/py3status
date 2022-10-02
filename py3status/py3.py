@@ -626,7 +626,7 @@ class Py3:
                     seconds -= 0.1
 
         current_time = time.time()
-        requested = time.perf_counter() + seconds - offset
+        requested = time.monotonic() + seconds - offset
 
         # if sync_to then we find the sync time for the requested time
         if sync_to:
@@ -778,7 +778,12 @@ class Py3:
         return self._formatter.update_placeholder_formats(format_string, formats)
 
     def safe_format(
-        self, format_string, param_dict=None, force_composite=False, attr_getter=None
+        self,
+        format_string,
+        param_dict=None,
+        force_composite=False,
+        attr_getter=None,
+        max_width=None,
     ):
         r"""
         Parser for advanced formatting.
@@ -835,18 +840,33 @@ class Py3:
 
         attr_getter is a function that will when called with an attribute name
         as a parameter will return a value.
+
+        max_width lets you to control the total max width of 'full_text' the
+        module is allowed to output on the bar.
         """
         try:
-            return self._formatter.format(
+            result = self._formatter.format(
                 format_string,
                 self._py3status_module,
                 param_dict,
                 force_composite=force_composite,
                 attr_getter=attr_getter,
             )
-        except Exception:
-            self._report_exception(f"Invalid format `{format_string}`")
-            return "invalid format"
+            if max_width is not None and max_width > 0:
+                if isinstance(result, str):
+                    result = result[:max_width]
+                elif isinstance(result, Composite):
+                    chars_left = max_width
+                    for composite in result:
+                        if "index" in composite:
+                            continue
+                        composite["full_text"] = composite["full_text"][:chars_left]
+                        chars_left -= len(composite["full_text"])
+                        chars_left = max(0, chars_left)
+            return result
+        except Exception as err:
+            self._report_exception(f"Invalid format `{format_string}` ({err})")
+            return f"invalid format ({err})"
 
     def build_composite(
         self, format_string, param_dict=None, composites=None, attr_getter=None

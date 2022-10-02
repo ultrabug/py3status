@@ -26,6 +26,10 @@ Configuration parameters:
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
         pactl and pamixer supports this. (default 120)
+    start_delay: Number of seconds to wait before starting this module.
+        This allows some systems to start the audio backend before we
+        try picking it up.
+        (default 0)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -82,6 +86,7 @@ mute
 
 import re
 import math
+from time import sleep
 from py3status.exceptions import CommandError
 
 STRING_ERROR = "invalid command `{}`"
@@ -114,11 +119,15 @@ class Amixer(Audio):
         if self.card is None:
             self.card = "0"
         if self.channel is None:
-            self.channel = "Capture" if self.is_input else "Master"
+            controls = self.parent.py3.command_output(
+                ["amixer", "scontrols"]
+            ).splitlines()
+            self.channel = controls[-abs(int(self.is_input))].split("'")[1::2][0]
         if self.device is None:
             self.device = "default"
         self.cmd = [
             "amixer",
+            "-M",
             "-q",
             "-c",
             self.card,
@@ -323,6 +332,7 @@ class Py3status:
     format_muted = r"[\?if=is_input 😶|♪]: muted"
     is_input = False
     max_volume = 120
+    start_delay = 0
     thresholds = [(0, "bad"), (20, "degraded"), (50, "good")]
     volume_delta = 5
 
@@ -352,6 +362,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        if self.start_delay:
+            sleep(int(self.start_delay))
         if not self.command:
             commands = ["pamixer", "pactl", "amixer"]
             # pamixer, pactl requires pulseaudio to work

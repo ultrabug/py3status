@@ -266,6 +266,7 @@ import datetime
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
+OWM_ONECALL_ENDPOINT = "https://api.openweathermap.org/data/2.5/onecall?"
 IP_ENDPOINT = "http://geo.ultrabug.fr"
 
 # Paths of information to extract from JSON
@@ -276,15 +277,28 @@ IP_LON = "//longitude"
 OWM_CLOUD_COVER = "//clouds/all"
 OWM_DESC = "//weather:0/main"
 OWM_DESC_LONG = "//weather:0/description"
-OWM_HUMIDITY = "//main/humidity"
-OWM_PRESSURE = "//main"
+OWM_HUMIDITY = "//humidity"
+OWM_PRESSURE = "//pressure"
 OWM_RAIN = "//rain/1h"
 OWM_SNOW = "//snow/1h"
 OWM_SUNRISE = "//sys/sunrise"
 OWM_SUNSET = "//sys/sunset"
-OWM_TEMP = "//main"
+OWM_TEMP_DAY = "//temp/day"
+OWM_TEMP_MAX = "//temp/max"
+OWM_TEMP_MIN = "//temp/min"
 OWM_WEATHER_ICON = "//weather:0/id"
-OWM_WIND = "//wind"
+OWM_WIND_SPEED = "//wind_speed"
+OWM_WIND_GUST = "//wind_gust"
+OWM_WIND_DEG = "//wind_deg"
+
+OWN_CURRENT_WIND_DEG = "//wind/deg"
+OWN_CURRENT_WIND_GUST = "//wind/gust"
+OWN_CURRENT_WIND_SPEED = "//wind/speed"
+OWM_CURRENT_TEMP = "//main/temp"
+OWM_CURRENT_TEMP_MAX = "//main/temp_max"
+OWM_CURRENT_TEMP_MIN = "//main/temp_min"
+OWM_CURRENT_HUMIDITY = "//main/humidity"
+OWM_CURRENT_PRESSURE = "//main/pressure"
 
 # Units constants
 RAIN_UNITS = {"mm", "cm", "in"}
@@ -534,9 +548,9 @@ class Py3status:
 
         return (lat_lng, city, country)
 
-    def _get_weather(self, extras):
+    def _get_current_weather(self, extras):
         # Get and process the current weather
-        params = {"APPID": self.api_key, "lang": self.lang}
+        params = {"appid": self.api_key, "lang": self.lang}
         extras.update(params)
         return self._make_req(OWM_CURR_ENDPOINT, extras)
 
@@ -546,7 +560,7 @@ class Py3status:
             return []
         # Get raw data
         params = {
-            "APPID": self.api_key,
+            "appid": self.api_key,
             "lang": self.lang,
             "cnt": self.forecast_days + 1,
         }
@@ -555,6 +569,12 @@ class Py3status:
         # Extract forecast
         weathers = data["list"]
         return weathers[:-1] if self.forecast_include_today else weathers[1:]
+
+    def _get_onecall(self, extras):
+        # Get and process the current weather
+        params = {"appid": self.api_key, "lang": self.lang}
+        extras.update(params)
+        return self._make_req(OWM_ONECALL_ENDPOINT, extras)
 
     def _get_icon(self, wthr):
         # Lookup the icon from the weather code (default sunny)
@@ -617,7 +637,17 @@ class Py3status:
         )
 
     def _format_wind(self, wthr):
-        wind = self._jpath(wthr, OWM_WIND, dict())
+        wind = {
+            "deg": self._jpath(
+                wthr, OWM_WIND_DEG, self._jpath(wthr, OWN_CURRENT_WIND_DEG, 0)
+            ),
+            "gust": self._jpath(
+                wthr, OWM_WIND_GUST, self._jpath(wthr, OWN_CURRENT_WIND_GUST, 0)
+            ),
+            "speed": self._jpath(
+                wthr, OWM_WIND_SPEED, self._jpath(wthr, OWN_CURRENT_WIND_SPEED, 0)
+            ),
+        }
 
         # Speed and Gust
         msec_speed = wind["speed"] if ("speed" in wind) else 0
@@ -673,7 +703,9 @@ class Py3status:
         # Format the humidity (default zero humidity)
         humidity_data = {
             "icon": self.icon_humidity,
-            "humidity": self._jpath(wthr, OWM_HUMIDITY, 0),
+            "humidity": self._jpath(
+                wthr, OWM_HUMIDITY, self._jpath(wthr, OWM_CURRENT_HUMIDITY, 0)
+            ),
         }
 
         for x in self.thresholds_init["format_humidity"]:
@@ -684,15 +716,29 @@ class Py3status:
 
     def _format_pressure(self, wthr):
         # Get data and add the icon
-        pressure = self._jpath(wthr, OWM_PRESSURE, dict())
-        pressure["icon"] = self.icon_pressure
+        pressure = {
+            "icon": self.icon_pressure,
+            "pressure": self._jpath(
+                wthr, OWM_PRESSURE, self._jpath(wthr, OWM_CURRENT_PRESSURE, 0)
+            ),
+        }
 
         # Format the barometric pressure
         return self.py3.safe_format(self.format_pressure, pressure)
 
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
-        kelvin = self._jpath(wthr, OWM_TEMP, 0)
+        kelvin = {
+            "day": self._jpath(
+                wthr, OWM_TEMP_DAY, self._jpath(wthr, OWM_CURRENT_TEMP, "")
+            ),
+            "max": self._jpath(
+                wthr, OWM_TEMP_MAX, self._jpath(wthr, OWM_CURRENT_TEMP_MAX, "")
+            ),
+            "min": self._jpath(
+                wthr, OWM_TEMP_MIN, self._jpath(wthr, OWM_CURRENT_TEMP_MIN, "")
+            ),
+        }
 
         # Temperature conversion methods
         def kToC(val):
@@ -703,19 +749,19 @@ class Py3status:
 
         options = {
             "c": {
-                "current": kToC(kelvin["temp"]),
-                "max": kToC(kelvin["temp_max"]),
-                "min": kToC(kelvin["temp_min"]),
+                "current": kToC(kelvin["day"]),
+                "max": kToC(kelvin["max"]),
+                "min": kToC(kelvin["min"]),
             },
             "f": {
-                "current": kToF(kelvin["temp"]),
-                "max": kToF(kelvin["temp_max"]),
-                "min": kToF(kelvin["temp_min"]),
+                "current": kToF(kelvin["day"]),
+                "max": kToF(kelvin["max"]),
+                "min": kToF(kelvin["min"]),
             },
             "k": {
-                "current": kelvin["temp"],
-                "max": kelvin["temp_max"],
-                "min": kelvin["temp_min"],
+                "current": kelvin["day"],
+                "max": kelvin["max"],
+                "min": kelvin["min"],
             },
         }
 
@@ -772,9 +818,9 @@ class Py3status:
 
         return data
 
-    def _format(self, wthr, fcsts, city, country):
+    def _format(self, current_wthr, fcsts, city, country):
         # Format all sections
-        today = self._format_dict(wthr, city, country)
+        today = self._format_dict(current_wthr, city, country)
 
         # Insert forecasts
         forecasts = []
@@ -797,20 +843,32 @@ class Py3status:
         if loc_tz_info is not None:
             (coords, city, country) = loc_tz_info
             if coords:
-                extras = {"lat": coords[0], "lon": coords[1]}
+                current_api_params = {"lat": coords[0], "lon": coords[1]}
             elif city:
-                extras = {"q": city}
-            wthr = self._get_weather(extras)
-            fcsts = self._get_forecast(extras)
+                current_api_params = {"q": city}
 
             # try to get a nice city name
-            city = wthr.get("name") or city or "unknown"
+            current_wthr = self._get_current_weather(current_api_params)
+            owm_city = current_wthr.get("name") or city or "unknown"
             # get the best country we can
             if not country:
-                sys = wthr.get("sys", {})
+                sys = current_wthr.get("sys", {})
                 country = sys.get("country", "unknown")
+            try:
+                lat = current_wthr["coord"]["lat"]
+                lon = current_wthr["coord"]["lon"]
+            except Exception:
+                raise Exception("no latitude/longitude found for your config")
 
-            text = self._format(wthr, fcsts, city, country)
+            # onecall = forecasts
+            onecall_api_params = {"lat": lat, "lon": lon}
+            onecall = self._get_onecall(onecall_api_params)
+            onecall_daily = onecall["daily"]
+
+            fcsts_days = self.forecast_days + 1
+            text = self._format(
+                current_wthr, onecall_daily[1:fcsts_days], owm_city, country,
+            )
 
         return {
             "full_text": text,

@@ -1,5 +1,6 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from time import sleep
+from datetime import datetime
 
 from py3status.constants import ON_TRIGGER_ACTIONS
 
@@ -20,6 +21,7 @@ class UdevMonitor:
         """
         self.py3_wrapper = py3_wrapper
         self.pyudev_available = pyudev is not None
+        self.throttle = defaultdict(Counter)
         self.udev_consumers = defaultdict(list)
         self.udev_observer = None
 
@@ -38,9 +40,11 @@ class UdevMonitor:
         This is a callback method that will trigger a refresh on subscribers.
         """
         # self.py3_wrapper.log(
-        #     "detected udev action '%s' on subsystem '%s'" % (action, device.subsystem)
+        #     f"detected udev action '{action}' on subsystem '{device.subsystem}'"
         # )
-        self.trigger_actions(device.subsystem)
+        if not self.py3_wrapper.i3bar_running:
+            return
+        self.trigger_actions(action, device.subsystem)
 
     def subscribe(self, py3_module, trigger_action, subsystem):
         """
@@ -71,14 +75,26 @@ class UdevMonitor:
             )
             return False
 
-    def trigger_actions(self, subsystem):
+    def trigger_actions(self, action, subsystem):
         """
         Refresh all modules which subscribed to the given subsystem.
         """
+        resolution = datetime.now().strftime("%S")[0]
         for py3_module, trigger_action in self.udev_consumers[subsystem]:
             if trigger_action in ON_TRIGGER_ACTIONS:
+                event_key = f"{subsystem}.{action}"
+                occurences = self.throttle[event_key][resolution]
+                # we allow at most 5 events per 10 seconds window
+                if occurences >= 5:
+                    self.py3_wrapper.log(
+                        f"udev event {event_key}: throttled after {occurences} occurences",
+                        level="warning",
+                    )
+                    continue
                 self.py3_wrapper.log(
-                    f"%{subsystem} udev event, refresh consumer {py3_module.module_full_name}"
+                    f"{event_key} udev event: refresh consumer {py3_module.module_full_name}"
                 )
                 sleep(0.1)
                 py3_module.force_update()
+                self.throttle[event_key].clear()
+                self.throttle[event_key][resolution] = occurences + 1

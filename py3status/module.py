@@ -238,7 +238,7 @@ class Module:
             return
         # clear cached_until for each method to allow update
         for meth, my_method in self.methods.items():
-            my_method["cached_until"] = time.perf_counter()
+            my_method["cached_until"] = time.monotonic()
             if self.config["debug"]:
                 self._py3_wrapper.log(f"clearing cache for method {meth}")
         # set module to update
@@ -858,7 +858,7 @@ class Module:
                             # the method_obj stores infos about each method
                             # of this module.
                             method_obj = {
-                                "cached_until": time.perf_counter(),
+                                "cached_until": time.monotonic(),
                                 "call_type": params_type,
                                 "instance": None,
                                 "last_output": {"name": method, "full_text": ""},
@@ -935,7 +935,7 @@ class Module:
                     break
 
                 # respect the cache set for this method
-                if time.perf_counter() < my_method["cached_until"]:
+                if time.monotonic() < my_method["cached_until"]:
                     if not cache_time or my_method["cached_until"] < cache_time:
                         cache_time = my_method["cached_until"]
                     continue
@@ -1031,9 +1031,9 @@ class Module:
                         if e.timeout is Py3.CACHE_FOREVER:
                             cache_time = Py3.CACHE_FOREVER
                         else:
-                            cache_time = time.perf_counter() + e.timeout
+                            cache_time = time.monotonic() + e.timeout
                     else:
-                        cache_time = time.perf_counter() + getattr(
+                        cache_time = time.monotonic() + getattr(
                             self.module_class,
                             "cache_timeout",
                             self.config["cache_timeout"],
@@ -1046,20 +1046,21 @@ class Module:
                         self._py3_wrapper.report_exception(msg, notify_user=False)
                     # added error
                     self.runtime_error(str(e) or e.__class__.__name__, meth)
-                    cache_time = time.perf_counter() + getattr(
+                    cache_time = time.monotonic() + getattr(
                         self.module_class, "cache_timeout", self.config["cache_timeout"]
                     )
 
             if cache_time is None:
-                cache_time = time.perf_counter() + self.config["cache_timeout"]
+                cache_time = time.monotonic() + self.config["cache_timeout"]
             self.cache_time = cache_time
             # new style modules can signal they want to cache forever
             if cache_time == Py3.CACHE_FOREVER:
+                self._py3_wrapper.clear_timeout_due(self)
                 return
             # don't be hasty mate
             # set timeout to do update next time one is needed
             if not cache_time:
-                cache_time = time.perf_counter() + self.config["minimum_interval"]
+                cache_time = time.monotonic() + self.config["minimum_interval"]
 
             self._py3_wrapper.timeout_queue_add(self, cache_time)
 

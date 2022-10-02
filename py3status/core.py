@@ -116,7 +116,7 @@ class CheckI3StatusThread(Task):
             self.notify_user(err)
         else:
             # check again in 5 seconds
-            self.timeout_queue_add(self, int(time.perf_counter()) + 5)
+            self.timeout_queue_add(self, int(time.monotonic()) + 5)
 
 
 class ModuleRunner(Task):
@@ -258,8 +258,10 @@ class Py3statusWrapper:
         """
         self.config = vars(options)
         self.i3bar_running = True
-        self.i3bar_inhibit_stp = time.time()
-        self.last_refresh_ts = time.perf_counter()
+        self.last_loop_ts = time.monotonic()
+        self.last_refresh_ts = time.monotonic()
+        self.last_sigcont_ts = None
+        self.last_sigtstp_ts = None
         self.lock = Event()
         self.modules = {}
         self.notified_messages = set()
@@ -284,6 +286,7 @@ class Py3statusWrapper:
         self.timeout_missed = {}
         self.timeout_queue = {}
         self.timeout_queue_lookup = {}
+        self.timeout_queue_lookup_previous = {}
         self.timeout_running = set()
         self.timeout_update_due = deque()
 
@@ -299,6 +302,25 @@ class Py3statusWrapper:
         # update request is due then trigger an update now.
         if self.timeout_due is None or cache_time < self.timeout_due:
             self.update_request.set()
+
+    def clear_timeout_due(self, module):
+        old = self.timeout_queue_lookup_previous.get(module, None)
+        if old:
+            if old == self.timeout_due:
+                self._set_new_timeout_due()
+            elif old in self.timeout_keys:
+                self.timeout_keys.remove(old)
+                self._set_new_timeout_due()
+
+    def _set_new_timeout_due(self):
+        # sort keys so earliest is first
+        self.timeout_keys.sort()
+
+        # when is next timeout due?
+        try:
+            self.timeout_due = self.timeout_keys[0]
+        except IndexError:
+            self.timeout_due = None
 
     def timeout_process_add_queue(self, module, cache_time):
         """
@@ -316,7 +338,7 @@ class Py3statusWrapper:
             return
 
         # remove if already in the queue
-        key = self.timeout_queue_lookup.get(module)
+        key = self.timeout_queue_lookup.get(module, None)
         if key:
             queue_item = self.timeout_queue[key]
             queue_item.remove(module)
@@ -327,24 +349,20 @@ class Py3statusWrapper:
         if cache_time == 0:
             # if cache_time is 0 we can just trigger the module update
             self.timeout_update_due.append(module)
-            self.timeout_queue_lookup[module] = None
+            if module in self.timeout_queue_lookup.keys():
+                del self.timeout_queue_lookup[module]
         else:
             # add the module to the timeout queue
             if cache_time not in self.timeout_keys:
                 self.timeout_queue[cache_time] = {module}
                 self.timeout_keys.append(cache_time)
-                # sort keys so earliest is first
-                self.timeout_keys.sort()
 
-                # when is next timeout due?
-                try:
-                    self.timeout_due = self.timeout_keys[0]
-                except IndexError:
-                    self.timeout_due = None
+                self._set_new_timeout_due()
             else:
                 self.timeout_queue[cache_time].add(module)
             # note that the module is in the timeout_queue
             self.timeout_queue_lookup[module] = cache_time
+            self.timeout_queue_lookup_previous[module] = cache_time
 
     def timeout_queue_process(self):
         """
@@ -353,7 +371,7 @@ class Py3statusWrapper:
         # process any items that need adding to the queue
         while self.timeout_add_queue:
             self.timeout_process_add_queue(*self.timeout_add_queue.popleft())
-        now = time.perf_counter()
+        now = time.monotonic()
         due_timeouts = []
         # find any due timeouts
         for timeout in self.timeout_keys:
@@ -410,8 +428,9 @@ class Py3statusWrapper:
                 Runner(module, self, module_name)
 
         # we return how long till we next need to process the timeout_queue
+        # this value should not be negative to avoid cpu overwhelming loops
         if self.timeout_due is not None:
-            return self.timeout_due - time.perf_counter()
+            return max(0, self.timeout_due - time.monotonic())
 
     def gevent_monkey_patch_report(self):
         """
@@ -578,18 +597,36 @@ class Py3statusWrapper:
         """
         self._setup_logging()
 
-        # log py3status and python versions
-        self.log("=" * 8)
-        msg = "Starting py3status version {version} python {python_version}"
-        self.log(msg.format(**self.config))
+    def _log_gitversion(self):
+        # A git repo is detected looking for the .git directory
+
+
+        git_path = Path(__file__).resolve().parent.parent / ".git"
+        if not git_path.exists():
+            return
+
+        self.log("Running within git repo")
 
         try:
-            # if running from git then log the branch and last commit
-            # we do this by looking in the .git directory
-            git_path = Path(__file__).resolve().parent.parent / ".git"
-            # branch
-            with (git_path / "HEAD").open() as f:
-                out = f.readline()
+            import git
+        except ImportError:
+            repo = None
+        else:
+            try:
+                repo = git.Repo(git_path.parent)
+            except Exception:
+                repo = None
+
+        if not repo:
+            try:
+                with (git_path / "HEAD").open() as f:
+                    out = f.readline()
+            except OSError:
+                self.log(
+                    "Unable to read git HEAD. "
+                    "Use python git package for more repo information"
+                )
+                return
             branch = "/".join(out.strip().split("/")[2:])
             self.log(f"git branch: {branch}")
             # last commit
@@ -599,8 +636,24 @@ class Py3statusWrapper:
             sha = out.split(" ")[1][:7]
             msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
             self.log(f"git commit: {sha}{msg}")
-        except:  # noqa e722
-            pass
+        else:
+            commit = repo.head.commit
+            self.log(f"git branch: {repo.active_branch.name}")
+            self.log(f"git commit: {commit.hexsha[:7]} {commit.summary}")
+            self.log(f"git clean: {not repo.is_dirty()!s}")
+
+    def setup(self):
+        """
+        Setup py3status and spawn i3status/events/modules threads.
+        """
+
+        # log py3status and python versions
+        self.log("=" * 8)
+        msg = "Starting py3status version {version} python {python_version}"
+        self.log(msg.format(**self.config))
+
+        # if running from git then log the branch and last commit
+        self._log_gitversion()
 
         self.log("window manager: {}".format(self.config["wm_name"]))
 
@@ -755,7 +808,7 @@ class Py3statusWrapper:
         limit_key = ""
         if rate_limit:
             try:
-                limit_key = time.perf_counter() // rate_limit
+                limit_key = time.monotonic() // rate_limit
             except TypeError:
                 pass
         # We use a hash to see if the message is being repeated.  This is crude
@@ -829,8 +882,8 @@ class Py3statusWrapper:
         refreshes.
         """
         if not module_string:
-            if time.perf_counter() > (self.last_refresh_ts + 0.1):
-                self.last_refresh_ts = time.perf_counter()
+            if time.monotonic() > (self.last_refresh_ts + 0.1):
+                self.last_refresh_ts = time.monotonic()
             else:
                 # rate limiting
                 return
@@ -995,18 +1048,25 @@ class Py3statusWrapper:
         return ",".join(dumps(x) for x in outputs)
 
     def i3bar_stop(self, signum, frame):
-        if time.time() - self.i3bar_inhibit_stp > 1:
+        if (
+            self.last_sigcont_ts
+            and self.last_sigtstp_ts
+            and self.last_sigcont_ts > self.last_sigtstp_ts
+            and time.monotonic() - self.last_loop_ts < 1
+        ):
             self.log(f"received stop_signal {Signals(signum).name}")
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
             self.sleep_modules()
         else:
-            self.log(f"inhibited stop_signal {Signals(signum).name}")
+            self.log(f"inhibited stop_signal {Signals(signum).name}", level="warning")
+        self.last_sigtstp_ts = time.monotonic()
 
     def i3bar_start(self, signum, frame):
         self.log(f"received resume signal {Signals(signum).name}")
-        self.i3bar_inhibit_stp = time.time()
+        self.last_loop_ts = time.monotonic()
+        self.last_sigcont_ts = time.monotonic()
         self.i3bar_running = True
         self.wake_modules()
 
@@ -1078,6 +1138,8 @@ class Py3statusWrapper:
 
             while not self.i3bar_running:
                 time.sleep(0.1)
+
+            self.last_loop_ts = time.monotonic()
 
             # check if an update is needed
             if self.update_queue:

@@ -31,7 +31,12 @@ class IOPoller:
         poll_result = self.poller.poll(timeout)
         if poll_result:
             line = self.io.readline().strip()
-            if self.io == sys.stdin and line == "[":
+            # when using pydev.debugger sys.stdin gets overwritten and placed
+            # into sys.stdin.original_stdin issue #2090
+            if (
+                self.io == getattr(sys.stdin, "original_stdin", sys.stdin)
+                and line == "["
+            ):
                 # skip first event line wrt issue #19
                 line = self.io.readline().strip()
             try:
