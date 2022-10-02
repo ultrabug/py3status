@@ -337,8 +337,8 @@ class Module:
 
         separator = fn(self.module_full_name, "separator")
         if not hasattr(separator, "none_setting"):
-            if not isinstance(separator, bool):
-                err = "Invalid `separator` attribute, should be a boolean. "
+            if not isinstance(separator, str):
+                err = "Invalid `separator` attribute, should be a string. "
                 err += f"Got `{separator}`."
                 raise TypeError(err)
             self.i3bar_module_options["separator"] = separator

@@ -154,15 +154,17 @@ class Common:
                 if attribute in config.get(module, {}):
                     param = config[module].get(attribute)
                     break
-        if hasattr(param, "none_setting"):
+        elif hasattr(param, "none_setting"):
             # check py3status config section
             param = config["py3status"].get(attribute, self.none_setting)
-        if hasattr(param, "none_setting"):
-            # check py3status general section
-            param = config["general"].get(attribute, self.none_setting)
-        if param and (attribute == "color" or attribute.startswith("color_")):
+        elif hasattr(param, "none_setting"):
+            if attribute != "separator":
+                # check py3status general section
+                param = config["general"].get(attribute, self.none_setting)
+        elif param and (attribute == "color" or attribute.startswith("color_")):
             # check color value
             param = expand_color(param.lower(), self.none_setting)
+        self.py3_wrapper.log(f"{name=} {attribute=} {param=}")
         return param
 
     def report_exception(self, msg, notify_user=True, level="error", error_frame=None):
