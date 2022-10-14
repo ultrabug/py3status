@@ -118,13 +118,13 @@ class Amixer(Audio):
     def setup(self, parent):
         if self.card is None:
             self.card = "0"
-        if self.channel is None:
-            controls = self.parent.py3.command_output(
-                ["amixer", "scontrols"]
-            ).splitlines()
-            self.channel = controls[-abs(int(self.is_input))].split("'")[1::2][0]
         if self.device is None:
             self.device = "default"
+        if self.channel is None:
+            controls = self.parent.py3.command_output(
+                ["amixer", "-c", self.card, "-D", self.device, "scontrols"]
+            ).splitlines()
+            self.channel = controls[-abs(int(self.is_input))].split("'")[1::2][0]
         self.cmd = [
             "amixer",
             "-M",
