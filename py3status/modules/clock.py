@@ -90,7 +90,11 @@ import re
 import time
 from datetime import datetime
 
-import zoneinfo
+try:
+    import zoneinfo
+# Fall back for python 3.7 and python 3.8
+except ImportError:
+    from backports import zoneinfo
 
 CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
 
