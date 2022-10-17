@@ -272,7 +272,7 @@ class Events(Thread):
         """
         try:
             while self.py3_wrapper.running:
-                event_str = self.poller_inp.readline()
+                event_str = self.poller_inp.readline(timeout=None)
                 if not event_str:
                     continue
                 try:
