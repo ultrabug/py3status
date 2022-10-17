@@ -6,12 +6,11 @@ All datetimes share the same format_time but can set their own timezones.
 Timezones are defined in the `format` using the TZ name in squiggly brackets eg
 `{GMT}`, `{Portugal}`, `{Europe/Paris}`, `{America/Argentina/Buenos_Aires}`.
 
-ISO-3166 two letter country codes eg `{de}` can also be used but if more than
-one timezone exists for the country eg `{us}` the first one will be selected.
+See https://docs.python.org/3/library/zoneinfo.html for supported formats.
 
 `{Local}` can be used for the local settings of your computer.
 
-Note: Timezones are case sensitive
+Note: Timezones are case sensitive!
 
 A full list of timezones can be found at
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -54,10 +53,6 @@ Format placeholders:
     {timezone_unclear} full timezone name eg `America/Argentina/Buenos_Aires`
         but is empty if only one timezone is provided
 
-Requires:
-    pytz: cross platform time zone library for python
-    tzlocal: tzinfo object for the local timezone
-
 Examples:
 ```
 # cycling through London, Warsaw, Tokyo
@@ -80,7 +75,7 @@ clock {
 }
 ```
 
-@author tobes
+@author tobes ultrabug
 @license BSD
 
 SAMPLE OUTPUT
@@ -95,8 +90,7 @@ import re
 import time
 from datetime import datetime
 
-import pytz
-import tzlocal
+import zoneinfo
 
 CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
 
@@ -192,24 +186,13 @@ class Py3status:
         # special Local timezone
         if tz == "Local":
             try:
-                return tzlocal.get_localzone()
-            except pytz.UnknownTimeZoneError:
+                return zoneinfo.ZoneInfo("localtime")
+            except zoneinfo.ZoneInfoNotFoundError:
                 return "?"
-
-        # we can use a country code to get tz
-        # FIXME this is broken for multi-timezone countries eg US
-        # for now we just grab the first one
-        if len(tz) == 2:
-            try:
-                zones = pytz.country_timezones(tz)
-            except KeyError:
-                return "?"
-            tz = zones[0]
-
         # get the timezone
         try:
-            zone = pytz.timezone(tz)
-        except pytz.UnknownTimeZoneError:
+            zone = zoneinfo.ZoneInfo(tz)
+        except zoneinfo.ZoneInfoNotFoundError:
             return "?"
         return zone
 
@@ -264,12 +247,7 @@ class Py3status:
                     idx = int(h / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
-                try:
-                    # tzlocal < 3.0
-                    timezone = zone.zone
-                except AttributeError:
-                    # tzlocal >= 3.0
-                    timezone = zone.key
+                timezone = zone.key
                 tzname = timezone.split("/")[-1].replace("_", " ")
 
                 if self.multiple_tz:
