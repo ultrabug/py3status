@@ -860,9 +860,12 @@ class Py3status:
                 raise Exception("no latitude/longitude found for your config")
 
             # onecall = forecasts
-            onecall_api_params = {"lat": lat, "lon": lon}
-            onecall = self._get_onecall(onecall_api_params)
-            onecall_daily = onecall["daily"]
+            try:
+                onecall_api_params = {"lat": lat, "lon": lon}
+                onecall = self._get_onecall(onecall_api_params)
+                onecall_daily = onecall["daily"]
+            except Exception:
+                onecall_daily = ""
 
             fcsts_days = self.forecast_days + 1
             text = self._format(
