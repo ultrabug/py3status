@@ -477,7 +477,7 @@ class Py3status:
             self.status = self.format_status_discharging
 
     def _update_icon(self):
-        if self.charging:
+        if self.charging and self.charging_character is not None:
             self.icon = self.charging_character
         else:
             self.icon = self.blocks[
