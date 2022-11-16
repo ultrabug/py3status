@@ -140,7 +140,6 @@ no_timew
 
 from json import loads as json_loads
 import datetime as dt
-from dateutil.relativedelta import relativedelta
 
 STRING_NOT_INSTALLED = "not installed"
 DATETIME = "%Y%m%dT%H%M%SZ"
@@ -244,15 +243,15 @@ class Py3status:
                 end = dt.datetime.strptime(time["end"], DATETIME)
 
             start = dt.datetime.strptime(time["start"], DATETIME)
-            duration = relativedelta(end, start)
+            duration = end - start
 
             time["format_duration"] = self.py3.safe_format(
                 self.format_duration,
                 {
                     "days": duration.days,
-                    "hours": duration.hours,
-                    "minutes": duration.minutes,
-                    "seconds": duration.seconds,
+                    "hours": duration.seconds // (60 * 60),
+                    "minutes": (duration.seconds // 60) % 60,
+                    "seconds": duration.seconds % 60,
                 },
             )
 
