@@ -25,6 +25,8 @@ Format placeholders:
     {name} name of the device
     {notif_size} number of notifications
     {notif_status} shows if a notification is available or not
+    {net_type} shows cell network type
+    {net_strength} shows cell network strength
 
 Color options:
     color_bad: Device unknown, unavailable
@@ -40,7 +42,7 @@ Examples:
 ```
 kdeconnector {
     device_id = "aa0844d33ac6ca03"
-    format = "{name} {battery} ⚡ {state}"
+    format = "{name} {charge} {bat_status}"
     low_battery = "10"
 }
 ```
@@ -91,7 +93,7 @@ class Py3status:
     cache_timeout = 30
     device = None
     device_id = None
-    format = "{name}{notif_status} {bat_status} {charge}% {net_type} {net_strength}"
+    format = "{name}{notif_status} {bat_status} {charge}%"
     format_disconnected = "device disconnected"
     low_threshold = 20
     status_bat = "⬇"
