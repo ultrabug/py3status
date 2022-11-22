@@ -77,6 +77,7 @@ INTERFACE_NOTIFICATIONS = INTERFACE + ".notifications"
 PATH = "/modules/kdeconnect"
 DEVICE_PATH = PATH + "/devices"
 BATTERY_SUBPATH = "/battery"
+CONN_REPORT_SUBPATH = "/connectivity_report"
 NOTIFICATIONS_SUBPATH = "/notifications"
 UNKNOWN = "Unknown"
 UNKNOWN_DEVICE = "unknown device"
@@ -90,7 +91,7 @@ class Py3status:
     cache_timeout = 30
     device = None
     device_id = None
-    format = "{name}{notif_status} {bat_status} {charge}%"
+    format = "{name}{notif_status} {bat_status} {charge}% {net_type} {net_strength}"
     format_disconnected = "device disconnected"
     low_threshold = 20
     status_bat = "⬇"
@@ -101,6 +102,7 @@ class Py3status:
 
     def post_config_hook(self):
         self._bat = None
+        self._con = None
         self._dev = None
         self._not = None
 
@@ -129,6 +131,15 @@ class Py3status:
                 # Fallback to the old version
                 self._bat = None
                 self._not = None
+
+            try:  # This plugin is released after kdeconnect version Mar 13, 2021
+                self._con = _bus.get(
+                    SERVICE_BUS,
+                    DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
+                )
+            except Exception:
+                self._con = None
+
         except Exception:
             return False
 
@@ -200,6 +211,29 @@ class Py3status:
 
         return battery
 
+    def _get_conn(self):
+        """
+        Get the connection report
+        """
+        try:
+            if self._con:
+                strength = self._con.cellularNetworkStrength
+                type = self._con.cellularNetworkType
+
+                con_info = {
+                    "strength": strength,
+                    "type": type,
+                }
+            else:
+                con_info = {
+                    "strength": "",
+                    "type": "",
+                }
+        except Exception:
+            return None
+
+        return con_info
+
     def _get_notifications(self):
         """
         Get notifications
@@ -249,6 +283,12 @@ class Py3status:
 
         return (size, status)
 
+    def _get_conn_status(self, conn):
+        """
+        Get the conn status
+        """
+        return (conn["strength"], conn["type"])
+
     def _get_text(self):
         """
         Get the current metadatas
@@ -271,6 +311,9 @@ class Py3status:
         notif = self._get_notifications()
         (notif_size, notif_status) = self._get_notifications_status(notif)
 
+        conn = self._get_conn()
+        (strength, type) = self._get_conn_status(conn)
+
         return (
             self.py3.safe_format(
                 self.format,
@@ -280,6 +323,8 @@ class Py3status:
                     bat_status=bat_status,
                     notif_size=notif_size,
                     notif_status=notif_status,
+                    net_type=type,
+                    net_strength=strength,
                 ),
             ),
             color,
