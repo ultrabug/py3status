@@ -613,6 +613,16 @@ class Py3statusWrapper:
         self.log("config file: {}".format(self.config["i3status_config_path"]))
         self.config["py3_config"] = process_config(config_path, self)
 
+        # autodetect output_format
+        output_format = self.config["py3_config"]["general"]["output_format"]
+        if output_format is None:
+            if sys.stdout.isatty():
+                print("py3status: trying to auto-detect output_format setting")
+                print('py3status: auto-detected "term"')
+                output_format = "term"
+
+        self.config["py3_config"]["general"]["output_format"] = output_format or "i3bar"
+
         # read resources
         if "resources" in str(self.config["py3_config"].values()):
             from subprocess import check_output

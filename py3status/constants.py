@@ -7,7 +7,7 @@ GENERAL_DEFAULTS = {
     "color_separator": "#333333",
     "colors": True,
     "interval": 5,
-    "output_format": "i3bar",
+    "output_format": None,
 }
 
 MAX_NESTING_LEVELS = 4
