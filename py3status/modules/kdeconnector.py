@@ -224,7 +224,7 @@ class Py3status:
                 type = self._con.cellularNetworkType
 
                 con_info = {
-                    "strength": f"{int((strength / 4) * 100)}%",
+                    "strength": f"{strength * 25}%",
                     "type": type,
                 }
             else:
