@@ -219,11 +219,12 @@ class Py3status:
         """
         try:
             if self._con:
+                # Possible values are 0 - 4
                 strength = self._con.cellularNetworkStrength
                 type = self._con.cellularNetworkType
 
                 con_info = {
-                    "strength": strength,
+                    "strength": f"{int((strength / 4) * 100)}%",
                     "type": type,
                 }
             else:
