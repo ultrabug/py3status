@@ -383,8 +383,20 @@ class Py3status:
         if self.device is not None:
             self.device = str(self.device)
 
-        self.backend = globals()[self.command.capitalize()](self)
+        self._init_backend()
         self.color_muted = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    def _init_backend(self):
+        # attempt it a few times since the audio service may still be loading during startup
+        for i in range(6):
+            try:
+                self.backend = globals()[self.command.capitalize()](self)
+                return
+            except Exception:  # noqa e722
+                # try again later (exponential backoff)
+                sleep(0.5 * 2**i)
+
+        self.backend = globals()[self.command.capitalize()](self)
 
     def volume_status(self):
         perc, muted = self.backend.get_volume()
