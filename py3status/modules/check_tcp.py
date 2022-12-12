@@ -44,7 +44,12 @@ class Py3status:
 
     def check_tcp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex((self.host, self.port))
+
+        try:
+            result = sock.connect_ex((self.host, self.port))
+        except socket.gaierror:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            result = sock.connect_ex((self.host, self.port))
 
         if result:
             color = self.color_off
