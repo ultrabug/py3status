@@ -117,6 +117,11 @@ class Py3status:
         self._dev = None
         self._not = None
 
+        self._signal_reachable_changed = None
+        self._signal_battery = None
+        self._signal_notifications = None
+        self._signal_conn_report = None
+
         self._format_contains_notifications = self.py3.format_contains(
             self.format, "notif_size"
         ) or self.py3.format_contains(self.format, "notif_status")
@@ -143,7 +148,7 @@ class Py3status:
             self._kill = True
 
     def _start_listener(self):
-        self._reachableChanged = self._dbus.con.signal_subscribe(
+        self._signal_reachable_changed = self._dbus.con.signal_subscribe(
             sender=None,
             interface_name=INTERFACE,
             member="reachableChanged",
@@ -441,6 +446,20 @@ class Py3status:
             ),
             color,
         )
+
+    def kill(self):
+        self._kill = True
+        if self._signal_reachable_changed:
+            self._dbus.con.signal_unsubscribe(self._signal_reachable_changed)
+
+        if self._signal_battery:
+            self._dbus.con.signal_unsubscribe(self._signal_battery)
+
+        if self._signal_notifications:
+            self._dbus.con.signal_unsubscribe(self._signal_notifications)
+
+        if self._signal_conn_report:
+            self._dbus.con.signal_unsubscribe(self._signal_conn_report)
 
     def kdeconnector(self):
         """
