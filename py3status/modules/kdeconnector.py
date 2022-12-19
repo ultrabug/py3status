@@ -470,7 +470,11 @@ class Py3status:
 
         if self._init_dbus():
             (text, color) = self._get_text()
-            cached_until = self.py3.CACHE_FOREVER
+            if self._bat: # kdeconnect version < 1.0 hasn't separate interface for bat/not
+                cached_until = self.py3.CACHE_FOREVER
+            else: #fallback to < 1.0 kdeconnect version.
+                cached_until = self.py3.time_in(self.cache_timeout)
+
         else:
             text = UNKNOWN_DEVICE
             color = self.py3.COLOR_BAD
