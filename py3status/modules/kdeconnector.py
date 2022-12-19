@@ -68,14 +68,20 @@ unknown
 {'color': '#FF0000', 'full_text': u'unknown device'}
 """
 
+import sys
+from threading import Thread
+
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 from pydbus import SessionBus
 
-
+STRING_GEVENT = "this module does not work with gevent"
 SERVICE_BUS = "org.kde.kdeconnect"
 INTERFACE = SERVICE_BUS + ".device"
 INTERFACE_DAEMON = SERVICE_BUS + ".daemon"
 INTERFACE_BATTERY = INTERFACE + ".battery"
 INTERFACE_NOTIFICATIONS = INTERFACE + ".notifications"
+INTERFACE_CONN_REPORT = INTERFACE + ".connectivity_report"
 PATH = "/modules/kdeconnect"
 DEVICE_PATH = PATH + "/devices"
 BATTERY_SUBPATH = "/battery"
@@ -103,10 +109,106 @@ class Py3status:
     status_notif = " ✉"
 
     def post_config_hook(self):
+        if self.py3.is_gevent():
+            raise Exception(STRING_GEVENT)
+
         self._bat = None
         self._con = None
         self._dev = None
         self._not = None
+
+
+        self._format_contains_notifications = self.py3.format_contains(
+            self.format, "notif_size"
+        ) or self.py3.format_contains(self.format, "notif_status")
+
+        self._format_contains_connection_status = self.py3.format_contains(
+            self.format, "net_type"
+        ) or self.py3.format_contains(self.format, "net_strength")
+
+        self._dbus = SessionBus()
+
+        # start last
+        self._kill = False
+        self._dbus_loop = DBusGMainLoop()
+        self._dbus = SessionBus()
+        self._start_listener()
+
+    def _start_loop(self):
+        self._loop = GLib.MainLoop()
+        GLib.timeout_add(1000, self._timeout)
+        try:
+            self._loop.run()
+        except KeyboardInterrupt:
+            # This branch is only needed for the test mode
+            self._kill = True
+
+    def _start_listener(self):
+        self._reachableChanged = self._dbus.con.signal_subscribe(
+            sender=None,
+            interface_name=INTERFACE,
+            member="reachableChanged",
+            object_path=DEVICE_PATH + f"/{self.device_id}",
+            arg0=None,
+            flags=0,
+            callback=self._reachable_on_change,
+        )
+
+        self._signal_battery = self._dbus.con.signal_subscribe(
+            sender=None,
+            interface_name=INTERFACE_BATTERY,
+            member=None,
+            object_path=DEVICE_PATH + f"/{self.device_id}",
+            arg0=None,
+            flags=0,
+            callback=self._battery_on_change,
+        )
+
+        if self._format_contains_notifications:
+            self._signal_notifications = self._dbus.con.signal_subscribe(
+                sender=None,
+                interface_name=INTERFACE_NOTIFICATIONS,
+                member=None,
+                object_path=DEVICE_PATH + f"/{self.device_id}",
+                arg0=None,
+                flags=0,
+                callback=self._notifications_on_change,
+            )
+
+        if self._format_contains_connection_status:
+            self._signal_conn_report = self._dbus.con.signal_subscribe(
+                sender=None,
+                interface_name=INTERFACE_CONN_REPORT,
+                member=None,
+                object_path=DEVICE_PATH + f"/{self.device_id}",
+                arg0=None,
+                flags=0,
+                callback=self._conn_report_on_change,
+            )
+
+        # Start listening things after initiating players.
+        t = Thread(target=self._start_loop)
+        t.daemon = True
+        t.start()
+
+    def _notifications_on_change(
+            self, connection, owner, device, path, event, new_value
+    ):
+        self.py3.update()
+
+    def _reachable_on_change(self, connection, owner, device, path, event, new_value):
+        self.py3.update()
+
+    def _battery_on_change(self, connection, owner, device, path, event, new_value):
+        self.py3.update()
+
+    def _conn_report_on_change(self, connection, owner, device, path, event, new_value):
+        self.py3.update()
+
+    def _timeout(self):
+        if self._kill:
+            self._loop.quit()
+            sys.exit(0)
 
     def _init_dbus(self):
         """
@@ -308,26 +410,25 @@ class Py3status:
                 self.py3.COLOR_BAD,
             )
 
+        result = {}
+
         battery = self._get_battery()
-        (charge, bat_status, color) = self._get_battery_status(battery)
+        (result["charge"], result["bat_status"], color) = self._get_battery_status(battery)
 
-        notif = self._get_notifications()
-        (notif_size, notif_status) = self._get_notifications_status(notif)
+        if self._format_contains_notifications:
+            notif = self._get_notifications()
+            (result["notif_size"], result["notif_status"]) = self._get_notifications_status(notif)
 
-        conn = self._get_conn()
-        (strength, type) = self._get_conn_status(conn)
+        if self._format_contains_connection_status:
+            conn = self._get_conn()
+            (result["strength"], result["type"]) = self._get_conn_status(conn)
 
         return (
             self.py3.safe_format(
                 self.format,
                 dict(
                     name=device["name"],
-                    charge=charge,
-                    bat_status=bat_status,
-                    notif_size=notif_size,
-                    notif_status=notif_status,
-                    net_type=type,
-                    net_strength=strength,
+                    **result
                 ),
             ),
             color,
@@ -337,14 +438,19 @@ class Py3status:
         """
         Get the current state and return it.
         """
+        if self._kill:
+            raise KeyboardInterrupt
+
         if self._init_dbus():
             (text, color) = self._get_text()
+            cached_until = self.py3.CACHE_FOREVER
         else:
             text = UNKNOWN_DEVICE
             color = self.py3.COLOR_BAD
+            cached_until = self.py3.time_in(self.cache_timeout)
 
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
+            "cached_until": cached_until,
             "full_text": text,
             "color": color,
         }
