@@ -47,7 +47,7 @@ kdeconnector {
 }
 ```
 
-@author Moritz Lüdecke
+@author Moritz Lüdecke, valdur55
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2B06 97%'}
