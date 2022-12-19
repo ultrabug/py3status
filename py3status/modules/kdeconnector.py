@@ -226,20 +226,27 @@ class Py3status:
                 self._bat = _bus.get(
                     SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}" + BATTERY_SUBPATH
                 )
-                self._not = _bus.get(
-                    SERVICE_BUS,
-                    DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
-                )
+
+                if self._format_contains_notifications:
+                    self._not = _bus.get(
+                        SERVICE_BUS,
+                        DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
+                    )
+                else:
+                    self._not = None
             except Exception:
                 # Fallback to the old version
                 self._bat = None
                 self._not = None
 
             try:  # This plugin is released after kdeconnect version Mar 13, 2021
-                self._con = _bus.get(
-                    SERVICE_BUS,
-                    DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
-                )
+                if self._format_contains_connection_status:
+                    self._con = _bus.get(
+                        SERVICE_BUS,
+                        DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
+                    )
+                else:
+                    self._con = None
             except Exception:
                 self._con = None
 
