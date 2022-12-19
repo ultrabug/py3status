@@ -117,7 +117,6 @@ class Py3status:
         self._dev = None
         self._not = None
 
-
         self._format_contains_notifications = self.py3.format_contains(
             self.format, "notif_size"
         ) or self.py3.format_contains(self.format, "notif_status")
@@ -192,7 +191,7 @@ class Py3status:
         t.start()
 
     def _notifications_on_change(
-            self, connection, owner, device, path, event, new_value
+        self, connection, owner, device, path, event, new_value
     ):
         self.py3.update()
 
@@ -413,11 +412,16 @@ class Py3status:
         result = {}
 
         battery = self._get_battery()
-        (result["charge"], result["bat_status"], color) = self._get_battery_status(battery)
+        (result["charge"], result["bat_status"], color) = self._get_battery_status(
+            battery
+        )
 
         if self._format_contains_notifications:
             notif = self._get_notifications()
-            (result["notif_size"], result["notif_status"]) = self._get_notifications_status(notif)
+            (
+                result["notif_size"],
+                result["notif_status"],
+            ) = self._get_notifications_status(notif)
 
         if self._format_contains_connection_status:
             conn = self._get_conn()
@@ -426,10 +430,7 @@ class Py3status:
         return (
             self.py3.safe_format(
                 self.format,
-                dict(
-                    name=device["name"],
-                    **result
-                ),
+                dict(name=device["name"], **result),
             ),
             color,
         )
