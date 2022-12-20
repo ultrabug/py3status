@@ -437,7 +437,7 @@ class Py3status:
 
         if self._format_contains_connection_status:
             conn = self._get_conn()
-            (result["strength"], result["type"]) = self._get_conn_status(conn)
+            (result["net_strength"], result["net_type"]) = self._get_conn_status(conn)
 
         return (
             self.py3.safe_format(
