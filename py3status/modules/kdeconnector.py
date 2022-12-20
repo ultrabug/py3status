@@ -136,6 +136,7 @@ class Py3status:
         self._kill = False
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus()
+        self._init_dbus()
         self._start_listener()
 
     def _start_loop(self):
@@ -152,7 +153,7 @@ class Py3status:
             sender=None,
             interface_name=INTERFACE,
             member="reachableChanged",
-            object_path=DEVICE_PATH + f"/{self.device_id}",
+            object_path=None,
             arg0=None,
             flags=0,
             callback=self._reachable_on_change,
@@ -162,7 +163,7 @@ class Py3status:
             sender=None,
             interface_name=INTERFACE_BATTERY,
             member=None,
-            object_path=DEVICE_PATH + f"/{self.device_id}",
+            object_path=None,
             arg0=None,
             flags=0,
             callback=self._battery_on_change,
@@ -173,7 +174,7 @@ class Py3status:
                 sender=None,
                 interface_name=INTERFACE_NOTIFICATIONS,
                 member=None,
-                object_path=DEVICE_PATH + f"/{self.device_id}",
+                object_path=None,
                 arg0=None,
                 flags=0,
                 callback=self._notifications_on_change,
@@ -184,7 +185,7 @@ class Py3status:
                 sender=None,
                 interface_name=INTERFACE_CONN_REPORT,
                 member=None,
-                object_path=DEVICE_PATH + f"/{self.device_id}",
+                object_path=None,
                 arg0=None,
                 flags=0,
                 callback=self._conn_report_on_change,
@@ -196,18 +197,31 @@ class Py3status:
         t.start()
 
     def _notifications_on_change(
-        self, connection, owner, device, path, event, new_value
+        self, connection, owner, object_path, interface_name, event, new_value
     ):
-        self.py3.update()
+        if self._is_current_device(object_path):
+            self.py3.update()
 
-    def _reachable_on_change(self, connection, owner, device, path, event, new_value):
-        self.py3.update()
+    def _reachable_on_change(
+        self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            self.py3.update()
 
-    def _battery_on_change(self, connection, owner, device, path, event, new_value):
-        self.py3.update()
+    def _battery_on_change(
+        self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            self.py3.update()
 
-    def _conn_report_on_change(self, connection, owner, device, path, event, new_value):
-        self.py3.update()
+    def _conn_report_on_change(
+        self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            self.py3.update()
+
+    def _is_current_device(self, object_path):
+        return self.device_id in object_path
 
     def _timeout(self):
         if self._kill:
