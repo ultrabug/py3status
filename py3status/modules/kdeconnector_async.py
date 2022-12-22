@@ -530,13 +530,17 @@ class Py3status:
         if self._kill:
             raise KeyboardInterrupt
 
+        if not self._bat:
+            self._update_battery_info()
+            self._update_notif_info()
+            self._update_conn_info()
+
         if self._init_dbus():
             (text, color) = self._get_text()
 
             # kdeconnect version < 1.0 hasn't separate interface for bat/not
             if self._bat:
                 cached_until = self.py3.CACHE_FOREVER
-            # fallback to < 1.0 kdeconnect version.
             else:
                 cached_until = self.py3.time_in(self.cache_timeout)
 
