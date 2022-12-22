@@ -117,6 +117,8 @@ class Py3status:
         self._dev = None
         self._not = None
 
+        self._result = {}
+
         self._signal_reachable_changed = None
         self._signal_battery = None
         self._signal_notifications = None
@@ -136,8 +138,13 @@ class Py3status:
         self._kill = False
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus()
-        self._init_dbus()
+        self._bus_init = self._init_dbus()
         self._start_listener()
+
+        if self._bus_init:
+            self._update_conn_info()
+            self._update_notif_info()
+            self._update_battery_info()
 
     def _start_loop(self):
         self._loop = GLib.MainLoop()
@@ -200,24 +207,51 @@ class Py3status:
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
+            if event == "notificationRemoved":
+                self._result["notif_size"] -= 1
+                if self._result["notif_size"] > 0:
+                    self._result["notif_status"] = self.status_notif
+                else:
+                    self._result["notif_status"] = self.status_no_notif
+                    
+            elif event == "notificationPosted":
+                self._result["notif_size"] += 1
+                self._result["notif_status"] = self.status_notif
+            else:
+                self._update_notif_info()
             self.py3.update()
 
     def _reachable_on_change(
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
+            self._update_battery_info()
+            self._update_notif_info()
+            self._update_conn_info()
             self.py3.update()
 
     def _battery_on_change(
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
+            if event == "refreshed":
+                self._set_battery_status(isCharging=new_value[0], charge=new_value[1])
+            if event == "stateChanged":
+                self._set_battery_status(isCharging=new_value[0], charge=None)
+            if event == "chargeChanged":
+                self._set_battery_status(isCharging=None, charge=new_value[0])
+            else:
+                self._update_battery_info()
             self.py3.update()
 
     def _conn_report_on_change(
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
+            if event == "refreshed":
+                self._set_conn_status(net_type=new_value[0], net_strength=new_value[1])
+            else:
+                self._update_conn_info()
             self.py3.update()
 
     def _is_current_device(self, object_path):
@@ -336,7 +370,10 @@ class Py3status:
                 "isCharging": isCharging == 1,
             }
         except Exception:
-            return None
+            return {
+                "charge": -1,
+                "isCharging": None,
+            }
 
         return battery
 
@@ -346,21 +383,24 @@ class Py3status:
         """
         try:
             if self._con:
-                # Possible values are 0 - 4
+                # Possible values are -1 - 4
                 strength = self._con.cellularNetworkStrength
                 type = self._con.cellularNetworkType
 
                 con_info = {
-                    "strength": strength * 25,
+                    "strength": strength,
                     "type": type,
                 }
             else:
                 con_info = {
-                    "strength": "",
+                    "strength": -1,
                     "type": "",
                 }
         except Exception:
-            return None
+            return {
+                "strength": -1,
+                "type": "",
+            }
 
         return con_info
 
@@ -370,54 +410,64 @@ class Py3status:
         """
         try:
             if self._not:
-                notifications = {"activeNotifications": self._not.activeNotifications()}
+                notifications = self._not.activeNotifications()
             else:
-                notifications = {"activeNotifications": self._dev.activeNotifications()}
-            notifications = {"activeNotifications": notifications}
+                notifications = self._dev.activeNotifications()
         except Exception:
-            return None
+            return []
 
         return notifications
 
-    def _get_battery_status(self, battery):
+    def _set_battery_status(self, isCharging, charge):
         """
         Get the battery status
         """
-        if not battery or battery["charge"] == -1:
-            return (UNKNOWN_SYMBOL, UNKNOWN, "#FFFFFF")
+        if charge == -1:
+            self._result["charge"] = UNKNOWN_SYMBOL
+            self._result["bat_status"] = UNKNOWN
+            self._result["color"] = "#FFFFFF"
+            return
 
-        if battery["isCharging"]:
-            status = self.status_chr
-            color = self.py3.COLOR_GOOD
-        else:
-            status = self.status_bat
-            color = self.py3.COLOR_DEGRADED
+        if charge is not None:
+            self._result["charge"] = charge
 
-        if not battery["isCharging"] and battery["charge"] <= self.low_threshold:
-            color = self.py3.COLOR_BAD
+        if isCharging is not None:
+            if isCharging:
+                self._result["bat_status"] = self.status_chr
+                self._result["color"] = self.py3.COLOR_GOOD
+            else:
+                self._result["bat_status"] = self.status_bat
+                self._result["color"] = self.py3.COLOR_DEGRADED
 
-        if battery["charge"] > 99:
-            status = self.status_full
+            if (
+                not isCharging
+                and isinstance(self._result["charge"], int)
+                and self._result["charge"] <= self.low_threshold
+            ):
+                self._result["color"] = self.py3.COLOR_BAD
 
-        return (battery["charge"], status, color)
+        if charge is not None:
+            if charge > 99:
+                self._result["bat_status"] = self.status_full
 
-    def _get_notifications_status(self, notifications):
+    def _set_notifications_status(self, activeNotifications):
         """
         Get the notifications status
         """
-        if notifications:
-            size = len(notifications["activeNotifications"])
-        else:
-            size = 0
-        status = self.status_notif if size > 0 else self.status_no_notif
+        size = len(activeNotifications)
+        self._result["notif_status"] = (
+            self.status_notif if size > 0 else self.status_no_notif
+        )
+        self._result["notif_size"] = size
 
-        return (size, status)
-
-    def _get_conn_status(self, conn):
+    def _set_conn_status(self, net_type, net_strength):
         """
         Get the conn status
         """
-        return (conn["strength"], conn["type"])
+        self._result["net_strength"] = (
+            net_strength * 25 if net_strength > -1 else UNKNOWN_SYMBOL
+        )
+        self._result["net_type"] = net_type
 
     def _get_text(self):
         """
@@ -435,30 +485,28 @@ class Py3status:
                 self.py3.COLOR_BAD,
             )
 
-        result = {}
-
-        battery = self._get_battery()
-        (result["charge"], result["bat_status"], color) = self._get_battery_status(
-            battery
-        )
-
-        if self._format_contains_notifications:
-            notif = self._get_notifications()
-            (
-                result["notif_size"],
-                result["notif_status"],
-            ) = self._get_notifications_status(notif)
-
-        if self._format_contains_connection_status:
-            conn = self._get_conn()
-            (result["net_strength"], result["net_type"]) = self._get_conn_status(conn)
-
         return (
             self.py3.safe_format(
                 self.format,
-                dict(name=device["name"], **result),
+                dict(name=device["name"], **self._result),
             ),
-            color,
+            self._result.get("color"),
+        )
+
+    def _update_conn_info(self):
+        if self._format_contains_connection_status:
+            conn = self._get_conn()
+            self._set_conn_status(net_type=conn["type"], net_strength=conn["strength"])
+
+    def _update_notif_info(self):
+        if self._format_contains_notifications:
+            notif = self._get_notifications()
+            self._set_notifications_status(notif)
+
+    def _update_battery_info(self):
+        battery = self._get_battery()
+        self._set_battery_status(
+            isCharging=battery["isCharging"], charge=battery["charge"]
         )
 
     def kill(self):
