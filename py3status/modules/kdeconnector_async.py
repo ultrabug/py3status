@@ -213,7 +213,7 @@ class Py3status:
                     self._result["notif_status"] = self.status_notif
                 else:
                     self._result["notif_status"] = self.status_no_notif
-                    
+
             elif event == "notificationPosted":
                 self._result["notif_size"] += 1
                 self._result["notif_status"] = self.status_notif
