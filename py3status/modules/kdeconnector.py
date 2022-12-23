@@ -47,7 +47,7 @@ kdeconnector {
 }
 ```
 
-@author Moritz Lüdecke
+@author Moritz Lüdecke, valdur55
 
 SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2B06 97%'}
@@ -68,14 +68,20 @@ unknown
 {'color': '#FF0000', 'full_text': u'unknown device'}
 """
 
+import sys
+from threading import Thread
+
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 from pydbus import SessionBus
 
-
+STRING_GEVENT = "this module does not work with gevent"
 SERVICE_BUS = "org.kde.kdeconnect"
 INTERFACE = SERVICE_BUS + ".device"
 INTERFACE_DAEMON = SERVICE_BUS + ".daemon"
 INTERFACE_BATTERY = INTERFACE + ".battery"
 INTERFACE_NOTIFICATIONS = INTERFACE + ".notifications"
+INTERFACE_CONN_REPORT = INTERFACE + ".connectivity_report"
 PATH = "/modules/kdeconnect"
 DEVICE_PATH = PATH + "/devices"
 BATTERY_SUBPATH = "/battery"
@@ -103,10 +109,152 @@ class Py3status:
     status_notif = " ✉"
 
     def post_config_hook(self):
+        if self.py3.is_gevent():
+            raise Exception(STRING_GEVENT)
+
         self._bat = None
         self._con = None
         self._dev = None
         self._not = None
+
+        self._result = {}
+
+        self._signal_reachable_changed = None
+        self._signal_battery = None
+        self._signal_notifications = None
+        self._signal_conn_report = None
+
+        self._format_contains_notifications = self.py3.format_contains(
+            self.format, ["notif_size", "notif_status"]
+        )
+
+        self._format_contains_connection_status = self.py3.format_contains(
+            self.format, ["net_type", "net_strength"]
+        )
+
+        self._dbus = SessionBus()
+
+        # start last
+        self._kill = False
+        self._dbus_loop = DBusGMainLoop()
+        self._dbus = SessionBus()
+        self._bus_init = self._init_dbus()
+        self._start_listener()
+
+        if self._bus_init:
+            self._update_conn_info()
+            self._update_notif_info()
+            self._update_battery_info()
+
+    def _start_loop(self):
+        self._loop = GLib.MainLoop()
+        GLib.timeout_add(1000, self._timeout)
+        try:
+            self._loop.run()
+        except KeyboardInterrupt:
+            # This branch is only needed for the test mode
+            self._kill = True
+
+    def _start_listener(self):
+        self._signal_reachable_changed = self._dbus.con.signal_subscribe(
+            sender=None,
+            interface_name=INTERFACE,
+            member="reachableChanged",
+            object_path=None,
+            arg0=None,
+            flags=0,
+            callback=self._reachable_on_change,
+        )
+
+        self._signal_battery = self._dbus.con.signal_subscribe(
+            sender=None,
+            interface_name=INTERFACE_BATTERY,
+            member=None,
+            object_path=None,
+            arg0=None,
+            flags=0,
+            callback=self._battery_on_change,
+        )
+
+        if self._format_contains_notifications:
+            self._signal_notifications = self._dbus.con.signal_subscribe(
+                sender=None,
+                interface_name=INTERFACE_NOTIFICATIONS,
+                member=None,
+                object_path=None,
+                arg0=None,
+                flags=0,
+                callback=self._notifications_on_change,
+            )
+
+        if self._format_contains_connection_status:
+            self._signal_conn_report = self._dbus.con.signal_subscribe(
+                sender=None,
+                interface_name=INTERFACE_CONN_REPORT,
+                member=None,
+                object_path=None,
+                arg0=None,
+                flags=0,
+                callback=self._conn_report_on_change,
+            )
+
+        # Start listening things after initiating players.
+        t = Thread(target=self._start_loop)
+        t.daemon = True
+        t.start()
+
+    def _notifications_on_change(
+            self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            self._update_notif_info()
+            self.py3.update()
+
+    def _reachable_on_change(
+            self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            # Update only when device is connected
+            if new_value[0]:
+                self._update_battery_info()
+                self._update_notif_info()
+                self._update_conn_info()
+            self.py3.update()
+
+    def _battery_on_change(
+            self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            if event == "refreshed":
+                if new_value[1] != -1:
+                    self._set_battery_status(
+                        isCharging=new_value[0], charge=new_value[1]
+                    )
+            elif event == "stateChanged":
+                self._set_battery_status(isCharging=new_value[0], charge=None)
+            elif event == "chargeChanged":
+                self._set_battery_status(isCharging=None, charge=new_value[0])
+            else:
+                self._update_battery_info()
+            self.py3.update()
+
+    def _conn_report_on_change(
+            self, connection, owner, object_path, interface_name, event, new_value
+    ):
+        if self._is_current_device(object_path):
+            if event == "refreshed":
+                self._set_conn_status(net_type=new_value[0], net_strength=new_value[1])
+            else:
+                self._update_conn_info()
+            self.py3.update()
+
+    def _is_current_device(self, object_path):
+        return self.device_id in object_path
+
+    def _timeout(self):
+        if self._kill:
+            self._loop.quit()
+            sys.exit(0)
 
     def _init_dbus(self):
         """
@@ -125,20 +273,27 @@ class Py3status:
                 self._bat = _bus.get(
                     SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}" + BATTERY_SUBPATH
                 )
-                self._not = _bus.get(
-                    SERVICE_BUS,
-                    DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
-                )
+
+                if self._format_contains_notifications:
+                    self._not = _bus.get(
+                        SERVICE_BUS,
+                        DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
+                        )
+                else:
+                    self._not = None
             except Exception:
                 # Fallback to the old version
                 self._bat = None
                 self._not = None
 
             try:  # This plugin is released after kdeconnect version Mar 13, 2021
-                self._con = _bus.get(
-                    SERVICE_BUS,
-                    DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
-                )
+                if self._format_contains_connection_status:
+                    self._con = _bus.get(
+                        SERVICE_BUS,
+                        DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
+                        )
+                else:
+                    self._con = None
             except Exception:
                 self._con = None
 
@@ -209,7 +364,10 @@ class Py3status:
                 "isCharging": isCharging == 1,
             }
         except Exception:
-            return None
+            return {
+                "charge": -1,
+                "isCharging": None,
+            }
 
         return battery
 
@@ -219,21 +377,24 @@ class Py3status:
         """
         try:
             if self._con:
-                # Possible values are 0 - 4
+                # Possible values are -1 - 4
                 strength = self._con.cellularNetworkStrength
                 type = self._con.cellularNetworkType
 
                 con_info = {
-                    "strength": strength * 25,
+                    "strength": strength,
                     "type": type,
                 }
             else:
                 con_info = {
-                    "strength": "",
+                    "strength": -1,
                     "type": "",
                 }
         except Exception:
-            return None
+            return {
+                "strength": -1,
+                "type": "",
+            }
 
         return con_info
 
@@ -243,54 +404,64 @@ class Py3status:
         """
         try:
             if self._not:
-                notifications = {"activeNotifications": self._not.activeNotifications()}
+                notifications = self._not.activeNotifications()
             else:
-                notifications = {"activeNotifications": self._dev.activeNotifications()}
-            notifications = {"activeNotifications": notifications}
+                notifications = self._dev.activeNotifications()
         except Exception:
-            return None
+            return []
 
         return notifications
 
-    def _get_battery_status(self, battery):
+    def _set_battery_status(self, isCharging, charge):
         """
         Get the battery status
         """
-        if not battery or battery["charge"] == -1:
-            return (UNKNOWN_SYMBOL, UNKNOWN, "#FFFFFF")
+        if charge == -1:
+            self._result["charge"] = UNKNOWN_SYMBOL
+            self._result["bat_status"] = UNKNOWN
+            self._result["color"] = "#FFFFFF"
+            return
 
-        if battery["isCharging"]:
-            status = self.status_chr
-            color = self.py3.COLOR_GOOD
-        else:
-            status = self.status_bat
-            color = self.py3.COLOR_DEGRADED
+        if charge is not None:
+            self._result["charge"] = charge
 
-        if not battery["isCharging"] and battery["charge"] <= self.low_threshold:
-            color = self.py3.COLOR_BAD
+        if isCharging is not None:
+            if isCharging:
+                self._result["bat_status"] = self.status_chr
+                self._result["color"] = self.py3.COLOR_GOOD
+            else:
+                self._result["bat_status"] = self.status_bat
+                self._result["color"] = self.py3.COLOR_DEGRADED
 
-        if battery["charge"] > 99:
-            status = self.status_full
+            if (
+                    not isCharging
+                    and isinstance(self._result["charge"], int)
+                    and self._result["charge"] <= self.low_threshold
+            ):
+                self._result["color"] = self.py3.COLOR_BAD
 
-        return (battery["charge"], status, color)
+        if charge is not None:
+            if charge > 99:
+                self._result["bat_status"] = self.status_full
 
-    def _get_notifications_status(self, notifications):
+    def _set_notifications_status(self, activeNotifications):
         """
         Get the notifications status
         """
-        if notifications:
-            size = len(notifications["activeNotifications"])
-        else:
-            size = 0
-        status = self.status_notif if size > 0 else self.status_no_notif
+        size = len(activeNotifications)
+        self._result["notif_status"] = (
+            self.status_notif if size > 0 else self.status_no_notif
+        )
+        self._result["notif_size"] = size
 
-        return (size, status)
-
-    def _get_conn_status(self, conn):
+    def _set_conn_status(self, net_type, net_strength):
         """
         Get the conn status
         """
-        return (conn["strength"], conn["type"])
+        self._result["net_strength"] = (
+            net_strength * 25 if net_strength > -1 else UNKNOWN_SYMBOL
+        )
+        self._result["net_type"] = net_type
 
     def _get_text(self):
         """
@@ -308,43 +479,72 @@ class Py3status:
                 self.py3.COLOR_BAD,
             )
 
-        battery = self._get_battery()
-        (charge, bat_status, color) = self._get_battery_status(battery)
-
-        notif = self._get_notifications()
-        (notif_size, notif_status) = self._get_notifications_status(notif)
-
-        conn = self._get_conn()
-        (strength, type) = self._get_conn_status(conn)
-
         return (
             self.py3.safe_format(
                 self.format,
-                dict(
-                    name=device["name"],
-                    charge=charge,
-                    bat_status=bat_status,
-                    notif_size=notif_size,
-                    notif_status=notif_status,
-                    net_type=type,
-                    net_strength=strength,
-                ),
+                dict(name=device["name"], **self._result),
             ),
-            color,
+            self._result.get("color"),
         )
+
+    def _update_conn_info(self):
+        if self._format_contains_connection_status:
+            conn = self._get_conn()
+            self._set_conn_status(net_type=conn["type"], net_strength=conn["strength"])
+
+    def _update_notif_info(self):
+        if self._format_contains_notifications:
+            notif = self._get_notifications()
+            self._set_notifications_status(notif)
+
+    def _update_battery_info(self):
+        battery = self._get_battery()
+        self._set_battery_status(
+            isCharging=battery["isCharging"], charge=battery["charge"]
+        )
+
+    def kill(self):
+        self._kill = True
+        if self._signal_reachable_changed:
+            self._dbus.con.signal_unsubscribe(self._signal_reachable_changed)
+
+        if self._signal_battery:
+            self._dbus.con.signal_unsubscribe(self._signal_battery)
+
+        if self._signal_notifications:
+            self._dbus.con.signal_unsubscribe(self._signal_notifications)
+
+        if self._signal_conn_report:
+            self._dbus.con.signal_unsubscribe(self._signal_conn_report)
 
     def kdeconnector(self):
         """
         Get the current state and return it.
         """
+        if self._kill:
+            raise KeyboardInterrupt
+
+        if not self._bat:
+            self._update_battery_info()
+            self._update_notif_info()
+            self._update_conn_info()
+
         if self._init_dbus():
             (text, color) = self._get_text()
+
+            # kdeconnect version < 1.0 hasn't separate interface for bat/not
+            if self._bat:
+                cached_until = self.py3.CACHE_FOREVER
+            else:
+                cached_until = self.py3.time_in(self.cache_timeout)
+
         else:
             text = UNKNOWN_DEVICE
             color = self.py3.COLOR_BAD
+            cached_until = self.py3.time_in(self.cache_timeout)
 
         response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
+            "cached_until": cached_until,
             "full_text": text,
             "color": color,
         }
