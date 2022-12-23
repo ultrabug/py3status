@@ -132,16 +132,14 @@ class Py3status:
             self.format, ["net_type", "net_strength"]
         )
 
-        self._dbus = SessionBus()
-
         # start last
         self._kill = False
         self._dbus_loop = DBusGMainLoop()
         self._dbus = SessionBus()
-        self._bus_init = self._init_dbus()
+        self._bus_initialized = self._init_dbus()
         self._start_listener()
 
-        if self._bus_init:
+        if self._bus_initialized:
             self._update_conn_info()
             self._update_notif_info()
             self._update_battery_info()
@@ -260,22 +258,20 @@ class Py3status:
         """
         Get the device id
         """
-        _bus = SessionBus()
-
         if self.device_id is None:
-            self.device_id = self._get_device_id(_bus)
+            self.device_id = self._get_device_id()
             if self.device_id is None:
                 return False
 
         try:
-            self._dev = _bus.get(SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}")
+            self._dev = self._dbus.get(SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}")
             try:
-                self._bat = _bus.get(
+                self._bat = self._dbus.get(
                     SERVICE_BUS, DEVICE_PATH + f"/{self.device_id}" + BATTERY_SUBPATH
                 )
 
                 if self._format_contains_notifications:
-                    self._not = _bus.get(
+                    self._not = self._dbus.get(
                         SERVICE_BUS,
                         DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
                         )
@@ -288,7 +284,7 @@ class Py3status:
 
             try:  # This plugin is released after kdeconnect version Mar 13, 2021
                 if self._format_contains_connection_status:
-                    self._con = _bus.get(
+                    self._con = self._dbus.get(
                         SERVICE_BUS,
                         DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
                         )
@@ -302,18 +298,18 @@ class Py3status:
 
         return True
 
-    def _get_device_id(self, bus):
+    def _get_device_id(self):
         """
         Find the device id
         """
-        _dbus = bus.get(SERVICE_BUS, PATH)
-        devices = _dbus.devices()
+        _bus = self._dbus.get(SERVICE_BUS, PATH)
+        devices = _bus.devices()
 
         if self.device is None and self.device_id is None and len(devices) == 1:
             return devices[0]
 
         for id in devices:
-            self._dev = bus.get(SERVICE_BUS, DEVICE_PATH + f"/{id}")
+            self._dev = self._dbus.get(SERVICE_BUS, DEVICE_PATH + f"/{id}")
             if self.device == self._dev.name:
                 return id
 
@@ -524,24 +520,20 @@ class Py3status:
         if self._kill:
             raise KeyboardInterrupt
 
-        if not self._bat:
-            self._update_battery_info()
-            self._update_notif_info()
-            self._update_conn_info()
-
-        if self._init_dbus():
+        if self._bus_initialized:
             (text, color) = self._get_text()
-
-            # kdeconnect version < 1.0 hasn't separate interface for bat/not
-            if self._bat:
-                cached_until = self.py3.CACHE_FOREVER
-            else:
-                cached_until = self.py3.time_in(self.cache_timeout)
+            cached_until = self.py3.CACHE_FOREVER
 
         else:
             text = UNKNOWN_DEVICE
             color = self.py3.COLOR_BAD
             cached_until = self.py3.time_in(self.cache_timeout)
+            self._bus_initialized = self._init_dbus()
+            if self._bus_initialized:
+                self._update_conn_info()
+                self._update_notif_info()
+                self._update_battery_info()
+                self.py3.update()
 
         response = {
             "cached_until": cached_until,
