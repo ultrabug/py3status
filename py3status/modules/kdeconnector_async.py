@@ -125,12 +125,12 @@ class Py3status:
         self._signal_conn_report = None
 
         self._format_contains_notifications = self.py3.format_contains(
-            self.format, "notif_size"
-        ) or self.py3.format_contains(self.format, "notif_status")
+            self.format, ["notif_size", "notif_status"]
+        )
 
         self._format_contains_connection_status = self.py3.format_contains(
-            self.format, "net_type"
-        ) or self.py3.format_contains(self.format, "net_strength")
+            self.format, ["net_type", "net_strength"]
+        )
 
         self._dbus = SessionBus()
 
@@ -227,7 +227,9 @@ class Py3status:
         if self._is_current_device(object_path):
             if event == "refreshed":
                 if new_value[1] != -1:
-                    self._set_battery_status(isCharging=new_value[0], charge=new_value[1])
+                    self._set_battery_status(
+                        isCharging=new_value[0], charge=new_value[1]
+                    )
             elif event == "stateChanged":
                 self._set_battery_status(isCharging=new_value[0], charge=None)
             elif event == "chargeChanged":
@@ -556,4 +558,3 @@ if __name__ == "__main__":
     from py3status.module_test import module_test
 
     module_test(Py3status)
-
