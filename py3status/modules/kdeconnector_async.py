@@ -207,27 +207,18 @@ class Py3status:
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
-            if event == "notificationRemoved":
-                self._result["notif_size"] -= 1
-                if self._result["notif_size"] > 0:
-                    self._result["notif_status"] = self.status_notif
-                else:
-                    self._result["notif_status"] = self.status_no_notif
-
-            elif event == "notificationPosted":
-                self._result["notif_size"] += 1
-                self._result["notif_status"] = self.status_notif
-            else:
-                self._update_notif_info()
+            self._update_notif_info()
             self.py3.update()
 
     def _reachable_on_change(
         self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
-            self._update_battery_info()
-            self._update_notif_info()
-            self._update_conn_info()
+            # Update only when device is connected
+            if new_value[0]:
+                self._update_battery_info()
+                self._update_notif_info()
+                self._update_conn_info()
             self.py3.update()
 
     def _battery_on_change(
@@ -235,10 +226,11 @@ class Py3status:
     ):
         if self._is_current_device(object_path):
             if event == "refreshed":
-                self._set_battery_status(isCharging=new_value[0], charge=new_value[1])
-            if event == "stateChanged":
+                if new_value[1] != -1:
+                    self._set_battery_status(isCharging=new_value[0], charge=new_value[1])
+            elif event == "stateChanged":
                 self._set_battery_status(isCharging=new_value[0], charge=None)
-            if event == "chargeChanged":
+            elif event == "chargeChanged":
                 self._set_battery_status(isCharging=None, charge=new_value[0])
             else:
                 self._update_battery_info()
@@ -564,3 +556,4 @@ if __name__ == "__main__":
     from py3status.module_test import module_test
 
     module_test(Py3status)
+
