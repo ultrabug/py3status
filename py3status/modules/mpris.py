@@ -668,7 +668,7 @@ class Py3status:
     def kill(self):
         self._kill = True
         if self._name_owner_change_match:
-            self.parent._dbus._clean_up_signal_match(self._name_owner_change_match)
+            self._dbus._clean_up_signal_match(self._name_owner_change_match)
 
     def mpris(self):
         """
