@@ -202,14 +202,14 @@ class Py3status:
         t.start()
 
     def _notifications_on_change(
-            self, connection, owner, object_path, interface_name, event, new_value
+        self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
             self._update_notif_info()
             self.py3.update()
 
     def _reachable_on_change(
-            self, connection, owner, object_path, interface_name, event, new_value
+        self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
             # Update only when device is connected
@@ -220,7 +220,7 @@ class Py3status:
             self.py3.update()
 
     def _battery_on_change(
-            self, connection, owner, object_path, interface_name, event, new_value
+        self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
             if event == "refreshed":
@@ -237,7 +237,7 @@ class Py3status:
             self.py3.update()
 
     def _conn_report_on_change(
-            self, connection, owner, object_path, interface_name, event, new_value
+        self, connection, owner, object_path, interface_name, event, new_value
     ):
         if self._is_current_device(object_path):
             if event == "refreshed":
@@ -274,7 +274,7 @@ class Py3status:
                     self._not = self._dbus.get(
                         SERVICE_BUS,
                         DEVICE_PATH + f"/{self.device_id}" + NOTIFICATIONS_SUBPATH,
-                        )
+                    )
                 else:
                     self._not = None
             except Exception:
@@ -287,7 +287,7 @@ class Py3status:
                     self._con = self._dbus.get(
                         SERVICE_BUS,
                         DEVICE_PATH + f"/{self.device_id}" + CONN_REPORT_SUBPATH,
-                        )
+                    )
                 else:
                     self._con = None
             except Exception:
@@ -430,9 +430,9 @@ class Py3status:
                 self._result["color"] = self.py3.COLOR_DEGRADED
 
             if (
-                    not isCharging
-                    and isinstance(self._result["charge"], int)
-                    and self._result["charge"] <= self.low_threshold
+                not isCharging
+                and isinstance(self._result["charge"], int)
+                and self._result["charge"] <= self.low_threshold
             ):
                 self._result["color"] = self.py3.COLOR_BAD
 
