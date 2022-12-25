@@ -196,7 +196,6 @@ class Py3status:
                 callback=self._conn_report_on_change,
             )
 
-        # Start listening things after initiating players.
         t = Thread(target=self._start_loop)
         t.daemon = True
         t.start()
