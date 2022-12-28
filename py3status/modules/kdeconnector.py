@@ -240,10 +240,17 @@ class Py3status:
     ):
         if self._is_current_device(object_path):
             if event == "refreshed":
-                self._set_conn_status(net_type=new_value[0], net_strength=new_value[1])
+                if (
+                    self._result["net_type"] != new_value[0]
+                    or self._result["net_strength_raw"] != new_value[1]
+                ):
+                    self._set_conn_status(
+                        net_type=new_value[0], net_strength=new_value[1]
+                    )
+                    self.py3.update()
             else:
                 self._update_conn_info()
-            self.py3.update()
+                self.py3.update()
 
     def _is_current_device(self, object_path):
         return self.device_id in object_path
@@ -453,6 +460,7 @@ class Py3status:
         """
         Get the conn status
         """
+        self._result["net_strength_raw"] = net_strength
         self._result["net_strength"] = (
             net_strength * 25 if net_strength > -1 else UNKNOWN_SYMBOL
         )
