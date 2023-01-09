@@ -5,6 +5,7 @@ from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from random import randint
+from types import FunctionType
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
@@ -845,8 +846,8 @@ class Module:
                 if method.startswith("_"):
                     continue
                 else:
-                    m_type = type(getattr(class_inst, method))
-                    if "method" in str(m_type):
+                    m_attr = inspect.getattr_static(class_inst, method)
+                    if isinstance(m_attr, FunctionType):
                         params_type = self._params_type(method, class_inst)
                         if method == "on_click":
                             self.click_events = params_type

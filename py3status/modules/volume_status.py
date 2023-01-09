@@ -26,10 +26,6 @@ Configuration parameters:
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
         pactl and pamixer supports this. (default 120)
-    start_delay: Number of seconds to wait before starting this module.
-        This allows some systems to start the audio backend before we
-        try picking it up.
-        (default 0)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -332,7 +328,6 @@ class Py3status:
     format_muted = r"[\?if=is_input 😶|♪]: muted"
     is_input = False
     max_volume = 120
-    start_delay = 0
     thresholds = [(0, "bad"), (20, "degraded"), (50, "good")]
     volume_delta = 5
 
@@ -362,8 +357,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        if self.start_delay:
-            sleep(int(self.start_delay))
         if not self.command:
             commands = ["pamixer", "pactl", "amixer"]
             # pamixer, pactl requires pulseaudio to work
@@ -383,8 +376,20 @@ class Py3status:
         if self.device is not None:
             self.device = str(self.device)
 
-        self.backend = globals()[self.command.capitalize()](self)
+        self._init_backend()
         self.color_muted = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+
+    def _init_backend(self):
+        # attempt it a few times since the audio service may still be loading during startup
+        for i in range(6):
+            try:
+                self.backend = globals()[self.command.capitalize()](self)
+                return
+            except Exception:  # noqa e722
+                # try again later (exponential backoff)
+                sleep(0.5 * 2**i)
+
+        self.backend = globals()[self.command.capitalize()](self)
 
     def volume_status(self):
         perc, muted = self.backend.get_volume()
