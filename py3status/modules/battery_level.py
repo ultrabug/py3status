@@ -12,6 +12,7 @@ Configuration parameters:
         (default 60)
     charging_character: a character to represent charging battery
         especially useful when using icon fonts (e.g. FontAwesome)
+        set to 'None' if you want to hide the charging state of your battery
         (default "⚡")
     format: string that formats the output. See placeholders below.
         (default "{icon}")
