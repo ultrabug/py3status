@@ -353,6 +353,10 @@ class Py3status:
                     "param": "threshold_degraded",
                     "msg": "obsolete set using thresholds parameter",
                 },
+                {
+                    "param": "start_delay",
+                    "msg": "obsolete parameter",
+                },
             ],
         }
 
