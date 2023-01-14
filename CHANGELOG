@@ -1,3 +1,21 @@
+version 3.48 (2023-01-14)
+* IMPORTANT: bluetooth module has been replaced by the bluetooth2 code, please migrate
+* python: drop py 3.6 from CI and bump 3.11 (#2166)
+* battery_level module: allow icon to not use charging_character (#2158), by Kevin Pulo
+* bluetooth module: replaced by bluetooth2 as announced on 2022-10
+* check_tcp module: add IPv6 support (#2167), by Björn Busse
+* clock module: migrate to standard zoneinfo with 3.7, 3.8 support. (#2155), by Valdur Kana
+* events: change the reading timeout to infinity (#2153), by Austin Lund
+* kdeconnector module: Active notifications were always 1. (#2170), by Valdur Kana
+* kdeconnector module: refactor to use dbus signals to update module (#2168), by Valdur Kana
+* kdeconnector module: show cell network type and strength. (#2162) (#2163), by Valdur Kana
+* mpris module: fix error self.parent on Py3status module not found. (#2169), by Valdur Kana
+* timewarrior module: remove dependency on dateutil (#2161), by Rasmus Rendal
+* volume_status module: amixer scontrols uses device and card parameter. (#2152), by Valdur Kana
+* volume_status module: deprecate start_delay parameter
+* volume_status module: smarter initialization logic with retry, remove start_delay setting (#2165), by Joan Bruguera
+* window module: window without title will not produce error on i3msg mode, by Valdur Kana* core: add inhibition timer on misbehaving signals
+
 version 3.47 (2022-10-02)
 * INFORMATION: the upcoming bluetooth module has been merged as bluetooth2, users are encouraged to switch
 * core: simpler logic to inhibit out of order signaling (#2147)
