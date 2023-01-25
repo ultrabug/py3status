@@ -25,6 +25,8 @@ Configuration parameters:
         (default 1)
     cache_timeout: How often the module is refreshed in seconds
         (default 60)
+    calendar_id: The ID of the calendar to display.
+        (default "primary")
     client_secret: the path to your client_secret file which
         contains your OAuth 2.0 credentials.
         (default '~/.config/py3status/google_calendar.client_secret')
@@ -182,6 +184,7 @@ class Py3status:
     button_refresh = 2
     button_toggle = 1
     cache_timeout = 60
+    calendar_id = "primary"
     client_secret = "~/.config/py3status/google_calendar.client_secret"
     events_within_hours = 12
     force_lowercase = False
@@ -284,7 +287,7 @@ class Py3status:
             eventsResult = (
                 self.service.events()
                 .list(
-                    calendarId="primary",
+                    calendarId=self.calendar_id,
                     timeMax=time_max.isoformat() + "Z",  # 'Z' indicates UTC time
                     timeMin=time_min.isoformat() + "Z",  # 'Z' indicates UTC time
                     singleEvents=True,
