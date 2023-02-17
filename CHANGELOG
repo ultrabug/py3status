@@ -1,3 +1,7 @@
+version 3.49 (2023-02-17)
+* do_not_disturb module: use 'makoctl mode' to check current mode. (#2172), by Valdur Kana
+* google_calendar module: add support to configure which google calendar will be used (#2174), by Alex Thomae
+
 version 3.48 (2023-01-14)
 * IMPORTANT: bluetooth module has been replaced by the bluetooth2 code, please migrate
 * python: drop py 3.6 from CI and bump 3.11 (#2166)
