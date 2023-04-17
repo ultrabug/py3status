@@ -101,7 +101,7 @@ class Py3status:
         ids = []
         for name in self.active:
             conn = bus.get(".NetworkManager", name)
-            if conn.Vpn:
+            if conn.Vpn or conn.Type == "wireguard":
                 ids.append(conn.Id)
         # No active VPN
         return ids
