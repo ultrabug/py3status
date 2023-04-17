@@ -285,9 +285,17 @@ class Py3status:
         # Separate the output because each pair of lines corresponds to a
         # single battery.  Now the list index will correspond to the index of
         # the battery we want to look at
-        acpi_list = [acpi_list[i : i + 2] for i in range(0, len(acpi_list) - 1, 2)]
+        temporary = {}
+        for line in acpi_list:
+            number = line.split(":", 1)[0].strip("Battery ")
+            temporary.setdefault(number, []).append(line)
 
-        return [_parse_battery_info(battery) for battery in acpi_list]
+        new_acpi = {}
+        for k, v in temporary.items():
+            if "rate information unavailable" not in "|".join(v):
+                new_acpi[k] = v
+
+        return [_parse_battery_info(battery) for battery in new_acpi.values()]
 
     def _extract_battery_info_from_sys(self):
         """
