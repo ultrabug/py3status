@@ -1,3 +1,8 @@
+version 3.50 (2023-04-17)
+* update alpine install doc (#2176), by raspbeguy
+* battery_level module: fix invalid indexing, skip batteries with unavailable info (#2180), by lasers
+* vpn_status module: add wireguard support (#2181), by javiertury
+
 version 3.49 (2023-02-17)
 * do_not_disturb module: use 'makoctl mode' to check current mode. (#2172), by Valdur Kana
 * google_calendar module: add support to configure which google calendar will be used (#2174), by Alex Thomae
