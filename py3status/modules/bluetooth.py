@@ -39,6 +39,7 @@ format_device placeholders:
     {address}          eg, 00:00:00:00:00:00
     {addresstype}      eg, public
     {alias}            eg, MSFT Mouse
+    {battery}          eg, 95
     {class}            eg, 1234
     {connected}        eg, False
     {icon}             eg, input-mouse
@@ -130,7 +131,8 @@ class Py3status:
             for name, match in self.names_and_matches:
                 if match in interface_keys:
                     interface = {k.lower(): v for k, v in interfaces[match].items()}
-                    interface.update({"path": path, "uuids": []})
+                    battery = interfaces.get("org.bluez.Battery1", {}).get("Percentage")
+                    interface.update({"path": path, "uuids": [], "battery": battery})
                     temporary.setdefault(name, []).append(interface)
                     break
 
