@@ -189,10 +189,7 @@ class Py3status:
         """
         # special Local timezone
         if tz == "Local":
-            try:
-                return zoneinfo.ZoneInfo("localtime")
-            except zoneinfo.ZoneInfoNotFoundError:
-                return "?"
+            return None
         # get the timezone
         try:
             zone = zoneinfo.ZoneInfo(tz)
@@ -251,8 +248,12 @@ class Py3status:
                     idx = int(h / self.block_hours * len(self.blocks))
                     icon = self.blocks[idx]
 
-                timezone = zone.key
-                tzname = timezone.split("/")[-1].replace("_", " ")
+                # special case for handling Local timezone
+                if zone is None:
+                    timezone, tzname = None, None
+                else:
+                    timezone = zone.key
+                    tzname = timezone.split("/")[-1].replace("_", " ")
 
                 if self.multiple_tz:
                     name_unclear = tzname
