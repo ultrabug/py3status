@@ -17,6 +17,7 @@ Requires:
     trizen: lightweight pacman wrapper and AUR helper
     yay: yet another yogurt. pacman wrapper and aur helper written in go
     paru: feature packed AUR helper
+    pikaur: pacman wrapper and AUR helper written in python
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -46,7 +47,7 @@ class Py3status:
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),
             "aur": self.py3.check_commands(
-                ["auracle", "trizen", "yay", "cower", "paru"]
+                ["auracle", "trizen", "yay", "cower", "paru", "pikaur"]
             ),
         }
         if self.format:
@@ -112,6 +113,13 @@ class Py3status:
     def _get_paru_updates(self):
         try:
             updates = self.py3.command_output(["paru", "-Qua"])
+            return len(updates.splitlines())
+        except self.py3.CommandError as ce:
+            return None if ce.error else 0
+
+    def _get_pikaur_updates(self):
+        try:
+            updates = self.py3.command_output(["pikaur", "-Qua"])
             return len(updates.splitlines())
         except self.py3.CommandError as ce:
             return None if ce.error else 0
