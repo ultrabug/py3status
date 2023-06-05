@@ -26,12 +26,14 @@ audiosink {
 }
 ```
 
-SAMPLE OUTPUT
-{'full_text': 'Dock'}
-{'full_text': 'Int'}
-
 @author Jens Brandt <py3status@brandt-george.de>
 @license BSD
+
+SAMPLE OUTPUT
+{'full_text': 'Dock'}
+
+int
+{'full_text': 'Int'}
 """
 
 import os
