@@ -47,7 +47,7 @@ class Py3status:
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),
             "aur": self.py3.check_commands(
-                ["auracle", "trizen", "yay", "cower", "paru", "pikaur"]
+                ["auracle", "trizen", "yay", "paru", "pikaur"]
             ),
         }
         if self.format:
@@ -88,13 +88,6 @@ class Py3status:
             return len(updates.splitlines())
         except self.py3.CommandError as ce:
             return None if ce.error else 0
-
-    def _get_cower_updates(self):
-        try:
-            self.py3.command_output(["cower", "-u"])
-            return None
-        except self.py3.CommandError as ce:
-            return len(ce.output.splitlines())
 
     def _get_trizen_updates(self):
         try:
