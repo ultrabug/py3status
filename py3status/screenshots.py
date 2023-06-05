@@ -148,7 +148,7 @@ def create_screenshot(name, data, path, font, is_module):
             color = COLOR_URGENT
             background = COLOR_URGENT_BG
 
-        size = font.getsize(text)
+        size = font.getbbox(text)[-2:]
 
         if background:
             d.rectangle(
@@ -167,7 +167,7 @@ def create_screenshot(name, data, path, font, is_module):
         d_text = ImageDraw.Draw(txt)
         d_text.text((0, 0), text, font=font, fill=color)
         # resize to actual size wanted and add to image
-        txt = txt.resize((size[0] // SCALE, size[1] // SCALE), Image.ANTIALIAS)
+        txt = txt.resize((size[0] // SCALE, size[1] // SCALE), Image.LANCZOS)
         img.paste(txt, (WIDTH - x, TOP_BAR_HEIGHT + PADDING))
 
         if separator:
