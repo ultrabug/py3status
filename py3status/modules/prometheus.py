@@ -64,6 +64,7 @@ class Py3status:
         self._rownum = 0
         rows = self._query(self.query)
         res = []
+
         for row in rows:
             val = float(row["value"][1])
             if self.units:
@@ -94,7 +95,12 @@ class Py3status:
         return ret
 
     def _query(self, query):
-        r = self.py3.request(self.server + "/api/v1/query", params={"query": query})
+        try:
+            r = self.py3.request(self.server + "/api/v1/query", params={"query": query})
+        except Exception as e:
+            self.py3.log(f"prometheus: Request failed {e}")
+            return []
+
         if r.status_code != 200:
             return []
         r = r.json()
