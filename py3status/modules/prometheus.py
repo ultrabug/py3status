@@ -58,6 +58,7 @@ class Py3status:
     query_interval = 60
     server = None
     units = None
+    format_down = "n/a"
 
     def prometheus(self):
         self._rows = []
@@ -65,6 +66,11 @@ class Py3status:
         rows = self._query(self.query)
         res = []
 
+        if len(rows) == 0:
+            return dict(
+                full_text=self.format_down,
+                cached_until=self.py3.time_in(self.query_interval),
+            )
         for row in rows:
             val = float(row["value"][1])
             if self.units:
