@@ -105,12 +105,16 @@ class Py3status:
             df_usages = ce.output
         total, used, free, devs = 0, 0, 0, []
 
-        if disk and not disk.startswith("/dev/"):
-            disk = "/dev/" + disk
+        disk_dev = None
+
+        if disk:
+            disk_dev = "/dev/" + disk
 
         for line in df_usages.splitlines():
-            if (disk and line.startswith(disk)) or (
-                disk is None and line.startswith("/dev/")
+            if (
+                (disk and line.startswith(disk))
+                or (disk_dev and line.startswith(disk_dev))
+                or (disk is None and line.startswith("/dev/"))
             ):
                 data = line.split()
                 if data[0] in devs:
