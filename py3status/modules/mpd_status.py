@@ -256,8 +256,7 @@ class Py3status:
                     text = "Failed to authenticate to mpd!"
                     self._get_mpd(disconnect=True)
 
-                state = None
-                self.current_status = (text, status)
+                self.current_status = (text, None)
                 return
             finally:
                 self.py3.update()  # to propagate error message
