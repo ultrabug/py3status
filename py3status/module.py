@@ -154,7 +154,7 @@ class Module:
                         self.module_nice_name, str(e) or e.__class__.__name__
                     ),
                 ]
-                self.runtime_error(self.error_messages[0], "post_config_hook")
+                self.error_output(self.error_messages[0])
                 msg = f"Exception in `{self.module_full_name}` post_config_hook()"
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log(f"terminating module {self.module_full_name}")
