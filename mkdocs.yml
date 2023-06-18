@@ -23,9 +23,9 @@ markdown_extensions:
 
 plugins:
   - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_config: "py3status.autodoc:create_auto_documentation"
+
+hooks:
+  - py3status/autodoc.py
 
 nav:
   - Introduction: index.md

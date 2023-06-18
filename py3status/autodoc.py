@@ -69,14 +69,10 @@ def create_module_docs(config):
     return config
 
 
-def create_auto_documentation(config):
+def on_config(config):
     """
     Create any include files needed for sphinx documentation
     """
     create_screenshots(config)
     create_module_docs(config)
     return config
-
-
-if __name__ == "__main__":
-    create_auto_documentation()
