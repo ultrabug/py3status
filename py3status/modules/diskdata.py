@@ -94,7 +94,7 @@ class Py3status:
                 self.last_diskstats = self._get_diskstats(self.disk)
                 self.last_time = time.monotonic()
             except Exception:
-                self.init["diskstats"] = []
+                self.init["diskstats"] = {}
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
