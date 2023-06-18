@@ -1,5 +1,5 @@
 Pillow>=3.4.2
 fonttools==4.24.4
-mkdocs==1.3.0
+mkdocs==1.4.3
 mkdocs-simple-hooks==0.1.3
 pymdown-extensions==10.0
