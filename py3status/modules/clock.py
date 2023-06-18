@@ -250,10 +250,11 @@ class Py3status:
 
                 # special case for handling Local timezone
                 if zone is None:
-                    timezone, tzname = None, None
+                    t = t.astimezone()
+                    timezone = t.tzname()
                 else:
                     timezone = zone.key
-                    tzname = timezone.split("/")[-1].replace("_", " ")
+                tzname = timezone.split("/")[-1].replace("_", " ")
 
                 if self.multiple_tz:
                     name_unclear = tzname
