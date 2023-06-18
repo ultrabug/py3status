@@ -3,7 +3,6 @@ import sys
 import time
 
 from collections import deque
-from json import dumps
 from pathlib import Path
 from pprint import pformat
 from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
@@ -19,6 +18,7 @@ from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.parse_config import process_config
 from py3status.module import Module
+from py3status.output import OutputFormat
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 
@@ -722,6 +722,20 @@ class Py3statusWrapper:
             # load and spawn i3status.conf configured modules threads
             self.load_modules(self.py3_modules, user_modules)
 
+        # determine the target output format
+        self.output_format = OutputFormat.instance_for(
+            self.config["py3_config"]["general"]["output_format"]
+        )
+
+        # determine the output separator, if needed
+        color_separator = None
+        if self.config["py3_config"]["general"]["colors"]:
+            color_separator = self.config["py3_config"]["general"]["color_separator"]
+        self.output_format.format_separator(
+            self.config["py3_config"]["general"].get("separator", None),
+            color_separator,
+        )
+
     def notify_user(
         self,
         msg,
@@ -1015,8 +1029,8 @@ class Py3statusWrapper:
                     # Color: substitute the config defined color
                     if "color" not in output:
                         output["color"] = color
-        # Create the json string output.
-        return ",".join(dumps(x) for x in outputs)
+        # format output and return
+        return self.output_format.format(outputs)
 
     def i3bar_stop(self, signum, frame):
         if (
@@ -1089,17 +1103,13 @@ class Py3statusWrapper:
         # items in the bar
         output = [None] * len(py3_config["order"])
 
-        write = sys.__stdout__.write
-        flush = sys.__stdout__.flush
-
         # start our output
         header = {
             "version": 1,
             "click_events": self.config["click_events"],
             "stop_signal": self.stop_signal or 0,
         }
-        write(dumps(header))
-        write("\n[[]\n")
+        self.output_format.write_header(header)
 
         update_due = None
         # main loop
@@ -1126,8 +1136,5 @@ class Py3statusWrapper:
                         # store the output as json
                         output[index] = out
 
-                # build output string
-                out = ",".join(x for x in output if x)
-                # dump the line to stdout
-                write(f",[{out}]\n")
-                flush()
+                # build output string and dump to stdout
+                self.output_format.write_line(output)
