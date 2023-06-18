@@ -6,7 +6,7 @@ Configuration parameters:
     disk: show stats for disk or partition, i.e. `sda1`. None for all disks.
         (default None)
     format: display format for this module.
-        (default "{disk}: {used_percent}% ({total})")
+        (default "{disk}: {used_percent}%[ ({total})]")
     format_rate: display format for rates value
         (default "[\?min_length=11 {value:.1f} {unit}]")
     format_space: display format for disk space values
@@ -65,7 +65,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     disk = None
-    format = "{disk}: {used_percent}% ({total})"
+    format = "{disk}: {used_percent}%[ ({total})]"
     format_rate = r"[\?min_length=11 {value:.1f} {unit}]"
     format_space = r"[\?min_length=5 {value:.1f}]"
     sector_size = 512
@@ -90,8 +90,11 @@ class Py3status:
                 self.init[name] = {"placeholders": placeholders, "keys": match}
 
         if self.init["diskstats"]:
-            self.last_diskstats = self._get_diskstats(self.disk)
-            self.last_time = time.monotonic()
+            try:
+                self.last_diskstats = self._get_diskstats(self.disk)
+                self.last_time = time.monotonic()
+            except Exception:
+                self.init["diskstats"] = []
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
@@ -102,12 +105,16 @@ class Py3status:
             df_usages = ce.output
         total, used, free, devs = 0, 0, 0, []
 
-        if disk and not disk.startswith("/dev/"):
-            disk = "/dev/" + disk
+        disk_dev = None
+
+        if disk:
+            disk_dev = "/dev/" + disk
 
         for line in df_usages.splitlines():
-            if (disk and line.startswith(disk)) or (
-                disk is None and line.startswith("/dev/")
+            if (
+                (disk and line.startswith(disk))
+                or (disk_dev and line.startswith(disk_dev))
+                or (disk is None and line.startswith("/dev/"))
             ):
                 data = line.split()
                 if data[0] in devs:
