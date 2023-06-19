@@ -22,7 +22,8 @@ Color options:
     color_good: VPN down
 
 Requires:
-    pydbus: Which further requires PyGi. Check your distribution's repositories.
+    dbus-python: to interact with dbus
+    pygobject: which in turn requires libcairo2-dev, libgirepository1.0-dev
 
 @author Nathan Smith <nathan AT praisetopia.org>
 
@@ -33,11 +34,13 @@ off
 {'color': '#FF0000', 'full_text': u'VPN: no'}
 """
 
-from pydbus import SystemBus
-from gi.repository import GObject
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 from threading import Thread
 from time import sleep
 from pathlib import Path
+
+import dbus
 
 
 class Py3status:
@@ -66,15 +69,25 @@ class Py3status:
     def _start_loop(self):
         """Starts main event handler loop, run in handler thread t."""
         # Create our main loop, get our bus, and add the signal handler
-        loop = GObject.MainLoop()
-        bus = SystemBus()
-        manager = bus.get(".NetworkManager")
-        manager.onPropertiesChanged = self._vpn_signal_handler
+        loop = DBusGMainLoop(set_as_default=True)
+        dbus.set_default_main_loop(loop)
 
-        # initialize active connections, some of them might be VPNs
-        self.active = manager.ActiveConnections
+        bus = dbus.SystemBus()
+        bus.add_signal_receiver(
+            self._vpn_signal_handler, path="/org/freedesktop/NetworkManager"
+        )
+        # Initialize the already active connections
+        manager = bus.get_object(
+            "org.freedesktop.NetworkManager",
+            "/org/freedesktop/NetworkManager",
+        )
+        interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
+        self.active = interface.Get(
+            "org.freedesktop.NetworkManager", "ActiveConnections"
+        )
 
-        # Loop forever
+        # Loop forever to listen for events
+        loop = GLib.MainLoop()
         loop.run()
 
     def _vpn_signal_handler(self, *args):
@@ -97,12 +110,23 @@ class Py3status:
         # Sleep for a bit to let any changes in state finish
         sleep(0.3)
         # Check if any active connections are a VPN
-        bus = SystemBus()
+        bus = dbus.SystemBus()
         ids = []
         for name in self.active:
-            conn = bus.get(".NetworkManager", name)
-            if conn.Vpn or conn.Type == "wireguard":
-                ids.append(conn.Id)
+            manager = bus.get_object(
+                "org.freedesktop.NetworkManager",
+                name,
+            )
+            interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
+            try:
+                properties = interface.GetAll(
+                    "org.freedesktop.NetworkManager.Connection.Active"
+                )
+                if properties.get("Vpn") or properties.get("Type") == "wireguard":
+                    ids.append(properties.get("Id"))
+            except dbus.DBusException:
+                # the connection id has disappeared
+                pass
         # No active VPN
         return ids
 
