@@ -35,7 +35,7 @@ Format placeholders:
 Requires: one of
     xbacklight: need for changing brightness, not detection
     light: program to easily change brightness on backlight-controllers
-    pydbus + logind v243: logind to change brightness without X
+    dbus-python + logind v243: logind to change brightness without X
 
 @author Tjaart van der Walt (github:tjaartvdwalt), Jérémy Rosen (github:boucman)
 @license BSD
@@ -46,10 +46,7 @@ SAMPLE OUTPUT
 
 from pathlib import Path
 
-try:
-    from pydbus import SystemBus
-except ImportError:
-    pass
+import dbus
 
 STRING_NOT_AVAILABLE = "no available device"
 
@@ -103,9 +100,9 @@ class Py3status:
 
     def post_config_hook(self):
         try:
-            self._logind_proxy = SystemBus().get(
-                bus_name="org.freedesktop.login1",
-                object_path="/org/freedesktop/login1/session/self",
+            bus = dbus.SystemBus()
+            self._logind_proxy = bus.get_object(
+                "org.freedesktop.login1", "/org/freedesktop/login1/session/self"
             )
         except NameError:
             self._logind_proxy = None
