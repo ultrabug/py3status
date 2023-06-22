@@ -10,7 +10,7 @@ Configuration parameters:
         (default "{__v:.0f}")
     join: If query returned multiple rows, join them using this string.
         If you want to show just one, update your query.
-        (default None)
+        (default "")
     query: The PromQL query
         (default None)
     query_interval: Re-query interval in seconds.
@@ -53,7 +53,7 @@ class Py3status:
     # available configuration parameters
     color = None
     format = "{__v:.0f}"
-    join = None
+    join = ""
     query = None
     query_interval = 60
     server = None
@@ -63,7 +63,7 @@ class Py3status:
         self._rows = []
         self._rownum = 0
         rows = self._query(self.query)
-        res = []
+        res = self.py3.composite_create({})
 
         for row in rows:
             val = float(row["value"][1])
@@ -76,15 +76,10 @@ class Py3status:
 
             vars = dict(row["metric"])
             vars.update({"__v": val, "__n": num, "__u": unit})
-            res.append(self.format.format(**vars))
-
-        if res:
-            join = self.join or ""
-            res = join.join(res)
-        else:
-            res = ""
+            res = self.py3.composite_join("", self.py3.safe_format(self.format, vars))
 
         ret = dict(full_text=res, cached_until=self.py3.time_in(self.query_interval))
+
         if self.color:
             if self.color.startswith("#"):
                 ret["color"] = self.color
