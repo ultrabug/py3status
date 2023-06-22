@@ -27,7 +27,7 @@ off
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
-from urllib.request import urlopen, URLError
+from urllib.request import urlopen
 
 
 class Py3status:
@@ -67,7 +67,7 @@ class Py3status:
             try:
                 urlopen(self.url, timeout=self.timeout)
                 return True
-            except URLError:
+            except Exception:
                 return False
         else:
             try:
