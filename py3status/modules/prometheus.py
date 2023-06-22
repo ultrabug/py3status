@@ -60,8 +60,6 @@ class Py3status:
     units = None
 
     def prometheus(self):
-        self._rows = []
-        self._rownum = 0
         rows = self._query(self.query)
         res = self.py3.composite_create({})
 
