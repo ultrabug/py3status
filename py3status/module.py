@@ -150,12 +150,10 @@ class Module:
 
                 self.error_messages = [
                     self.module_nice_name,
-                    "{}: {}".format(
-                        self.module_nice_name, str(e) or e.__class__.__name__
-                    ),
+                    f"{e}",
                 ]
-                self.runtime_error(self.error_messages[0], "post_config_hook")
-                msg = f"Exception in `{self.module_full_name}` post_config_hook()"
+                self.runtime_error(self.error_messages[1], "post_config_hook")
+                msg = f"Exception in `{self.module_full_name}` post_config_hook() : {self.error_messages}"
                 self._py3_wrapper.report_exception(msg, notify_user=False)
                 self._py3_wrapper.log(f"terminating module {self.module_full_name}")
         self.enabled = True
@@ -175,7 +173,7 @@ class Module:
         # only show first line of error
         msg = msg.splitlines()[0]
 
-        errors = [self.module_nice_name, f"{self.module_nice_name}: {msg}"]
+        errors = [self.module_nice_name, f"{self.module_nice_name}[{method}]: {msg}"]
 
         # if we have shown this error then keep in the same state
         if self.error_messages != errors:
@@ -202,7 +200,11 @@ class Module:
             "name": self.module_name,
         }
         for method in self.methods.values():
-            if method_affected and method["method"] != method_affected:
+            if (
+                method_affected
+                and method["method"] != method_affected
+                and method_affected != "post_config_hook"
+            ):
                 continue
 
             method["last_output"] = [error]
