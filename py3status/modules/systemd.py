@@ -25,7 +25,8 @@ Color options:
     color_degraded: unit not-found
 
 Requires:
-    pydbus: pythonic dbus library
+    dbus-python: to interact with dbus
+    pygobject: which in turn requires libcairo2-dev, libgirepository1.0-dev
 
 Examples:
 ```
@@ -51,7 +52,7 @@ not-found
 {'color': '#FFFF00', 'full_text': 'sshd.service: not-found'}
 """
 
-from pydbus import SessionBus, SystemBus
+import dbus
 
 
 class Py3status:
@@ -67,16 +68,30 @@ class Py3status:
 
     def post_config_hook(self):
         if self.user:
-            bus = SessionBus()
+            bus = dbus.SessionBus()
         else:
-            bus = SystemBus()
-        systemd = bus.get("org.freedesktop.systemd1")
-        self.systemd_unit = bus.get(".systemd1", systemd.LoadUnit(self.unit))
+            bus = dbus.SystemBus()
+        systemd = bus.get_object(
+            "org.freedesktop.systemd1", "/org/freedesktop/systemd1"
+        )
+        systemd_unit = systemd.LoadUnit(
+            self.unit, dbus_interface="org.freedesktop.systemd1.Manager"
+        )
+        unit_proxy = bus.get_object("org.freedesktop.systemd1", systemd_unit)
+        self.systemd_interface = dbus.Interface(
+            unit_proxy, "org.freedesktop.DBus.Properties"
+        )
 
     def systemd(self):
-        status = self.systemd_unit.Get("org.freedesktop.systemd1.Unit", "ActiveState")
-        exists = self.systemd_unit.Get("org.freedesktop.systemd1.Unit", "LoadState")
-        state = self.systemd_unit.Get("org.freedesktop.systemd1.Unit", "UnitFileState")
+        status = self.systemd_interface.Get(
+            "org.freedesktop.systemd1.Unit", "ActiveState"
+        )
+        exists = self.systemd_interface.Get(
+            "org.freedesktop.systemd1.Unit", "LoadState"
+        )
+        state = self.systemd_interface.Get(
+            "org.freedesktop.systemd1.Unit", "UnitFileState"
+        )
 
         if exists == "not-found":
             color = self.py3.COLOR_DEGRADED
