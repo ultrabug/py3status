@@ -970,8 +970,8 @@ weather_owm {
 
 Want Py3status in your beloved tmux? Sure!
 
-While Py3status is by default running using the `i3bar` format, you
-can change the `output_format` of the `general` section of the
+While Py3status is by default running using the `i3bar` output format,
+you can change the `output_format` of the `general` section of the
 configuration file to get your favorite status bar in the following
 programs:
 
