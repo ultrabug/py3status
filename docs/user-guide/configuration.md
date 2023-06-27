@@ -965,3 +965,20 @@ weather_owm {
     request_retry_wait = 5
 }
 ```
+
+## Running Py3status outside i3bar
+
+Want Py3status in your beloved tmux? Sure!
+
+While Py3status is by default running using the `i3bar` format, you
+can change the `output_format` of the `general` section of the
+configuration file to get your favorite status bar in the following
+programs:
+
+- i3bar (default)
+- dzen2
+- lemonbar
+- term
+- tmux
+- xmobar
+- none (no special output format)
