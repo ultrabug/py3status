@@ -67,6 +67,13 @@ imap {
 }
 ```
 
+## Modules dependencies
+
+Py3status itself **does not** handle the possible dependencies of the
+modules you use. Each module's documentation has a dedicated `Requires`
+section allowing you to know which libraries or binaries they depend
+on. It's up to you to install them on your system.
+
 ## The py3status configuration section
 
 This special section holds py3status specific configuration. Settings
