@@ -1,3 +1,27 @@
+version 3.51 (2023-06-27)
+* NEW: thanks to Andreas Grapentin, py3status can now run in lots of other containers (tmux, term, dzen2, lemonbar...)
+* IMPORTANT: modules are moving away from the obsolete pydbus library
+* core: implement handling of output_format in py3status for i3bar, dzen2, xmobar, lemonbar, tmux, term, none (#2104), by Andreas Grapentin
+* core: autodetect output_format (#2202), by lasers
+* fix(module): report module post_config_hook errors thx to @lasers (#2208)
+* docs(user): add a section to specify that modules dependencies are up to the users
+* docs(mkdocs): drop mkdocs-simple-hooks closes #2195
+* docs: fix two DeprecationWarning (#2191), by lasers
+* docs(audiosink): fix screenshots (#2194), by lasers
+* docs(autodoc): remove dead code thx to @lasers, closes #2183 (#2193)
+* arch_updates module: add support for pikaur (#2182), by vim
+* arch_updates module: remove cower support (gone) (#2190), by lasers
+* backlight module: drop pydbus, switch to dbus-python
+* bluetooth module: report battery percentage if available (#2185), by Alex Tsitsimpis
+* clock module: added timezone information to times implicitly using local system timezone (#2197), by Andreas Grapentin
+* clock module: minor patch to get the local timezone. (#2189), by Josh Sixsmith
+* diskdata module: fix variable init type
+* diskdata module: make module work on FreeBSD (#2200), by Björn Busse
+* mpd_status module: fix UnboundLocalError (#2199), by Björn Busse
+* ns_checker module: replace query() with resolve() (#2207), by Björn Busse
+* systemd module: drop pydbus, switch to dbus-python
+* vpn_status module: drop pydbus, switch to dbus-python
+
 version 3.50 (2023-04-17)
 * update alpine install doc (#2176), by raspbeguy
 * battery_level module: fix invalid indexing, skip batteries with unavailable info (#2180), by lasers
