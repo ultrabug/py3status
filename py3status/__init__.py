@@ -13,16 +13,6 @@ def main():
     from py3status.argparsers import parse_cli_args
 
     options = parse_cli_args()
-    # detect gevent option early because monkey patching should be done before
-    # everything else starts kicking
-    if options.gevent:
-        try:
-            from gevent import monkey
-
-            monkey.patch_all()
-        except Exception:
-            # user will be notified when we start
-            pass
 
     from py3status.core import Py3statusWrapper
 

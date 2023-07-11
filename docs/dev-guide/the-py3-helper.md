@@ -297,10 +297,6 @@ function is a helper for this second case.
 
 Check if item is a Composite and return True if it is.
 
-### is_gevent()
-
-Checks if gevent monkey patching is enabled or not.
-
 ### is_my_event(event)
 
 Checks if an event triggered belongs to the module receiving it.  This

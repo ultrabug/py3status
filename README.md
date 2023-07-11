@@ -89,7 +89,6 @@ You can see the help of py3status by issuing \`py3status -h\`:
       -c, --config FILE     load config (default: /home/alexys/.i3/i3status.conf)
       -d, --debug           enable debug logging in syslog and --log-file
                             (default: False)
-      -g, --gevent          enable gevent monkey patching (default: False)
       -i, --include PATH    append additional user-defined module paths (default:
                             None)
       -l, --log-file FILE   enable logging to FILE (default: None)

@@ -63,7 +63,6 @@ $ pip install py3status
 
 There are optional requirements that you could find useful:
 
-- `py3status[gevent]` for gevent support.
 - `py3status[udev]` for udev support.
 
 Or if you want everything:

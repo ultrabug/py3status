@@ -11,6 +11,7 @@ from pathlib import Path
 from pprint import pformat
 from shutil import which
 from subprocess import Popen, PIPE, STDOUT
+from time import sleep
 from uuid import uuid4
 
 from py3status import exceptions
@@ -419,12 +420,6 @@ class Py3:
         returns the i3s_config dict.
         """
         return self._i3s_config
-
-    def is_gevent(self):
-        """
-        Checks if gevent monkey patching is enabled or not.
-        """
-        return self._py3_wrapper.is_gevent
 
     def is_my_event(self, event):
         """
@@ -1310,10 +1305,6 @@ class Py3:
             try:
                 return get_http_response()
             except (self.RequestTimeout, self.RequestURLError):
-                if self.is_gevent():
-                    from gevent import sleep
-                else:
-                    from time import sleep
                 self.log(f"HTTP request retry {n}/{retry_times}")
                 sleep(retry_wait)
         self.log(f"HTTP request retry {retry_times}/{retry_times}")

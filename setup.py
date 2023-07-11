@@ -23,9 +23,8 @@ def read(fname):
 
 
 # extra requirements
-req_gevent = ["gevent >= 1.1"]
 req_udev = ["pyudev >= 0.21.0"]
-req_all = req_gevent + req_udev
+req_all = req_udev
 
 setup(
     name="py3status",
@@ -35,7 +34,7 @@ setup(
     description="py3status: an extensible i3status wrapper written in python",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
-    extras_require={"all": req_all, "gevent": req_gevent, "udev": req_udev},
+    extras_require={"all": req_all, "udev": req_udev},
     url="https://github.com/ultrabug/py3status",
     download_url="https://github.com/ultrabug/py3status/tags",
     license="BSD",

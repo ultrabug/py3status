@@ -424,23 +424,6 @@ class Py3statusWrapper:
         if self.timeout_due is not None:
             return max(0, self.timeout_due - time.monotonic())
 
-    def gevent_monkey_patch_report(self):
-        """
-        Report effective gevent monkey patching on the logs.
-        """
-        try:
-            import gevent.socket
-            import socket
-
-            if gevent.socket.socket is socket.socket:
-                self.log("gevent monkey patching is active")
-                return True
-            else:
-                self.notify_user("gevent monkey patching failed.")
-        except ImportError:
-            self.notify_user("gevent is not installed, monkey patching failed.")
-        return False
-
     def get_user_modules(self):
         """Mapping from module name to relevant objects.
 
@@ -602,11 +585,6 @@ class Py3statusWrapper:
 
         if self.config["debug"]:
             self.log(f"py3status started with config {self.config}")
-
-        if self.config["gevent"]:
-            self.is_gevent = self.gevent_monkey_patch_report()
-        else:
-            self.is_gevent = False
 
         # read i3status.conf
         config_path = self.config["i3status_config_path"]

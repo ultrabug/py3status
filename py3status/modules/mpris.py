@@ -113,8 +113,6 @@ from mpris2 import get_players_uri, Interfaces
 from mpris2.types import Metadata_Map
 from enum import IntEnum
 
-STRING_GEVENT = "this module does not work with gevent"
-
 
 class STATE(IntEnum):
     Playing = 0
@@ -389,8 +387,6 @@ class Py3status:
     state_stop = "\u25a1"
 
     def post_config_hook(self):
-        if self.py3.is_gevent():
-            raise Exception(STRING_GEVENT)
         self._name_owner_change_match = None
         self._kill = False
         self._mpris_players: dict[Player] = {}
