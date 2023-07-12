@@ -75,7 +75,6 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 from pydbus import SessionBus
 
-STRING_GEVENT = "this module does not work with gevent"
 SERVICE_BUS = "org.kde.kdeconnect"
 INTERFACE = SERVICE_BUS + ".device"
 INTERFACE_DAEMON = SERVICE_BUS + ".daemon"
@@ -109,9 +108,6 @@ class Py3status:
     status_notif = " ✉"
 
     def post_config_hook(self):
-        if self.py3.is_gevent():
-            raise Exception(STRING_GEVENT)
-
         self._bat = None
         self._con = None
         self._dev = None

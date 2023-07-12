@@ -89,13 +89,6 @@ def parse_cli_args():
         help="enable debug logging in syslog or log file if --log-file option is passed",
     )
     parser.add_argument(
-        "-g",
-        "--gevent",
-        action="store_true",
-        dest="gevent",
-        help="enable gevent monkey patching",
-    )
-    parser.add_argument(
         "-i",
         "--include",
         action="append",

@@ -1,3 +1,7 @@
+version 3.52 (2023-07-11)
+* IMPORTANT: gevent support is now deprecated and removed
+* core: drop gevent support
+
 version 3.51 (2023-06-27)
 * NEW: thanks to Andreas Grapentin, py3status can now run in lots of other containers (tmux, term, dzen2, lemonbar...)
 * IMPORTANT: modules are moving away from the obsolete pydbus library
