@@ -19,13 +19,13 @@ Configuration parameters:
     format: display format for this module
         *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
         '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
-        '|\?show cmus: waiting for user input]]')*
+        '|\?show playerctl: no active players]]')*
     ignored_players: list of players to ignore. Playerctld will always be 
         ignored as it conflicts with this module (default: [])
-    sleep_timeout: sleep interval for this module. When cmus is not running,
-        this interval will be used. This allows some flexible timing where one
-        might want to refresh constantly with some placeholders or to refresh
-        only once every minute rather than every few seconds. (default 20)
+    sleep_timeout: sleep interval for this module. When playerctl is not controlling
+        any media players, this interval will be used. This allows some flexible
+        timing where one might want to refresh constantly with some placeholders or to
+        refresh only once every minute rather than every few seconds. (default 20)
 
 Control placeholders:
     {is_paused} True if the current player is paused. Otherwise, false
