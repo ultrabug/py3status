@@ -16,34 +16,30 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default: '{format_player}')
     format_player: display format for players:
-        *(default '[\?if=is_playing > ][\?if=is_paused \|\| ]'
-        '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]]')*
-    format_separator: show separator if more than one (default: ' ')
+        *(default '[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]'
+        '[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}]]]')*
+    format_player_separator: show separator if more than one player (default: ' ')
     players: list of players to track. An empty list tracks all players (default: [])
     sleep_timeout: sleep interval for this module. When playerctl is not tracking any
         players, this interval will be used. This allows some flexible timing where
         one might want to refresh constantly with some placeholders or to refresh
         only once every minute rather than every few seconds. (default 20)
-
-Control placeholders:
-    {is_paused} True if the player is paused. Otherwise, false
-    {is_playing} True if the player is playing. Otherwise, false
-    {is_stopped} True if the player is stopped. Otherwise, false
+    thresholds: specify color thresholds to use for different placeholders
+        (default {"status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]})
 
 Format placeholders:
+    {format_player} format for players
+
+Format player placeholders:
     {album} album name
     {artist} artist name
     {duration} length of track/video in [HH:]MM:SS, e.g. 03:22
     {player} name of the player
     {position} elapsed time in [HH:]MM:SS, e.g. 00:17
+    {status} playback status, e.g. playing, paused, stopped
     {title} track/video title
 
     Not all media players support every placeholder
-
-Color options:
-    color_paused: Paused, defaults to color_degraded
-    color_playing: Playing, defaults to color_good
-    color_stopped: Stopped, defaults to color_bad
 
 Requires:
     playerctl: mpris media player controller and lib for spotify, vlc, audacious,
@@ -57,6 +53,7 @@ SAMPLE OUTPUT
     {'color': '#FFFF00', 'full_text': '|| Too Much Skunk Tonight - Birdy Nam Nam'}
 ]
 """
+from fnmatch import fnmatch
 from threading import Thread
 
 import gi
@@ -78,20 +75,31 @@ class Py3status:
     cache_timeout = 5
     format = "{format_player}"
     format_player = (
-        r"[\?if=is_playing > ][\?if=is_paused \|\| ]"
-        r"[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]]"
+        r"[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]"
+        r"[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}]]]"
     )
-    format_separator = " "
+    format_player_separator = " "
     players = []
     sleep_timeout = 20
+    thresholds = {
+        "status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]
+    }
+
+    class Meta:
+        update_config = {
+            "update_placeholder_format": [
+                {
+                    "placeholder_formats": {"title": ":escape"},
+                    "format_strings": ["format_player"],
+                }
+            ]
+        }
 
     def post_config_hook(self):
-        if not self.py3.check_commands("playerctl"):
-            raise Exception("command 'playerctl' not installed")
-
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+        self.thresholds_init = self.py3.get_color_names_list(self.format_player)
 
         self._init_manager()
 
@@ -106,8 +114,15 @@ class Py3status:
 
         self._start_loop()
 
+    def _player_should_be_tracked(self, player_name):
+        for _filter in self.players:
+            if fnmatch(player_name.name, _filter):
+                return True
+
+        return len(self.players) == 0
+
     def _init_player(self, player_name):
-        if len(self.players) > 0 and player_name.name not in self.players:
+        if not self._player_should_be_tracked(player_name):
             return
 
         player = Playerctl.Player.new_from_name(player_name)
@@ -156,19 +171,6 @@ class Py3status:
         time = f"{h}:{m:02d}:{s:02d}"
         return time.lstrip("0").lstrip(":")
 
-    def _set_color(self, player, data):
-        """Set the color and the control variables for a player"""
-        status = player.props.playback_status
-        if status == Playerctl.PlaybackStatus.PLAYING:
-            data["color"] = self.color_playing
-            data["is_playing"] = True
-        elif status == Playerctl.PlaybackStatus.PAUSED:
-            data["color"] = self.color_paused
-            data["is_paused"] = True
-        else:
-            data["color"] = self.color_stopped
-            data["is_stopped"] = True
-
     def _set_data_from_metadata(self, player, data):
         """Set any data retrieved directly from the metadata for a player"""
         metadata = dict(player.props.metadata)
@@ -182,15 +184,16 @@ class Py3status:
     def _get_player_data(self, player):
         data = {}
 
+        # Song attributes
         data["album"] = player.get_album()
         data["artist"] = player.get_artist()
         data["title"] = player.get_title()
-        data["player"] = player.props.player_name
-
-        self._set_color(player, data)
-
         data["position"] = self._get_player_position(player)
         self._set_data_from_metadata(player, data)
+
+        # Player attributes
+        data["player"] = player.props.player_name
+        data["status"] = player.props.status.lower()
 
         return data
 
@@ -202,17 +205,18 @@ class Py3status:
         for player in tracked_players:
             player_data = self._get_player_data(player)
 
-            # Delete after referencing because it shouldn't be a valid placeholder
-            color = player_data["color"]
-            del player_data["color"]
+            # Set the color of a player
+            for key in self.thresholds_init:
+                if key in player_data:
+                    self.py3.threshold_get_color(player_data[key], key)
 
             format_player = self.py3.safe_format(self.format_player, player_data)
             self.py3.composite_update(format_player, {"index": player_data["player"]})
-            self.py3.composite_update(format_player, {"color": color})
+
             players.append(format_player)
 
-        format_separator = self.py3.safe_format(self.format_separator)
-        format_players = self.py3.composite_join(format_separator, players)
+        format_player_separator = self.py3.safe_format(self.format_player_separator)
+        format_players = self.py3.composite_join(format_player_separator, players)
 
         return {
             "cached_until": self.py3.time_in(cached_until),
