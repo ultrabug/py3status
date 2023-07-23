@@ -13,8 +13,6 @@ Configuration parameters:
     button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
     button_stop: mouse button to stop the playback (default 3)
-    cache_timeout: refresh interval for this module. When no players are being
-        tracked, it will be cached forever (default 5)
     format: display format for this module (default: '{format_player}')
     format_player: display format for players:
         *(default '[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]'
@@ -70,7 +68,6 @@ class Py3status:
     button_play_pause = 1
     button_previous = None
     button_stop = 3
-    cache_timeout = 5
     format = "{format_player}"
     format_player = (
         r"[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]"
@@ -196,7 +193,15 @@ class Py3status:
 
     def playerctl(self):
         tracked_players = self.manager.props.players
-        cached_until = self.cache_timeout if tracked_players else self.py3.CACHE_FOREVER
+
+        # Only have a cache timeout if the user wants to know the players' positions
+        if tracked_players and (
+            self.py3.format_contains(self.format, "position")
+            or self.py3.format_contains(self.format_player, "position")
+        ):
+            cached_until = 1
+        else:
+            cached_until = self.py3.CACHE_FOREVER
 
         players = []
         for player in tracked_players:
