@@ -53,6 +53,7 @@ SAMPLE OUTPUT
     {'color': '#FFFF00', 'full_text': '|| Too Much Skunk Tonight - Birdy Nam Nam'}
 ]
 """
+import time
 from fnmatch import fnmatch
 from threading import Thread
 
@@ -145,6 +146,8 @@ class Py3status:
         self._init_player(player_name)
 
     def _on_name_vanished(self, manager, name):
+        # Add a very small delay to give Playerctl time to remove the player
+        time.sleep(0.01)
         self.py3.update()
 
     def _on_metadata(self, player, metadata, manager):
@@ -230,8 +233,6 @@ class Py3status:
             if player.props.player_name == index:
                 return player
 
-        # Should never be reached as the user can't click on a player
-        # that doesn't exist
         return None
 
     def on_click(self, event):
@@ -246,7 +247,7 @@ class Py3status:
         self.py3.prevent_refresh()
 
         player = self._get_player_from_index(index)
-        if not player.props.can_control:
+        if not player or not player.props.can_control:
             return
 
         if button == self.button_play and player.props.can_play:
