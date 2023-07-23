@@ -13,17 +13,14 @@ Configuration parameters:
     button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
     button_stop: mouse button to stop the playback (default 3)
-    cache_timeout: refresh interval for this module (default 5)
+    cache_timeout: refresh interval for this module. When no players are being
+        tracked, it will be cached forever (default 5)
     format: display format for this module (default: '{format_player}')
     format_player: display format for players:
         *(default '[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]'
-        '[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}]]]')*
+        '[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default: ' ')
     players: list of players to track. An empty list tracks all players (default: [])
-    sleep_timeout: sleep interval for this module. When playerctl is not tracking any
-        players, this interval will be used. This allows some flexible timing where
-        one might want to refresh constantly with some placeholders or to refresh
-        only once every minute rather than every few seconds. (default 20)
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]})
 
@@ -77,11 +74,10 @@ class Py3status:
     format = "{format_player}"
     format_player = (
         r"[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]"
-        r"[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}]]]"
+        r"[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]"
     )
     format_player_separator = " "
     players = []
-    sleep_timeout = 20
     thresholds = {
         "status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]
     }
@@ -102,9 +98,7 @@ class Py3status:
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
 
-        self._init_manager()
-
-    def _init_manager(self):
+        # Initialize the manager + event listeners
         self.manager = Playerctl.PlayerManager()
         self.manager.connect("name-appeared", self._on_name_appeared)
         self.manager.connect("name-vanished", self._on_name_vanished)
@@ -128,7 +122,7 @@ class Py3status:
 
         player = Playerctl.Player.new_from_name(player_name)
 
-        # Set up all event listeners
+        # Initialize player event listeners
         player.connect("playback-status", self._status_changed, self.manager)
         player.connect("metadata", self._on_metadata, self.manager)
 
@@ -156,6 +150,14 @@ class Py3status:
     def _status_changed(self, player, status, manager):
         self.py3.update()
 
+    @staticmethod
+    def _microseconds_to_time(microseconds):
+        seconds = microseconds // 1_000_000
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        time = f"{h}:{m:02d}:{s:02d}"
+        return time.lstrip("0").lstrip(":")
+
     def _get_player_position(self, player):
         try:
             # Playerctl doesn't support getting positions for all players
@@ -165,14 +167,6 @@ class Py3status:
             position = None
 
         return position
-
-    @staticmethod
-    def _microseconds_to_time(microseconds):
-        seconds = microseconds // 1_000_000
-        m, s = divmod(seconds, 60)
-        h, m = divmod(m, 60)
-        time = f"{h}:{m:02d}:{s:02d}"
-        return time.lstrip("0").lstrip(":")
 
     def _set_data_from_metadata(self, player, data):
         """Set any data retrieved directly from the metadata for a player"""
@@ -202,7 +196,7 @@ class Py3status:
 
     def playerctl(self):
         tracked_players = self.manager.props.players
-        cached_until = self.cache_timeout if tracked_players else self.sleep_timeout
+        cached_until = self.cache_timeout if tracked_players else self.py3.CACHE_FOREVER
 
         players = []
         for player in tracked_players:
