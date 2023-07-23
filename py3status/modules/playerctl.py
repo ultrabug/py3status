@@ -13,12 +13,12 @@ Configuration parameters:
     button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
     button_stop: mouse button to stop the playback (default 3)
-    format: display format for this module (default: '{format_player}')
-    format_player: display format for players:
+    format: display format for this module (default '{format_player}')
+    format_player: display format for players
         *(default '[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]'
         '[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
-    format_player_separator: show separator if more than one player (default: ' ')
-    players: list of players to track. An empty list tracks all players (default: [])
+    format_player_separator: show separator if more than one player (default ' ')
+    players: list of players to track. An empty list tracks all players (default [])
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]})
 
