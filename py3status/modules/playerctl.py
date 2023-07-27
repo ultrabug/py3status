@@ -15,12 +15,12 @@ Configuration parameters:
     button_stop: mouse button to stop the playback (default 3)
     format: display format for this module (default '{format_player}')
     format_player: display format for players
-        *(default '[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]'
-        '[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
+        *(default '[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]'
+        '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
     players: list of players to track. An empty list tracks all players (default [])
     thresholds: specify color thresholds to use for different placeholders
-        (default {"status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]})
+        (default {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]})
 
 Format placeholders:
     {format_player} format for players
@@ -70,19 +70,20 @@ class Py3status:
     button_stop = 3
     format = "{format_player}"
     format_player = (
-        r"[\?color=status [\?if=status=playing > ][\?if=status=paused \|\| ]"
-        r"[\?if=status=stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]"
+        r"[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]"
+        r"[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]"
     )
     format_player_separator = " "
     players = []
     thresholds = {
-        "status": [("playing", "good"), ("paused", "degraded"), ("stopped", "bad")]
+        "status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]
     }
 
     class Meta:
         update_config = {
             "update_placeholder_format": [
                 {
+                    # Escape the title by default because many contain special characters
                     "placeholder_formats": {"title": ":escape"},
                     "format_strings": ["format_player"],
                 }
@@ -93,7 +94,10 @@ class Py3status:
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
+        self.position = self.py3.format_contains(self.format_player, "position")
+        self.cache_timeout = getattr(self, "cache_timeout", 1)
 
         # Initialize the manager + event listeners
         self.manager = Playerctl.PlayerManager()
@@ -187,25 +191,21 @@ class Py3status:
 
         # Player attributes
         data["player"] = player.props.player_name
-        data["status"] = player.props.status.lower()
+        data["status"] = player.props.status
 
         return data
 
     def playerctl(self):
         tracked_players = self.manager.props.players
 
-        # Only have a cache timeout if the user wants to know the players' positions
-        if tracked_players and (
-            self.py3.format_contains(self.format, "position")
-            or self.py3.format_contains(self.format_player, "position")
-        ):
-            cached_until = 1
-        else:
-            cached_until = self.py3.CACHE_FOREVER
-
         players = []
+        cache_forever = True
         for player in tracked_players:
             player_data = self._get_player_data(player)
+
+            # Check if the player should cause the module to continuously update
+            if player_data["status"] == "Playing" and player_data["position"]:
+                cache_forever = False
 
             # Set the color of a player
             for key in self.thresholds_init:
@@ -219,6 +219,12 @@ class Py3status:
 
         format_player_separator = self.py3.safe_format(self.format_player_separator)
         format_players = self.py3.composite_join(format_player_separator, players)
+
+        # Only set a cache timeout if necessary
+        if not cache_forever and self.position:
+            cached_until = self.cache_timeout
+        else:
+            cached_until = self.py3.CACHE_FOREVER
 
         return {
             "cached_until": self.py3.time_in(cached_until),
