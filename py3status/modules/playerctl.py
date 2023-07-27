@@ -7,20 +7,30 @@ you can bind player actions to keys and get metadata about the currently
 playing song or video.
 
 Configuration parameters:
+    button_cycle_loop_status: mouse button to cycle the loop status of the player (default None)
     button_next: mouse button to skip to the next track (default None)
     button_pause: mouse button to pause the playback (default None)
     button_play: mouse button to play the playback (default None)
     button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
+    button_seek_forward: mouse button to playback's position forward (default None)
+    button_seek_backward: mouse button to playback's position backward (default None)
     button_stop: mouse button to stop the playback (default 3)
+    button_toggle_shuffle: mouse button to toggle the shuffle mode of the player (default None)
+    button_volume_up: mouse button to increase the volume of the player
+    button_volume_down: mouse button to decrease the volume of the player
     format: display format for this module (default '{format_player}')
     format_player: display format for players
         *(default '[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]'
         '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
     players: list of players to track. An empty list tracks all players (default [])
+    seek_change: time (in seconds) to change the playback's position by (default 5)
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]})
+    volume_change: percentage (from 0 to 100) to change the player's volume by (default 10)
+
+    Not all players support every button action
 
 Format placeholders:
     {format_player} format for players
@@ -29,10 +39,14 @@ Format player placeholders:
     {album} album name
     {artist} artist name
     {duration} length of track/video in [HH:]MM:SS, e.g. 03:22
+    {loop_status} loop status of the player, e.g. None, playlist, Track
     {player} name of the player
     {position} elapsed time in [HH:]MM:SS, e.g. 00:17
-    {status} playback status, e.g. playing, paused, stopped
+    {shuffle} boolean indicating if the player's shuffle mode is on
+    {status} playback status, e.g. Playing, Paused, Stopped
     {title} track/video title
+    {trackNumber} position of the track in the album or playlist
+    {volume} volume level of the player from 0 to 100
 
     Not all media players support every placeholder
 
@@ -65,12 +79,18 @@ class Py3status:
     """ """
 
     # available configuration parameters
+    button_cycle_loop_status = None
     button_next = None
     button_pause = None
     button_play = None
     button_play_pause = 1
     button_previous = None
+    button_seek_forward = None
+    button_seek_backward = None
     button_stop = 3
+    button_toggle_shuffle = None
+    button_volume_up = None
+    button_volume_down = None
     format = "{format_player}"
     format_player = (
         r"[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]"
@@ -78,9 +98,11 @@ class Py3status:
     )
     format_player_separator = " "
     players = []
+    seek_change = 5
     thresholds = {
         "status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]
     }
+    volume_change = 10
 
     class Meta:
         update_config = {
@@ -127,8 +149,12 @@ class Py3status:
         player = Playerctl.Player.new_from_name(player_name)
 
         # Initialize player event listeners
-        player.connect("playback-status", self._status_changed, self.manager)
+        player.connect("loop-status", self._loop_status_changed, self.manager)
         player.connect("metadata", self._on_metadata, self.manager)
+        player.connect("playback-status", self._status_changed, self.manager)
+        player.connect("seeked", self._on_seeked, self.manager)
+        player.connect("shuffle", self._shuffle_changed, self.manager)
+        player.connect("volume", self._volume_changed, self.manager)
 
         self.manager.manage_player(player)
 
@@ -148,10 +174,22 @@ class Py3status:
         time.sleep(0.01)
         self.py3.update()
 
+    def _loop_status_changed(self, player, loop_status, manager):
+        self.py3.update()
+
     def _on_metadata(self, player, metadata, manager):
         self.py3.update()
 
     def _status_changed(self, player, status, manager):
+        self.py3.update()
+
+    def _on_seeked(self, player, position, manager):
+        self.py3.update()
+
+    def _shuffle_changed(self, player, shuffle, manager):
+        self.py3.update()
+
+    def _volume_changed(self, player, volume, manager):
         self.py3.update()
 
     @staticmethod
@@ -176,6 +214,8 @@ class Py3status:
         """Set any data retrieved directly from the metadata for a player"""
         metadata = dict(player.props.metadata)
 
+        data["trackNumber"] = metadata.get("xesam:trackNumber")
+
         duration_ms = metadata.get("mpris:length")
         if duration_ms:
             data["duration"] = self._microseconds_to_time(duration_ms)
@@ -194,7 +234,10 @@ class Py3status:
 
         # Player attributes
         data["player"] = player.props.player_name
+        data["loop_status"] = player.props.loop_status.value_nick
+        data["shuffle"] = player.props.shuffle
         data["status"] = player.props.status
+        data["volume"] = int(player.props.volume * 100)
 
         return data
 
@@ -204,6 +247,30 @@ class Py3status:
                 return player
 
         return None
+
+    def _change_player_volume(self, player, volume_factor):
+        volume_change = volume_factor * self.volume_change / 100
+        new_volume = player.props.volume + volume_change
+        try:
+            # Playerctl can't set the volume for every player
+            player.set_volume(new_volume)
+        except GLib.GError:
+            pass
+
+    def _cycle_player_loop_status(self, player):
+        new_loop_status = (player.props.loop_status + 1) % 3
+        try:
+            # Not all players support setting the loop status
+            player.set_loop_status(new_loop_status)
+        except GLib.GError:
+            pass
+
+    def _toggle_player_shuffle(self, player):
+        try:
+            # Not all players support setting the shuffle mode
+            player.set_shuffle(not player.props.shuffle)
+        except GLib.GError:
+            pass
 
     def playerctl(self):
         tracked_players = self.manager.props.players
@@ -270,6 +337,18 @@ class Py3status:
             player.next()
         elif button == self.button_previous and player.props.can_go_previous:
             player.previous()
+        elif button == self.button_seek_forward and player.props.can_seek:
+            player.seek(self.seek_change * 10 ** 6)
+        elif button == self.button_seek_backward and player.props.can_seek:
+            player.seek(self.seek_change * -1 * 10 ** 6)
+        elif button == self.button_volume_up:
+            self._change_player_volume(player, 1)
+        elif button == self.button_volume_down:
+            self._change_player_volume(player, -1)
+        elif button == self.button_cycle_loop_status:
+            self._cycle_player_loop_status(player)
+        elif button == self.button_toggle_shuffle:
+            self._toggle_player_shuffle(player)
 
 
 if __name__ == "__main__":
