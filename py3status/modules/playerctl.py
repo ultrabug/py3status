@@ -43,10 +43,13 @@ Requires:
 @author jdholtz
 
 SAMPLE OUTPUT
-[
-    {'color': '#00FF00', 'full_text': '> My Lucky Pants Failed Me Again - Tom Rosenthal'}
-    {'color': '#FFFF00', 'full_text': '|| Too Much Skunk Tonight - Birdy Nam Nam'}
-]
+{'color': '#00FF00', 'full_text': '> Don’t Eat the Yellow Snow - Frank Zappa'}
+
+Paused
+{'color': '#FFFF00', 'full_text': '|| Too Much Skunk Tonight - Birdy Nam Nam'}
+
+Stopped
+{'color': '#FF0000', 'full_text': '.. This Song Has No Title - Elton John'}
 """
 import time
 from fnmatch import fnmatch
@@ -195,6 +198,13 @@ class Py3status:
 
         return data
 
+    def _get_player_from_index(self, index):
+        for player in self.manager.props.players:
+            if player.props.player_name == index:
+                return player
+
+        return None
+
     def playerctl(self):
         tracked_players = self.manager.props.players
 
@@ -232,13 +242,6 @@ class Py3status:
                 self.format, {"format_player": format_players}
             ),
         }
-
-    def _get_player_from_index(self, index):
-        for player in self.manager.props.players:
-            if player.props.player_name == index:
-                return player
-
-        return None
 
     def on_click(self, event):
         """
