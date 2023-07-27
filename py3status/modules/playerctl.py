@@ -7,7 +7,7 @@ you can bind player actions to keys and get metadata about the currently
 playing song or video.
 
 Configuration parameters:
-    button_cycle_loop_status: mouse button to cycle the loop status of the player (default None)
+    button_loop_status: mouse button to cycle the loop status of the player (default None)
     button_next: mouse button to skip to the next track (default None)
     button_pause: mouse button to pause the playback (default None)
     button_play: mouse button to play the playback (default None)
@@ -16,7 +16,7 @@ Configuration parameters:
     button_seek_forward: mouse button to playback's position forward (default None)
     button_seek_backward: mouse button to playback's position backward (default None)
     button_stop: mouse button to stop the playback (default 3)
-    button_toggle_shuffle: mouse button to toggle the shuffle mode of the player (default None)
+    button_shuffle: mouse button to toggle the shuffle mode of the player (default None)
     button_volume_up: mouse button to increase the volume of the player
     button_volume_down: mouse button to decrease the volume of the player
     format: display format for this module (default '{format_player}')
@@ -25,10 +25,10 @@ Configuration parameters:
         '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
     players: list of players to track. An empty list tracks all players (default [])
-    seek_change: time (in seconds) to change the playback's position by (default 5)
+    seek_delta: time (in seconds) to change the playback's position by (default 5)
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]})
-    volume_change: percentage (from 0 to 100) to change the player's volume by (default 10)
+    volume_delta: percentage (from 0 to 100) to change the player's volume by (default 10)
 
     Not all players support every button action
 
@@ -79,7 +79,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
-    button_cycle_loop_status = None
+    button_loop_status = None
     button_next = None
     button_pause = None
     button_play = None
@@ -88,7 +88,7 @@ class Py3status:
     button_seek_forward = None
     button_seek_backward = None
     button_stop = 3
-    button_toggle_shuffle = None
+    button_shuffle = None
     button_volume_up = None
     button_volume_down = None
     format = "{format_player}"
@@ -98,11 +98,11 @@ class Py3status:
     )
     format_player_separator = " "
     players = []
-    seek_change = 5
+    seek_delta = 5
     thresholds = {
         "status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]
     }
-    volume_change = 10
+    volume_delta = 10
 
     class Meta:
         update_config = {
@@ -249,7 +249,7 @@ class Py3status:
         return None
 
     def _change_player_volume(self, player, volume_factor):
-        volume_change = volume_factor * self.volume_change / 100
+        volume_change = volume_factor * self.volume_delta / 100
         new_volume = player.props.volume + volume_change
         try:
             # Playerctl can't set the volume for every player
@@ -276,13 +276,17 @@ class Py3status:
         tracked_players = self.manager.props.players
 
         players = []
-        cache_forever = True
+        cached_until = self.py3.CACHE_FOREVER
         for player in tracked_players:
             player_data = self._get_player_data(player)
 
             # Check if the player should cause the module to continuously update
-            if player_data["status"] == "Playing" and player_data["position"]:
-                cache_forever = False
+            if (
+                self.position
+                and player_data["status"] == "Playing"
+                and player_data["position"]
+            ):
+                cached_until = self.cache_timeout
 
             # Set the color of a player
             for key in self.thresholds_init:
@@ -296,12 +300,6 @@ class Py3status:
 
         format_player_separator = self.py3.safe_format(self.format_player_separator)
         format_players = self.py3.composite_join(format_player_separator, players)
-
-        # Only set a cache timeout if necessary
-        if not cache_forever and self.position:
-            cached_until = self.cache_timeout
-        else:
-            cached_until = self.py3.CACHE_FOREVER
 
         return {
             "cached_until": self.py3.time_in(cached_until),
@@ -338,16 +336,16 @@ class Py3status:
         elif button == self.button_previous and player.props.can_go_previous:
             player.previous()
         elif button == self.button_seek_forward and player.props.can_seek:
-            player.seek(self.seek_change * 10 ** 6)
+            player.seek(self.seek_delta * 10**6)
         elif button == self.button_seek_backward and player.props.can_seek:
-            player.seek(self.seek_change * -1 * 10 ** 6)
+            player.seek(self.seek_delta * -1 * 10**6)
         elif button == self.button_volume_up:
             self._change_player_volume(player, 1)
         elif button == self.button_volume_down:
             self._change_player_volume(player, -1)
-        elif button == self.button_cycle_loop_status:
+        elif button == self.button_loop_status:
             self._cycle_player_loop_status(player)
-        elif button == self.button_toggle_shuffle:
+        elif button == self.button_shuffle:
             self._toggle_player_shuffle(player)
 
 
