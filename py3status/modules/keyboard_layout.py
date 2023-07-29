@@ -105,9 +105,7 @@ class Py3status:
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"layout": lang, "variant": variant}
-            ),
+            "full_text": self.py3.safe_format(self.format, {"layout": lang, "variant": variant}),
         }
 
         if self.colors and not self.colors_dict:
@@ -135,9 +133,9 @@ class Py3status:
     def _get_xkblayout(self):
         layout, variant = [
             x.strip()
-            for x in self.py3.command_output(
-                ["xkblayout-state", "print", "%s|SEPARATOR|%v"]
-            ).split("|SEPARATOR|")
+            for x in self.py3.command_output(["xkblayout-state", "print", "%s|SEPARATOR|%v"]).split(
+                "|SEPARATOR|"
+            )
         ]
         return layout, variant
 
@@ -165,9 +163,7 @@ class Py3status:
     def _set_xkblayout(self):
         layout = self._layouts[self._active]
         layout_pos = (
-            self.py3.command_output(["xkblayout-state", "print", "%E"])
-            .split()
-            .index(layout)
+            self.py3.command_output(["xkblayout-state", "print", "%E"]).split().index(layout)
         )
         self.py3.command_run(f"xkblayout-state set {layout_pos}")
 

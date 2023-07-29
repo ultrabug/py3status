@@ -24,9 +24,10 @@ SAMPLE OUTPUT
 """
 from datetime import datetime
 from re import compile as re_compile
-from khal.settings import get_config
+
 from khal.cli import build_collection
 from khal.controllers import khal_list
+from khal.settings import get_config
 
 
 class Py3status:
@@ -51,9 +52,7 @@ class Py3status:
 
     def khal_calendar(self):
         self._init_config()
-        daterange = (
-            str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
-        )
+        daterange = str(datetime.now().strftime(self.datetimeformat)) + " " + self.date_end
         output = khal_list(self.collection, daterange, self.config, self.output_format)
         output = [self._format_output(x) for x in output[1:]][: self.max_results]
 

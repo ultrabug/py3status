@@ -76,7 +76,7 @@ class Py3status:
         # filter for not ignored (or active) devices
         state = list(
             filter(
-                lambda d: (not d["name"] in self.sinks_to_ignore) or d["is_active"],
+                lambda d: (d["name"] not in self.sinks_to_ignore) or d["is_active"],
                 state,
             )
         )

@@ -1,26 +1,24 @@
 import os
 import re
-
 from collections import OrderedDict
 from importlib import util
 from pathlib import Path
 from string import Template
-from subprocess import check_output, CalledProcessError
+from subprocess import CalledProcessError, check_output
 
 from py3status.constants import (
     CONFIG_FILE_SPECIAL_SECTIONS,
-    I3S_SINGLE_NAMES,
-    I3S_MODULE_NAMES,
-    MAX_NESTING_LEVELS,
     ERROR_CONFIG,
     GENERAL_DEFAULTS,
+    I3S_MODULE_NAMES,
+    I3S_SINGLE_NAMES,
+    MAX_NESTING_LEVELS,
     RETIRED_MODULES,
-    TIME_MODULES,
     TIME_FORMAT,
+    TIME_MODULES,
     TZTIME_FORMAT,
 )
-
-from py3status.private import PrivateHide, PrivateBase64
+from py3status.private import PrivateBase64, PrivateHide
 
 
 class ParseException(Exception):
@@ -40,9 +38,7 @@ class ParseException(Exception):
     def one_line(self, config_path):
         filename = config_path.name
         notif = "CONFIG ERROR: {} saw `{}` at line {} position {} in file {}"
-        return notif.format(
-            self.error, self.token, self.line_no, self.position, filename
-        )
+        return notif.format(self.error, self.token, self.line_no, self.position, filename)
 
     def __str__(self):
         marker = " " * (self.position - 1) + "^"
@@ -253,9 +249,7 @@ class ConfigParser:
                 t_type = "unknown"
             else:
                 continue
-            tokens.append(
-                {"type": t_type, "value": value, "match": token, "start": token.start()}
-            )
+            tokens.append({"type": t_type, "value": value, "match": token, "start": token.start()})
         self.tokens = tokens
 
     def next(self):
@@ -393,9 +387,7 @@ class ConfigParser:
                 value = False
             else:
                 if self.py3_wrapper:
-                    self.py3_wrapper.report_exception(
-                        msg=f"shell: called with command `{param}`"
-                    )
+                    self.py3_wrapper.report_exception(msg=f"shell: called with command `{param}`")
                 self.notify_user("shell script exited with an error")
                 value = None
         else:
@@ -567,7 +559,6 @@ class ConfigParser:
         # if we have a colon in the name of a setting then it
         # indicates that it has been encoded.
         if ":" in name:
-
             if module_name.split(" ")[0] in I3S_MODULE_NAMES + ["general"]:
                 self.error("Only py3status modules can use obfuscated")
 
@@ -641,20 +632,14 @@ class ConfigParser:
                     # no instance name then give it an anon one.  This allows
                     # us to have multiple non-instance named modules defined
                     # without them clashing.
-                    if (
-                        self.level > 1
-                        and " " not in name
-                        and name not in I3S_MODULE_NAMES
-                    ):
+                    if self.level > 1 and " " not in name and name not in I3S_MODULE_NAMES:
                         name = f"{name} _anon_module_{self.anon_count}"
                         self.anon_count += 1
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == "=":
                     try:
-                        name, value = self.process_value(
-                            name, value, self.current_module[-1]
-                        )
+                        name, value = self.process_value(name, value, self.current_module[-1])
                     except IndexError:
                         self.error("Missing {", previous=True)
                     dictionary[name] = value
@@ -704,9 +689,7 @@ def process_config(config_path, py3_wrapper=None):
 
     # get the file encoding this is important with multi-byte unicode chars
     try:
-        encoding = check_output(
-            ["file", "-b", "--mime-encoding", "--dereference", config_path]
-        )
+        encoding = check_output(["file", "-b", "--mime-encoding", "--dereference", config_path])
         encoding = encoding.strip().decode("utf-8")
     except FileNotFoundError:
         # can be missing on NixOS (see #1961)
@@ -879,8 +862,8 @@ def process_config(config_path, py3_wrapper=None):
 if __name__ == "__main__":
     # process a config file and display output
     # file name user supplied or ~/.i3/i3status.conf
-    import sys
     import pprint
+    import sys
 
     if len(sys.argv) > 1:
         file_name = sys.argv[1]

@@ -80,9 +80,10 @@ mute
 {'color': '#FF0000', 'full_text': u'\u266a: muted'}
 """
 
-import re
 import math
+import re
 from time import sleep
+
 from py3status.exceptions import CommandError
 
 STRING_ERROR = "invalid command `{}`"
@@ -292,9 +293,7 @@ class Pactl(Audio):
             change = f"{self.max_volume}%"
         else:
             change = f"+{delta}%"
-        self.run_cmd(
-            ["pactl", "--", f"set-{self.device_type}-volume", self.device, change]
-        )
+        self.run_cmd(["pactl", "--", f"set-{self.device_type}-volume", self.device, change])
 
     def volume_down(self, delta):
         self.run_cmd(

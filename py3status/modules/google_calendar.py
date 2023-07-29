@@ -152,22 +152,22 @@ SAMPLE OUTPUT
 ]
 """
 
-import httplib2
 import datetime
 import time
 from pathlib import Path
+
+import httplib2
 
 try:
     from googleapiclient import discovery
 except ImportError:
     from apiclient import discovery
-from oauth2client import client
-from oauth2client import clientsecrets
-from oauth2client import tools
-from oauth2client.file import Storage
-from httplib2 import ServerNotFoundError
+
 from dateutil import parser
 from dateutil.tz import tzlocal
+from httplib2 import ServerNotFoundError
+from oauth2client import client, clientsecrets, tools
+from oauth2client.file import Storage
 
 SCOPES = "https://www.googleapis.com/auth/calendar.readonly"
 APPLICATION_NAME = "py3status google_calendar module"
@@ -325,9 +325,7 @@ class Py3status:
 
                 # filter out blacklisted event names
                 if event["summary"] is not None:
-                    if event["summary"].lower() in (
-                        e.lower() for e in self.blacklist_events
-                    ):
+                    if event["summary"].lower() in (e.lower() for e in self.blacklist_events):
                         continue
 
                 events.append(event)
@@ -416,9 +414,7 @@ class Py3status:
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            self.event_urls.append(
-                event.get(self.preferred_event_link, event.get("htmlLink"))
-            )
+            self.event_urls.append(event.get(self.preferred_event_link, event.get("htmlLink")))
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
@@ -443,9 +439,7 @@ class Py3status:
             else:
                 is_current = False
 
-            event_dict["format_timer"] = self._format_timedelta(
-                index, time_delta, is_current
-            )
+            event_dict["format_timer"] = self._format_timedelta(index, time_delta, is_current)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)

@@ -109,9 +109,7 @@ class Dunst(Notification):
 
     def toggle(self, state):
         if self.has_dunstctl:
-            self.parent.py3.command_run(
-                "dunstctl set-paused {}".format(str(state).lower())
-            )
+            self.parent.py3.command_run("dunstctl set-paused {}".format(str(state).lower()))
         elif state:
             # pause
             self.parent.py3.command_run("pkill -SIGUSR1 dunst")

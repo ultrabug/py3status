@@ -262,7 +262,6 @@ diff
 
 import datetime
 
-
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
@@ -472,9 +471,7 @@ class Py3status:
         # Initialize per-format thresholds
         self.thresholds_init = {}
         for name in ("format_humidity",):
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
@@ -637,12 +634,8 @@ class Py3status:
 
     def _format_wind(self, wthr):
         wind = {
-            "deg": self._jpath(
-                wthr, OWM_WIND_DEG, self._jpath(wthr, OWN_CURRENT_WIND_DEG, 0)
-            ),
-            "gust": self._jpath(
-                wthr, OWM_WIND_GUST, self._jpath(wthr, OWN_CURRENT_WIND_GUST, 0)
-            ),
+            "deg": self._jpath(wthr, OWM_WIND_DEG, self._jpath(wthr, OWN_CURRENT_WIND_DEG, 0)),
+            "gust": self._jpath(wthr, OWM_WIND_GUST, self._jpath(wthr, OWN_CURRENT_WIND_GUST, 0)),
             "speed": self._jpath(
                 wthr, OWM_WIND_SPEED, self._jpath(wthr, OWN_CURRENT_WIND_SPEED, 0)
             ),
@@ -702,9 +695,7 @@ class Py3status:
         # Format the humidity (default zero humidity)
         humidity_data = {
             "icon": self.icon_humidity,
-            "humidity": self._jpath(
-                wthr, OWM_HUMIDITY, self._jpath(wthr, OWM_CURRENT_HUMIDITY, 0)
-            ),
+            "humidity": self._jpath(wthr, OWM_HUMIDITY, self._jpath(wthr, OWM_CURRENT_HUMIDITY, 0)),
         }
 
         for x in self.thresholds_init["format_humidity"]:
@@ -717,9 +708,7 @@ class Py3status:
         # Get data and add the icon
         pressure = {
             "icon": self.icon_pressure,
-            "pressure": self._jpath(
-                wthr, OWM_PRESSURE, self._jpath(wthr, OWM_CURRENT_PRESSURE, 0)
-            ),
+            "pressure": self._jpath(wthr, OWM_PRESSURE, self._jpath(wthr, OWM_CURRENT_PRESSURE, 0)),
         }
 
         # Format the barometric pressure
@@ -728,15 +717,9 @@ class Py3status:
     def _format_temp(self, wthr):
         # Get Kelvin data (default absolute zero)
         kelvin = {
-            "day": self._jpath(
-                wthr, OWM_TEMP_DAY, self._jpath(wthr, OWM_CURRENT_TEMP, "")
-            ),
-            "max": self._jpath(
-                wthr, OWM_TEMP_MAX, self._jpath(wthr, OWM_CURRENT_TEMP_MAX, "")
-            ),
-            "min": self._jpath(
-                wthr, OWM_TEMP_MIN, self._jpath(wthr, OWM_CURRENT_TEMP_MIN, "")
-            ),
+            "day": self._jpath(wthr, OWM_TEMP_DAY, self._jpath(wthr, OWM_CURRENT_TEMP, "")),
+            "max": self._jpath(wthr, OWM_TEMP_MAX, self._jpath(wthr, OWM_CURRENT_TEMP_MAX, "")),
+            "min": self._jpath(wthr, OWM_TEMP_MIN, self._jpath(wthr, OWM_CURRENT_TEMP_MIN, "")),
         }
 
         # Temperature conversion methods
@@ -829,9 +812,7 @@ class Py3status:
 
         # Give the final format
         format_forecast_separator = self.py3.safe_format(self.format_forecast_separator)
-        today["forecast"] = self.py3.composite_join(
-            format_forecast_separator, forecasts
-        )
+        today["forecast"] = self.py3.composite_join(format_forecast_separator, forecasts)
 
         return self.py3.safe_format(self.format, today)
 
@@ -883,6 +864,7 @@ if __name__ == "__main__":
     Run module in test mode.
     """
     from os import getenv
+
     from py3status.module_test import module_test
 
     def colorize(names, color="lightgreen", separator=None):
@@ -915,9 +897,7 @@ if __name__ == "__main__":
         "format_rain": colorize(["icon", "amount", "unit"]),
         "format_snow": colorize(["icon", "amount", "unit"]),
         "format_temperature": colorize(["icon", "max", "min", "current", "unit"]),
-        "format_wind": colorize(
-            ["icon", "degree", "direction", "gust", "speed", "unit"]
-        ),
+        "format_wind": colorize(["icon", "degree", "direction", "gust", "speed", "unit"]),
     }
 
     module_test(Py3status, config)

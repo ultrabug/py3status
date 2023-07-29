@@ -82,9 +82,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
     def dropboxd_status(self):
-        status = self.py3.command_output(
-            "dropbox-cli status", localized=True
-        ).splitlines()[0]
+        status = self.py3.command_output("dropbox-cli status", localized=True).splitlines()[0]
 
         if status == "Dropbox isn't running!":
             color = self.py3.COLOR_BAD

@@ -214,15 +214,11 @@ class Py3status:
                 self._update_conn_info()
             self.py3.update()
 
-    def _battery_on_change(
-        self, connection, owner, object_path, interface_name, event, new_value
-    ):
+    def _battery_on_change(self, connection, owner, object_path, interface_name, event, new_value):
         if self._is_current_device(object_path):
             if event == "refreshed":
                 if new_value[1] != -1:
-                    self._set_battery_status(
-                        isCharging=new_value[0], charge=new_value[1]
-                    )
+                    self._set_battery_status(isCharging=new_value[0], charge=new_value[1])
             elif event == "stateChanged":
                 self._set_battery_status(isCharging=new_value[0], charge=None)
             elif event == "chargeChanged":
@@ -240,9 +236,7 @@ class Py3status:
                     self._result["net_type"] != new_value[0]
                     or self._result["net_strength_raw"] != new_value[1]
                 ):
-                    self._set_conn_status(
-                        net_type=new_value[0], net_strength=new_value[1]
-                    )
+                    self._set_conn_status(net_type=new_value[0], net_strength=new_value[1])
                     self.py3.update()
             else:
                 self._update_conn_info()
@@ -447,9 +441,7 @@ class Py3status:
         Get the notifications status
         """
         size = len(activeNotifications)
-        self._result["notif_status"] = (
-            self.status_notif if size > 0 else self.status_no_notif
-        )
+        self._result["notif_status"] = self.status_notif if size > 0 else self.status_no_notif
         self._result["notif_size"] = size
 
     def _set_conn_status(self, net_type, net_strength):
@@ -457,9 +449,7 @@ class Py3status:
         Get the conn status
         """
         self._result["net_strength_raw"] = net_strength
-        self._result["net_strength"] = (
-            net_strength * 25 if net_strength > -1 else UNKNOWN_SYMBOL
-        )
+        self._result["net_strength"] = net_strength * 25 if net_strength > -1 else UNKNOWN_SYMBOL
         self._result["net_type"] = net_type
 
     def _get_text(self):
@@ -472,9 +462,7 @@ class Py3status:
 
         if not device["isReachable"] or not device["isTrusted"]:
             return (
-                self.py3.safe_format(
-                    self.format_disconnected, {"name": device["name"]}
-                ),
+                self.py3.safe_format(self.format_disconnected, {"name": device["name"]}),
                 self.py3.COLOR_BAD,
             )
 
@@ -498,9 +486,7 @@ class Py3status:
 
     def _update_battery_info(self):
         battery = self._get_battery()
-        self._set_battery_status(
-            isCharging=battery["isCharging"], charge=battery["charge"]
-        )
+        self._set_battery_status(isCharging=battery["isCharging"], charge=battery["charge"])
 
     def kill(self):
         self._kill = True

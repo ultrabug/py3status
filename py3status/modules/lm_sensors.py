@@ -188,9 +188,7 @@ class Py3status:
         placeholders = self.py3.get_placeholders_list(self.format_sensor)
         format_sensor = {x: ":g" for x in placeholders if x != "name"}
         self.sensor_placeholders = [x for x in placeholders if x != "name"]
-        self.format_sensor = self.py3.update_placeholder_formats(
-            self.format_sensor, format_sensor
-        )
+        self.format_sensor = self.py3.update_placeholder_formats(self.format_sensor, format_sensor)
 
         self.first_run = True
 
@@ -298,9 +296,7 @@ class Py3status:
                             auto_input.append((_crit, self.color_crit))
 
                     key = "{}/{}".format(chip["name"], sensor["name"])
-                    self.py3.threshold_get_color(
-                        _input, ("auto.input", key, auto_input)
-                    )
+                    self.py3.threshold_get_color(_input, ("auto.input", key, auto_input))
 
                 for x in self.sensor_placeholders:
                     if x not in sensor:
@@ -322,9 +318,7 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"format_chip": format_chip}
-            ),
+            "full_text": self.py3.safe_format(self.format, {"format_chip": format_chip}),
         }
 
 

@@ -1,4 +1,5 @@
-version 3.52 (2023-07-11)
+version 3.52 (2023-07-29)
+* IMPORTANT: the project has moved from setuptools to pyproject.toml and hatch
 * IMPORTANT: gevent support is now deprecated and removed
 * core: drop gevent support
 

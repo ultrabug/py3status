@@ -130,7 +130,6 @@ import time
 from json import loads
 from threading import Thread
 
-
 STRING_NOT_INSTALLED = "not installed"
 
 

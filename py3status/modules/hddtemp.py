@@ -107,8 +107,8 @@ compact
 ]
 """
 
-from telnetlib import Telnet
 from string import printable
+from telnetlib import Telnet
 
 
 class Py3status:

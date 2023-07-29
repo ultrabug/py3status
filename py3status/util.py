@@ -1,5 +1,5 @@
 import re
-from colorsys import rgb_to_hsv, hsv_to_rgb
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from math import modf
 
 
@@ -94,14 +94,11 @@ class Gradients:
 
             steps = end - start
             for j in range(steps):
-                data.append(
-                    self.hsv_2_hex(*self.make_mid_color(color1, color2, j / steps))
-                )
+                data.append(self.hsv_2_hex(*self.make_mid_color(color1, color2, j / steps)))
         data.append(self.hsv_2_hex(*color2))
         return data
 
     def make_threshold_gradient(self, py3, thresholds, size=100):
-
         """
         Given a thresholds list, creates a gradient list that covers the range
         of the thresholds.

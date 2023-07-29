@@ -115,7 +115,9 @@ class Py3status:
     api_key = None
     cache_timeout = 600
     format = "{format_coin}"
-    format_coin = r"{name} ${usd_price:.2f} [\?color=usd_percent_change_24h {usd_percent_change_24h:.1f}%]"
+    format_coin = (
+        r"{name} ${usd_price:.2f} [\?color=usd_percent_change_24h {usd_percent_change_24h:.1f}%]"
+    )
     format_coin_separator = " "
     markets = ["btc", "eth"]
     thresholds = [(-100, "bad"), (0, "good")]
@@ -180,9 +182,7 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, {"format_coin": format_coin}
-            ),
+            "full_text": self.py3.safe_format(self.format, {"format_coin": format_coin}),
         }
 
 

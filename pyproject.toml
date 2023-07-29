@@ -1,0 +1,102 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "py3status"
+dynamic = ["version"]
+description = "py3status: an extensible i3status wrapper written in python"
+readme = "README.md"
+license = "BSD-2-Clause"
+requires-python = ">=3.7"
+authors = [
+    { name = "Ultrabug", email = "ultrabug@ultrabug.net" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+udev = ["pyudev >= 0.21.0"]
+
+[project.urls]
+Download = "https://github.com/ultrabug/py3status/tags"
+Homepage = "https://github.com/ultrabug/py3status"
+
+[project.scripts]
+py3status = "py3status:main"
+py3-cmd = "py3status.command:send_command"
+
+[tool.hatch.version]
+path = "py3status/version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/py3status",
+]
+
+[tool.hatch.envs.default.scripts]
+all = [
+    "hatch run test:test",
+    "hatch run style:check",
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest"
+]
+
+[tool.hatch.envs.test.scripts]
+test = [
+    "pytest -xs",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["py37", "py38", "py39", "py310", "py311"]
+type = ["default"]
+
+[tool.hatch.envs.style]
+detached = true
+dependencies = [
+    "black",
+    "isort",
+    "ruff",
+]
+
+[tool.hatch.envs.style.scripts]
+check = [
+    "isort --check-only --diff py3status",
+    "black -q --check --diff py3status",
+    "ruff py3status",
+]
+format = [
+    "isort -q py3status",
+    "black -q py3status",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+ignore = ["E501"]

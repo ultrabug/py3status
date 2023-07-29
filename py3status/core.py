@@ -1,24 +1,24 @@
-import pkg_resources
 import sys
 import time
-
 from collections import deque
 from pathlib import Path
 from pprint import pformat
-from signal import signal, Signals, SIGTERM, SIGUSR1, SIGTSTP, SIGCONT
+from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
 from subprocess import Popen
+from syslog import LOG_ERR, LOG_INFO, LOG_WARNING, syslog
 from threading import Event, Thread
-from syslog import syslog, LOG_ERR, LOG_INFO, LOG_WARNING
-from traceback import extract_tb, format_tb, format_stack
+from traceback import extract_tb, format_stack, format_tb
+
+import pkg_resources
 
 from py3status.command import CommandServer
 from py3status.events import Events
 from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
-from py3status.parse_config import process_config
 from py3status.module import Module
 from py3status.output import OutputFormat
+from py3status.parse_config import process_config
 from py3status.profiling import profile
 from py3status.udev_monitor import UdevMonitor
 
@@ -217,9 +217,7 @@ class Common:
                     if found:
                         break
             # all done!  create our message.
-            msg = "{} ({}) {} line {}.".format(
-                msg, exc_type.__name__, filename, line_no
-            )
+            msg = "{} ({}) {} line {}.".format(msg, exc_type.__name__, filename, line_no)
         except:  # noqa e722
             # something went wrong report what we can.
             msg = f"{msg}."
@@ -549,8 +547,7 @@ class Py3statusWrapper:
                     out = f.readline()
             except OSError:
                 self.log(
-                    "Unable to read git HEAD. "
-                    "Use python git package for more repo information"
+                    "Unable to read git HEAD. " "Use python git package for more repo information"
                 )
                 return
             branch = "/".join(out.strip().split("/")[2:])
@@ -636,9 +633,7 @@ class Py3statusWrapper:
                 time.sleep(0.1)
         if self.config["debug"]:
             self.log(
-                "i3status thread {} with config {}".format(
-                    i3s_mode, self.config["py3_config"]
-                )
+                "i3status thread {} with config {}".format(i3s_mode, self.config["py3_config"])
             )
 
         # add i3status thread monitoring task
@@ -671,9 +666,7 @@ class Py3statusWrapper:
         # make sure we honor custom i3bar protocol stop/resume signals
         # while providing users a way to opt out from that feature
         # using the 0 value as specified by the i3bar protocol
-        custom_stop_signal = (
-            self.config["py3_config"].get("py3status", {}).get("stop_signal")
-        )
+        custom_stop_signal = self.config["py3_config"].get("py3status", {}).get("stop_signal")
         if custom_stop_signal is not None:
             try:
                 # 0 is a special value for i3bar protocol, use it as-is
@@ -769,9 +762,7 @@ class Py3statusWrapper:
         if msg_hash in self.notified_messages:
             return
         elif module_name:
-            log_msg = 'Module `{}` sent a notification. "{}: {}"'.format(
-                module_name, title, msg
-            )
+            log_msg = 'Module `{}` sent a notification. "{}: {}"'.format(module_name, title, msg)
             self.log(log_msg, level)
         else:
             self.log(msg, level)
@@ -1021,10 +1012,7 @@ class Py3statusWrapper:
         return self.output_format.format(outputs)
 
     def i3bar_stop(self, signum, frame):
-        if (
-            self.next_allowed_signal == signum
-            and time.monotonic() > self.inhibit_signal_ts
-        ):
+        if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
             self.log(f"received stop_signal {Signals(signum).name}")
             self.i3bar_running = False
             # i3status should be stopped
@@ -1036,10 +1024,7 @@ class Py3statusWrapper:
             self.inhibit_signal_ts = time.monotonic() + 0.1
 
     def i3bar_start(self, signum, frame):
-        if (
-            self.next_allowed_signal == signum
-            and time.monotonic() > self.inhibit_signal_ts
-        ):
+        if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
             self.log(f"received resume signal {Signals(signum).name}")
             self.i3bar_running = True
             self.wake_modules()

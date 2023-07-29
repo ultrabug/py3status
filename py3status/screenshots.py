@@ -13,13 +13,11 @@ PIL may work if installed but is not supported.
 
 import ast
 import re
-
 from hashlib import md5
 from pathlib import Path
 
-from PIL import Image, ImageFont, ImageDraw
 from fontTools.ttLib import TTFont
-
+from PIL import Image, ImageDraw, ImageFont
 
 WIDTH = 650
 TOP_BAR_HEIGHT = 5
@@ -49,9 +47,7 @@ COLOR_URGENT_BG = "#900000"
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
 
-SAMPLE_DATA_ERROR = dict(
-    color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR "
-)
+SAMPLE_DATA_ERROR = dict(color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR ")
 
 # font, glyph_data want caching for performance
 font = None
@@ -121,12 +117,8 @@ def create_screenshot(name, data, path, font, is_module):
 
     # if this screenshot is for a module then add modules name etc
     if is_module:
-        data.append(
-            {"full_text": name.split("-")[0], "color": desktop_color, "separator": True}
-        )
-        data.append(
-            {"full_text": "py3status", "color": COLOR_PY3STATUS, "separator": True}
-        )
+        data.append({"full_text": name.split("-")[0], "color": desktop_color, "separator": True})
+        data.append({"full_text": "py3status", "color": COLOR_PY3STATUS, "separator": True})
 
     img = Image.new("RGB", (WIDTH, HEIGHT), COLOR_BG)
     d = ImageDraw.Draw(img)

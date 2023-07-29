@@ -1,6 +1,5 @@
 import inspect
 import time
-
 from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
@@ -9,9 +8,9 @@ from types import FunctionType
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
-from py3status.py3 import Py3, ModuleErrorException
-from py3status.profiling import profile
 from py3status.formatter import Formatter
+from py3status.profiling import profile
+from py3status.py3 import ModuleErrorException, Py3
 
 
 def make_quotes(options):
@@ -545,9 +544,7 @@ class Module:
 
             # padding
             if left:
-                response["composite"][0]["full_text"] = (
-                    left + response["composite"][0]["full_text"]
-                )
+                response["composite"][0]["full_text"] = left + response["composite"][0]["full_text"]
             if right:
                 response["composite"][-1]["full_text"] += right
 
@@ -602,15 +599,12 @@ class Module:
             # load from py3status provided modules
             else:
                 self._py3_wrapper.log(
-                    'loading module "{}" from py3status.modules.{}'.format(
-                        module, self.module_name
-                    )
+                    'loading module "{}" from py3status.modules.{}'.format(module, self.module_name)
                 )
                 self.module_class = self.load_from_namespace(self.module_name)
 
         class_inst = self.module_class
         if class_inst:
-
             try:
                 # containers have items attribute set to a list of contained
                 # module instance names.  If there are no contained items then
@@ -668,9 +662,7 @@ class Module:
                         param = item.get("param")
                         if param:
                             msg = f"`{param}` {msg}"
-                        msg = "DEPRECATION WARNING: {} {}".format(
-                            self.module_full_name, msg
-                        )
+                        msg = "DEPRECATION WARNING: {} {}".format(self.module_full_name, msg)
                         self._py3_wrapper.log(msg)
 
                 if "rename" in deprecated:
@@ -704,9 +696,7 @@ class Module:
                             format_string = mod_config.get(format_param)
                             if not format_string:
                                 continue
-                            format = Formatter().update_placeholders(
-                                format_string, placeholders
-                            )
+                            format = Formatter().update_placeholders(format_string, placeholders)
                             mod_config[format_param] = format
 
                 if "update_placeholder_format" in deprecated:
@@ -732,10 +722,7 @@ class Module:
                         substitute = item["substitute"]
                         substitute_param = substitute["param"]
                         substitute_value = substitute["value"]
-                        if (
-                            mod_config.get(param) == value
-                            and substitute_param not in mod_config
-                        ):
+                        if mod_config.get(param) == value and substitute_param not in mod_config:
                             mod_config[substitute_param] = substitute_value
                             deprecation_log(item)
                 if "function" in deprecated:
@@ -938,7 +925,6 @@ class Module:
             cache_time = None
             # execute each method of this module
             for meth, my_method in self.methods.items():
-
                 # always check py3status is running
                 if not self._py3_wrapper.running:
                     break

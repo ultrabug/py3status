@@ -140,8 +140,7 @@ single_2
 {'full_text': 'DP1'}
 """
 
-from collections import deque
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from itertools import combinations
 from time import sleep
 
@@ -199,9 +198,7 @@ class Py3status:
         connected = list()
         active_layout = list()
         disconnected = list()
-        layout = OrderedDict(
-            {"connected": OrderedDict(), "disconnected": OrderedDict()}
-        )
+        layout = OrderedDict({"connected": OrderedDict(), "disconnected": OrderedDict()})
         self.old_layout = self.layout or layout
 
         current = self.py3.command_output("xrandr")
@@ -298,10 +295,7 @@ class Py3status:
         we display the last selected combination.
         """
         for _ in range(len(self.available_combinations)):
-            if (
-                self.displayed is None
-                and self.available_combinations[0] == self.active_layout
-            ):
+            if self.displayed is None and self.available_combinations[0] == self.active_layout:
                 self.displayed = self.available_combinations[0]
                 break
             else:
@@ -358,17 +352,10 @@ class Py3status:
                 if mode == "clone" and previous_output is not None:
                     cmd += f" {resolution} --same-as {previous_output}"
                 else:
-                    if (
-                        "above" in pos
-                        or "below" in pos
-                        or "left-of" in pos
-                        or "right-of" in pos
-                    ):
+                    if "above" in pos or "below" in pos or "left-of" in pos or "right-of" in pos:
                         cmd += f" {resolution} --{pos} --rotate {rotation}"
                     else:
-                        cmd += " {} --pos {} --rotate {}".format(
-                            resolution, pos, rotation
-                        )
+                        cmd += " {} --pos {} --rotate {}".format(resolution, pos, rotation)
                 previous_output = output
             else:
                 cmd += " --off"
@@ -405,9 +392,7 @@ class Py3status:
                     cmd = f'{self.py3.get_wm_msg()} workspace "{workspace}"'
                     self.py3.command_run(cmd)
                     # move it to output
-                    cmd = '{} move workspace to output "{}"'.format(
-                        self.py3.get_wm_msg(), output
-                    )
+                    cmd = '{} move workspace to output "{}"'.format(self.py3.get_wm_msg(), output)
                     self.py3.command_run(cmd)
                     # log this
                     self.py3.log(f"moved workspace {workspace} to output {output}")
@@ -508,11 +493,7 @@ class Py3status:
             self._force_force_on_start()
 
         # follow on change
-        if (
-            not self._no_force_on_change
-            and self.force_on_change
-            and self._layout_changed()
-        ):
+        if not self._no_force_on_change and self.force_on_change and self._layout_changed():
             self.py3.log("detected change of monitor setup")
             self._force_on_change()
 

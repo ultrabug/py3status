@@ -68,10 +68,12 @@ stopped
 import datetime
 import re
 import socket
-from py3status.composite import Composite
-from mpd import MPDClient, CommandError, ConnectionError
 from threading import Thread
 from time import sleep
+
+from mpd import CommandError, ConnectionError, MPDClient
+
+from py3status.composite import Composite
 
 
 def song_attr(song, attr):

@@ -1,8 +1,7 @@
 import os
-import sys
 import shlex
+import sys
 import time
-
 from collections.abc import Mapping
 from copy import deepcopy
 from fnmatch import fnmatch
@@ -10,12 +9,12 @@ from math import log10
 from pathlib import Path
 from pprint import pformat
 from shutil import which
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, Popen
 from time import sleep
 from uuid import uuid4
 
 from py3status import exceptions
-from py3status.formatter import Formatter, Composite, expand_color
+from py3status.formatter import Composite, Formatter, expand_color
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradients
@@ -186,9 +185,7 @@ class Py3:
                         value.sort()
                     except TypeError:
                         pass
-                    self._thresholds[key] = [
-                        (x[0], self._get_color(x[1])) for x in value
-                    ]
+                    self._thresholds[key] = [(x[0], self._get_color(x[1])) for x in value]
 
     def _get_module_info(self, module_name):
         """
@@ -227,9 +224,7 @@ class Py3:
         while frame_skip:
             error_frame = error_frame.f_back
             frame_skip -= 1
-        self._py3_wrapper.report_exception(
-            msg, notify_user=False, error_frame=error_frame
-        )
+        self._py3_wrapper.report_exception(msg, notify_user=False, error_frame=error_frame)
 
     def error(self, msg, timeout=None):
         """
@@ -304,9 +299,7 @@ class Py3:
             if isinstance(v, list):
                 v = dict(enumerate(v))
             if isinstance(v, Mapping):
-                items.extend(
-                    self.flatten_dict(v, delimiter, intermediates, str(k)).items()
-                )
+                items.extend(self.flatten_dict(v, delimiter, intermediates, str(k)).items())
             else:
                 items.append((str(k), v))
         return dict(items)
@@ -863,9 +856,7 @@ class Py3:
             self._report_exception(f"Invalid format `{format_string}` ({err})")
             return f"invalid format ({err})"
 
-    def build_composite(
-        self, format_string, param_dict=None, composites=None, attr_getter=None
-    ):
+    def build_composite(self, format_string, param_dict=None, composites=None, attr_getter=None):
         """
         .. note::
             deprecated in 3.3 use safe_format().
@@ -979,9 +970,7 @@ class Py3:
             msg = f"Command `{pretty_cmd}` {e.errno}"
             raise exceptions.CommandError(msg, error_code=e.errno)
 
-    def command_output(
-        self, command, shell=False, capture_stderr=False, localized=False
-    ):
+    def command_output(self, command, shell=False, capture_stderr=False, localized=False):
         """
         Run a command and return its output as unicode.
         The command can either be supplied as a sequence or string.
@@ -1036,9 +1025,7 @@ class Py3:
                 if output_oneline:
                     msg += " ({output})"
                 msg = msg.format(cmd=pretty_cmd, error=retcode, output=output_oneline)
-                raise exceptions.CommandError(
-                    msg, error_code=retcode, error=error, output=output
-                )
+                raise exceptions.CommandError(msg, error_code=retcode, error=error, output=output)
         return output
 
     def _storage_init(self):
@@ -1159,9 +1146,7 @@ class Py3:
         if isinstance(name, tuple):
             name_used = "{}/{}".format(name[0], name[1])
             if name[2]:
-                self._thresholds[name_used] = [
-                    (x[0], self._get_color(x[1])) for x in name[2]
-                ]
+                self._thresholds[name_used] = [(x[0], self._get_color(x[1])) for x in name[2]]
             name = name[0]
         else:
             # if name not in thresholds info then use defaults
@@ -1193,9 +1178,7 @@ class Py3:
                     try:
                         colors, minimum, maximum = self._threshold_gradients[name_used]
                     except KeyError:
-                        colors = self._gradients.make_threshold_gradient(
-                            self, thresholds
-                        )
+                        colors = self._gradients.make_threshold_gradient(self, thresholds)
                         minimum = min(thresholds)[0]
                         maximum = max(thresholds)[0]
                         self._threshold_gradients[name_used] = (
@@ -1210,9 +1193,7 @@ class Py3:
                         color = colors[-1]
                     else:
                         value -= minimum
-                        col_index = int(
-                            ((len(colors) - 1) / (maximum - minimum)) * value
-                        )
+                        col_index = int(((len(colors) - 1) / (maximum - minimum)) * value)
                         color = colors[col_index]
                 else:
                     color = thresholds[0][1]

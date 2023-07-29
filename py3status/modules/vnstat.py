@@ -77,9 +77,7 @@ class Py3status:
         elif self.statistics_type not in ["d", "m"]:
             raise Exception(STRING_INVALID_TYPE)
         self.slice = slice(*(3, 6) if self.statistics_type == "d" else (8, 11))
-        self.value_format = "{{value:{}.{}f}} {{unit}}".format(
-            self.left_align, self.precision
-        )
+        self.value_format = "{{value:{}.{}f}} {{unit}}".format(self.left_align, self.precision)
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
         self.units = ["kb", "mb", "gb", "tb"]
@@ -87,9 +85,7 @@ class Py3status:
         # deprecations
         self.coloring = getattr(self, "coloring", None)
         if self.coloring and not self.thresholds:
-            self.thresholds = [
-                (num * 1024**2, col) for num, col in self.coloring.items()
-            ]
+            self.thresholds = [(num * 1024**2, col) for num, col in self.coloring.items()]
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 

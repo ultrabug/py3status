@@ -138,9 +138,9 @@ SAMPLE OUTPUT
 {'full_text': 'New Task 1, New Task 2'}
 """
 
-from sqlite3 import connect
 from datetime import datetime
 from pathlib import Path
+from sqlite3 import connect
 
 STRING_NO_PROFILE = "missing profile"
 STRING_NOT_INSTALLED = "not installed"
@@ -171,9 +171,7 @@ class Py3status:
             with profile_ini.open() as f:
                 for line in f:
                     if line.startswith("Path="):
-                        profile.append(
-                            "{}/{}".format(directory, line.split("Path=")[-1].strip())
-                        )
+                        profile.append("{}/{}".format(directory, line.split("Path=")[-1].strip()))
             if not len(profile):
                 raise Exception(STRING_NO_PROFILE)
             self.profile = profile[0]
@@ -190,9 +188,7 @@ class Py3status:
 
         self.thresholds_init = {}
         for name in ["format", "format_todo"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _get_thunderbird_todos_data(self):
         connection = connect(self.path)
@@ -258,9 +254,7 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(
-                self.format, dict(format_todo=format_todo, **count)
-            ),
+            "full_text": self.py3.safe_format(self.format, dict(format_todo=format_todo, **count)),
         }
 
 

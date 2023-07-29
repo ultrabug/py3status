@@ -110,9 +110,7 @@ class Py3status:
         timeout = None
         if self.fortune_timeout != fortune_timeout:
             timeout = time() + self.fortune_timeout
-        self.time = (
-            timeout or self.py3.storage_get("time") or (time() + self.fortune_timeout)
-        )
+        self.time = timeout or self.py3.storage_get("time") or (time() + self.fortune_timeout)
 
     def _set_fortune(self, state=None, new=False):
         if not self.fortune_command:

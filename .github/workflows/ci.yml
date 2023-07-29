@@ -19,6 +19,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-    - name: Test with tox
-      run: tox
+        pip install -r requirements/project.txt
+    - name: Test with hatch
+      run: hatch run all

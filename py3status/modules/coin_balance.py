@@ -99,10 +99,10 @@ SAMPLE OUTPUT
 """
 
 from errno import ENOENT
-import requests
-from string import Formatter
 from pathlib import Path
+from string import Formatter
 
+import requests
 
 COIN_PORTS = {"bitcoin": 8332, "dogecoin": 22555, "litecoin": 9332}
 

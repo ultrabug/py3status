@@ -41,7 +41,6 @@ SAMPLE OUTPUT
 import time
 from pathlib import Path
 
-
 # No "magic numbers"
 SECS_IN_MIN = 60
 SECS_IN_HOUR = 60 * SECS_IN_MIN  # 3600
@@ -136,13 +135,9 @@ class Py3status:
         days, hours, mins, secs = self.secs_to_dhms(running_time)
         subtotal = self.hour_price * running_time / SECS_IN_HOUR
         total = subtotal * float(self.tax)
-        subtotal_cost = self.py3.safe_format(
-            self.format_money, {"price": f"{subtotal:.2f}"}
-        )
+        subtotal_cost = self.py3.safe_format(self.format_money, {"price": f"{subtotal:.2f}"})
         total_cost = self.py3.safe_format(self.format_money, {"price": f"{total:.2f}"})
-        tax_cost = self.py3.safe_format(
-            self.format_money, {"price": f"{total - subtotal:.2f}"}
-        )
+        tax_cost = self.py3.safe_format(self.format_money, {"price": f"{total - subtotal:.2f}"})
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "color": color,

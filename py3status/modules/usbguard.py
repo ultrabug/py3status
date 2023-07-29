@@ -44,9 +44,10 @@ SAMPLE OUTPUT
 ]
 """
 
-from threading import Thread
-from gi.repository import GLib, Gio
 import re
+from threading import Thread
+
+from gi.repository import Gio, GLib
 
 STRING_USBGUARD_DBUS = "start usbguard-dbus.service"
 
@@ -63,9 +64,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.init = {
-            "format_button": self.py3.get_placeholders_list(
-                self.format_device, "format_button_*"
-            ),
+            "format_button": self.py3.get_placeholders_list(self.format_device, "format_button_*"),
             "target": {"allow": 0, "reject": 2},
         }
 

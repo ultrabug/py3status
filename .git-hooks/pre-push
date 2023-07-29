@@ -5,16 +5,8 @@
 # $ git config core.hooksPath .git-hooks  # (in dir) to add hooks
 # $ git config --unset core.hooksPath  # (in dir) to remove hooks
 
-if command -v black &>/dev/null; then
-    black --diff --check --quiet py3status/ || exit 1
-    black --diff --check --quiet setup.py fastentrypoints.py || exit 1
-    black --diff --check --quiet tests/ || exit 1
+if command -v hatch &>/dev/null; then
+    hatch run all
 else
-    echo 'hooks/pre-push: command "black" not found, skipping black tests'
-fi
-
-if command -v pytest &>/dev/null; then
-    pytest --flake8 || exit 1
-else
-    echo 'hooks/pre-push: command "pytest" not found, skipping flake8 tests'
+    echo 'hooks/pre-push: command "hatch" not found, skipping hatch tests'
 fi

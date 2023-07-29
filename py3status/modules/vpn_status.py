@@ -34,13 +34,13 @@ off
 {'color': '#FF0000', 'full_text': u'VPN: no'}
 """
 
-from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GLib
+from pathlib import Path
 from threading import Thread
 from time import sleep
-from pathlib import Path
 
 import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 
 
 class Py3status:
@@ -73,18 +73,14 @@ class Py3status:
         dbus.set_default_main_loop(loop)
 
         bus = dbus.SystemBus()
-        bus.add_signal_receiver(
-            self._vpn_signal_handler, path="/org/freedesktop/NetworkManager"
-        )
+        bus.add_signal_receiver(self._vpn_signal_handler, path="/org/freedesktop/NetworkManager")
         # Initialize the already active connections
         manager = bus.get_object(
             "org.freedesktop.NetworkManager",
             "/org/freedesktop/NetworkManager",
         )
         interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
-        self.active = interface.Get(
-            "org.freedesktop.NetworkManager", "ActiveConnections"
-        )
+        self.active = interface.Get("org.freedesktop.NetworkManager", "ActiveConnections")
 
         # Loop forever to listen for events
         loop = GLib.MainLoop()
@@ -119,9 +115,7 @@ class Py3status:
             )
             interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
             try:
-                properties = interface.GetAll(
-                    "org.freedesktop.NetworkManager.Connection.Active"
-                )
+                properties = interface.GetAll("org.freedesktop.NetworkManager.Connection.Active")
                 if properties.get("Vpn") or properties.get("Type") == "wireguard":
                     ids.append(properties.get("Id"))
             except dbus.DBusException:

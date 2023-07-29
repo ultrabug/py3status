@@ -56,8 +56,8 @@ SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'W: 54.0 MBit/s 100% Chicken Remixed'}
 """
 
-import re
 import math
+import re
 
 DEFAULT_FORMAT = "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}|W: down"
 STRING_NOT_INSTALLED = "iw not installed"

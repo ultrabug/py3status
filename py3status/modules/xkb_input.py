@@ -147,7 +147,7 @@ class Listener:
         t.start()
 
     def start(self):
-        from subprocess import Popen, PIPE
+        from subprocess import PIPE, Popen
 
         try:
             self.process = Popen(self.listen_command, stdout=PIPE)
@@ -331,8 +331,8 @@ class Swaymsg(Xkb):
     """
 
     def setup(self, parent):
-        from json import loads
         from fnmatch import fnmatch
+        from json import loads
 
         self.excluded = ["alias"]
         self.fnmatch, self.loads = (fnmatch, loads)
@@ -427,9 +427,7 @@ class Py3status:
 
         self.thresholds_init = {}
         for name in ["format", "format_input"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _stop_on_errors(self):
         if self.error:
@@ -481,7 +479,6 @@ class Py3status:
 
 
 if __name__ == "__main__":
-
     """
     Run module in test mode.
     """

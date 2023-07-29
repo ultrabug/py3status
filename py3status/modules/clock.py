@@ -222,7 +222,6 @@ class Py3status:
             self._change_active(1)
 
     def clock(self):
-
         # cycling
         if self.cycle and time.time() >= self._cycle_time:
             self._change_active(1)

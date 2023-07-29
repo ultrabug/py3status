@@ -73,18 +73,14 @@ class Py3status:
         if "checks" in result:
             for check in [ck for ck in result["checks"] if ck["name"] in self.checks]:
                 if check["status"] == "up":
-                    pingdom += "{}: {}ms, ".format(
-                        check["name"], check["lastresponsetime"]
-                    )
+                    pingdom += "{}: {}ms, ".format(check["name"], check["lastresponsetime"])
                     if check["lastresponsetime"] > self.max_latency:
                         response["color"] = self.py3.COLOR_DEGRADED
                 else:
                     response["color"] = self.py3.COLOR_BAD
                     pingdom += "{}: DOWN".format(check["name"])
             pingdom = pingdom.strip(", ")
-            response["full_text"] = self.py3.safe_format(
-                self.format, {"pingdom": pingdom}
-            )
+            response["full_text"] = self.py3.safe_format(self.format, {"pingdom": pingdom})
 
         return response
 

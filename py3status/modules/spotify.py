@@ -106,18 +106,14 @@ class Py3status:
         # - Remastered 2012
         # / Radio Edit
         # ; Remastered
-        self.after_delimiter = self._compile_re(
-            r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*"
-        )
+        self.after_delimiter = self._compile_re(r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*")
 
         # Match brackets with their content containing any metadata word
         # examples:
         # (Remastered 2017)
         # [Single]
         # (Bonus Track)
-        self.inside_brackets = self._compile_re(
-            r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])"
-        )
+        self.inside_brackets = self._compile_re(r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])")
 
     def _compile_re(self, expression):
         """

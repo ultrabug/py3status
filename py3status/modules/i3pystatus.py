@@ -254,8 +254,7 @@ class Py3status:
                 except i3pystatus.core.exceptions.ConfigMissingError as e:
                     msg = e.message
                     msg = (
-                        "i3pystatus module `{}` backend `{}`"
-                        "missing configuration options {}"
+                        "i3pystatus module `{}` backend `{}`" "missing configuration options {}"
                     ).format(self.module, key, msg[msg.index("{") :])
                     self.py3.notify_user(msg)
                     raise Exception("Missing configuration options")

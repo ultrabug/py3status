@@ -137,9 +137,7 @@ class Py3status:
         self.url = f"https://api.waqi.info/feed/{self.location}/"
         self.init_datetimes = []
         for word in self.format_datetime:
-            if (self.py3.format_contains(self.format, word)) and (
-                word in self.format_datetime
-            ):
+            if (self.py3.format_contains(self.format, word)) and (word in self.format_datetime):
                 self.init_datetimes.append(word)
 
         if isinstance(self.thresholds, dict):
@@ -173,9 +171,7 @@ class Py3status:
         for k in self.init_datetimes:
             if k in data:
                 data[k] = self.py3.safe_format(
-                    datetime.strftime(
-                        datetime.fromtimestamp(data[k]), self.format_datetime[k]
-                    )
+                    datetime.strftime(datetime.fromtimestamp(data[k]), self.format_datetime[k])
                 )
         return data
 

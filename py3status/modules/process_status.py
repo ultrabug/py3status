@@ -83,9 +83,7 @@ class Py3status:
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "color": color,
-            "full_text": self.py3.safe_format(
-                self.format, {"icon": icon, "process": self.process}
-            ),
+            "full_text": self.py3.safe_format(self.format, {"icon": icon, "process": self.process}),
         }
 
 

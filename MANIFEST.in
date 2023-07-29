@@ -5,4 +5,3 @@ recursive-include doc *.rst *.md *.txt *.py
 include CHANGELOG
 include LICENSE
 include README.md
-include fastentrypoints.py

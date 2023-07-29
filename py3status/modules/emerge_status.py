@@ -47,8 +47,8 @@ SAMPLE OUTPUT
 {'full_text': 'emrg : 0/0'}
 """
 
-import re
 import copy
+import re
 
 STRING_NOT_INSTALLED = "not installed"
 

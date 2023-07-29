@@ -54,11 +54,12 @@ off
 {'color': '#FF0000', 'full_text': u'WWAN: down'}
 """
 
-import netifaces as ni
 import stat
-import serial
 from pathlib import Path
 from time import sleep
+
+import netifaces as ni
+import serial
 
 
 class Py3status:
@@ -77,7 +78,6 @@ class Py3status:
     modem_timeout = 0.4
 
     def wwan_status(self):
-
         query = "AT^SYSINFOEX"
         target_line = "^SYSINFOEX"
 

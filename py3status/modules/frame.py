@@ -111,7 +111,6 @@ class Py3status:
         self.urgent = True
 
     def frame(self):
-
         if not self.items:
             return {"full_text": "", "cached_until": self.py3.CACHE_FOREVER}
 

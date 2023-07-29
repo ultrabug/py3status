@@ -92,13 +92,10 @@ discharging
 {'color': '#FF0000', 'full_text': u'\u2340'}
 """
 
-from re import findall
-
 import itertools
 import math
-
 from pathlib import Path
-
+from re import findall
 
 BLOCKS = "_▁▂▃▄▅▆▇█"
 CHARGING_CHARACTER = "⚡"
@@ -254,21 +251,16 @@ class Py3status:
 
         def _parse_battery_info(acpi_battery_lines):
             battery = {}
-            battery["percent_charged"] = int(
-                findall(r"(?<= )(\d+)(?=%)", acpi_battery_lines[0])[0]
-            )
+            battery["percent_charged"] = int(findall(r"(?<= )(\d+)(?=%)", acpi_battery_lines[0])[0])
             battery["charging"] = "Charging" in acpi_battery_lines[0]
-            battery["capacity"] = int(
-                findall(r"(?<= )(\d+)(?= mAh)", acpi_battery_lines[1])[1]
-            )
+            battery["capacity"] = int(findall(r"(?<= )(\d+)(?= mAh)", acpi_battery_lines[1])[1])
 
             # ACPI only shows time remaining if battery is discharging or
             # charging
             try:
                 battery["time_remaining"] = "".join(
                     findall(
-                        r"(?<=, )(\d+:\d+:\d+)(?= remaining)|"
-                        r"(?<=, )(\d+:\d+:\d+)(?= until)",
+                        r"(?<=, )(\d+:\d+:\d+)(?= remaining)|" r"(?<=, )(\d+:\d+:\d+)(?= until)",
                         acpi_battery_lines[0],
                     )[0]
                 )
@@ -327,9 +319,7 @@ class Py3status:
         battery_list = []
 
         bglobs = ["BAT*", "*bat*"]
-        path_its = itertools.chain(
-            *[Path(self.sys_battery_path).glob(bglob) for bglob in bglobs]
-        )
+        path_its = itertools.chain(*[Path(self.sys_battery_path).glob(bglob) for bglob in bglobs])
 
         for path in path_its:
             r = _parse_battery_info(path)
@@ -337,19 +327,13 @@ class Py3status:
             if not r:
                 continue
 
-            capacity = r.get(
-                "POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL")
-            )
+            capacity = r.get("POWER_SUPPLY_ENERGY_FULL", r.get("POWER_SUPPLY_CHARGE_FULL"))
             present_rate = r.get(
                 "POWER_SUPPLY_POWER_NOW",
                 r.get("POWER_SUPPLY_CURRENT_NOW", r.get("POWER_SUPPLY_VOLTAGE_NOW")),
             )
-            remaining_energy = r.get(
-                "POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW")
-            )
-            current_now = r.get(
-                "POWER_SUPPLY_CURRENT_NOW", r.get("POWER_SUPPLY_POWER_NOW", 0)
-            )
+            remaining_energy = r.get("POWER_SUPPLY_ENERGY_NOW", r.get("POWER_SUPPLY_CHARGE_NOW"))
+            current_now = r.get("POWER_SUPPLY_CURRENT_NOW", r.get("POWER_SUPPLY_POWER_NOW", 0))
             voltage_now = r.get("POWER_SUPPLY_VOLTAGE_NOW", 0)
 
             # missing values may indicate this is not a battery and should be skipped
@@ -417,10 +401,7 @@ class Py3status:
             active_battery = None
             inactive_battery = battery_list[:]
             for battery_id, battery in enumerate(battery_list):
-                if (
-                    battery["time_remaining"]
-                    and battery["time_remaining"] != FULLY_CHARGED
-                ):
+                if battery["time_remaining"] and battery["time_remaining"] != FULLY_CHARGED:
                     active_battery = battery
                     del inactive_battery[battery_id]
 
@@ -432,13 +413,10 @@ class Py3status:
             if active_battery and inactive_battery:
                 inactive_battery = inactive_battery[0]
 
-                time_remaining_seconds = self._hms_to_seconds(
-                    active_battery["time_remaining"]
-                )
+                time_remaining_seconds = self._hms_to_seconds(active_battery["time_remaining"])
                 try:
                     rate_second_per_mah = time_remaining_seconds / (
-                        active_battery["capacity"]
-                        * (active_battery["percent_charged"] / 100)
+                        active_battery["capacity"] * (active_battery["percent_charged"] / 100)
                     )
                     time_remaining_seconds += (
                         inactive_battery["capacity"]
@@ -469,9 +447,7 @@ class Py3status:
         if self.charging:
             self.ascii_bar += EMPTY_BLOCK_CHARGING * (10 - self.percent_charged // 10)
         else:
-            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (
-                10 - self.percent_charged // 10
-            )
+            self.ascii_bar += EMPTY_BLOCK_DISCHARGING * (10 - self.percent_charged // 10)
 
     def _update_status(self):
         if self.charging:
@@ -550,11 +526,7 @@ class Py3status:
         else:
             battery_status = "good"
 
-        if (
-            notify_msg
-            and self.notify_low_level
-            and self.last_known_status != battery_status
-        ):
+        if notify_msg and self.notify_low_level and self.last_known_status != battery_status:
             self.py3.notify_user(
                 notify_msg["msg"].format(self.percent_charged), notify_msg["level"]
             )

@@ -180,10 +180,7 @@ class Msg(Ipc):
             if (
                 focused["border"] == "normal"
                 or focused["type"] == "workspace"
-                or (
-                    parent["layout"] in ("stacked", "tabbed")
-                    and len(parent["nodes"]) > 1
-                )
+                or (parent["layout"] in ("stacked", "tabbed") and len(parent["nodes"]) > 1)
             ):
                 window_properties["title"] = None
         window_properties = self.compatibility(window_properties)

@@ -27,8 +27,8 @@ SAMPLE OUTPUT
 {'color': '#FFFF00', 'full_text': 'DNF: 14'}
 """
 
-import subprocess
 import re
+import subprocess
 
 
 class Py3status:
@@ -69,11 +69,7 @@ class Py3status:
             if self._updates > updates:
                 # we have installed some updates so re-check security
                 self._security_notice = False
-            if (
-                self.check_security
-                and not self._security_notice
-                and self._updates != updates
-            ):
+            if self.check_security and not self._security_notice and self._updates != updates:
                 output, error = subprocess.Popen(
                     ["dnf", "updateinfo"],
                     stdout=subprocess.PIPE,

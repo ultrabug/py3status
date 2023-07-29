@@ -77,9 +77,7 @@ class Py3status:
     def post_config_hook(self):
         self.iface_re = re.compile(r"\d+: (?P<iface>[\w\-@]+):")
         self.ip_re = re.compile(r"\s+inet (?P<ip4>[\d.]+)(?:/| )")
-        self.ip6_re = re.compile(
-            r"\s+inet6 (?P<ip6>[\da-f:]+)(?:/\d{1,3}| ) scope global dynamic"
-        )
+        self.ip6_re = re.compile(r"\s+inet6 (?P<ip6>[\da-f:]+)(?:/\d{1,3}| ) scope global dynamic")
 
     def net_iplist(self):
         response = {
@@ -143,16 +141,12 @@ class Py3status:
 
             ip4 = self.ip_re.match(line)
             if ip4:
-                data.setdefault(cur_iface, {}).setdefault("ip4", []).append(
-                    ip4.group("ip4")
-                )
+                data.setdefault(cur_iface, {}).setdefault("ip4", []).append(ip4.group("ip4"))
                 continue
 
             ip6 = self.ip6_re.match(line)
             if ip6:
-                data.setdefault(cur_iface, {}).setdefault("ip6", []).append(
-                    ip6.group("ip6")
-                )
+                data.setdefault(cur_iface, {}).setdefault("ip6", []).append(ip6.group("ip6"))
                 continue
 
         return data

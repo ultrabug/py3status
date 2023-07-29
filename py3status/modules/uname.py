@@ -28,9 +28,7 @@ class Py3status:
     format = "{system} {release}"
 
     class Meta:
-        deprecated = {
-            "remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]
-        }
+        deprecated = {"remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]}
 
     def uname(self):
         keys = ["system", "node", "release", "version", "machine", "processor"]

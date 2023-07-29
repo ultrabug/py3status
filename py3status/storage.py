@@ -1,13 +1,11 @@
 import os
 import time
-
 from pathlib import Path
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
 
 
 class Storage:
-
     data = {}
     initialized = False
 
@@ -38,9 +36,7 @@ class Storage:
         # move legacy storage cache to new desired / default location
         if legacy_storage_path:
             self.py3_wrapper.log(
-                "moving legacy storage_path {} to {}".format(
-                    legacy_storage_path, self.storage_path
-                )
+                "moving legacy storage_path {} to {}".format(legacy_storage_path, self.storage_path)
             )
             legacy_storage_path.rename(self.storage_path)
 
@@ -59,9 +55,7 @@ class Storage:
         """
         Detect and return existing legacy storage path.
         """
-        config_dir = Path(
-            self.py3_wrapper.config.get("i3status_config_path", "/tmp")
-        ).parent
+        config_dir = Path(self.py3_wrapper.config.get("i3status_config_path", "/tmp")).parent
         storage_path = config_dir / "py3status.data"
         if storage_path.exists():
             return storage_path
