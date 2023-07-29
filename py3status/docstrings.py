@@ -1,7 +1,6 @@
 import ast
-import re
 import difflib
-
+import re
 from pathlib import Path
 
 from py3status.helpers import print_stderr
@@ -38,9 +37,7 @@ def parse_readme():
     return modules_dict
 
 
-def core_module_docstrings(
-    include_core=True, include_user=False, config=None, format="md"
-):
+def core_module_docstrings(include_core=True, include_user=False, config=None, format="md"):
     """
     Get docstrings for all core modules and user ones if requested
     returns a dict of {<module_name>: <docstring>}
@@ -79,13 +76,9 @@ def core_module_docstrings(
             docstring = parts[0]
 
             if format == "md":
-                docstring = [
-                    d for d in _from_docstring_md(str(docstring).strip().split("\n"))
-                ]
+                docstring = [d for d in _from_docstring_md(str(docstring).strip().split("\n"))]
             elif format == "rst":
-                docstring = [
-                    d for d in _from_docstring_rst(str(docstring).strip().split("\n"))
-                ]
+                docstring = [d for d in _from_docstring_rst(str(docstring).strip().split("\n"))]
             else:
                 raise Exception("`md` and `rst` format supported only")
 
@@ -316,9 +309,7 @@ def update_docstrings():
             if quotes and row.strip().startswith(quotes) and not done:
                 out.append(row)
                 if not replaced:
-                    out = out + [
-                        "".join(_to_docstring(modules_dict[mod])).strip() + "\n"
-                    ]
+                    out = out + ["".join(_to_docstring(modules_dict[mod])).strip() + "\n"]
                     replaced = True
                 if lines:
                     done = True
@@ -403,9 +394,7 @@ def show_modules(config, modules_list):
     core_mods = not config["user"]
     user_mods = not config["core"]
 
-    modules = core_module_docstrings(
-        include_core=core_mods, include_user=user_mods, config=config
-    )
+    modules = core_module_docstrings(include_core=core_mods, include_user=user_mods, config=config)
 
     new_modules = []
     if modules_list:

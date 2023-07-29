@@ -3,7 +3,6 @@ import json
 import os
 import socket
 import threading
-
 from pathlib import Path
 
 SERVER_ADDRESS = "/tmp/py3status_uds"
@@ -419,6 +418,7 @@ def command_parser():
     elif options.version:
         # print version
         from platform import python_version
+
         from py3status.version import version
 
         print(f"py3status {version} (python {python_version()})")
@@ -460,9 +460,7 @@ def parse_list_or_docstring(options, sps):
 
     # HARDCODE: make include path to search for user modules
     home_path = Path.home()
-    xdg_home_path = Path(
-        os.environ.get("XDG_CONFIG_HOME", home_path / ".config")
-    ).resolve()
+    xdg_home_path = Path(os.environ.get("XDG_CONFIG_HOME", home_path / ".config")).resolve()
     options.include_paths = [
         xdg_home_path / "py3status/modules",
         xdg_home_path / "i3status/py3status",

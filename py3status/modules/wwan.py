@@ -524,12 +524,8 @@ class Py3status:
                 if self.init["stats"]:
                     stats = self._organize(self._get_stats(bearer))
                     if stats:
-                        stats["duration_hms"] = format(
-                            timedelta(seconds=stats["duration"])
-                        )
-                    wwan_data["format_stats"] = self.py3.safe_format(
-                        self.format_stats, stats
-                    )
+                        stats["duration_hms"] = format(timedelta(seconds=stats["duration"]))
+                    wwan_data["format_stats"] = self.py3.safe_format(self.format_stats, stats)
 
         # message and format message
         if self.init["sms_message"]:
@@ -552,11 +548,8 @@ class Py3status:
 
         # notifications
         if self.format_notification:
-
             # get a notification
-            format_notification = self.py3.safe_format(
-                self.format_notification, wwan_data
-            )
+            format_notification = self.py3.safe_format(self.format_notification, wwan_data)
             notification = self.py3.get_composite_string(format_notification)
 
             if notification and notification != self.last_notification:

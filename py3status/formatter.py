@@ -122,9 +122,7 @@ class Formatter:
         for token in self.tokens(format_string):
             if token.group("key") in placeholders:
                 output.append(
-                    "{{{}{}}}".format(
-                        placeholders[token.group("key")], token.group("format")
-                    )
+                    "{{{}{}}}".format(placeholders[token.group("key")], token.group("format"))
                 )
                 continue
             elif token.group("command"):
@@ -149,9 +147,7 @@ class Formatter:
                                     value_ = condition.value
                                 else:
                                     value_ = ""
-                                value = "{}{}{}{}".format(
-                                    not_, variable, condition_, value_
-                                )
+                                value = "{}{}{}{}".format(not_, variable, condition_, value_)
                         if value:
                             items.append(f"{key}={value}")
                         else:
@@ -177,9 +173,7 @@ class Formatter:
                 and (not token.group("format"))
                 and token.group("key") in placeholder_formats
             ):
-                output.append(
-                    f"{{{token.group('key')}{placeholder_formats[token.group('key')]}}}"
-                )
+                output.append(f"{{{token.group('key')}{placeholder_formats[token.group('key')]}}}")
                 continue
             value = token.group(0)
             output.append(value)
@@ -498,9 +492,7 @@ class BlockConfig:
             self._if = Condition(_if)
         self._set_int(commands, "max_length")
         self._set_int(commands, "min_length")
-        self.color = expand_color(
-            commands.get("color"), passthrough=True, block=self.color
-        )
+        self.color = expand_color(commands.get("color"), passthrough=True, block=self.color)
 
         self.not_zero = "not_zero" in commands or self.not_zero
         self.show = "show" in commands or self.show
@@ -524,7 +516,6 @@ class Block:
     """
 
     def __init__(self, parent, base_block=None, py3_wrapper=None):
-
         self.base_block = base_block
         self.commands = BlockConfig(parent)
         self.content = []
@@ -556,9 +547,7 @@ class Block:
         option and return it to the user.
         """
         base_block = self.base_block or self
-        self.next_block = Block(
-            self.parent, base_block=base_block, py3_wrapper=self.py3_wrapper
-        )
+        self.next_block = Block(self.parent, base_block=base_block, py3_wrapper=self.py3_wrapper)
         return self.next_block
 
     def __repr__(self):
@@ -611,12 +600,8 @@ class Block:
                 valid = valid or sub_valid
         if not valid:
             if self.next_block:
-                valid, output = self.next_block.render(
-                    get_params, module, _if=self.commands._if
-                )
-            elif self.parent is None and (
-                (not self.next_block and enough) or self.base_block
-            ):
+                valid, output = self.next_block.render(get_params, module, _if=self.commands._if)
+            elif self.parent is None and ((not self.next_block and enough) or self.base_block):
                 valid = True
             else:
                 output = []

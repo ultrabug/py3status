@@ -78,18 +78,14 @@ class Py3status:
             # support old thresholds
             precision = config.get("precision", 1)
             padding = 3 + 1 + precision + 1 + 5
-            format_value = (
-                r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
-                    padding=padding, precision=precision
-                )
+            format_value = r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
+                padding=padding, precision=precision
             )
             return {"format_value": format_value}
 
         deprecated = {
             "function": [{"function": deprecate_function}],
-            "remove": [
-                {"param": "precision", "msg": "obsolete, use format_value instead"}
-            ],
+            "remove": [{"param": "precision", "msg": "obsolete, use format_value instead"}],
         }
 
     def post_config_hook(self):

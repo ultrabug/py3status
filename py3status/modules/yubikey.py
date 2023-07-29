@@ -21,11 +21,10 @@ SAMPLE OUTPUT
 {'full_text': 'YubiKey', 'urgent': True}
 """
 
-import time
 import os
 import socket
 import threading
-
+import time
 from pathlib import Path
 
 

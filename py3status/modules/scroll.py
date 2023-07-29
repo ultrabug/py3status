@@ -39,9 +39,7 @@ class Py3status:
 
     def _set_scroll(self):
         length = sum(
-            len(output["full_text"])
-            for item in self.items
-            for output in self.py3.get_output(item)
+            len(output["full_text"]) for item in self.items for output in self.py3.get_output(item)
         )
 
         self.index += 1

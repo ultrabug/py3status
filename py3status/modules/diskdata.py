@@ -172,9 +172,7 @@ class Py3status:
             threshold_data.update(data)
 
             for x in self.init["df"]["placeholders"]:
-                disk_data[x] = self.py3.safe_format(
-                    self.format_space, {"value": data[x]}
-                )
+                disk_data[x] = self.py3.safe_format(self.format_space, {"value": data[x]})
 
         if self.init["diskstats"]:
             diskstats = self._calc_diskstats(self._get_diskstats(self.disk))
@@ -182,9 +180,7 @@ class Py3status:
             threshold_data.update(data)
 
             for x in self.init["diskstats"]["placeholders"]:
-                value, unit = self.py3.format_units(
-                    data[x], unit=self.unit, si=self.si_units
-                )
+                value, unit = self.py3.format_units(data[x], unit=self.unit, si=self.si_units)
                 disk_data[x] = self.py3.safe_format(
                     self.format_rate, {"value": value, "unit": unit}
                 )

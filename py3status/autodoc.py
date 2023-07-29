@@ -1,5 +1,4 @@
 import re
-
 from pathlib import Path
 
 from py3status.docstrings import core_module_docstrings

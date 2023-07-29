@@ -138,8 +138,8 @@ no_timew
 {'full_text': 'No Timew'}
 """
 
-from json import loads as json_loads
 import datetime as dt
+from json import loads as json_loads
 
 STRING_NOT_INSTALLED = "not installed"
 DATETIME = "%Y%m%dT%H%M%SZ"
@@ -204,9 +204,7 @@ class Py3status:
         self.tracking = None
         self.thresholds_init = {}
         for name in ("format", "format_tag", "format_time"):
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _get_timewarrior_data(self):
         return json_loads(self.py3.command_output(self.timewarrior_command))

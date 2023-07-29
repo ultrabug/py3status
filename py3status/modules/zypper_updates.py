@@ -22,8 +22,8 @@ SAMPLE OUTPUT
 [{'full_text': 'zypper: '}, {'full_text': '0', 'color': '#00FF00'}]
 """
 
-import subprocess
 import re
+import subprocess
 
 
 class Py3status:

@@ -322,11 +322,11 @@ bar
 ]
 """
 
-from subprocess import Popen, PIPE, STDOUT
-from threading import Thread
-from tempfile import NamedTemporaryFile
 from json import dumps
 from pathlib import Path
+from subprocess import PIPE, STDOUT, Popen
+from tempfile import NamedTemporaryFile
+from threading import Thread
 
 STRING_NOT_INSTALLED = "not installed"
 STRING_MISSING_FORMAT = "missing format"
@@ -369,9 +369,7 @@ class Py3status:
         tmp = f"conky.config = {config}\nconky.text = [[{text}]]"
 
         # write tmp output to '/tmp/py3status-conky_*', make a command
-        self.tmpfile = NamedTemporaryFile(
-            prefix="py3status_conky-", suffix=".conf", delete=False
-        )
+        self.tmpfile = NamedTemporaryFile(prefix="py3status_conky-", suffix=".conf", delete=False)
         self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
         self.conky_command = f"conky -c {self.tmpfile.name}".split()

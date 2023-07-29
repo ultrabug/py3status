@@ -62,11 +62,12 @@ SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
 import imaplib
+from pathlib import Path
+from socket import error as socket_error
+from socket import setdefaulttimeout
+from ssl import create_default_context
 from threading import Thread
 from time import sleep
-from ssl import create_default_context
-from socket import setdefaulttimeout, error as socket_error
-from pathlib import Path
 
 STRING_UNAVAILABLE = "N/A"
 NO_DATA_YET = -1
@@ -117,9 +118,7 @@ class Py3status:
         self.connection = None
         self.mail_error = None  # cannot throw self.py3.error from thread
         self.network_error = None
-        self.command_tag = (
-            0  # IMAPcommands are tagged, so responses can be matched up to requests
-        )
+        self.command_tag = 0  # IMAPcommands are tagged, so responses can be matched up to requests
         self.idle_thread = Thread()
 
         if self.client_secret:
@@ -133,9 +132,7 @@ class Py3status:
         # I -- acquire mail_count
         if self.use_idle is not False:
             if not self.idle_thread.is_alive():
-                sleep(
-                    self.read_timeout
-                )  # rate-limit thread-restarting (when network is offline)
+                sleep(self.read_timeout)  # rate-limit thread-restarting (when network is offline)
                 self.idle_thread = Thread(target=self._get_mail_count)
                 self.idle_thread.daemon = True
                 self.idle_thread.start()
@@ -148,9 +145,7 @@ class Py3status:
             self.mail_error = None
 
         # II -- format response
-        response["full_text"] = self.py3.safe_format(
-            self.format, {"unseen": self.mail_count}
-        )
+        response["full_text"] = self.py3.safe_format(self.format, {"unseen": self.mail_count})
 
         if self.mail_count is None:
             response["color"] = (self.py3.COLOR_BAD,)
@@ -178,10 +173,11 @@ class Py3status:
             self.py3.error("Server does not support IDLE")
 
     def _get_creds(self):
-        from google_auth_oauthlib.flow import InstalledAppFlow
-        from google.auth.transport.requests import Request
-        from google.auth.exceptions import TransportError
         import pickle
+
+        from google.auth.exceptions import TransportError
+        from google.auth.transport.requests import Request
+        from google_auth_oauthlib.flow import InstalledAppFlow
 
         self.creds = None
 
@@ -300,9 +296,7 @@ class Py3status:
                 try:
                     response = socket.read(4096).decode("ascii")
                 except socket_error:
-                    raise imaplib.IMAP4.abort(
-                        "Server sent more continuations, but no 'DONE' ack"
-                    )
+                    raise imaplib.IMAP4.abort("Server sent more continuations, but no 'DONE' ack")
 
             expected_response = (command_tag + b" OK").decode("ascii")
             if not response.lower().startswith(expected_response.lower()):
@@ -379,9 +373,7 @@ class Py3status:
                 if retry_counter <= retry_max:
                     if self.debug:
                         self.py3.log(
-                            "Will retry after 60 seconds ({}/{})".format(
-                                retry_counter, retry_max
-                            ),
+                            "Will retry after 60 seconds ({}/{})".format(retry_counter, retry_max),
                             level=self.py3.LOG_INFO,
                         )
                     sleep(60)

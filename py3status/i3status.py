@@ -1,18 +1,13 @@
 import sys
 import time
-
 from copy import deepcopy
-from json import loads
 from datetime import datetime, timezone
-from subprocess import Popen
-from subprocess import PIPE
-from signal import SIGTSTP, SIGSTOP, SIGUSR1, SIG_IGN, signal
+from json import loads
+from signal import SIG_IGN, SIGSTOP, SIGTSTP, SIGUSR1, signal
+from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread
 
-from py3status.profiling import profile
-from py3status.py3 import Py3
-from py3status.events import IOPoller
 from py3status.constants import (
     I3S_ALLOWED_COLORS,
     I3S_COLOR_MODULES,
@@ -20,6 +15,9 @@ from py3status.constants import (
     TIME_MODULES,
     TZTIME_FORMAT,
 )
+from py3status.events import IOPoller
+from py3status.profiling import profile
+from py3status.py3 import Py3
 
 
 class I3statusModule:
@@ -145,9 +143,7 @@ class I3statusModule:
                     # we had an issue with an invalid time zone probably due to
                     # suspending.  re check the time zone when we next can.
                     self.time_zone_check_due = 0
-                elif self.time_zone_check_due and (
-                    t - self.time_zone_check_due > 5 + interval
-                ):
+                elif self.time_zone_check_due and (t - self.time_zone_check_due > 5 + interval):
                     self.time_zone_check_due = 0
                 else:
                     # Check again in 30 mins.  We do this in case the timezone
@@ -210,9 +206,9 @@ class I3statusModule:
         date = datetime.strptime(i3s_datetime, TIME_FORMAT)
         # calculate the time delta
         utcnow = datetime.utcnow()
-        delta = datetime(
-            date.year, date.month, date.day, date.hour, date.minute
-        ) - datetime(utcnow.year, utcnow.month, utcnow.day, utcnow.hour, utcnow.minute)
+        delta = datetime(date.year, date.month, date.day, date.hour, date.minute) - datetime(
+            utcnow.year, utcnow.month, utcnow.day, utcnow.hour, utcnow.minute
+        )
         # create our custom timezone
         try:
             self.tz = timezone(delta, i3s_time_tz)
@@ -250,9 +246,7 @@ class I3status(Thread):
         self.update_due = 0
 
         # the update interval is useful to know
-        self.update_interval = self.py3_wrapper.get_config_attribute(
-            "general", "interval"
-        )
+        self.update_interval = self.py3_wrapper.get_config_attribute("general", "interval")
         # do any initialization
         self.setup()
 
@@ -386,9 +380,7 @@ class I3status(Thread):
                     preexec_fn=lambda: signal(SIGTSTP, SIG_IGN),
                 )
 
-                self.py3_wrapper.log(
-                    f"i3status spawned using config file {tmpfile.name}"
-                )
+                self.py3_wrapper.log(f"i3status spawned using config file {tmpfile.name}")
 
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)

@@ -71,27 +71,17 @@ class Py3status:
             bus = dbus.SessionBus()
         else:
             bus = dbus.SystemBus()
-        systemd = bus.get_object(
-            "org.freedesktop.systemd1", "/org/freedesktop/systemd1"
-        )
+        systemd = bus.get_object("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
         systemd_unit = systemd.LoadUnit(
             self.unit, dbus_interface="org.freedesktop.systemd1.Manager"
         )
         unit_proxy = bus.get_object("org.freedesktop.systemd1", systemd_unit)
-        self.systemd_interface = dbus.Interface(
-            unit_proxy, "org.freedesktop.DBus.Properties"
-        )
+        self.systemd_interface = dbus.Interface(unit_proxy, "org.freedesktop.DBus.Properties")
 
     def systemd(self):
-        status = self.systemd_interface.Get(
-            "org.freedesktop.systemd1.Unit", "ActiveState"
-        )
-        exists = self.systemd_interface.Get(
-            "org.freedesktop.systemd1.Unit", "LoadState"
-        )
-        state = self.systemd_interface.Get(
-            "org.freedesktop.systemd1.Unit", "UnitFileState"
-        )
+        status = self.systemd_interface.Get("org.freedesktop.systemd1.Unit", "ActiveState")
+        exists = self.systemd_interface.Get("org.freedesktop.systemd1.Unit", "LoadState")
+        state = self.systemd_interface.Get("org.freedesktop.systemd1.Unit", "UnitFileState")
 
         if exists == "not-found":
             color = self.py3.COLOR_DEGRADED

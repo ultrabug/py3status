@@ -35,8 +35,9 @@ SAMPLE OUTPUT
 {'full_text': '10 NS OK'}
 """
 
-import dns.resolver
 import socket
+
+import dns.resolver
 
 
 class Py3status:

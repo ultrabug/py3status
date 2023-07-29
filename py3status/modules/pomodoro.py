@@ -59,7 +59,6 @@ import time
 from math import ceil
 from threading import Timer
 
-
 PROGRESS_BAR_ITEMS = "▏▎▍▌▋▊▉"
 
 
@@ -243,9 +242,7 @@ class Py3status:
             cached_until = self.py3.CACHE_FOREVER
 
         response = {
-            "full_text": format.format(
-                breakno=self._break_number, format=formatted, **vals
-            ),
+            "full_text": format.format(breakno=self._break_number, format=formatted, **vals),
             "cached_until": cached_until,
         }
 

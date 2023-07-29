@@ -49,8 +49,9 @@ SAMPLE OUTPUT
 {'full_text': 'Feed: 488'}
 """
 
-import requests
 import json
+
+import requests
 
 
 class Py3status:
@@ -97,9 +98,7 @@ class Py3status:
         try:
             rss_count = 0
             api_url = f"{self.server}/index.php/apps/news/api/v1-2/"
-            r = requests.get(
-                api_url + "feeds", auth=(self.user, self.password), timeout=10
-            )
+            r = requests.get(api_url + "feeds", auth=(self.user, self.password), timeout=10)
             for feed in r.json()["feeds"]:
                 if (
                     (not self.feed_ids and not self.folder_ids)
@@ -119,15 +118,11 @@ class Py3status:
             api_url = f"{self.server}/api/"
             r = requests.post(
                 api_url,
-                data=json.dumps(
-                    {"op": "login", "user": self.user, "password": self.password}
-                ),
+                data=json.dumps({"op": "login", "user": self.user, "password": self.password}),
             )
             sid = r.json()["content"]["session_id"]
             if not self.feed_ids and not self.folder_ids:
-                r = requests.post(
-                    api_url, data=json.dumps({"sid": sid, "op": "getUnread"})
-                )
+                r = requests.post(api_url, data=json.dumps({"sid": sid, "op": "getUnread"}))
                 rss_count = r.json()["content"]["unread"]
             else:
                 for folder in self.folder_ids:

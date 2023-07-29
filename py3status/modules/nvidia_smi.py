@@ -98,9 +98,7 @@ class Py3status:
 
         properties = self.py3.get_placeholders_list(self.format_gpu)
         format_gpu = {x: ":.1f" for x in properties if "used_percent" in x}
-        self.format_gpu = self.py3.update_placeholder_formats(
-            self.format_gpu, format_gpu
-        )
+        self.format_gpu = self.py3.update_placeholder_formats(self.format_gpu, format_gpu)
 
         new_memory_properties = set()
         new_properties = {"memory.used", "memory.total"}
@@ -157,9 +155,9 @@ if __name__ == "__main__":
     from sys import argv
 
     if "--list-properties" in argv:
-        from sys import exit
         from json import dumps
         from subprocess import check_output
+        from sys import exit
 
         help_cmd = "nvidia-smi --help-query-gpu"
         help_data = check_output(help_cmd.split()).decode()

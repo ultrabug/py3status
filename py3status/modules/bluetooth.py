@@ -118,9 +118,7 @@ class Py3status:
 
         self.thresholds_init = {}
         for name in ["format", "format_adapter", "format_device"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _get_bluez_data(self):
         objects = self.bluez_manager.GetManagedObjects()
@@ -139,9 +137,7 @@ class Py3status:
         for device in temporary.pop("devices", []):
             for index, adapter in enumerate(temporary["adapters"]):
                 if device["adapter"] == adapter["path"]:
-                    temporary["adapters"][index].setdefault("devices", []).append(
-                        device
-                    )
+                    temporary["adapters"][index].setdefault("devices", []).append(device)
                     break
 
         return temporary

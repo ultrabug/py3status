@@ -69,8 +69,9 @@ Color options:
 SAMPLE OUTPUT
 {'full_text': '412 req/s'}
 """
+from syslog import LOG_INFO, syslog
+
 from requests import get
-from syslog import syslog, LOG_INFO
 
 
 def format_value(num, value_round=True):
@@ -172,9 +173,7 @@ class Py3status:
 
                 # compare this value to the configured thresholds
                 # and use the worst color to display
-                _color = self._check_threshold_and_get_color(
-                    displayed_value, target, value
-                )
+                _color = self._check_threshold_and_get_color(displayed_value, target, value)
                 if _color == "bad":
                     color_key = "bad"
                 elif _color == "degraded" and color_key != "bad":
@@ -196,9 +195,7 @@ class Py3status:
 
     def _notify_user(self):
         if self.notifications:
-            self.py3.notify_user(
-                "\n".join(self.notifications), level=self.notification_level
-            )
+            self.py3.notify_user("\n".join(self.notifications), level=self.notification_level)
 
     def _check_threshold_and_get_color(self, displayed_value, target, value):
         func = {"max": max, "min": min}
@@ -211,9 +208,7 @@ class Py3status:
         if self.threshold_degraded:
             test = func[self.value_comparator](self.threshold_degraded, value)
             if test == value:
-                self._store_notification(
-                    target, self.threshold_degraded, displayed_value
-                )
+                self._store_notification(target, self.threshold_degraded, displayed_value)
                 return "degraded"
         return "good"
 

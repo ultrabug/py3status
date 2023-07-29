@@ -1,6 +1,6 @@
-from collections import defaultdict, Counter
-from time import sleep
+from collections import Counter, defaultdict
 from datetime import datetime
+from time import sleep
 
 from py3status.constants import ON_TRIGGER_ACTIONS
 

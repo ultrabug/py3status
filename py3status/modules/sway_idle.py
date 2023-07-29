@@ -28,7 +28,6 @@ SAMPLE OUTPUT
 
 
 class Py3status:
-
     # available configuration parameters
     cache_timeout = 1
     format = "Inhibit Idle: {inhibit_idle}"

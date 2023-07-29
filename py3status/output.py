@@ -144,9 +144,7 @@ class SeparatedOutputFormat(OutputFormat):
         """
         full_text = block["full_text"]
         if "color" in block:
-            full_text = (
-                self.begin_color(block["color"]) + full_text + self.end_color_quick()
-            )
+            full_text = self.begin_color(block["color"]) + full_text + self.end_color_quick()
         return full_text
 
     def format(self, outputs):

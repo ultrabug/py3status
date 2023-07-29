@@ -103,11 +103,11 @@ SAMPLE OUTPUT
 ]
 """
 
+import re
 from fnmatch import fnmatch
 from json import loads
 from os import getloadavg
 from pathlib import Path
-import re
 
 INVALID_CPU_TEMP_UNIT = "invalid cpu_temp_unit"
 STRING_NOT_INSTALLED = "not installed"
@@ -136,9 +136,7 @@ class Py3status:
         def update_deprecated_placeholder_format(config):
             padding = config.get("padding", 0)
             precision = config.get("precision", 2)
-            format_vals = ":{padding}.{precision}f".format(
-                padding=padding, precision=precision
-            )
+            format_vals = ":{padding}.{precision}f".format(padding=padding, precision=precision)
             return {
                 "cpu_freq_avg": format_vals,
                 "cpu_freq_max": format_vals,
@@ -434,9 +432,7 @@ class Py3status:
         if total != last_total:
             used_percent = (1 - (idle - last_idle) / (total - last_total)) * 100
 
-        self.cpus["last"].setdefault(name, {}).update(
-            zip(["name", "idle", "total"], cpu)
-        )
+        self.cpus["last"].setdefault(name, {}).update(zip(["name", "idle", "total"], cpu))
         return used_percent
 
     def _get_cputemp(self, cpu_temp_unit):

@@ -81,9 +81,8 @@ bandwidth
 import fcntl
 import os
 import re
-
 from os import environ
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 from threading import Thread
 
 RESPONSE_FIELDS = [
@@ -254,9 +253,7 @@ class Py3status:
                 if hash(msg) not in self.errors:
                     self.py3.log(msg, level=self.py3.LOG_ERROR)
                     self.errors.append(hash(msg))
-                _output = "Error\nError\n{}".format(
-                    self.py3.COLOR_ERROR or self.py3.COLOR_BAD
-                )
+                _output = "Error\nError\n{}".format(self.py3.COLOR_ERROR or self.py3.COLOR_BAD)
             # we have got output so update the received output
             # this provides support for i3blocks pseudo click support
             if _output:
@@ -318,9 +315,7 @@ class Py3status:
 
         # blocklet label gets prepended
         if self.label:
-            block_response["full_text"] = "{}{}".format(
-                self.label, block_response["full_text"]
-            )
+            block_response["full_text"] = "{}{}".format(self.label, block_response["full_text"])
             if "short_text" in block_response:
                 block_response["short_text"] = "{}{}".format(
                     self.label, block_response["short_text"]

@@ -24,7 +24,6 @@ SAMPLE OUTPUT
 """
 
 import json
-
 from pathlib import Path
 from typing import Dict, List, Union
 
@@ -67,9 +66,7 @@ class Py3status:
                 "cached_until": self.py3.time_in(seconds=self.cache_timeout),
             }
 
-    def _format_output(
-        self, session_data: Dict[str, Union[str, int, List[str]]]
-    ) -> Dict[str, str]:
+    def _format_output(self, session_data: Dict[str, Union[str, int, List[str]]]) -> Dict[str, str]:
         if not session_data:
             return {"full_text": "No project started", "color": self.py3.COLOR_BAD}
 

@@ -2,9 +2,9 @@ import argparse
 import os
 import subprocess
 from pathlib import Path
+from platform import python_version
 from shutil import which
 
-from platform import python_version
 from py3status.version import version
 
 

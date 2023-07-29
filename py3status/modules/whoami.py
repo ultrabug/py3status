@@ -28,9 +28,7 @@ class Py3status:
     format = "{username}"
 
     class Meta:
-        deprecated = {
-            "remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]
-        }
+        deprecated = {"remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]}
 
     def whoami(self):
         return {

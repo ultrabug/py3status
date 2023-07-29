@@ -65,8 +65,8 @@ SAMPLE OUTPUT
 ]
 """
 
-import re
 import math
+import re
 import time
 
 HEX_RE = re.compile("#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})")
@@ -113,9 +113,7 @@ class Py3status:
             """
             Convert [r, g, b] to hex.
             """
-            return "#{:02X}{:02X}{:02X}".format(
-                int(color[0]), int(color[1]), int(color[2])
-            )
+            return "#{:02X}{:02X}{:02X}".format(int(color[0]), int(color[1]), int(color[2]))
 
         def make_color(c1, c2, t):
             """

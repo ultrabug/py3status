@@ -36,7 +36,7 @@ example
 
 import re
 import shlex
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 from threading import Thread
 
 
@@ -74,9 +74,7 @@ class Py3status:
         if self.command_color is not None:
             response["color"] = self.command_color
 
-        response["full_text"] = self.py3.safe_format(
-            self.format, {"output": self.command_output}
-        )
+        response["full_text"] = self.py3.safe_format(self.format, {"output": self.command_output})
         return response
 
     def _command_start(self):

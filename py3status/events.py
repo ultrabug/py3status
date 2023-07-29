@@ -1,10 +1,9 @@
 import select
 import sys
-
-from threading import Thread
-from subprocess import Popen, PIPE
 from json import loads
 from shlex import quote as shell_quote
+from subprocess import PIPE, Popen
+from threading import Thread
 
 from py3status.profiling import profile
 
@@ -33,10 +32,7 @@ class IOPoller:
             line = self.io.readline().strip()
             # when using pydev.debugger sys.stdin gets overwritten and placed
             # into sys.stdin.original_stdin issue #2090
-            if (
-                self.io == getattr(sys.stdin, "original_stdin", sys.stdin)
-                and line == "["
-            ):
+            if self.io == getattr(sys.stdin, "original_stdin", sys.stdin) and line == "[":
                 # skip first event line wrt issue #19
                 line = self.io.readline().strip()
             try:
@@ -61,9 +57,7 @@ class EventTask:
         self.event = event
 
     def run(self):
-        self.events_thread.process_event(
-            self.module_full_name, self.event, self.default_event
-        )
+        self.events_thread.process_event(self.module_full_name, self.event, self.default_event)
 
 
 class EventClickTask:
@@ -78,9 +72,7 @@ class EventClickTask:
         self.event = event
 
     def run(self):
-        self.events_thread.on_click_dispatcher(
-            self.module_name, self.event, self.command
-        )
+        self.events_thread.on_click_dispatcher(self.module_name, self.event, self.command)
 
 
 class Events(Thread):
@@ -229,9 +221,7 @@ class Events(Thread):
 
         if self.config["debug"]:
             self.py3_wrapper.log(
-                'trying to dispatch event to module "{}"'.format(
-                    f"{name} {instance}".strip()
-                )
+                'trying to dispatch event to module "{}"'.format(f"{name} {instance}".strip())
             )
 
         # guess the module config name

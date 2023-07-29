@@ -149,8 +149,7 @@ class Py3status:
         if not self.username or not self.auth_token:
             if not self.notification_warning:
                 self.py3.notify_user(
-                    "Github module needs username and "
-                    "auth_token to check notifications."
+                    "Github module needs username and " "auth_token to check notifications."
                 )
                 self.notification_warning = True
             return "?"
@@ -179,9 +178,7 @@ class Py3status:
             if last_page == 1:
                 return len(info.json())
             try:
-                last_page_info = self.py3.request(
-                    last_url, auth=(self.username, self.auth_token)
-                )
+                last_page_info = self.py3.request(last_url, auth=(self.username, self.auth_token))
             except self.py3.RequestException:
                 return
 

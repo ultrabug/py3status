@@ -82,9 +82,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
 
         self.separator = "|SEPARATOR|"
-        self.placeholders = list(
-            set(self.py3.get_placeholders_list(self.format) + ["isplaying"])
-        )
+        self.placeholders = list(set(self.py3.get_placeholders_list(self.format) + ["isplaying"]))
         self.deadbeef_command = 'deadbeef --nowplaying-tf "{}"'.format(
             self.separator.join(f"%{x}%" for x in self.placeholders)
         )

@@ -1,19 +1,11 @@
 import base64
 import json
 import socket
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.request import HTTPCookieProcessor, Request, build_opener, install_opener, urlopen
 
-from urllib.error import URLError, HTTPError
-from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
-from urllib.request import (
-    urlopen,
-    Request,
-    build_opener,
-    install_opener,
-    HTTPCookieProcessor,
-)
-
-
-from py3status.exceptions import RequestTimeout, RequestURLError, RequestInvalidJSON
+from py3status.exceptions import RequestInvalidJSON, RequestTimeout, RequestURLError
 
 
 class HttpResponse:

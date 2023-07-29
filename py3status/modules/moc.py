@@ -144,7 +144,7 @@ class Py3status:
                     is_playing=is_playing,
                     is_started=is_started,
                     is_stopped=is_stopped,
-                    **data
+                    **data,
                 ),
             ),
         }

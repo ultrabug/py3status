@@ -164,9 +164,7 @@ class Py3status:
             raise Exception(STRING_NOT_INSTALLED)
         if self.arguments:
             self.command = f"{self.command} {self.arguments}"
-        self.init_summary = self.py3.format_contains(
-            self.format, ["up", "down", "have"]
-        )
+        self.init_summary = self.py3.format_contains(self.format, ["up", "down", "have"])
         self.id = 0
         self.state = None
         self.reset_id = self.id
@@ -177,9 +175,7 @@ class Py3status:
 
         self.thresholds_init = {}
         for name in ["format", "format_torrent"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _scroll(self, direction=0):
         self.is_scrolling = True
@@ -271,9 +267,7 @@ class Py3status:
         format_separator = self.py3.safe_format(self.format_separator)
         format_torrent = self.py3.composite_join(format_separator, data)
 
-        summary_data.update(
-            {"torrent": self.count_torrent, "format_torrent": format_torrent}
-        )
+        summary_data.update({"torrent": self.count_torrent, "format_torrent": format_torrent})
 
         for x in self.thresholds_init["format"]:
             if x in summary_data:

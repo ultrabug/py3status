@@ -104,9 +104,7 @@ class Py3status:
 
     def xrandr_rotate(self):
         all_outputs = self._get_active_outputs()
-        selected_screen_disconnected = (
-            self.screen is not None and self.screen not in all_outputs
-        )
+        selected_screen_disconnected = self.screen is not None and self.screen not in all_outputs
         if selected_screen_disconnected and self.hide_if_disconnected:
             self.displayed = ""
             full_text = ""

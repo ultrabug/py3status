@@ -76,8 +76,8 @@ offline
 {'color': '#FF0000', 'full_text': 'exotic_bug is offline!'}
 """
 
-import time
 import datetime
+import time
 
 STRING_MISSING = "missing {}"
 
@@ -245,10 +245,7 @@ class Py3status:
                 for loc in self.locales:
                     if loc in tag["localization_names"] and "name" not in tag_data:
                         tag_data["name"] = tag["localization_names"][loc]
-                    if (
-                        loc in tag["localization_descriptions"]
-                        and "desc" not in tag_data
-                    ):
+                    if loc in tag["localization_descriptions"] and "desc" not in tag_data:
                         tag_data["desc"] = tag["localization_descriptions"][loc]
                 if tag_data:
                     tags.append(self.py3.safe_format(self.format_tag, tag_data))
@@ -284,9 +281,7 @@ class Py3status:
             del stream["user_name"]
 
             # calculate runtime and  update data dict
-            stream["runtime"], stream["runtime_seconds"] = time_since(
-                stream["started_at"]
-            )
+            stream["runtime"], stream["runtime_seconds"] = time_since(stream["started_at"])
             twitch_data["stream"] = stream
             twitch_data["is_streaming"] = True
 
@@ -319,8 +314,9 @@ if __name__ == "__main__":
     """
     Run module in test mode.
     """
-    from py3status.module_test import module_test
     from os import getenv
+
+    from py3status.module_test import module_test
 
     config = {
         "client_id": getenv("TWITCH_CLIENT_ID"),

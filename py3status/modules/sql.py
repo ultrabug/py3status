@@ -118,18 +118,14 @@ class Py3status:
                 raise Exception(f"missing {config_name}")
 
         self.connect = getattr(import_module(self.database), "connect")
-        self.operational_error = getattr(
-            import_module(self.database), "OperationalError"
-        )
+        self.operational_error = getattr(import_module(self.database), "OperationalError")
         self.is_parameters_a_dict = isinstance(self.parameters, dict)
         if not self.is_parameters_a_dict:
             self.parameters = Path(self.parameters).expanduser()
 
         self.thresholds_init = {}
         for name in ("format", "format_row"):
-            self.thresholds_init[name] = self.py3.get_color_names_list(
-                getattr(self, name)
-            )
+            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _get_sql_data(self):
         if self.is_parameters_a_dict:
