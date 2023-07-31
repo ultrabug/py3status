@@ -116,10 +116,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
-        self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
-        self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
-
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
         self.cache_timeout = getattr(self, "cache_timeout", 1)
