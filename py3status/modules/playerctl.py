@@ -7,7 +7,7 @@ you can bind player actions to keys and get metadata about the currently
 playing song or video.
 
 Configuration parameters:
-    button_loop_status: mouse button to cycle the loop status of the player (default None)
+    button_loop: mouse button to cycle the loop status of the player (default None)
     button_next: mouse button to skip to the next track (default None)
     button_pause: mouse button to pause the playback (default None)
     button_play: mouse button to play the playback (default None)
@@ -39,7 +39,7 @@ Format player placeholders:
     {album} album name
     {artist} artist name
     {duration} length of track/video in [HH:]MM:SS, e.g. 03:22
-    {loop_status} loop status of the player, e.g. None, playlist, Track
+    {loop} loop status of the player, e.g. None, playlist, Track
     {player} name of the player
     {position} elapsed time in [HH:]MM:SS, e.g. 00:17
     {shuffle} boolean indicating if the player's shuffle mode is on
@@ -79,7 +79,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
-    button_loop_status = None
+    button_loop = None
     button_next = None
     button_pause = None
     button_play = None
@@ -230,7 +230,7 @@ class Py3status:
 
         # Player attributes
         data["player"] = player.props.player_name
-        data["loop_status"] = player.props.loop_status.value_nick
+        data["loop"] = player.props.loop_status.value_nick
         data["shuffle"] = player.props.shuffle
         data["status"] = player.props.status
         data["volume"] = int(player.props.volume * 100)
@@ -339,7 +339,7 @@ class Py3status:
             self._change_player_volume(player, 1)
         elif button == self.button_volume_down:
             self._change_player_volume(player, -1)
-        elif button == self.button_loop_status:
+        elif button == self.button_loop:
             self._cycle_player_loop_status(player)
         elif button == self.button_shuffle:
             self._toggle_player_shuffle(player)
