@@ -13,12 +13,12 @@ Configuration parameters:
     button_play: mouse button to play the playback (default None)
     button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
-    button_seek_forward: mouse button to playback's position forward (default None)
     button_seek_backward: mouse button to playback's position backward (default None)
-    button_stop: mouse button to stop the playback (default 3)
+    button_seek_forward: mouse button to playback's position forward (default None)
     button_shuffle: mouse button to toggle the shuffle mode of the player (default None)
-    button_volume_up: mouse button to increase the volume of the player
-    button_volume_down: mouse button to decrease the volume of the player
+    button_stop: mouse button to stop the playback (default 3)
+    button_volume_down: mouse button to decrease the volume of the player (default None)
+    button_volume_up: mouse button to increase the volume of the player (default None)
     format: display format for this module (default '{format_player}')
     format_player: display format for players
         *(default '[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]'
@@ -85,12 +85,12 @@ class Py3status:
     button_play = None
     button_play_pause = 1
     button_previous = None
-    button_seek_forward = None
     button_seek_backward = None
-    button_stop = 3
+    button_seek_forward = None
     button_shuffle = None
-    button_volume_up = None
+    button_stop = 3
     button_volume_down = None
+    button_volume_up = None
     format = "{format_player}"
     format_player = (
         r"[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]"
