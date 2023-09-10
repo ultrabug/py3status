@@ -70,9 +70,9 @@ from fnmatch import fnmatch
 from threading import Thread
 
 import gi
+from gi.repository import GLib, Playerctl
 
 gi.require_version("Playerctl", "2.0")
-from gi.repository import GLib, Playerctl
 
 
 class Py3status:
@@ -99,9 +99,7 @@ class Py3status:
     format_player_separator = " "
     players = []
     seek_delta = 5
-    thresholds = {
-        "status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]
-    }
+    thresholds = {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]}
     volume_delta = 10
 
     class Meta:
@@ -277,11 +275,7 @@ class Py3status:
             player_data = self._get_player_data(player)
 
             # Check if the player should cause the module to continuously update
-            if (
-                self.position
-                and player_data["status"] == "Playing"
-                and player_data["position"]
-            ):
+            if self.position and player_data["status"] == "Playing" and player_data["position"]:
                 cached_until = self.cache_timeout
 
             # Set the color of a player
@@ -299,9 +293,7 @@ class Py3status:
 
         return {
             "cached_until": self.py3.time_in(cached_until),
-            "full_text": self.py3.safe_format(
-                self.format, {"format_player": format_players}
-            ),
+            "full_text": self.py3.safe_format(self.format, {"format_player": format_players}),
         }
 
     def on_click(self, event):
