@@ -157,9 +157,6 @@ def parse_cli_args():
         help="specify window manager i3 or sway",
     )
 
-    # deprecations
-    parser.add_argument("-n", "--interval", help=argparse.SUPPRESS)
-
     # parse options, command, etc
     options = parser.parse_args()
 
@@ -195,7 +192,6 @@ def parse_cli_args():
     options.include_paths = include_paths
 
     # defaults
-    del options.interval
     del options.print_version
     options.minimum_interval = 0.1  # minimum module update interval
     options.click_events = not options.__dict__.pop("disable_click_events")
