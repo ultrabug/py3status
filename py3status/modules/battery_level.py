@@ -375,7 +375,7 @@ class Py3status:
         return f"{int(h):2d}:{int(m):02d}:{int(s):02d}"
 
     def _refresh_battery_info(self, battery_list):
-        if type(self.battery_id) == int:
+        if isinstance(self.battery_id, int):
             battery = battery_list[self.battery_id]
             self.percent_charged = battery["percent_charged"]
             self.charging = battery["charging"]
