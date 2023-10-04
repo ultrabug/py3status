@@ -98,8 +98,9 @@ class Py3status:
         try:
             updates = self.py3.command_output(["yay", "-Qua"])
             return len(updates.splitlines())
-        except self.py3.CommandError:
-            return None
+        except self.py3.CommandError as ce:
+            # yay returns 1 if there are no updates.
+            return 0 if ce.error_code == 1 else None
 
     def _get_paru_updates(self):
         try:
