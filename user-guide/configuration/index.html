@@ -1,0 +1,1730 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ultrabug.github.io/py3status/user-guide/configuration/">
+      
+      
+        <link rel="prev" href="../installation/">
+      
+      
+        <link rel="next" href="../modules/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.5">
+    
+    
+      
+        <title>Configuration - Py3status</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6a10b989.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.356b1318.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:300,300i,400,400i,700,700i%7CUbuntu+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Ubuntu";--md-code-font:"Ubuntu Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Py3status" class="md-header__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Py3status
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../dev-guide/writing-modules/" class="md-tabs__link">
+          
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Py3status" class="md-nav__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    Py3status
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#loading-and-ordering-py3status-modules" class="md-nav__link">
+    Loading and ordering py3status modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-a-py3status-module" class="md-nav__link">
+    Configuring a py3status module
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-dependencies" class="md-nav__link">
+    Modules dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-py3status-configuration-section" class="md-nav__link">
+    The py3status configuration section
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generic-per-module-configuration" class="md-nav__link">
+    Generic per-module configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generic-configuration-applying-to-all-modules" class="md-nav__link">
+    Generic configuration applying to all modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-obfuscation" class="md-nav__link">
+    Configuration obfuscation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-colors" class="md-nav__link">
+    Configuring colors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-thresholds" class="md-nav__link">
+    Configuring thresholds
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatter" class="md-nav__link">
+    Formatter
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marking-modules-as-urgent" class="md-nav__link">
+    Marking modules as urgent
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#controlling-error-behavior" class="md-nav__link">
+    Controlling error behavior
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#grouping-modules" class="md-nav__link">
+    Grouping Modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-click-events" class="md-nav__link">
+    Custom click events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#special-on_click-commands" class="md-nav__link">
+    Special on_click commands
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-data-and-on_click-commands" class="md-nav__link">
+    Module data and on_click commands
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    Environment Variables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inline-shell-code" class="md-nav__link">
+    Inline Shell Code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#refreshing-modules-on-udev-events-with-on_udev-dynamic-options" class="md-nav__link">
+    Refreshing modules on udev events with on_udev dynamic options
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-request-settings" class="md-nav__link">
+    HTTP Request Settings
+  </a>
+  
+    <nav class="md-nav" aria-label="HTTP Request Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handling-timeouts" class="md-nav__link">
+    Handling timeouts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handling-retries" class="md-nav__link">
+    Handling retries
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-py3status-outside-i3bar" class="md-nav__link">
+    Running Py3status outside i3bar
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Available Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../remote-control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Controlling Py3status Remotely
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-contributed-conf-examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Configuration Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/writing-modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Py3status Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/the-py3-helper/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Py3 Module Helper
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Py3status
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="configuration">Configuration</h1>
+<p>py3status comes with a large range of modules.</p>
+<p>Modules in py3status are configured using your usual <code>i3status.conf</code> or
+your own <code>py3status.conf</code> which follows the exact same format.</p>
+<p>py3status will try to find its configuration file in the following
+locations:</p>
+<ul>
+<li><code>~/.config/py3status/config</code></li>
+<li><code>~/.config/i3status/config</code></li>
+<li><code>~/.config/i3/i3status.conf</code></li>
+<li><code>~/.i3status.conf</code></li>
+<li><code>~/.i3/i3status.conf</code></li>
+<li><code>/etc/xdg/i3status/config</code></li>
+<li><code>/etc/i3status.conf</code></li>
+</ul>
+<p>which if you are used to XDG_CONFIG paths relates to:</p>
+<ul>
+<li><code>XDG_CONFIG_HOME/py3status/config</code></li>
+<li><code>XDG_CONFIG_HOME/i3status/config</code></li>
+<li><code>XDG_CONFIG_HOME/i3/i3status.conf</code></li>
+<li><code>~/.i3status.conf</code></li>
+<li><code>~/.i3/i3status.conf</code></li>
+<li><code>XDG_CONFIG_DIRS/i3status/config</code></li>
+<li><code>/etc/i3status.conf</code></li>
+</ul>
+<p>You can also specify the config location using
+<code>py3status -c &lt;path to config file&gt;</code> in your i3 configuration file.</p>
+<h2 id="loading-and-ordering-py3status-modules">Loading and ordering py3status modules</h2>
+<p>To load a py3status module you just have to list it like any other
+i3status module using the <code>order +=</code> parameter.</p>
+<p>Ordering your py3status modules in your i3bar is just the same as
+i3status modules, just list the order parameter where you want your
+module to be displayed.</p>
+<p>For example you could insert and load the <code>imap</code> module like this:</p>
+<pre><code>order += &quot;disk /home&quot;
+order += &quot;disk /&quot;
+order += &quot;imap&quot;
+order += &quot;time&quot;
+</code></pre>
+<h2 id="configuring-a-py3status-module">Configuring a py3status module</h2>
+<p>Your py3status modules are configured the exact same way as i3status
+modules, directly from your <code>i3status.conf</code> (or your own configuration file),
+like this :</p>
+<pre><code># configure the py3status imap module
+# and run thunderbird when I left click on it
+imap {
+    cache_timeout = 60
+    imap_server = 'imap.myprovider.com'
+    mailbox = 'INBOX'
+    password = 'coconut'
+    port = '993'
+    user = 'mylogin'
+    on_click 1 = &quot;exec thunderbird&quot;
+}
+</code></pre>
+<h2 id="modules-dependencies">Modules dependencies</h2>
+<p>Py3status itself <strong>does not</strong> handle the possible dependencies of the
+modules you use. Each module's documentation has a dedicated <code>Requires</code>
+section allowing you to know which libraries or binaries they depend
+on. It's up to you to install them on your system.</p>
+<h2 id="the-py3status-configuration-section">The py3status configuration section</h2>
+<p>This special section holds py3status specific configuration. Settings
+here will affect all py3status modules. Many settings e.g. colors can
+still be overridden by also defining in the individual module.</p>
+<ul>
+<li><code>stop_signal</code>. Specify a signal number to be used by i3bar to stop/resume the bar refresh. This is useful if you want to prevent i3bar from stopping py3status when the bar is not visible (hidden/fullscreen).</li>
+</ul>
+<pre><code># prevent i3bar from stopping py3status when hidden/fullscreen
+py3status {
+    stop_signal = 0
+}
+</code></pre>
+<ul>
+<li><code>nagbar_font</code>. Specify a font for <code>i3-nagbar -f &lt;font&gt;</code>.</li>
+</ul>
+<pre><code>py3status {
+    nagbar_font = 'pango:Ubuntu Mono 12'
+}
+</code></pre>
+<ul>
+<li><code>storage</code>: Set storage name or path.</li>
+</ul>
+<p>Store cache in <code>$XDG_CACHE_HOME</code> or <code>~/.cache</code>:</p>
+<pre><code># default behavior
+py3status {
+    storage = 'py3status_cache.data'
+}
+</code></pre>
+<p>Store per config cache in <code>$XDG_CACHE_HOME</code> or <code>~/.cache</code>:</p>
+<pre><code># first config
+py3status {
+    storage = 'py3status_top.data'
+}
+</code></pre>
+<pre><code># second config
+py3status {
+    storage = 'py3status_bottom.data'
+}
+</code></pre>
+<p>Store per config cache in different directories:</p>
+<pre><code># first config
+py3status {
+    storage = '~/.config/py3status/cache_top.data'
+}
+</code></pre>
+<pre><code># second config
+py3status {
+    storage = '~/.config/py3status/cache_bottom.data'
+}
+</code></pre>
+<h2 id="generic-per-module-configuration">Generic per-module configuration</h2>
+<p>You can specify the following options in module configuration.</p>
+<ul>
+<li><code>min_length</code>: Specify a minimum length of characters for modules.</li>
+<li><code>position</code>: Specify how modules should be positioned when the
+    <code>min_length</code> is not reached. Either <code>left</code> (default), <code>center</code>, or
+    <code>right</code>.</li>
+</ul>
+<pre><code>static_string {
+    min_length = 15
+    position = 'center'
+}
+</code></pre>
+<h2 id="generic-configuration-applying-to-all-modules">Generic configuration applying to all modules</h2>
+<p>You can specify the options in module or py3status configuration
+section.</p>
+<p>The following options will work on <code>i3</code>.</p>
+<ul>
+<li><code>align</code>: Specify how modules should be aligned when the <code>min_width</code>
+  is not reached. Either <code>left</code> (default), <code>center</code>, or <code>right</code>.</li>
+<li><code>background</code>: Specify a background color for py3status modules.</li>
+<li><code>markup</code>: Specify how modules should be parsed.</li>
+<li><code>min_width</code>: Specify a minimum width of pixels for modules.</li>
+<li><code>separator</code>: Specify a separator boolean for modules.</li>
+<li><code>separator_block_width</code>: Specify a separator block width for
+  modules.</li>
+</ul>
+<p>The following options will work on <code>i3-gaps</code>.</p>
+<ul>
+<li><code>border</code>: Specify a border color for modules.</li>
+<li><code>border_bottom</code>: Specify a border width for modules</li>
+<li><code>border_left</code>: Specify a border width for modules.</li>
+<li><code>border_right</code>: Specify a border width for modules.</li>
+<li><code>border_top</code>: Specify a border width for modules.</li>
+</ul>
+<p>The following options will work on <code>py3status</code>.</p>
+<ul>
+<li><code>min_length</code>: Specify a minimum length of characters for modules.</li>
+<li><code>position</code>: Specify how modules should be positioned when the
+  <code>min_length</code> is not reached. Either <code>left</code> (default), <code>center</code>, or
+  <code>right</code>.</li>
+</ul>
+<pre><code># customize a theme
+py3status {
+   align = 'left'
+   markup = 'pango'
+   min_width = 20
+   separator = True
+   separator_block_width = 9
+
+   background = '#285577'
+   border = '#4c7899'
+   border_bottom = 1
+   border_left = 1
+   border_right = 1
+   border_top = 1
+
+   min_length = 15
+   position = 'right'
+}
+</code></pre>
+<p>You can specify the options in module or py3status configuration
+section.</p>
+<p>The following options will work on <code>i3bar</code> and <code>py3status</code>.</p>
+<ul>
+<li><code>urgent_background</code>: Specify urgent background color for modules.</li>
+<li><code>urgent_foreground</code>: Specify urgent foreground color for modules.</li>
+<li><code>urgent_border</code>: Specify urgent border color for modules.</li>
+</ul>
+<p>The following options will work on <code>i3bar-gaps</code> and <code>py3status</code>.</p>
+<ul>
+<li><code>urgent_border_bottom</code>: Specify urgent border width for modules</li>
+<li><code>urgent_border_left</code>: Specify urgent border width for modules.</li>
+<li><code>urgent_border_right</code>: Specify urgent border width for modules.</li>
+<li><code>urgent_border_top</code>: Specify urgent border width for modules.</li>
+</ul>
+<p>You lose urgent functionality too that can be sometimes utilized by
+container modules, e.g., frame and group.</p>
+<pre><code># customize urgent
+py3status {
+   urgent_background  = 'blue'
+   urgent_foreground = 'white'
+   urgent_border = 'red'
+   urgent_border_bottom = 1
+   urgent_border_left = 1
+   urgent_border_right = 1
+   urgent_border_top = 1
+}
+</code></pre>
+<p>You can specify the options in module or py3status configuration
+section.</p>
+<ul>
+<li><code>resources</code>: Specify a list of 3-tuples, e.g.,
+  <code>[(option, resource, fallback)]</code>, to import resources.</li>
+</ul>
+<pre><code># import resources
+py3status {
+   resources = [
+       ('color_bad', '*color9', 'lightcoral'),
+       ('color_good', '*color10', 'lightgreen'),
+       ('color_degraded', '*color11', 'khaki'),
+       ('nagbar_font', 'py3status.font', 'pango:Ubuntu Mono 12'),
+   ]
+}
+</code></pre>
+<pre><code># import 16 colors
+py3status {
+   resources = [
+       ('color_color0', '*color0', 'black'),
+       ('color_color1', '*color1', 'black'),
+       ('color_color2', '*color2', 'black'),
+       ('color_color3', '*color3', 'black'),
+       ('color_color4', '*color4', 'black'),
+       ('color_color5', '*color5', 'black'),
+       ('color_color6', '*color6', 'black'),
+       ('color_color7', '*color7', 'black'),
+       ('color_color8', '*color8', 'black'),
+       ('color_color9', '*color9', 'black'),
+       ('color_color10', '*color10', 'black'),
+       ('color_color11', '*color11', 'black'),
+       ('color_color12', '*color12', 'black'),
+       ('color_color13', '*color13', 'black'),
+       ('color_color14', '*color14', 'black'),
+       ('color_color15', '*color15', 'black'),
+   ]
+}
+
+# apply colors
+coin_market {
+    thresholds = [(-100, &quot;color9&quot;), (0, &quot;color10&quot;)]
+}
+</code></pre>
+<h2 id="configuration-obfuscation">Configuration obfuscation</h2>
+<p>Py3status allows you to hide individual configuration parameters so that
+they do not leak into log files, user notifications or to the i3bar.
+Additionally they allow you to obfuscate configuration parameters using
+base64 encoding.</p>
+<p>To "hide" a value you can use the <code>hide()</code> configuration function. This
+prevents the module displaying the value as a format placeholder and
+from appearing in the logs.</p>
+<pre><code># Example of 'hidden' configuration
+imap {
+    imap_server = 'imap.myprovider.com'
+    password = hide('hunter22')
+    user = 'mylogin'
+}
+</code></pre>
+<p>To base64 encode a value you can use the <code>base64()</code> configuration
+function. This also prevents the module displaying the value as a format
+placeholder and from appearing in the logs.</p>
+<pre><code># Example of obfuscated configuration
+imap {
+    imap_server = 'imap.myprovider.com'
+    password = base64('Y29jb251dA==')
+    user = 'mylogin'
+}
+</code></pre>
+<p>Since version 3.1 obfuscation options can also be added by the legacy
+method. Add <code>:hide</code> or <code>:base64</code> to the name of the parameters. You are
+advised to use the new <code>hide()</code> and <code>base64()</code> configuration functions.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Legacy obfuscation is only available for string:
+parameters with <code>:hide</code> or <code>:base64</code>. If you want other types then
+be sure to use <code>hide()</code> and <code>base64()</code> configuration functions.</p>
+</div>
+<pre><code># normal_parameter will be shown in log files etc as 'some value'
+# obfuscated_parameter will be shown in log files etc as '***'
+module {
+    normal_parameter = 'some value'
+    obfuscated_parameter:hide = 'some value'
+}
+</code></pre>
+<p>In the previous example configuration the users password is in plain
+text. Users may want to make it less easy to read. Py3status allows
+strings to be base64 encoded.</p>
+<p>To use an encoded string add <code>:base64</code> to the name of the parameter.</p>
+<pre><code># Example of obfuscated configuration
+imap {
+    imap_server = 'imap.myprovider.com'
+    password:base64 = 'Y29jb251dA=='
+    user = 'mylogin'
+}
+</code></pre>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Base64 encoding is very simple and should not be considered secure in
+any way.</p>
+</div>
+<h2 id="configuring-colors">Configuring colors</h2>
+<p>Since version 3.1 py3status allows greater color configuration. Colors
+can be set in the general section of your <code>i3status.conf</code> or in an
+individual modules configuration. If a color is not in a modules
+configuration then the values from the general section will be used.</p>
+<p>If a module does not specify colors but it is in a container, then the
+colors of the container will be used if they are set, before using ones
+defined in the general section.</p>
+<p>Generally colors can specified using hex values eg <code>#FF00FF</code> or <code>#F0F</code>.
+It is also possible to use css3 color names eg <code>red</code> <code>hotpink</code>.
+<a href="https://drafts.csswg.org/css-color/#named-colors">Check here for al ist of available color names</a>.</p>
+<pre><code>general {
+    # These will be used if not supplied by a module
+    color = '#FFFFFF'
+    color_good = '#00FF00'
+    color_bad = '#FF0000'
+    color_degraded = '#FFFF00'
+}
+
+time {
+    color = 'FF00FF'
+    format = &quot;%H:%M&quot;
+}
+
+battery_level {
+    color_good = '#00AA00'
+    color_bad = '#AA0000'
+    color_degraded = '#AAAA00'
+    color_charging = '#FFFF00'
+}
+</code></pre>
+<h2 id="configuring-thresholds">Configuring thresholds</h2>
+<p>Some modules allow you to define thresholds in a module. These are used
+to determine which color to use when displaying the module. Thresholds
+are defined in the config as a list of tuples. With each tuple
+containing a value and a color. The color can either be a named color eg
+<code>good</code> referring to <code>color_good</code> or a hex value.</p>
+<pre><code>volume_status {
+    thresholds = [
+        (0, &quot;#FF0000&quot;),
+        (20, &quot;degraded&quot;),
+        (50, &quot;bad&quot;),
+    ]
+}
+</code></pre>
+<p>If the value checked against the threshold is equal to or more than a
+threshold then that color supplied will be used.</p>
+<p>In the above example the logic would be</p>
+<pre><code>if 0 &gt;= value &lt; 20 use #FF0000
+else if 20 &gt;= value &lt; 50 use color_degraded
+else if 50 &gt;= value use color_good
+</code></pre>
+<p>Some modules may allow more than one threshold to be defined. If all the
+thresholds are the same they can be defined as above but if you wish to
+specify them separately you can by giving a dict of lists.</p>
+<pre><code>my_module {
+    thresholds = {
+        'threshold_1': [
+            (0, &quot;#FF0000&quot;),
+            (20, &quot;degraded&quot;),
+            (50, &quot;bad&quot;),
+        ],
+        'threshold_2': [
+            (0, &quot;good&quot;),
+            (30, &quot;bad&quot;),
+        ],
+    }
+}
+</code></pre>
+<p>You can specify <code>hidden</code> color to hide a block.</p>
+<pre><code># hide a block when ``1avg`` (i.e., 12.4) is less than 20 percent
+format = &quot;[\?color=1avg [\?color=darkgray&amp;show 1min] {1min}]&quot;
+loadavg {
+   thresholds = [
+        (0, &quot;hidden&quot;),
+       (20, &quot;good&quot;),
+       (40, &quot;degraded&quot;),
+       (60, &quot;#ffa500&quot;),
+       (80, &quot;bad&quot;),
+   ]
+}
+
+# hide cpu block when ``cpu_used_percent`` is less than 50 percent
+# hide mem block when ``mem_used_percent`` is less than 50 percent
+sysdata {
+    thresholds = [
+        (50, &quot;hidden&quot;),
+        (75, &quot;bad&quot;),
+    ]
+}
+</code></pre>
+<h2 id="formatter">Formatter</h2>
+<p>All modules allow you to define the format of their output. This is done
+with the format option. You can:</p>
+<ul>
+<li>display static text:</li>
+</ul>
+<pre><code>mpd_status {
+   format = &quot;MPD:&quot;
+}
+</code></pre>
+<ul>
+<li>use a backslash <code>\</code> to escape a character (<code>\[</code> will show <code>[</code>).</li>
+<li>display data provided by the module. This is done with
+  "placeholders", which follow the format {placeholder_name}. The
+  following example shows the state of the MPD (play/pause/stop) and
+  the artist and title of the currently playing song.</li>
+</ul>
+<pre><code>mpd_status {
+   format = &quot;MPD: {state} {artist} {title}&quot;
+}
+</code></pre>
+<pre><code>- Unknown placeholders act as if they were static text and
+  placeholders that are empty or None will be removed.
+- Formatting can also be applied to the placeholder Eg
+  `{number:03.2f}`.
+</code></pre>
+<ul>
+<li>hide invalid (no valid data or undefined) placeholders by enclosing
+  them in <code>[]</code>. The following example will show <code>artist - title</code> if
+  artist is present and <code>title</code> if title but no artist is present.</li>
+</ul>
+<pre><code>mpd_status {
+   format = &quot;MPD: {state} [[{artist} - ]{title}]&quot;
+}
+</code></pre>
+<ul>
+<li>show the first block with valid output by dividing them with a pipe
+    <code>|</code>. The following example will show the filename if neither artist
+    nor title are present.</li>
+</ul>
+<pre><code>mpd_status {
+   format = &quot;MPD: {state} [[{artist} - ]{title}]|{file}&quot;
+}
+</code></pre>
+<ul>
+<li><code>\?</code> can be used to provide extra commands to the format string.
+    Multiple commands can be given using an ampersand <code>&amp;</code> as a
+    separator.</li>
+</ul>
+<pre><code>my_module {
+   format = &quot;\?color=#FF00FF&amp;show blue&quot;
+}
+</code></pre>
+<ul>
+<li>change the output with conditions. This is done by following the
+  <code>\?</code> with a an if statement. Multiple conditions or commands can be
+  combined by using an ampersand <code>&amp;</code> as a separator. Here are some
+  examples:<ul>
+<li><code>\?if=online green | red</code> checks if the placeholder exists and
+  would display <code>green</code> in that case. A condition that evaluates
+  to false invalidates a section and the section can be hidden
+  with <code>[]</code> or skipped with <code>|</code></li>
+<li><code>\?if=!online red | green</code> this dose the same as the above
+  condition, the only difference is that the exclamation mark <code>!</code>
+  negates the condition.</li>
+<li><code>\?if=state=play PLAYING! | not playing</code> checks if the
+  placeholder contains <code>play</code> and displays <code>PLAYING!</code> if not it
+  will display <code>not playing</code>.</li>
+</ul>
+</li>
+</ul>
+<p>A format string using nearly all of the above options could look like
+this:</p>
+<pre><code>mpd_status {
+  format = &quot;MPD: {state} [\?if=![stop] [[{artist} - ]{title}]|[{file}]]&quot;
+}
+</code></pre>
+<p>This will show <code>MPD: [state]</code> if the state of the MPD is <code>[stop]</code> or
+<code>MPD: [state] artist - title</code> if it is <code>[play]</code> or <code>[pause]</code> and artist
+and title are present, <code>MPD: [state] title</code> if artist is missing and
+<code>MPD: [state] file</code> if artist and title are missing.</p>
+<h2 id="marking-modules-as-urgent">Marking modules as urgent</h2>
+<p>Some modules use i3bar's urgent feature to indicate that something
+important has occurred. The <code>allow_urgent</code> configuration parameter can
+be used to allow/prevent a module from setting itself as urgent.</p>
+<pre><code># prevent modules showing as urgent, except github
+py3status {
+    allow_urgent = false
+}
+
+github {
+    allow_urgent = true
+}
+</code></pre>
+<h2 id="controlling-error-behavior">Controlling error behavior</h2>
+<p>When a module error has occurred, it will be reported on the bar. The
+<code>on_error</code> configuration parameter allows users to choose what to do
+instead.</p>
+<p>Supported values:</p>
+<ul>
+<li><code>show</code> (default): report the error on the bar (click to view)</li>
+<li><code>hide</code>: hide the module on the bar</li>
+</ul>
+<pre><code># hide errors on all modules by default (still reported on logs)
+py3status {
+    on_error = &quot;hide&quot;
+}
+
+# hide errors on non-NVIDIA hardwares
+nvidia_smi {
+    on_error = &quot;hide&quot;
+}
+
+# hide errors on sway where xrandr does not work
+xrandr {
+    on_error = &quot;hide&quot;
+}
+</code></pre>
+<h2 id="grouping-modules">Grouping Modules</h2>
+<p>The module_group module allows you to group several modules together.
+Only one of the modules are displayed at a time. The displayed module
+can either be cycled through automatically or by user action (the
+default, on mouse scroll).</p>
+<p>This module is very powerful and allows you to save a lot of space on
+your bar.</p>
+<pre><code>order += &quot;group tz&quot;
+
+# cycle through different timezone hours every 10s
+group tz {
+    cycle = 10
+    format = &quot;{output}&quot;
+
+    tztime la {
+        format = &quot;LA %H:%M&quot;
+        timezone = &quot;America/Los_Angeles&quot;
+    }
+
+    tztime ny {
+        format = &quot;NY %H:%M&quot;
+        timezone = &quot;America/New_York&quot;
+    }
+
+    tztime du {
+        format = &quot;DU %H:%M&quot;
+        timezone = &quot;Asia/Dubai&quot;
+    }
+}
+</code></pre>
+<p>The module_frame module also allows you to group several modules
+together, however in a frame all the modules are shown. This allows you
+to have more than one module shown in a group.</p>
+<pre><code>order += &quot;group frames&quot;
+
+# group showing disk space or times using button to change what is shown.
+group frames {
+    click_mode = &quot;button&quot;
+
+    frame time {
+        tztime la {
+            format = &quot;LA %H:%M&quot;
+            timezone = &quot;America/Los_Angeles&quot;
+        }
+
+        tztime ny {
+            format = &quot;NY %H:%M&quot;
+            timezone = &quot;America/New_York&quot;
+        }
+
+        tztime du {
+            format = &quot;DU %H:%M&quot;
+            timezone = &quot;Asia/Dubai&quot;
+        }
+    }
+
+    frame disks {
+        disk &quot;/&quot; {
+            format = &quot;/ %avail&quot;
+        }
+
+        disk &quot;/home&quot; {
+            format = &quot;/home %avail&quot;
+        }
+    }
+}
+</code></pre>
+<p>Frames can also have a toggle button to hide/show the content</p>
+<pre><code># A frame showing times in different cities.
+# We also have a button to hide/show the content
+
+frame time {
+    format = '{output}{button}'
+    format_separator = ' '  # have space instead of usual i3bar separator
+
+    tztime la {
+        format = &quot;LA %H:%M&quot;
+        timezone = &quot;America/Los_Angeles&quot;
+    }
+
+    tztime ny {
+        format = &quot;NY %H:%M&quot;
+        timezone = &quot;America/New_York&quot;
+    }
+
+    tztime du {
+        format = &quot;DU %H:%M&quot;
+        timezone = &quot;Asia/Dubai&quot;
+    }
+}
+</code></pre>
+<h2 id="custom-click-events">Custom click events</h2>
+<p>py3status allows you to easily add click events to modules in your
+i3bar. These modules can be both i3status or py3status modules. This is
+done in your <code>i3status.config</code> using the <code>on_click</code> parameter.</p>
+<p>Just add a new configuration parameter named <code>on_click [button number]</code>
+to your module config and py3status will then execute the given i3
+command (using i3-msg).</p>
+<p>This means you can run simple tasks like executing a program or execute
+any other i3 specific command.</p>
+<p>As an added feature and in order to get your i3bar more responsive,
+every <code>on_click</code> command will also trigger a module refresh. This works
+for both py3status modules and i3status modules as described in the
+refresh command below.</p>
+<pre><code># button numbers
+1 = left click
+2 = middle click
+3 = right click
+4 = scroll up
+5 = scroll down
+</code></pre>
+<pre><code># reload the i3 config when I left click on the i3status time module
+# and restart i3 when I middle click on it
+time {
+    on_click 1 = &quot;reload&quot;
+    on_click 2 = &quot;restart&quot;
+}
+
+# control the volume with your mouse (need &gt;i3-4.8)
+# launch alsamixer when I left click
+# kill it when I right click
+# toggle mute/unmute when I middle click
+# increase the volume when I scroll the mouse wheel up
+# decrease the volume when I scroll the mouse wheel down
+volume master {
+    format = &quot;♪: %volume&quot;
+    device = &quot;default&quot;
+    mixer = &quot;Master&quot;
+    mixer_idx = 0
+    on_click 1 = &quot;exec i3-sensible-terminal -e alsamixer&quot;
+    on_click 2 = &quot;exec amixer set Master toggle&quot;
+    on_click 3 = &quot;exec killall alsamixer&quot;
+    on_click 4 = &quot;exec amixer set Master 1+&quot;
+    on_click 5 = &quot;exec amixer set Master 1-&quot;
+}
+
+# run wicd-gtk GUI when I left click on the i3status ethernet module
+# and kill it when I right click on it
+ethernet eth0 {
+    # if you use %speed, i3status requires root privileges
+    format_up = &quot;E: %ip&quot;
+    format_down = &quot;&quot;
+    on_click 1 = &quot;exec wicd-gtk&quot;
+    on_click 3 = &quot;exec killall wicd-gtk&quot;
+}
+
+# run thunar when I left click on the / disk info module
+disk &quot;/&quot; {
+    format = &quot;/ %free&quot;
+    on_click 1 = &quot;exec thunar /&quot;
+}
+
+# this is a py3status module configuration
+# open an URL on opera when I left click on the weather_yahoo module
+weather_yahoo paris {
+    cache_timeout = 1800
+    woeid = 615702
+    forecast_days = 2
+    on_click 1 = &quot;exec opera http://www.meteo.fr&quot;
+    request_timeout = 10
+}
+</code></pre>
+<h2 id="special-on_click-commands">Special on_click commands</h2>
+<p>There are two commands you can pass to the <code>on_click</code> parameter that
+have a special meaning to py3status :</p>
+<ul>
+<li><code>refresh</code> : This will refresh (expire the cache) of the clicked
+    module. This also works for i3status modules (it will send a SIGUSR1
+    to i3status for you).</li>
+<li><code>refresh_all</code> : This will refresh all the modules from your i3bar
+    (i3status included). This has the same effect has sending a SIGUSR1
+    to py3status.</li>
+</ul>
+<h2 id="module-data-and-on_click-commands">Module data and on_click commands</h2>
+<p>Since version 3.3 it is possible to use the output text of a module in
+the <code>on_click</code> command. To do this <code>$OUTPUT</code> can be used in command and
+it will be substituted by the modules text output when the command is
+run.</p>
+<pre><code># copy module output to the clipboard using xclip
+my_module {
+    on_click 1 = 'exec echo $OUTPUT | xclip -i'
+}
+</code></pre>
+<p>If the output of a module is a composite then the output of the part
+clicked on can be accessed using <code>$OUTPUT_PART</code>.</p>
+<h2 id="environment-variables">Environment Variables</h2>
+<p>You may use the value of an environment variable in your configuration
+with the <code>env(...)</code> directive. These values are captured at startup and
+may be converted to the needed datatype (only <code>str</code>, <code>int</code>, <code>float</code>,
+<code>bool</code> and <code>auto</code> are currently supported).</p>
+<p>Note, the <code>auto</code> conversion will try to guess the type of the contents
+and automatically convert to that type. Without an explicit conversion
+function, it defaults to <code>auto</code>.</p>
+<p>This is primarily designed to obfuscate sensitive information when
+sharing your configuration file, such as usernames, passwords, API keys,
+etc.</p>
+<p>The <code>env(...)</code> expression can be used anywhere a normal constant would
+be used. Note, you cannot use the directive in place of a dictionary
+key, i.e <code>{..., env(KEY): 'val', ...}</code>.</p>
+<p>See the examples below!</p>
+<pre><code>order += &quot;my_module&quot;
+order += env(ORDER_MODULE)
+
+module {
+    normal_parameter = 'some value'
+    env_parameter = env(SOME_ENVIRONMENT_PARAM)
+    sensitive_api_key = env(API_KEY)
+
+    complex_parameter = {
+      'key': env(VAL)
+    }
+
+    equivalent1 = env(MY_VAL)
+    equivalent2 = env(MY_VAL, auto)
+
+    list_of_tuples = [
+      (env(APPLE_NUM, int), 'apple'),
+      (2, env(ORANGE))
+    ]
+
+    float_param = env(MY_NUM, float)
+}
+</code></pre>
+<h2 id="inline-shell-code">Inline Shell Code</h2>
+<p>You can use the standard output of a shell script in your configuration
+with the <code>shell(...)</code> directive. These values are captured at startup
+and may be converted to the needed datatype (only <code>str</code>, <code>int</code>, <code>float</code>,
+<code>bool</code> and <code>auto</code> (default) are currently supported).</p>
+<p>The shell script executed must return a single line of text on stdout
+and then terminate. If the type is explicitly declared <code>bool</code>, the exit
+status of the script is respected (a non-zero exit status being
+interpreted falsey). In any other case if the script exits with a
+non-zero exit status an error will be thrown.</p>
+<p>The <code>shell(...)</code> expression can be used anywhere a constant or an
+<code>env(...)</code> directive can be used (see the section "Environment
+Variables").</p>
+<p>Usage example:</p>
+<pre><code>my_module {
+    password = shell(pass show myPasswd | head -n1)
+    some_string = shell(/opt/mydaemon/get_api_key.sh, str)
+    pid = shell(cat /var/run/mydaemon/pidfile, int)
+    my_bool = shell(pgrep thttpd, bool)
+}
+</code></pre>
+<p>Due to the way the config is parsed you need to to escape any closing
+parenthesis <code>)</code> using a backslash <code>\)</code>.</p>
+<pre><code>static_string {
+    # note we need to explicitly cast the result to str
+    # because we are using it as the format which must be a
+    # string
+    format = shell(echo $((6 + 2\)\), str)
+}
+</code></pre>
+<h2 id="refreshing-modules-on-udev-events-with-on_udev-dynamic-options">Refreshing modules on udev events with on_udev dynamic options</h2>
+<p>Refreshing of modules can be triggered when an udev event is detected on
+a specific subsystem using the <code>on_udev_&lt;subsystem&gt;</code> configuration
+parameter and an associated action.</p>
+<p>Possible actions:</p>
+<ul>
+<li><code>refresh</code>: immediately refresh the module and keep on updating it as
+    usual</li>
+<li><code>refresh_and_freeze</code>: module is ONLY refreshed when said udev
+    subsystem emits an event</li>
+</ul>
+<pre><code># refresh xrandr only when udev 'drm' events are triggered
+xrandr {
+    on_udev_drm = &quot;refresh_and_freeze&quot;
+}
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This feature will only activate when <code>pyudev</code> is installed on the system.
+This is an optional dependency of py3status and is therefore not
+enforced by all package managers.</p>
+</div>
+<h2 id="http-request-settings">HTTP Request Settings</h2>
+<h3 id="handling-timeouts">Handling timeouts</h3>
+<p>Timeouts are handled thanks to the global <code>request_timeout</code> setting.</p>
+<p>Request Timeout for URL request based modules can be specified in the
+module configuration. To find out if your module supports that, look for
+<code>self.py3.request</code> in the code. Otherwise, we will use <code>10</code>.</p>
+<pre><code># stop waiting for a response after 10 seconds
+exchange_rate {
+    request_timeout = 10
+}
+</code></pre>
+<h3 id="handling-retries">Handling retries</h3>
+<p>Retries are handled thanks to the global <code>request_retry_times</code> and
+<code>request_retry_wait</code> settings.</p>
+<p>Requests failing due to network unavailability or remote server timeouts
+are retried automatically <code>request_retry_times</code> times (default <code>3</code>) at a
+<code>request_retry_wait</code> (default <code>2</code>) seconds interval.</p>
+<p>This allows to be more graceful to i3 startup when network is not up yet
+or to short network disruptions and not display an error on the bar in
+that case.</p>
+<p>To find out if your module supports that, look for <code>self.py3.request</code> in
+the code.</p>
+<pre><code># try to contact the OWM API 10 times every 5 seconds before displaying
+# an error on the bar for the module
+# that is equivalent to 50 seconds of retrying before an error occurs
+weather_owm {
+    request_retry_times = 10
+    request_retry_wait = 5
+}
+</code></pre>
+<h2 id="running-py3status-outside-i3bar">Running Py3status outside i3bar</h2>
+<p>Want Py3status in your beloved tmux? Sure!</p>
+<p>While Py3status is by default running using the <code>i3bar</code> output format,
+you can change the <code>output_format</code> of the <code>general</code> section of the
+configuration file to get your favorite status bar in the following
+programs:</p>
+<ul>
+<li>i3bar (default)</li>
+<li>dzen2</li>
+<li>lemonbar</li>
+<li>term</li>
+<li>tmux</li>
+<li>xmobar</li>
+<li>none (no special output format)</li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/ultrabug/py3status" target="_blank" rel="noopener" title="py3status on Github" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.indexes", "navigation.sections", "navigation.tabs", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.aecac24b.min.js"></script>
+      
+    
+  </body>
+</html>

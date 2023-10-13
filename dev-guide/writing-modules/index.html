@@ -1,0 +1,1591 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ultrabug.github.io/py3status/dev-guide/writing-modules/">
+      
+      
+        <link rel="prev" href="../../user-guide/user-contributed-conf-examples/">
+      
+      
+        <link rel="next" href="../the-py3-helper/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.5">
+    
+    
+      
+        <title>Writing Py3status Modules - Py3status</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6a10b989.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.356b1318.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:300,300i,400,400i,700,700i%7CUbuntu+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Ubuntu";--md-code-font:"Ubuntu Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#writing-custom-py3status-modules" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Py3status" class="md-header__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Py3status
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Writing Py3status Modules
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user-guide/installation/" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Py3status" class="md-nav__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    Py3status
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Available Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/remote-control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Controlling Py3status Remotely
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/user-contributed-conf-examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Configuration Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Writing Py3status Modules
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Writing Py3status Modules
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#importing-custom-modules" class="md-nav__link">
+    Importing custom modules
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-1-the-basics-hello-world" class="md-nav__link">
+    Example 1: The basics - Hello World!
+  </a>
+  
+    <nav class="md-nav" aria-label="Example 1: The basics - Hello World!">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-example" class="md-nav__link">
+    Running the example
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-does-it-work" class="md-nav__link">
+    How does it work?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-response" class="md-nav__link">
+    The response
+  </a>
+  
+    <nav class="md-nav" aria-label="The response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#full_text" class="md-nav__link">
+    full_text
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cached_until" class="md-nav__link">
+    cached_until
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selfpy3" class="md-nav__link">
+    self.py3
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-2-configuration-parameters" class="md-nav__link">
+    Example 2: Configuration parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-3-click-events" class="md-nav__link">
+    Example 3: Click events
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-4-status-string-placeholders" class="md-nav__link">
+    Example 4: Status string placeholders
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-5-using-color-constants" class="md-nav__link">
+    Example 5: Using color constants
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-methods" class="md-nav__link">
+    Module methods
+  </a>
+  
+    <nav class="md-nav" aria-label="Module methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    Outputs
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-methods" class="md-nav__link">
+    Special methods
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#py3-module-helper" class="md-nav__link">
+    Py3 module helper
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#composites" class="md-nav__link">
+    Composites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-data-storage" class="md-nav__link">
+    Module data storage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-documentation" class="md-nav__link">
+    Module documentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deprecation-of-configuration-parameters" class="md-nav__link">
+    Deprecation of configuration parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#updating-of-configuration-parameters" class="md-nav__link">
+    Updating of configuration parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-testing" class="md-nav__link">
+    Module testing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publishing-custom-modules-on-pypi" class="md-nav__link">
+    Publishing custom modules on PyPI
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../the-py3-helper/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The Py3 Module Helper
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Py3status
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="writing-custom-py3status-modules">Writing custom py3status modules</h1>
+<p>Writing custom modules for py3status is as easy as declaring a Python class.
+This guide will teach you how.</p>
+<h2 id="importing-custom-modules">Importing custom modules</h2>
+<p>First of all, it is important to know that py3status will try to find your
+custom modules in the following locations:</p>
+<ul>
+<li><code>~/.config/py3status/modules</code></li>
+<li><code>~/.config/i3status/py3status</code></li>
+<li><code>~/.config/i3/py3status</code></li>
+<li><code>~/.i3/py3status</code></li>
+</ul>
+<p>which if you are used to XDG_CONFIG paths relates to:</p>
+<ul>
+<li><code>XDG_CONFIG_HOME/py3status/modules</code></li>
+<li><code>XDG_CONFIG_HOME/i3status/py3status</code></li>
+<li><code>XDG_CONFIG_HOME/i3/py3status</code></li>
+<li><code>~/.i3/py3status</code></li>
+</ul>
+<p>You can also specify the modules location using
+<code>py3status -i &lt;path to custom modules directory&gt;</code> in your i3
+configuration file.</p>
+<h2 id="example-1-the-basics-hello-world">Example 1: The basics - Hello World!</h2>
+<p>Now let's start by looking at a simple example.</p>
+<p>Here we start with the most basic module that just outputs a static
+string to the status bar.</p>
+<pre><code class="language-python"># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+Example module that says 'Hello World!'
+
+This demonstrates how to produce a simple custom module.
+&quot;&quot;&quot;
+
+
+class Py3status:
+
+    def hello_world(self):
+        return {
+            'full_text': 'Hello World!',
+            'cached_until': self.py3.CACHE_FOREVER
+        }
+</code></pre>
+<h3 id="running-the-example">Running the example</h3>
+<p>Save the file as <code>hello_world.py</code> in a directory that py3status will
+check for modules. By default it will look in <code>$HOME/.i3/py3status/</code> or
+you can specify additional directories using <code>--include</code> when you run
+py3status.</p>
+<p>You need to tell py3status about your new module, so in your
+<code>i3status.conf</code> add:</p>
+<pre><code>order += &quot;hello_world&quot;
+</code></pre>
+<p>Then restart i3 by pressing <code>Mod</code> + <code>Shift</code> + <code>R</code>. Your new module
+should now show up in the status bar.</p>
+<h3 id="how-does-it-work">How does it work?</h3>
+<p>The <code>Py3status</code> class tells py3status that this is a module. The module
+gets loaded. py3status then calls any public methods that the class
+contains to get a response. In our example there is a single method
+<code>hello_world()</code>. Read more here: <a href="#module_methods">module methods</a>.</p>
+<h3 id="the-response">The response</h3>
+<p>The response that a method returns must be a python <code>dict</code>. It should
+contain at least two key / values.</p>
+<h4 id="full_text">full_text</h4>
+<p>This is the text that will be displayed in the status bar.</p>
+<h4 id="cached_until">cached_until</h4>
+<p>This tells py3status how long it should consider your response valid
+before it should re-run the method to get a fresh response. In our
+example our response will not need to be updated so we can use the
+special <code>self.py3.CACHE_FOREVER</code> constant. This tells py3status to
+consider our response always valid.</p>
+<p><code>cached_until</code> should be generated via the <code>self.py3.time_in()</code> method.</p>
+<h4 id="selfpy3">self.py3</h4>
+<p>This is a special object that gets injected into py3status modules. It
+helps provide functionality for the module, such as the <code>CACHE_FOREVER</code>
+constant. Read more about the py3.</p>
+<h2 id="example-2-configuration-parameters">Example 2: Configuration parameters</h2>
+<p>Allow users to supply configuration to a module.</p>
+<pre><code class="language-python"># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+Example module that says 'Hello World!' that can be customised.
+
+This demonstrates how to use configuration parameters.
+
+Configuration parameters:
+    format: Display format (default 'Hello World!')
+&quot;&quot;&quot;
+
+
+class Py3status:
+
+    format = 'Hello World!'
+
+    def hello_world(self):
+        return {
+            'full_text': self.format,
+            'cached_until': self.py3.CACHE_FOREVER
+        }
+</code></pre>
+<p>This module still outputs 'Hello World' as before but now you can
+customise the output using your <code>i3status.config</code> for example to show
+the text in French.</p>
+<pre><code>hello_world {
+    format = 'Bonjour tout le monde!'
+}
+</code></pre>
+<p>In your module <code>self.format</code> will have been set to the value supplied in
+the config.</p>
+<h2 id="example-3-click-events">Example 3: Click events</h2>
+<p>Catch click events and perform an action.</p>
+<pre><code class="language-python"># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+Example module that handles events
+
+This demonstrates how to use events.
+&quot;&quot;&quot;
+
+
+class Py3status:
+
+    def __init__(self):
+        self.full_text = 'Click me'
+
+    def click_info(self):
+        return {
+            'full_text': self.full_text,
+            'cached_until': self.py3.CACHE_FOREVER
+        }
+
+    def on_click(self, event):
+        &quot;&quot;&quot;
+        event will be a dict like
+        {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
+        &quot;&quot;&quot;
+        button = event['button']
+        # update our output (self.full_text)
+        format_string = 'You pressed button {button}'
+        data = {'button': button}
+        self.full_text = self.py3.safe_format(format_string, data)
+        # Our modules update methods will get called automatically.
+</code></pre>
+<p>The <code>on_click</code> method of a module is special and will get called when
+the module is clicked on. The event parameter will be a dict that gives
+information about the event.</p>
+<p>A typical event dict will look like this:
+<code>{'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}</code></p>
+<p>You should only receive events for the module clicked on, so generally
+we only care about the button.</p>
+<p>The <code>__init__()</code> method is called when our class is instantiated.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>init</strong> is called before any config parameters have been set.</p>
+</div>
+<p>We use the <code>safe_format()</code> method of <code>py3</code> for formatting. Read more
+about the py3.</p>
+<h2 id="example-4-status-string-placeholders">Example 4: Status string placeholders</h2>
+<p>Status string placeholders allow us to add information to formats.</p>
+<pre><code class="language-python"># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+Example module that demonstrates status string placeholders
+
+Configuration parameters:
+    format: Initial format to use
+        (default 'Click me')
+    format_clicked: Display format to use when we are clicked
+        (default 'You pressed button {button}')
+
+Format placeholders:
+    {button} The button that was pressed
+&quot;&quot;&quot;
+
+
+class Py3status:
+    format = 'Click me'
+    format_clicked = 'You pressed button {button}'
+
+    def __init__(self):
+        self.button = None
+
+    def click_info(self):
+        if self.button:
+            data = {'button': self.button}
+            full_text = self.py3.safe_format(self.format_clicked, data)
+        else:
+            full_text = self.format
+
+        return {
+            'full_text': full_text,
+            'cached_until': self.py3.CACHE_FOREVER
+        }
+
+    def on_click(self, event):
+        &quot;&quot;&quot;
+        event will be a dict like
+        {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
+        &quot;&quot;&quot;
+        self.button = event['button']
+        # Our modules update methods will get called automatically.
+</code></pre>
+<p>This works just like the previous example but we can now be customised.
+The following example assumes that our module has been saved as
+click_info.py.</p>
+<pre><code>click_info {
+    format = &quot;Cliquez ici&quot;
+    format_clicked = &quot;Vous avez appuyé sur le bouton {button}&quot;
+}
+</code></pre>
+<h2 id="example-5-using-color-constants">Example 5: Using color constants</h2>
+<p><code>self.py3</code> in our module has color constants that we can access, these
+allow the user to set colors easily in their config.</p>
+<pre><code class="language-python"># -*- coding: utf-8 -*-
+&quot;&quot;&quot;
+Example module that uses colors.
+
+We generate a random number between and color it depending on its value.
+Clicking on the module will update it an a new number will be chosen.
+
+Configuration parameters:
+    format: Initial format to use
+        (default 'Number {number}')
+
+Format placeholders:
+    {number} Our random number
+
+Color options:
+    color_high: number is 5 or higher
+    color_low: number is less than 5
+&quot;&quot;&quot;
+
+from random import randint
+
+
+class Py3status:
+    format = 'Number {number}'
+
+    def random(self):
+        number = randint(0, 9)
+        full_text = self.py3.safe_format(self.format, {'number': number})
+
+        if number &lt; 5:
+            color = self.py3.COLOR_LOW
+        else:
+            color = self.py3.COLOR_HIGH
+
+        return {
+            'full_text': full_text,
+            'color': color,
+            'cached_until': self.py3.CACHE_FOREVER
+        }
+
+    def on_click(self, event):
+        # by defining on_click pressing any mouse button will refresh the
+        # module.
+        pass
+</code></pre>
+<p>The colors can be set in the config in the module or its container or in
+the general section. The following example assumes that our module has
+been saved as <code>number.py</code>. Although the constants are capitalized they
+are defined in the config in lower case.</p>
+<pre><code>number {
+    color_high = '#FF0000'
+    color_low = '#00FF00'
+}
+</code></pre>
+<h2 id="module-methods">Module methods</h2>
+<p>Py3status will call a method in a module to provide output to the i3bar.
+Methods that have names starting with an underscore will not be used in
+this way. Any methods defined as static methods will also not be used.</p>
+<h3 id="outputs">Outputs</h3>
+<p>Output methods should provide a response dict.</p>
+<p>Example response:</p>
+<pre><code class="language-python">{
+    'full_text': &quot;This text will be displayed&quot;,
+    'cached_until': 1470922537,  # Time in seconds since the epoch
+}
+</code></pre>
+<p>The response can include the following keys</p>
+<p><strong>cached_until</strong></p>
+<p>The time (in seconds since the epoch) that the output will be classed as
+no longer valid and the output function will be called again.</p>
+<p>Since version 3.1, if no <code>cached_until</code> value is provided the output
+will be cached for <code>cache_timeout</code> seconds by default this is <code>60</code> and
+can be set using the <code>-t</code> or <code>--timeout</code> option when running py3status.
+To never expire the <code>self.py3.CACHE_FOREVER</code> constant should be used.</p>
+<p><code>cached_until</code> should be generated via the <code>self.py3.time_in()</code> method.</p>
+<p><strong>color</strong></p>
+<p>The color that the module output will be displayed in.</p>
+<p><strong>composite</strong></p>
+<p>Used to output more than one item to i3bar from a single output method.
+If this is provided then <code>full_text</code> should not be.</p>
+<p><strong>full_text</strong></p>
+<p>This is the text output that will be sent to i3bar.</p>
+<p><strong>index</strong></p>
+<p>The index of the output. Allows composite output to identify which
+component of their output had an event triggered.</p>
+<p><strong>separator</strong></p>
+<p>If <code>False</code> no separator will be shown after the output block (requires
+i3bar 4.12).</p>
+<p><strong>urgent</strong></p>
+<p>If <code>True</code> the output will be shown as urgent in i3bar.</p>
+<h3 id="special-methods">Special methods</h3>
+<p>Some special method are also defined.</p>
+<p><strong>kill()</strong></p>
+<p>Called just before a module is destroyed.</p>
+<p><strong>on_click(event)</strong></p>
+<p>Called when an event is received by a module.</p>
+<p><strong>post_config_hook()</strong></p>
+<p>Called once an instance of a module has been created and the
+configuration parameters have been set. This is useful for any work a
+module must do before its output methods are run for the first time.
+<code>post_config_hook()</code> introduced in version 3.1</p>
+<h2 id="py3-module-helper">Py3 module helper</h2>
+<p>Py3 is a special helper object that gets injected into py3status
+modules, providing extra functionality. A module can access it via the
+self.py3 instance attribute of its py3status class. For details see py3.</p>
+<h2 id="composites">Composites</h2>
+<p>Whilst most modules return a simple response eg:</p>
+<pre><code class="language-python">{
+    'full_text': &lt;some text&gt;,
+    'cached_until': &lt;cache time&gt;,
+}
+</code></pre>
+<p>Sometimes it is useful to provide a more complex, composite response. A
+composite is made up of more than one simple response which allows for
+example a response that has multiple colors. Different parts of the
+response can also be differentiated between when a click event occurs
+and so allow clicking on different parts of the response to have
+different outcomes. The different parts of the composite will not have
+separators between them in the output so they will appear as a single
+module to the user.</p>
+<p>The format of a composite is as follows:</p>
+<pre><code class="language-python">{
+    'cached_until': &lt;cache time&gt;,
+    'composite': [
+        {
+            'full_text': &lt;some text&gt;,
+        },
+        {
+            'full_text': &lt;some more text&gt;,
+            'index': &lt;some index&gt;
+        },
+    ]
+}
+</code></pre>
+<p>The <code>index</code> key in the response is used to identify the individual block
+and when the modules <code>on_click()</code> method is called the event will
+include this. Supplied index values should be strings. If no index is
+given then it will have an integer value indicating its position in the
+composite.</p>
+<h2 id="module-data-storage">Module data storage</h2>
+<p>Py3status allows modules to maintain state through the use of the
+storage functions of the Py3 helper.</p>
+<p>Currently bool, int, float, None, unicode, dicts, lists, datetimes etc
+are supported. Basically anything that can be pickled. We do our best to
+ensure that the resulting pickles are compatible with both python
+versions 2 and 3.</p>
+<p>The following helper functions are defined in the modules py3.</p>
+<p>These functions may return <code>None</code> if storage is not available as well as
+some metadata such as storage creation timestamp <code>_ctime</code> and last
+modification timestamp <code>_mtime</code>.</p>
+<p>Example:</p>
+<pre><code class="language-python">def module_function(self):
+    # set some storage
+    self.py3.storage_set('my_key', value)
+    # get the value or None if key not present
+    value = self.py3.storage_get('my_key')
+</code></pre>
+<h2 id="module-documentation">Module documentation</h2>
+<p>All contributed modules should have correct documentation. This
+documentation is in a specific format and is used to generate user
+documentation.</p>
+<p>The docstring of a module is used. The format is as follows:</p>
+<ul>
+<li>Single line description of the module followed by a single blank
+    line.</li>
+<li>Longer description of the module providing more detail.</li>
+<li>Configuration parameters. This section describes the user settable
+    parameters for the module. All parameters should be listed (in
+    alphabetical order). default values should be given in parentheses
+    eg <code>(default 7)</code>.</li>
+<li>Format placeholders. These are used for substituting values in
+    format strings. All placeholders should be listed (in alphabetical
+    order) and describe the output that they provide.</li>
+<li>Color options. These are the color options that can be provided for
+    this module. All color options should be listed (in alphabetical
+    order) that the module uses.</li>
+<li>Requires. A list of all the additional requirements for the module
+    to work. These may be command line utilities, python libraries etc.</li>
+<li>Example. Example configurations for the module can be given.</li>
+<li>Author and license. Finally information on the modules author and a
+    license can be provided.</li>
+</ul>
+<p>Here is an example of a docstring.</p>
+<pre><code class="language-python">&quot;&quot;&quot;
+Single line summary
+
+Longer description of the module.  This should help users understand the
+modules purpose.
+
+Configuration parameters:
+    parameter: Explanation of this parameter (default &lt;value&gt;)
+    parameter_other: This parameter has a longer explanation that continues
+        onto a second line so it is indented.
+        (default &lt;value&gt;)
+
+Format placeholders:
+    {info} Description of the placeholder
+
+Color options:
+    color_meaning: what this signifies, defaults to color_good
+    color_meaning2: what this signifies
+
+Requires:
+    program: Information about the program
+    python_lib: Information on the library
+
+Example:
+
+</code></pre>
+<p>module {
+    parameter = "Example"
+    parameter_other = 7
+}</p>
+<pre><code>
+@author &lt;author&gt;
+@license &lt;license&gt;
+&quot;&quot;&quot;
+</code></pre>
+<h2 id="deprecation-of-configuration-parameters">Deprecation of configuration parameters</h2>
+<p>Sometimes it is necessary to deprecate configuration parameters. Modules
+are able to specify information about deprecation so that it can be done
+automatically. Deprecation information is specified in the Meta class of
+a py3status module using the deprecated attribute. The following types
+of deprecation are supported.</p>
+<p>The deprecation types will be performed in the order here.</p>
+<p><strong>rename</strong></p>
+<p>The parameter has been renamed. We will update the configuration to use
+the new name.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'rename': [
+                {
+                    'param': 'format_available',  # parameter name to be renamed
+                    'new': 'icon_available',   # the parameter that will get the value
+                    'msg': 'obsolete parameter use `icon_available`',  # message
+                },
+            ],
+        }
+</code></pre>
+<p><strong>format_fix_unnamed_param</strong></p>
+<p>Some formats used <code>{}</code> as a placeholder this needs to be updated to a
+named placeholder eg <code>{value}</code>.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'format_fix_unnamed_param': [
+                {
+                    'param': 'format',  # parameter to be changed
+                    'placeholder': 'percent',  # the place holder to use
+                    'msg': '{} should not be used in format use `{percent}`',  # message
+                },
+            ],
+        }
+</code></pre>
+<p><strong>rename_placeholder</strong></p>
+<p>We can use this to rename placeholders in format strings</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'rename_placeholder': [
+                {
+                    'placeholder': 'cpu',  # old placeholder name
+                    'new': 'cpu_usage',  # new placeholder name
+                    'format_strings': ['format'],  # config settings to update
+                },
+            ],
+        }
+</code></pre>
+<p><strong>update_placeholder_format</strong></p>
+<p>This allows us to update the format of a placeholder in format strings.
+The key value pairs {placeholder: format} can be supplied as a dict in
+<code>placeholder_formats</code> or the dict can be provided by <code>function</code> the
+function will be called with the current config and must return a dict.
+If both are supplied then <code>placeholder_formats</code> will be updated using
+the dict supplied by the function.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'update_placeholder_format': [
+                {
+                    'function': update_placeholder_format,  # function returning dict
+                    'placeholder_formats': {   # dict of placeholder:format
+                        'cpu_usage': ':.2f',
+                    },
+                    'format_strings': ['format'],  # config settings to update
+                }
+            ],
+        }
+</code></pre>
+<p><strong>substitute_by_value</strong></p>
+<p>This allows one configuration parameter to set the value of another.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'substitute_by_value': [
+                {
+                    'param': 'mode',  # parameter to be checked for substitution
+                    'value': 'ascii_bar',  # value that will trigger the substitution
+                    'substitute': {
+                        'param': 'format',  # parameter to be updated
+                        'value': '{ascii_bar}',  # the value that will be set
+                    },
+                    'msg': 'obsolete parameter use `format = &quot;{ascii_bar}&quot;`',  #message
+                },
+            ],
+        }
+</code></pre>
+<p><strong>function</strong></p>
+<p>For more complex substitutions a function can be defined that will be
+called with the config as a parameter. This function must return a dict
+of key value pairs of parameters to update</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        # Create a function to be called
+        def deprecate_function(config):
+            # This function must return a dict
+            return {'thresholds': [
+                        (0, 'bad'),
+                        (config.get('threshold_bad', 20), 'degraded'),
+                        (config.get('threshold_degraded', 50), 'good'),
+                    ],
+            }
+
+        deprecated = {
+            'function': [
+                {
+                    'function': deprecate_function,  # function to be called
+                },
+            ],
+        }
+</code></pre>
+<p><strong>remove</strong></p>
+<p>The parameters will be removed.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'threshold_bad',  # name of parameter to remove
+                    'msg': 'obsolete set using thresholds parameter',  #message
+                },
+            ],
+        }
+</code></pre>
+<h2 id="updating-of-configuration-parameters">Updating of configuration parameters</h2>
+<p>Sometimes it is necessary to update configuration parameters. Modules
+are able to specify information about updates so that it can be done
+automatically. Config updating information is specified in the Meta
+class of a py3status module using the update_config attribute. The
+following types of updates are supported.</p>
+<p><strong>update_placeholder_format</strong></p>
+<p>This allows us to update the format of a placeholder in format strings.
+The key value pairs {placeholder: format} can be supplied as a dict in
+<code>placeholder_formats</code> or the dict can be provided by <code>function</code> the
+function will be called with the current config and must return a dict.
+If both are supplied then <code>placeholder_formats</code> will be updated using
+the dict supplied by the function.</p>
+<p>This is similar to the deprecation method but is to allow default
+formatting of placeholders to be set.</p>
+<p>In a module like sysdata we have placeholders eg <code>{cpu_usage}</code> this ends
+up having a value something like <code>20.542317173377157</code> which is strange
+as the value to use but gives the user the ability to have as much
+precision as they want. A module writer may decide that they want this
+displayed as <code>20.54</code> so <code>{cpu_usage:.2f}</code> would do this. Having a
+default format containing that just looks long/silly and the user
+setting a custom format just wants to do <code>format = 'CPU: {cpu_usage}%'</code>
+and get expected results ie not the full precision. If they don't like
+the default formatting of the number they could still do format = 'CPU:
+{cpu_usage:d}%' etc.</p>
+<p>So using this allows sensible defaults formatting and allows simple
+placeholders for user configurations.</p>
+<pre><code class="language-python">class Py3status:
+
+    class Meta:
+
+        update_config = {
+            'update_placeholder_format': [
+                {
+                    'placeholder_formats': {   # dict of placeholder:format
+                        'cpu_usage': ':.2f',
+                    },
+                    'format_strings': ['format'],  # config settings to update
+                }
+            ],
+        }
+</code></pre>
+<h2 id="module-testing">Module testing</h2>
+<p>Each module should be able to run independently for testing purposes.
+This is simply done by adding the following code to the bottom of your
+module.</p>
+<pre><code class="language-python">if __name__ == &quot;__main__&quot;:
+    &quot;&quot;&quot;
+    Run module in test mode.
+    &quot;&quot;&quot;
+    from py3status.module_test import module_test
+    module_test(Py3status)
+</code></pre>
+<p>If a specific config should be provided for the module test, this can be
+done as follows.</p>
+<pre><code class="language-python">if __name__ == &quot;__main__&quot;:
+    &quot;&quot;&quot;
+    Run module in test mode.
+    &quot;&quot;&quot;
+    config = {
+        'always_show': True,
+    }
+    from py3status.module_test import module_test
+    module_test(Py3status, config=config)
+</code></pre>
+<p>Such modules can then be tested independently by running
+<code>python /path/to/module.py</code>.</p>
+<pre><code class="language-bash">$ python loadavg.py
+[{'full_text': 'Loadavg ', 'separator': False,
+'separator_block_width': 0, 'cached_until': 1538755796.0},
+{'full_text': '1.87 1.73 1.87', 'color': '#9DD7FB'}]
+^C
+</code></pre>
+<p>We also can produce an output similar to i3bar output in terminal with
+<code>python /path/to/module.py --term</code>.</p>
+<pre><code class="language-bash">$ python loadavg.py --term
+Loadavg 1.41 1.61 1.82
+Loadavg 1.41 1.61 1.82
+Loadavg 1.41 1.61 1.82
+^C
+</code></pre>
+<h2 id="publishing-custom-modules-on-pypi">Publishing custom modules on PyPI</h2>
+<p>You can share your custom modules and make them available for py3status
+users even if they are not directly part of the py3status main project!</p>
+<p>All you have to do is to package your module and publish it to PyPI.</p>
+<p>py3status will discover custom modules if they are installed in the same
+host interpreter and if an entry_point in your package <code>setup.py</code> is
+defined:</p>
+<pre><code>setup(
+    entry_points={"py3status": ["module = package_name.py3status_module_name"]},
+)
+</code></pre>
+<p>The awesome pewpew module can be taken as an example on how to do it
+easily:</p>
+<ul>
+<li>Module repository: <a href="https://github.com/obestwalter/py3status-pewpew">https://github.com/obestwalter/py3status-pewpew</a></li>
+<li>Example setup.py:
+    <a href="https://github.com/obestwalter/py3status-pewpew/blob/master/setup.py">https://github.com/obestwalter/py3status-pewpew/blob/master/setup.py</a></li>
+</ul>
+<p>We will gladly add <code>extra_requires</code> pointing to your modules so that
+users can require them while installing py3status. Just open an issue to
+request this or propose a PR.</p>
+<p>If you have installed py3status in a virtualenv (maybe because your
+custom module has dependencies that need to be available) you can also
+create an installable package from your module and publish it on PyPI.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To clearly identify your py3status package and for others to discover it easily
+it is recommended to name the PyPI package <code>py3status-&lt;your module name&gt;</code>.</p>
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/ultrabug/py3status" target="_blank" rel="noopener" title="py3status on Github" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.indexes", "navigation.sections", "navigation.tabs", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.aecac24b.min.js"></script>
+      
+    
+  </body>
+</html>

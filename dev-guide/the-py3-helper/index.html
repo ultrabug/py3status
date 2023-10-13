@@ -1,0 +1,1494 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ultrabug.github.io/py3status/dev-guide/the-py3-helper/">
+      
+      
+        <link rel="prev" href="../writing-modules/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.5">
+    
+    
+      
+        <title>The Py3 Module Helper - Py3status</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6a10b989.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.356b1318.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:300,300i,400,400i,700,700i%7CUbuntu+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Ubuntu";--md-code-font:"Ubuntu Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-py3-module-helper" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Py3status" class="md-header__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Py3status
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              The Py3 Module Helper
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user-guide/installation/" class="md-tabs__link">
+          
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../writing-modules/" class="md-tabs__link">
+          
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Py3status" class="md-nav__button md-logo" aria-label="Py3status" data-md-component="logo">
+      
+  <img src="../../assets/logomark.png" alt="logo">
+
+    </a>
+    Py3status
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ultrabug/py3status" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Available Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/remote-control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Controlling Py3status Remotely
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/user-contributed-conf-examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    User Configuration Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../writing-modules/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Py3status Modules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    The Py3 Module Helper
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    The Py3 Module Helper
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    Constants
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cache_forever" class="md-nav__link">
+    CACHE_FOREVER
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log_error" class="md-nav__link">
+    LOG_ERROR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log_info" class="md-nav__link">
+    LOG_INFO
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log_warning" class="md-nav__link">
+    LOG_WARNING
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exceptions" class="md-nav__link">
+    Exceptions
+  </a>
+  
+    <nav class="md-nav" aria-label="Exceptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#commanderror" class="md-nav__link">
+    CommandError
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#py3exception" class="md-nav__link">
+    Py3Exception
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requestexception" class="md-nav__link">
+    RequestException
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requestinvalidjson" class="md-nav__link">
+    RequestInvalidJSON
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requesttimeout" class="md-nav__link">
+    RequestTimeout
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requesturlerror" class="md-nav__link">
+    RequestURLError
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    Methods
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check_commandscmd_list" class="md-nav__link">
+    check_commands(cmd_list)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command_outputcommand-shellfalse-capture_stderrfalse-localizedfalse" class="md-nav__link">
+    command_output(command, shell=False, capture_stderr=False, localized=False)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command_runcommand" class="md-nav__link">
+    command_run(command)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composite_createitem" class="md-nav__link">
+    composite_create(item)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composite_joinseparator-items" class="md-nav__link">
+    composite_join(separator, items)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composite_updateitem-update_dict-softfalse" class="md-nav__link">
+    composite_update(item, update_dict, soft=False)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errormsg-timeoutnone" class="md-nav__link">
+    error(msg, timeout=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatten_dictd-delimiter-intermediatesfalse-parent_keynone" class="md-nav__link">
+    flatten_dict(d, delimiter='-', intermediates=False, parent_key=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format_containsformat_string-names" class="md-nav__link">
+    format_contains(format_string, names)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format_unitsvalue-unitb-optimal5-autotrue-sifalse" class="md-nav__link">
+    format_units(value, unit='B', optimal=5, auto=True, si=False)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_color_names_listformat_string-matchesnone" class="md-nav__link">
+    get_color_names_list(format_string, matches=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_composite_stringformat_string" class="md-nav__link">
+    get_composite_string(format_string)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_outputmodule_name" class="md-nav__link">
+    get_output(module_name)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_placeholder_formats_listformat_string" class="md-nav__link">
+    get_placeholder_formats_list(format_string)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_placeholders_listformat_string-matchesnone" class="md-nav__link">
+    get_placeholders_list(format_string, matches=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_wm_msg" class="md-nav__link">
+    get_wm_msg()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i3s_config" class="md-nav__link">
+    i3s_config()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is_colorcolor" class="md-nav__link">
+    is_color(color)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is_compositeitem" class="md-nav__link">
+    is_composite(item)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is_my_eventevent" class="md-nav__link">
+    is_my_event(event)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logmessage-levelinfo" class="md-nav__link">
+    log(message, level='info')
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notify_usermsg-levelinfo-rate_limit5-titlenone-iconnone" class="md-nav__link">
+    notify_user(msg, level='info', rate_limit=5, title=None, icon=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#play_soundsound_file" class="md-nav__link">
+    play_sound(sound_file)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prevent_refresh" class="md-nav__link">
+    prevent_refresh()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register_functionfunction_name-function" class="md-nav__link">
+    register_function(function_name, function)
+  </a>
+  
+    <nav class="md-nav" aria-label="register_function(function_name, function)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#content_function" class="md-nav__link">
+    content_function()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#urgent_functionmodule_names" class="md-nav__link">
+    urgent_function(module_names)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requesturl-paramsnone-datanone-headersnone-timeoutnone-authnone-cookiejarnone-retry_timesnone-retry_waitnone" class="md-nav__link">
+    request(url, params=None, data=None, headers=None, timeout=None, auth=None, cookiejar=None, retry_times=None, retry_wait=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safe_formatformat_string-param_dictnone-force_compositefalse-attr_getternone-max_widthnone" class="md-nav__link">
+    safe_format(format_string, param_dict=None, force_composite=False, attr_getter=None, max_width=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop_sound" class="md-nav__link">
+    stop_sound()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage_delkeynone" class="md-nav__link">
+    storage_del(key=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage_getkey" class="md-nav__link">
+    storage_get(key)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage_items" class="md-nav__link">
+    storage_items()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage_keys" class="md-nav__link">
+    storage_keys()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage_setkey-value" class="md-nav__link">
+    storage_set(key, value)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threshold_get_colorvalue-namenone" class="md-nav__link">
+    threshold_get_color(value, name=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_insecondsnone-sync_tonone-offset0" class="md-nav__link">
+    time_in(seconds=None, sync_to=None, offset=0)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trigger_eventmodule_name-event" class="md-nav__link">
+    trigger_event(module_name, event)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updatemodule_namenone" class="md-nav__link">
+    update(module_name=None)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update_placeholder_formatsformat_string-formats" class="md-nav__link">
+    update_placeholder_formats(format_string, formats)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing to Py3status
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="the-py3-module-helper">The py3 module helper</h1>
+<p>The Py3 module is a special helper object that gets injected into py3status
+modules, providing extra functionality. A module can access it via the
+<code>self.py3</code> instance attribute of its py3status class.</p>
+<h2 id="constants">Constants</h2>
+<h3 id="cache_forever">CACHE_FOREVER</h3>
+<p>Special constant that when returned for <code>cached_until</code> will cause the
+module to not update unless externally triggered.</p>
+<h3 id="log_error">LOG_ERROR</h3>
+<p>Show as Error</p>
+<h3 id="log_info">LOG_INFO</h3>
+<p>Show as Informational</p>
+<h3 id="log_warning">LOG_WARNING</h3>
+<p>Show as Warning</p>
+<h2 id="exceptions">Exceptions</h2>
+<h3 id="commanderror">CommandError</h3>
+<p>An error occurred running the given command.</p>
+<p>This exception provides some additional attributes</p>
+<p><code>error_code</code>: The error code returned from the call</p>
+<p><code>output</code>: Any output returned by the call</p>
+<p><code>error</code>: Any error output returned by the call</p>
+<h3 id="py3exception">Py3Exception</h3>
+<p>Base Py3 exception class.  All custom Py3 exceptions derive from this
+class.</p>
+<h3 id="requestexception">RequestException</h3>
+<p>A Py3.request() base exception.  This will catch any of the more specific
+exceptions.</p>
+<h3 id="requestinvalidjson">RequestInvalidJSON</h3>
+<p>The request has not returned valid JSON</p>
+<h3 id="requesttimeout">RequestTimeout</h3>
+<p>A timeout has occurred during a request made via Py3.request().</p>
+<h3 id="requesturlerror">RequestURLError</h3>
+<p>A URL related error has occurred during a request made via Py3.request().</p>
+<h2 id="methods">Methods</h2>
+<h3 id="check_commandscmd_list">check_commands(cmd_list)</h3>
+<p>Checks to see if commands in list are available using shutil.which().</p>
+<p>returns the first available command.</p>
+<p>If a string is passed then that command will be checked for.</p>
+<h3 id="command_outputcommand-shellfalse-capture_stderrfalse-localizedfalse">command_output(command, shell=False, capture_stderr=False, localized=False)</h3>
+<p>Run a command and return its output as unicode.
+The command can either be supplied as a sequence or string.</p>
+<p>:param command: command to run can be a str or list
+:param shell: if <code>True</code> then command is run through the shell
+:param capture_stderr: if <code>True</code> then STDERR is piped to STDOUT
+:param localized: if <code>False</code> then command is forced to use its default (English) locale</p>
+<p>A CommandError is raised if an error occurs</p>
+<h3 id="command_runcommand">command_run(command)</h3>
+<p>Runs a command and returns the exit code.
+The command can either be supplied as a sequence or string.</p>
+<p>An Exception is raised if an error occurs</p>
+<h3 id="composite_createitem">composite_create(item)</h3>
+<p>Create and return a Composite.</p>
+<p>The item may be a string, dict, list of dicts or a Composite.</p>
+<h3 id="composite_joinseparator-items">composite_join(separator, items)</h3>
+<p>Join a list of items with a separator.
+This is used in joining strings, responses and Composites.</p>
+<p>A Composite object will be returned.</p>
+<h3 id="composite_updateitem-update_dict-softfalse">composite_update(item, update_dict, soft=False)</h3>
+<p>Takes a Composite (item) if item is a type that can be converted into a
+Composite then this is done automatically.  Updates all entries it the
+Composite with values from update_dict.  Updates can be soft in which
+case existing values are not overwritten.</p>
+<p>A Composite object will be returned.</p>
+<h3 id="errormsg-timeoutnone">error(msg, timeout=None)</h3>
+<p>Raise an error for the module.</p>
+<p>:param msg: message to be displayed explaining the error
+:param timeout: how long before we should retry.  For permanent errors
+    <code>py3.CACHE_FOREVER</code> should be returned.  If not supplied then the
+    modules <code>cache_timeout</code> will be used.</p>
+<h3 id="flatten_dictd-delimiter-intermediatesfalse-parent_keynone">flatten_dict(d, delimiter='-', intermediates=False, parent_key=None)</h3>
+<p>Flatten a dictionary.</p>
+<p>Values that are dictionaries are flattened using delimiter in between
+(eg. parent-child)</p>
+<p>Values that are lists are flattened using delimiter
+followed by the index (eg. parent-0)</p>
+<p>example:</p>
+<pre><code>{
+    'fish_facts': {
+        'sharks': 'Most will drown if they stop moving',
+        'skates': 'More than 200 species',
+    },
+    'fruits': ['apple', 'peach', 'watermelon'],
+    'number': 52
+}
+
+# becomes
+
+{
+    'fish_facts-sharks': 'Most will drown if they stop moving',
+    'fish_facts-skates': 'More than 200 species',
+    'fruits-0': 'apple',
+    'fruits-1': 'peach',
+    'fruits-2': 'watermelon',
+    'number': 52
+}
+
+# if intermediates is True then we also get unflattened elements
+# as well as the flattened ones.
+
+{
+    'fish_facts': {
+        'sharks': 'Most will drown if they stop moving',
+        'skates': 'More than 200 species',
+    },
+    'fish_facts-sharks': 'Most will drown if they stop moving',
+    'fish_facts-skates': 'More than 200 species',
+    'fruits': ['apple', 'peach', 'watermelon'],
+    'fruits-0': 'apple',
+    'fruits-1': 'peach',
+    'fruits-2': 'watermelon',
+    'number': 52
+}
+</code></pre>
+<h3 id="format_containsformat_string-names">format_contains(format_string, names)</h3>
+<p>Determines if <code>format_string</code> contains a placeholder string <code>names</code>
+or a list of placeholders <code>names</code>.</p>
+<p><code>names</code> is tested against placeholders using fnmatch so the following
+patterns can be used:</p>
+<pre><code>*       matches everything
+?       matches any single character
+[seq]   matches any character in seq
+[!seq]  matches any character not in seq
+</code></pre>
+<p>This is useful because a simple test like
+<code>'{placeholder}' in format_string</code>
+will fail if the format string contains placeholder formatting
+eg <code>'{placeholder:.2f}'</code></p>
+<h3 id="format_unitsvalue-unitb-optimal5-autotrue-sifalse">format_units(value, unit='B', optimal=5, auto=True, si=False)</h3>
+<p>Takes a value and formats it for user output, we can choose the unit to
+use eg B, MiB, kbits/second.  This is mainly for use with bytes/bits it
+converts the value into a human readable form.  It has various
+additional options but they are really only for special cases.</p>
+<p>The function returns a tuple containing the new value (this is a number
+so that the user can still format it if required) and a unit that is
+the units that we have been converted to.</p>
+<p>By supplying unit to the function we can force those units to be used
+eg <code>unit=KiB</code> would force the output to be in Kibibytes.  By default we
+use non-si units but if the unit is si eg kB then we will switch to si
+units.  Units can also be things like <code>Mbit/sec</code>.</p>
+<p>If the auto parameter is False then we use the unit provided.  This
+only makes sense when the unit is singular eg 'Bytes' and we want the
+result in bytes and not say converted to MBytes.</p>
+<p>optimal is used to control the size of the output value.  We try to
+provide an output value of that number of characters (including decimal
+point), it may also be less due to rounding.  If a fixed unit is used
+the output may be more than this number of characters.</p>
+<h3 id="get_color_names_listformat_string-matchesnone">get_color_names_list(format_string, matches=None)</h3>
+<p>Returns a list of color names in <code>format_string</code>.</p>
+<ul>
+<li><strong><em>format_string</em></strong>: Accepts a format string.</li>
+<li><strong><em>matches</em></strong>: Filter results with a string or a list of strings.</li>
+</ul>
+<p>If <code>matches</code> is provided then it is used to filter the result
+using fnmatch so the following patterns can be used:</p>
+<pre><code>*       matches everything
+?       matches any single character
+[seq]   matches any character in seq
+[!seq]  matches any character not in seq
+</code></pre>
+<h3 id="get_composite_stringformat_string">get_composite_string(format_string)</h3>
+<p>Return a string from a Composite.</p>
+<h3 id="get_outputmodule_name">get_output(module_name)</h3>
+<p>Return the output of the named module.  This will be a list.</p>
+<h3 id="get_placeholder_formats_listformat_string">get_placeholder_formats_list(format_string)</h3>
+<p>Parses the format_string and returns a list of tuples
+[(placeholder, format), ...].</p>
+<p>eg <code>'{placeholder:.2f}'</code> will give <code>[('placeholder', ':.2f')]</code></p>
+<h3 id="get_placeholders_listformat_string-matchesnone">get_placeholders_list(format_string, matches=None)</h3>
+<p>Returns a list of placeholders in <code>format_string</code>.</p>
+<p>If <code>matches</code> is provided then it is used to filter the result
+using fnmatch so the following patterns can be used:</p>
+<pre><code>*       matches everything
+?       matches any single character
+[seq]   matches any character in seq
+[!seq]  matches any character not in seq
+</code></pre>
+<p>This is useful because we just get simple placeholder without any
+formatting that may be applied to them
+eg <code>'{placeholder:.2f}'</code> will give <code>['{placeholder}']</code></p>
+<h3 id="get_wm_msg">get_wm_msg()</h3>
+<p>Return the control program of the current window manager.</p>
+<p>On i3, will return "i3-msg"
+On sway, will return "swaymsg"</p>
+<h3 id="i3s_config">i3s_config()</h3>
+<p>returns the i3s_config dict.</p>
+<h3 id="is_colorcolor">is_color(color)</h3>
+<p>Tests to see if a color is defined.
+Because colors can be set to None in the config and we want this to be
+respected in an expression like.</p>
+<pre><code class="language-python">color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
+</code></pre>
+<p>The color is treated as True but sometimes we want to know if the color
+has a value set in which case the color should count as False.  This
+function is a helper for this second case.</p>
+<h3 id="is_compositeitem">is_composite(item)</h3>
+<p>Check if item is a Composite and return True if it is.</p>
+<h3 id="is_my_eventevent">is_my_event(event)</h3>
+<p>Checks if an event triggered belongs to the module receiving it.  This
+is mainly for containers who will also receive events from any children
+they have.</p>
+<p>Returns True if the event name and instance match that of the module
+checking.</p>
+<h3 id="logmessage-levelinfo">log(message, level='info')</h3>
+<p>Log the message.
+The level must be one of LOG_ERROR, LOG_INFO or LOG_WARNING</p>
+<h3 id="notify_usermsg-levelinfo-rate_limit5-titlenone-iconnone">notify_user(msg, level='info', rate_limit=5, title=None, icon=None)</h3>
+<p>Send a notification to the user.
+level must be 'info', 'error' or 'warning'.
+rate_limit is the time period in seconds during which this message
+should not be repeated.
+icon must be an icon path or icon name.</p>
+<h3 id="play_soundsound_file">play_sound(sound_file)</h3>
+<p>Plays sound_file if possible.</p>
+<h3 id="prevent_refresh">prevent_refresh()</h3>
+<p>Calling this function during the on_click() method of a module will
+request that the module is not refreshed after the event. By default
+the module is updated after the on_click event has been processed.</p>
+<h3 id="register_functionfunction_name-function">register_function(function_name, function)</h3>
+<p>Register a function for the module.</p>
+<p>The following functions can be registered:</p>
+<h4 id="content_function">content_function()</h4>
+<p>Called to discover what modules a container is displaying.  This is
+used to determine when updates need passing on to the container and
+also when modules can be put to sleep.</p>
+<p>the function must return a set of module names that are being
+displayed.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function should only be used by containers.</p>
+</div>
+<h4 id="urgent_functionmodule_names">urgent_function(module_names)</h4>
+<p>This function will be called when one of the contents of a container
+has changed from a non-urgent to an urgent state.  It is used by the
+group module to switch to displaying the urgent module.</p>
+<p><code>module_names</code> is a list of modules that have become urgent</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function should only be used by containers.</p>
+</div>
+<h3 id="requesturl-paramsnone-datanone-headersnone-timeoutnone-authnone-cookiejarnone-retry_timesnone-retry_waitnone">request(url, params=None, data=None, headers=None, timeout=None, auth=None, cookiejar=None, retry_times=None, retry_wait=None)</h3>
+<p>Make a request to a url and retrieve the results.</p>
+<p>If the headers parameter does not provide an 'User-Agent' key, one will
+be added automatically following the convention:</p>
+<pre><code>py3status/&lt;version&gt; &lt;per session random uuid&gt;
+</code></pre>
+<ul>
+<li>url: url to request eg <code>http://example.com</code></li>
+<li>params: extra query string parameters as a dict</li>
+<li>data: POST data as a dict.  If this is not supplied the GET method will be used</li>
+<li>headers: http headers to be added to the request as a dict</li>
+<li>timeout: timeout for the request in seconds</li>
+<li>auth: authentication info as tuple <code>(username, password)</code></li>
+<li>cookiejar: an object of a CookieJar subclass</li>
+<li>retry_times: how many times to retry the request</li>
+<li>retry_wait: how long to wait between retries in seconds</li>
+</ul>
+<p>returns: HttpResponse</p>
+<h3 id="safe_formatformat_string-param_dictnone-force_compositefalse-attr_getternone-max_widthnone">safe_format(format_string, param_dict=None, force_composite=False, attr_getter=None, max_width=None)</h3>
+<p>Parser for advanced formatting.</p>
+<p>Unknown placeholders will be shown in the output eg <code>{foo}</code>.</p>
+<p>Square brackets <code>[]</code> can be used. The content of them will be removed
+from the output if there is no valid placeholder contained within.
+They can also be nested.</p>
+<p>A pipe (vertical bar) <code>|</code> can be used to divide sections the first
+valid section only will be shown in the output.</p>
+<p>A backslash <code>\</code> can be used to escape a character eg <code>\[</code> will show <code>[</code>
+in the output.</p>
+<p><code>\?</code> is special and is used to provide extra commands to the format
+string,  example <code>\?color=#FF00FF</code>. Multiple commands can be given
+using an ampersand <code>&amp;</code> as a separator, example <code>\?color=#FF00FF&amp;show</code>.</p>
+<p><code>\?if=&lt;placeholder&gt;</code> can be used to check if a placeholder exists. An
+exclamation mark <code>!</code> after the equals sign <code>=</code> can be used to negate
+the condition.</p>
+<p><code>\?if=&lt;placeholder&gt;=&lt;value&gt;</code> can be used to determine if {<placeholder>}
+would be replaced with <value>. <code>[]</code> in <value> don't need to be escaped.</p>
+<p><code>{&lt;placeholder&gt;}</code> will be converted, or removed if it is None or empty.
+Formatting can also be applied to the placeholder Eg
+<code>{number:03.2f}</code>.</p>
+<p>example format_string:</p>
+<p><code>"[[{artist} - ]{title}]|{file}"</code>
+This will show <code>artist - title</code> if artist is present,
+<code>title</code> if title but no artist,
+and <code>file</code> if file is present but not artist or title.</p>
+<p>param_dict is a dictionary of placeholders that will be substituted.
+If a placeholder is not in the dictionary then if the py3status module
+has an attribute with the same name then it will be used.</p>
+<p>Composites can be included in the param_dict.</p>
+<p>The result returned from this function can either be a string in the
+case of simple parsing or a Composite if more complex.</p>
+<p>If force_composite parameter is True a composite will always be
+returned.</p>
+<p>attr_getter is a function that will when called with an attribute name
+as a parameter will return a value.</p>
+<p>max_width lets you to control the total max width of 'full_text' the
+module is allowed to output on the bar.</p>
+<h3 id="stop_sound">stop_sound()</h3>
+<p>Stops any currently playing sounds for this module.</p>
+<h3 id="storage_delkeynone">storage_del(key=None)</h3>
+<p>Remove the value stored with the key from storage.
+If key is not supplied then all values for the module are removed.</p>
+<h3 id="storage_getkey">storage_get(key)</h3>
+<p>Retrieve a value for the module.</p>
+<h3 id="storage_items">storage_items()</h3>
+<p>Return key, value pairs of the stored data for the module.</p>
+<p>Keys will contain the following metadata entries:
+- '_ctime': storage creation timestamp
+- '_mtime': storage last modification timestamp</p>
+<h3 id="storage_keys">storage_keys()</h3>
+<p>Return a list of the keys for values stored for the module.</p>
+<p>Keys will contain the following metadata entries:
+- '_ctime': storage creation timestamp
+- '_mtime': storage last modification timestamp</p>
+<h3 id="storage_setkey-value">storage_set(key, value)</h3>
+<p>Store a value for the module.</p>
+<h3 id="threshold_get_colorvalue-namenone">threshold_get_color(value, name=None)</h3>
+<p>Obtain color for a value using thresholds.</p>
+<p>The value will be checked against any defined thresholds.  These should
+have been set in the i3status configuration.  If more than one
+threshold is needed for a module then the name can also be supplied.
+If the user has not supplied a named threshold but has defined a
+general one that will be used.</p>
+<p>If the gradients config parameter is True then rather than sharp
+thresholds we will use a gradient between the color values.</p>
+<ul>
+<li>value: numerical value to be graded</li>
+<li>name: accepts a string, otherwise 'threshold'
+    accepts 3-tuples to allow name with different
+    values eg ('name', 'key', 'thresholds')</li>
+</ul>
+<h3 id="time_insecondsnone-sync_tonone-offset0">time_in(seconds=None, sync_to=None, offset=0)</h3>
+<p>Returns the time a given number of seconds into the future.  Helpful
+for creating the <code>cached_until</code> value for the module output.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>from version 3.1 modules no longer need to explicitly set a
+<code>cached_until</code> in their response unless they wish to directly control
+it.</p>
+</div>
+<ul>
+<li>
+<p>seconds: specifies the number of seconds that should occur before the
+    update is required.  Passing a value of <code>CACHE_FOREVER</code> returns
+    <code>CACHE_FOREVER</code> which can be useful for some modules.</p>
+</li>
+<li>
+<p>sync_to: causes the update to be synchronized to a time period.  1 would
+    cause the update on the second, 60 to the nearest minute. By default we
+    synchronize to the nearest second. 0 will disable this feature.</p>
+</li>
+<li>
+<p>offset: is used to alter the base time used. A timer that started at a
+    certain time could set that as the offset and any synchronization would
+    then be relative to that time.</p>
+</li>
+</ul>
+<h3 id="trigger_eventmodule_name-event">trigger_event(module_name, event)</h3>
+<p>Trigger an event on a named module.</p>
+<h3 id="updatemodule_namenone">update(module_name=None)</h3>
+<p>Update a module.  If module_name is supplied the module of that
+name is updated.  Otherwise the module calling is updated.</p>
+<h3 id="update_placeholder_formatsformat_string-formats">update_placeholder_formats(format_string, formats)</h3>
+<p>Update a format string adding formats if they are not already present.
+This is useful when for example a placeholder has a floating point
+value but by default we only want to show it to a certain precision.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/ultrabug/py3status" target="_blank" rel="noopener" title="py3status on Github" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.indexes", "navigation.sections", "navigation.tabs", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.aecac24b.min.js"></script>
+      
+    
+  </body>
+</html>
