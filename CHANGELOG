@@ -1,3 +1,8 @@
+version 3.54 (2023-10-13)
+* arch_updates module: handle yay return code better when there are no updates (#2214), by Geoff Liu
+* arch_updates module: make it more responsive to system updates (#2215), by Geoff Liu
+* battery_level module: fix code style
+
 version 3.53 (2023-09-10)
 * argparser: remove deprecated interval option (#2210), by lasers
 * new module playerctl: control players supported by playerctl (#2211), by Joey Holtzman
