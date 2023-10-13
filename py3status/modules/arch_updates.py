@@ -2,9 +2,13 @@
 Display number of pending updates for Arch Linux.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 600)
     format: display format for this module, otherwise auto (default None)
     hide_if_zero: don't show on bar if True (default False)
+    pacman_log_location: location of the pacman log (default '/var/log/pacman.log')
+    refresh_interval: interval (in seconds) between refreshing data from package
+        database or AUR. Note that this module may refresh sooner than the
+        specified interval, if pacman log is modified since the last refresh
+        time. (default 3600)
 
 Format placeholders:
     {aur} Number of pending aur updates
@@ -28,20 +32,34 @@ SAMPLE OUTPUT
 aur
 {'full_text': 'UPD: 15/4'}
 """
+import os
+import time
 
 STRING_NOT_INSTALLED = "{} not installed"
+CACHE_KEY_TEXT = "arch_updates_text"
+CACHE_KEY_TIMESTAMP = "arch_updates_timestamp"
 
 
 class Py3status:
     """ """
 
     # available configuration parameters
-    cache_timeout = 600
     format = None
     hide_if_zero = False
+    pacman_log_location = "/var/log/pacman.log"
+    refresh_interval = 3600
 
     class Meta:
-        deprecated = {"remove": [{"param": "include_aur", "msg": "obsolete"}]}
+        deprecated = {
+            "remove": [{"param": "include_aur", "msg": "obsolete"}],
+            "rename": [
+                {
+                    "param": "cache_timeout",
+                    "new": "refresh_interval",
+                    "msg": "cache_timeout has been renamed to refresh_interval",
+                }
+            ],
+        }
 
     def post_config_hook(self):
         helper = {
@@ -117,6 +135,36 @@ class Py3status:
             return None if ce.error else 0
 
     def arch_updates(self):
+        cached = self._get_cached_value()
+        if cached is not None:
+            return {"full_text": cached}
+
+        full_text = self._get_display_text()
+
+        self.py3.storage_set(CACHE_KEY_TEXT, full_text)
+        self.py3.storage_set(CACHE_KEY_TIMESTAMP, time.time())
+
+        return {"full_text": full_text}
+
+    def _get_cached_value(self):
+        text = self.py3.storage_get(CACHE_KEY_TEXT)
+        generated_at = self.py3.storage_get(CACHE_KEY_TIMESTAMP)
+
+        if text is None or generated_at is None:
+            return None
+
+        # If the log file has been updated since last refresh, the update number
+        # is likely no longer valid. We skip the cache here.
+        log_mtime = os.path.getmtime(self.pacman_log_location)
+        if generated_at < log_mtime:
+            return None
+
+        if generated_at + self.refresh_interval > time.time():
+            return text
+
+        return None
+
+    def _get_display_text(self):
         pacman, aur, total, full_text = None, None, None, ""
 
         if self._get_pacman_updates:
@@ -130,10 +178,7 @@ class Py3status:
             arch_data = {"aur": aur, "pacman": pacman, "total": total}
             full_text = self.py3.safe_format(self.format, arch_data)
 
-        return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": full_text,
-        }
+        return full_text
 
 
 if __name__ == "__main__":
