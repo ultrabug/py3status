@@ -100,3 +100,10 @@ line_length = 100
 [tool.ruff]
 line-length = 100
 ignore = ["E501"]
+
+[tool.hatch.envs.docs]
+dependencies = [
+    "mkdocs-material>=9.4.5",
+    "Pillow>=3.4.2",
+    "fonttools==4.24.4",
+]

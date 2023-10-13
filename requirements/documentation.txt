@@ -1,4 +1,0 @@
-Pillow>=3.4.2
-fonttools==4.24.4
-mkdocs==1.4.3
-pymdown-extensions==10.0

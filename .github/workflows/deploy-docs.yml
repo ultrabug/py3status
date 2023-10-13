@@ -1,0 +1,29 @@
+name: Deploy docs
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download source
+        uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade hatch
+      - name: Build site
+        run: hatch -e docs run mkdocs build
+      - name: Deploy to gh-pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: oprypin/push-to-gh-pages@v3
+        with:
+          publish_dir: site
+          commit_message: 'Generate docs: '
