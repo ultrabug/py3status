@@ -3,7 +3,6 @@
 # py3status
 
 ![CI](https://github.com/ultrabug/py3status/workflows/CI/badge.svg)
-![readthedocs](https://readthedocs.org/projects/py3status/badge/?version=latest)
 
 **py3status** is an extensible i3status wrapper written in Python.
 
