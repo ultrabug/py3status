@@ -1,6 +1,8 @@
-site_name: Py3status
+site_name: Py3status Documentation
 site_url: https://ultrabug.github.io/py3status
 repo_url: https://github.com/ultrabug/py3status
+
+copyright: Copyright © 2021-2023 Alexys Jacob
 
 theme:
   name: material
@@ -8,6 +10,7 @@ theme:
     text: Ubuntu
     code: Ubuntu Mono
   logo: assets/logomark.png
+  favicon: assets/favicon.ico
   palette:
     primary: black
   features:
