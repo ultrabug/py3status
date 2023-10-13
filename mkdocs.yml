@@ -3,14 +3,20 @@ site_url: https://ultrabug.github.io/py3status
 repo_url: https://github.com/ultrabug/py3status
 
 theme:
-  name: readthedocs
+  name: material
   font:
     text: Ubuntu
     code: Ubuntu Mono
-  icon:
-    logo: material/file-document-multiple
+  logo: assets/logomark.png
   palette:
-    primary: blue
+    primary: black
+  features:
+    - navigation.expand
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - toc.follow
+    - toc.integrate
 
 extra:
   social:
