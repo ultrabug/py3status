@@ -36,7 +36,8 @@ import os
 import time
 
 STRING_NOT_INSTALLED = "{} not installed"
-CACHE_KEY_TEXT = "arch_updates_text"
+CACHE_KEY_PACMAN = "arch_updates_pacman_count"
+CACHE_KEY_AUR = "arch_updates_aur_count"
 CACHE_KEY_TIMESTAMP = "arch_updates_timestamp"
 
 
@@ -135,22 +136,22 @@ class Py3status:
             return None if ce.error else 0
 
     def arch_updates(self):
-        cached = self._get_cached_value()
-        if cached is not None:
-            return {"full_text": cached}
+        counts = self._get_cached_value()
+        if counts is None:
+            counts = self._get_package_counts()
 
-        full_text = self._get_display_text()
+            self.py3.storage_set(CACHE_KEY_PACMAN, counts[0])
+            self.py3.storage_set(CACHE_KEY_AUR, counts[1])
+            self.py3.storage_set(CACHE_KEY_TIMESTAMP, time.time())
 
-        self.py3.storage_set(CACHE_KEY_TEXT, full_text)
-        self.py3.storage_set(CACHE_KEY_TIMESTAMP, time.time())
-
-        return {"full_text": full_text}
+        return {"full_text": self._format_display_text(*counts)}
 
     def _get_cached_value(self):
-        text = self.py3.storage_get(CACHE_KEY_TEXT)
+        pacman = self.py3.storage_get(CACHE_KEY_PACMAN)
+        aur = self.py3.storage_get(CACHE_KEY_AUR)
         generated_at = self.py3.storage_get(CACHE_KEY_TIMESTAMP)
 
-        if text is None or generated_at is None:
+        if pacman is None or aur is None or generated_at is None:
             return None
 
         # If the log file has been updated since last refresh, the update number
@@ -160,25 +161,26 @@ class Py3status:
             return None
 
         if generated_at + self.refresh_interval > time.time():
-            return text
+            return pacman, aur
 
         return None
 
-    def _get_display_text(self):
-        pacman, aur, total, full_text = None, None, None, ""
-
+    def _get_package_counts(self):
+        pacman, aur = None, None
         if self._get_pacman_updates:
-            pacman = self._get_pacman_updates()
+            pacman = self._get_pacman_updates() or 0
         if self._get_aur_updates:
-            aur = self._get_aur_updates()
-        if pacman is not None or aur is not None:
-            total = (pacman or 0) + (aur or 0)
+            aur = self._get_aur_updates() or 0
 
-        if not (self.hide_if_zero and not total):
-            arch_data = {"aur": aur, "pacman": pacman, "total": total}
-            full_text = self.py3.safe_format(self.format, arch_data)
+        return pacman, aur
 
-        return full_text
+    def _format_display_text(self, pacman, aur):
+        total = pacman + aur
+        if self.hide_if_zero and not total:
+            return ""
+
+        arch_data = {"aur": aur, "pacman": pacman, "total": total}
+        return self.py3.safe_format(self.format, arch_data)
 
 
 if __name__ == "__main__":
