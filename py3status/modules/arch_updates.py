@@ -2,7 +2,7 @@
 Display number of pending updates for Arch Linux.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 600)
+    cache_timeout: refresh interval for this module (default 3600)
     format: display format for this module, otherwise auto (default None)
     hide_if_zero: don't show on bar if True (default False)
 
@@ -18,6 +18,10 @@ Requires:
     yay: yet another yogurt. pacman wrapper and aur helper written in go
     paru: feature packed AUR helper
     pikaur: pacman wrapper and AUR helper written in python
+
+Note:
+    py3status for Arch-based distributions should include an alpm hook
+    to refresh this module after packages and/or files being modified.
 
 @author Iain Tatch <iain.tatch@gmail.com>
 @license BSD
@@ -36,7 +40,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
-    cache_timeout = 600
+    cache_timeout = 3600
     format = None
     hide_if_zero = False
 
