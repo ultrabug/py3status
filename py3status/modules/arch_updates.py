@@ -100,7 +100,7 @@ class Py3status:
 
     def _get_auracle_updates(self):
         try:
-            updates = self.py3.command_output(["auracle", "sync"])
+            updates = self.py3.command_output(["auracle", "outdated"])
             return len(updates.splitlines())
         except self.py3.CommandError as ce:
             return None if ce.error else 0
