@@ -89,7 +89,7 @@ SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'Microsoft Bluetooth Notebook Mouse 5000'}
 """
 
-from gi.repository import Gio
+from gi.repository import Gio, GLib
 
 
 class Py3status:
@@ -105,12 +105,7 @@ class Py3status:
     thresholds = [(False, "bad"), (True, "good")]
 
     def post_config_hook(self):
-        bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
-        iface = "org.freedesktop.DBus.ObjectManager"
-        self.bluez_manager = Gio.DBusProxy.new_sync(
-            bus, Gio.DBusProxyFlags.NONE, None, "org.bluez", "/", iface, None
-        )
-
+        self._dbus_init()
         self.names_and_matches = [
             ("adapters", "org.bluez.Adapter1"),
             ("devices", "org.bluez.Device1"),
@@ -120,8 +115,23 @@ class Py3status:
         for name in ["format", "format_adapter", "format_device"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
+    def _dbus_init(self):
+        bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+        iface = "org.freedesktop.DBus.ObjectManager"
+        self.bluez_manager = Gio.DBusProxy.new_sync(
+            bus, Gio.DBusProxyFlags.NONE, None, "org.bluez", "/", iface, None
+        )
+
     def _get_bluez_data(self):
-        objects = self.bluez_manager.GetManagedObjects()
+        try:
+            objects = self.bluez_manager.GetManagedObjects()
+        except GLib.Error as err:
+            if err.matches(Gio.dbus_error_quark(), Gio.DBusError.SERVICE_UNKNOWN):
+                self._dbus_init()
+                objects = self.bluez_manager.GetManagedObjects()
+            else:
+                raise
+
         temporary = {}
 
         for path, interfaces in sorted(objects.items()):
