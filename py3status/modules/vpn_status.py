@@ -10,12 +10,19 @@ Configuration parameters:
     check_pid: If True, act just like the default i3status module.
         (default False)
     format: Format of the output.
-        (default 'VPN: {name}|VPN: no')
+        (default 'VPN: {format_vpn}|VPN: no')
+    format_vpn: display format for vpns (default '{name}')
+    format_vpn_separator: show separator if more than one VPN (default ', ')
     pidfile: Same as i3status pidfile, checked when check_pid is True.
         (default '/sys/class/net/vpn0/dev_id')
 
 Format placeholders:
+    {format_vpn} format for VPNs
+
+Format VPN placeholders:
     {name} The name and/or status of the VPN.
+    {ipv4} The IPv4 address of the VPN
+    {ipv6} The IPv6 address of the VPN
 
 Color options:
     color_bad: VPN connected
@@ -28,7 +35,7 @@ Requires:
 @author Nathan Smith <nathan AT praisetopia.org>
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'VPN: yes'}
+{'color': '#00FF00', 'full_text': u'VPN: vpn0, tun0'}
 
 off
 {'color': '#FF0000', 'full_text': u'VPN: no'}
@@ -49,7 +56,9 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 10
     check_pid = False
-    format = "VPN: {name}|VPN: no"
+    format = "VPN: {format_vpn}|VPN: no"
+    format_vpn = "{name}"
+    format_vpn_separator = ", "
     pidfile = "/sys/class/net/vpn0/dev_id"
 
     def post_config_hook(self):
@@ -107,7 +116,7 @@ class Py3status:
         sleep(0.3)
         # Check if any active connections are a VPN
         bus = dbus.SystemBus()
-        ids = []
+        vpns = []
         for name in self.active:
             manager = bus.get_object(
                 "org.freedesktop.NetworkManager",
@@ -116,13 +125,30 @@ class Py3status:
             interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
             try:
                 properties = interface.GetAll("org.freedesktop.NetworkManager.Connection.Active")
-                if properties.get("Vpn") or properties.get("Type") == "wireguard":
-                    ids.append(properties.get("Id"))
+                if properties.get("Vpn") or properties.get("Type") in ("wireguard", "tun"):
+                    ipv4, ipv6 = self._get_ips(bus, properties["Connection"])
+                    vpns.append({"name": properties.get("Id"), "ipv4": ipv4, "ipv6": ipv6})
             except dbus.DBusException:
                 # the connection id has disappeared
                 pass
-        # No active VPN
-        return ids
+
+        return vpns
+
+    def _get_ips(self, bus, connection_path):
+        conn = bus.get_object("org.freedesktop.NetworkManager", connection_path)
+        interface = dbus.Interface(conn, "org.freedesktop.NetworkManager.Settings.Connection")
+
+        settings = interface.GetSettings()
+        ipv4 = self._get_ip(settings["ipv4"])
+        ipv6 = self._get_ip(settings["ipv6"])
+        return ipv4, ipv6
+
+    def _get_ip(self, ip_settings):
+        address_data = ip_settings["address-data"]
+        if address_data:
+            return address_data[0].get("address")
+
+        return None
 
     def _check_pid(self):
         """Returns True if pidfile exists, False otherwise."""
@@ -136,25 +162,27 @@ class Py3status:
         if not self.check_pid and not self.thread_started:
             self._start_handler_thread()
 
-        # Set color_bad as default output. Replaced if VPN active.
-        name = None
-        color = self.py3.COLOR_BAD
+        vpns = []
 
         # If we are acting like the default i3status module
         if self.check_pid:
             if self._check_pid():
-                name = "yes"
-                color = self.py3.COLOR_GOOD
+                format_vpn = self.py3.safe_format(self.format_vpn, {"name": "yes"})
+                vpns.append(format_vpn)
 
         # Otherwise, find the VPN name, if it is active
         else:
-            vpn = self._get_vpn_status()
-            if vpn:
-                name = ", ".join(vpn)
-                color = self.py3.COLOR_GOOD
+            vpn_info = self._get_vpn_status()
+            for vpn in vpn_info:
+                format_vpn = self.py3.safe_format(self.format_vpn, vpn)
+                vpns.append(format_vpn)
+
+        color = self.py3.COLOR_GOOD if vpns else self.py3.COLOR_BAD
 
         # Format and create the response dict
-        full_text = self.py3.safe_format(self.format, {"name": name})
+        format_vpn_separator = self.py3.safe_format(self.format_vpn_separator)
+        format_vpns = self.py3.composite_join(format_vpn_separator, vpns)
+        full_text = self.py3.safe_format(self.format, {"format_vpn": format_vpns})
         response = {
             "full_text": full_text,
             "color": color,
