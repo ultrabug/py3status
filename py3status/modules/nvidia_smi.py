@@ -163,12 +163,11 @@ if __name__ == "__main__":
         help_data = check_output(help_cmd.split()).decode()
 
         new_properties = []
-        e = ["Default", "Exclusive_Thread", "Exclusive_Process", "Prohibited"]
         for line in help_data.splitlines():
             if line.startswith('"'):
                 properties = line.split('"')[1::2]
                 for name in properties:
-                    if name not in e:
+                    if ":" not in name:
                         new_properties.append(name)
 
         properties = ",".join(new_properties)
@@ -177,9 +176,10 @@ if __name__ == "__main__":
 
         new_gpus = []
         msg = "This GPU contains {} supported properties."
+        e = ["Not Supported", "N/A"]
         for line in gpu_data.splitlines():
             gpu = dict(zip(new_properties, line.split(", ")))
-            gpu = {k: v for k, v in gpu.items() if "[Not Supported]" not in v}
+            gpu = {k: v for k, v in gpu.items() if all(x not in v for x in e)}
             gpu["= " + msg.format(len(gpu))] = ""
             gpu["=" * (len(msg) + 2)] = ""
             new_gpus.append(gpu)
