@@ -28,7 +28,9 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = []
+dependencies = [
+    "setuptools; python_version >= '3.12'"
+]
 
 [project.optional-dependencies]
 dbus = [
