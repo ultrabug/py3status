@@ -31,6 +31,10 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
+dbus = [
+    "dbus-python==1.3.2",
+    "PyGObject==3.46.0",
+]
 udev = ["pyudev >= 0.21.0"]
 
 [project.urls]
