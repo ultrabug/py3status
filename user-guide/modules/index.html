@@ -9822,7 +9822,13 @@ using pydbus. Asynchronously updates on dbus signals unless check_pid is True.</
 </li>
 <li>
 <p><code>format</code> Format of the output.
-    <em>(default 'VPN: {name}|VPN: no')</em></p>
+    <em>(default 'VPN: {format_vpn}|VPN: no')</em></p>
+</li>
+<li>
+<p><code>format_vpn</code> display format for vpns <em>(default '{name}')</em></p>
+</li>
+<li>
+<p><code>format_vpn_separator</code> show separator if more than one VPN <em>(default ', ')</em></p>
 </li>
 <li>
 <p><code>pidfile</code> Same as i3status pidfile, checked when check_pid is True.
@@ -9831,7 +9837,19 @@ using pydbus. Asynchronously updates on dbus signals unless check_pid is True.</
 </ul>
 <p>Format placeholders:</p>
 <ul>
-<li><code>{name}</code> The name and/or status of the VPN.</li>
+<li><code>{format_vpn}</code> format for VPNs</li>
+</ul>
+<p>Format VPN placeholders:</p>
+<ul>
+<li>
+<p><code>{name}</code> The name and/or status of the VPN.</p>
+</li>
+<li>
+<p><code>{ipv4}</code> The IPv4 address of the VPN</p>
+</li>
+<li>
+<p><code>{ipv6}</code> The IPv6 address of the VPN</p>
+</li>
 </ul>
 <p>Color options:</p>
 <ul>
