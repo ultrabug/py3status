@@ -160,6 +160,7 @@ sensor_names
 ]
 """
 
+from collections import OrderedDict
 from fnmatch import fnmatch
 from json import loads
 
@@ -194,12 +195,12 @@ class Py3status:
 
         if self.chips:
             lm_sensors_data = self._get_lm_sensors_data()
-            chips = set()
+            chips = OrderedDict()
             for _filter in self.chips:
                 for chip_name in lm_sensors_data:
                     if fnmatch(chip_name, _filter):
-                        chips.add(_filter)
-            self.lm_sensors_command += chips
+                        chips[_filter] = None
+            self.lm_sensors_command += OrderedDict.keys(chips)
 
         self.sensors = {"list": [], "name": {}, "sensors": self.sensors}
 
@@ -225,7 +226,17 @@ class Py3status:
             self.thresholds_man.remove("auto.input")
 
     def _get_lm_sensors_data(self):
-        return loads(self.py3.command_output(self.lm_sensors_command))
+        output = self.py3.command_output(self.lm_sensors_command)
+        temporary = OrderedDict()
+
+        for chunk in output.strip().split("}\n{"):
+            if not chunk.startswith("{"):
+                chunk = "{" + chunk
+            if not chunk.endswith("}"):
+                chunk = chunk + "}"
+            temporary.update(loads(chunk))
+
+        return temporary
 
     def lm_sensors(self):
         lm_sensors_data = self._get_lm_sensors_data()
