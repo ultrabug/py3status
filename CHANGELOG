@@ -1,3 +1,17 @@
+version 3.55 (2024-01-12)
+* pkg: add dbus tag to pull dependencies 'pip install py3status[dbus]'
+* pkg: drop eol python 3.7 support, add python 3.12
+* pkg: pull setuptools for 3.12
+* docs(build): move away from readthedocs and switch to automatic github pages (#2216)
+* docs(config): add favicon and rename the site
+* readme: drop readthedocs build status
+* docs: fix broken 404 urls (#2223), by lasers
+* arch_updates module: update auracle from sync to outdated (#2220), by mlmatlock
+* bluetooth module: reinitialize dbus to fix after sleep behavior (#2221), by lasers
+* lm_sensors module: fix invalid json if specified more than one chip (#2226), by lasers
+* nvidia_smi module: fix --list-properties (#2225), by lasers
+* vpn_status module: add formatters for displaying IP addresses of VPNs (#2227), by Joey Holtzman
+
 version 3.54 (2023-10-13)
 * arch_updates module: handle yay return code better when there are no updates (#2214), by Geoff Liu
 * arch_updates module: make it more responsive to system updates (#2215), by Geoff Liu
