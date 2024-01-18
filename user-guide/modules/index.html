@@ -1909,19 +1909,13 @@ This will display a count of how many 'apt' updates are waiting to be installed.
 <p>Configuration parameters:</p>
 <ul>
 <li>
+<p><code>cache_timeout</code> refresh interval for this module <em>(default 3600)</em></p>
+</li>
+<li>
 <p><code>format</code> display format for this module, otherwise auto <em>(default None)</em></p>
 </li>
 <li>
 <p><code>hide_if_zero</code> don't show on bar if True <em>(default False)</em></p>
-</li>
-<li>
-<p><code>pacman_log_location</code> location of the pacman log <em>(default '/var/log/pacman.log')</em></p>
-</li>
-<li>
-<p><code>refresh_interval</code> interval (in seconds) between refreshing data from package
-    database or AUR. Note that this module may refresh sooner than the
-    specified interval, if pacman log is modified since the last refresh
-    time. <em>(default 3600)</em></p>
 </li>
 </ul>
 <p>Format placeholders:</p>
@@ -1957,6 +1951,9 @@ This will display a count of how many 'apt' updates are waiting to be installed.
 <p><code>pikaur</code> pacman wrapper and AUR helper written in python</p>
 </li>
 </ul>
+<p>Note:
+    py3status for Arch-based distributions should include an alpm hook
+    to refresh this module after packages and/or files being modified.</p>
 <p><strong>author</strong> Iain Tatch &lt;iain.tatch@gmail.com&gt;</p>
 <p><strong>license</strong> BSD</p>
 <h2 id="async_script">async_script</h2>
