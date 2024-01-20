@@ -229,6 +229,10 @@ RETIRED_MODULES = {
         "new": ["nvidia_smi"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
+    "player_control": {
+        "new": ["playerctl"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "scratchpad_async": {
         "new": ["scratchpad"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
