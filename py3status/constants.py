@@ -225,6 +225,10 @@ RETIRED_MODULES = {
         "new": ["coin_market"],
         "msg": "Module {old} is no longer available due to unmaintained APIs. You can try a different module {new}.",
     },
+    "clementine": {
+        "new": ["playerctl"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "gpmdp": {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
