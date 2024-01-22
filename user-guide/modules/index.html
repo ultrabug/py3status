@@ -636,6 +636,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dexcom" class="md-nav__link">
+    <span class="md-ellipsis">
+      dexcom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#diskdata" class="md-nav__link">
     <span class="md-ellipsis">
       diskdata
@@ -3318,6 +3327,89 @@ deadbeef {
 }
 </code></pre>
 <p><strong>author</strong> mrt-prodz</p>
+<h2 id="dexcom">dexcom</h2>
+<p><img alt="dexcom example 0" src="../screenshots/dexcom-0.png" /></p>
+<p>Display glucose readings from your Dexcom CGM system.</p>
+<p>Dexcom CGM systems provide glucose readings up to every five minutes. Designed
+to help diabetes patients keep track of their blood glucose levels with ease.</p>
+<p>Configuration parameters:</p>
+<ul>
+<li>
+<p><code>format</code> display format for this module
+    <em>(default "Dexcom [\?color=mg_dl {mg_dl} mg/dL {trend_arrow}] [\?color=darkgrey {datetime}]")</em></p>
+</li>
+<li>
+<p><code>format_datetime</code> specify strftime characters to format <em>(default {"datetime": "%-I:%M %p"})</em></p>
+</li>
+<li>
+<p><code>ous</code> specify whether if the Dexcom Share user is outside of the US <em>(default False)</em></p>
+</li>
+<li>
+<p><code>password</code> specify password for the Dexcom Share user <em>(default None)</em></p>
+</li>
+<li>
+<p><code>thresholds</code> specify color thresholds to use
+    <em>(default {
+    "mg_dl": [(55, "bad"), (70, "degraded"), (80, "good"), (130, "degraded"), (180, "bad")],
+    "mmol_l": [(3.1, "bad"), (3.9, "degraded"), (4.4, "good"), (7.2, "degraded"), (10.0, "bad")],
+    })</em></p>
+</li>
+<li>
+<p><code>username</code> specify username for the Dexcom Share user, not follower <em>(default None)</em></p>
+</li>
+</ul>
+<p>Format placeholders:</p>
+<ul>
+<li>
+<p><code>{mg_dl}</code> blood glucose value in mg/dL, eg 80</p>
+</li>
+<li>
+<p><code>{mmol_l}</code> blood glucose value in mmol/L, eg 4.4</p>
+</li>
+<li>
+<p><code>{trend}</code> blood glucose trend information, eg 4</p>
+</li>
+<li>
+<p><code>{trend_direction}</code> blood glucose trend direction, eg Flat</p>
+</li>
+<li>
+<p><code>{trend_description}</code> blood glucose trend information description, eg steady</p>
+</li>
+<li>
+<p><code>{trend_arrow}</code> blood glucose trend as unicode arrow, eg →</p>
+</li>
+<li>
+<p><code>{datetime}</code> glucose reading recorded time as datetime</p>
+</li>
+</ul>
+<p>format_datetime placeholders:</p>
+<ul>
+<li>
+<p><code>key</code> epoch_placeholder, eg {datetime}</p>
+</li>
+<li>
+<p><code>value</code> % strftime characters to be translated, eg '%b %d' ----&gt; 'Jan 1'</p>
+</li>
+</ul>
+<p>Color thresholds:</p>
+<ul>
+<li><code>xxx</code> print a color based on the value of <code>xxx</code> placeholder</li>
+</ul>
+<p>Requires:</p>
+<ul>
+<li><code>pydexcom</code> A simple Python API to interact with Dexcom Share service</li>
+</ul>
+<p>Notes:
+    IF GLUCOSE ALERTS AND CGM READINGS DO NOT MATCH SYMPTOMS OR EXPECTATIONS,
+    USE A BLOOD GLUCOSE METER TO MAKE DIABETES TREATMENT DECISIONS.</p>
+<p>Examples:</p>
+<pre><code># compact
+dexcom {
+    format = &quot;[\?color=mg_dl {mg_dl} {trend_arrow}][\?color=darkgrey {datetime}]&quot;
+    format_datetime = {&quot;datetime&quot;: &quot;%-I:%M&quot;}
+}
+</code></pre>
+<p><strong>author</strong> lasers</p>
 <h2 id="diskdata">diskdata</h2>
 <p><img alt="diskdata example 0" src="../screenshots/diskdata-0.png" /></p>
 <p>Display disk information.</p>
