@@ -582,15 +582,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#clementine" class="md-nav__link">
-    <span class="md-ellipsis">
-      clementine
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#clock" class="md-nav__link">
     <span class="md-ellipsis">
       clock
@@ -774,15 +765,6 @@
   <a href="#google_calendar" class="md-nav__link">
     <span class="md-ellipsis">
       google_calendar
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gpmdp" class="md-nav__link">
-    <span class="md-ellipsis">
-      gpmdp
     </span>
   </a>
   
@@ -1044,15 +1026,6 @@
   <a href="#pingdom" class="md-nav__link">
     <span class="md-ellipsis">
       pingdom
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#player_control" class="md-nav__link">
-    <span class="md-ellipsis">
-      player_control
     </span>
   </a>
   
@@ -2511,34 +2484,6 @@ bluetooth {
 </li>
 </ul>
 <p><strong>author</strong> obb, Moritz Lüdecke</p>
-<h2 id="clementine">clementine</h2>
-<p><img alt="clementine example 0" src="../screenshots/clementine-0.png" /></p>
-<p>Display song currently playing in Clementine.</p>
-<p>Configuration parameters:</p>
-<ul>
-<li>
-<p><code>cache_timeout</code> refresh interval for this module <em>(default 5)</em></p>
-</li>
-<li>
-<p><code>format</code> display format for this module <em>(default '♫ {current}')</em></p>
-</li>
-</ul>
-<p>Format placeholders:</p>
-<ul>
-<li><code>{current}</code> currently playing</li>
-</ul>
-<p>Requires:</p>
-<ul>
-<li>
-<p><code>clementine</code> a modern music player and library organizer</p>
-</li>
-<li>
-<p><code>qdbus</code> a communication-interface for qt-based applications
-    (may be part of qt5-tools)</p>
-</li>
-</ul>
-<p><strong>author</strong> Francois LASSERRE &lt;choiz@me.com&gt;</p>
-<p><strong>license</strong> GNU GPL https://www.gnu.org/licenses/gpl.html</p>
 <h2 id="clock">clock</h2>
 <p><img alt="clock example 0" src="../screenshots/clock-0.png" /></p>
 <p><img alt="clock example 1" src="../screenshots/clock-1-london.png" /></p>
@@ -4528,61 +4473,6 @@ google_calendar {
 }
 </code></pre>
 <p><strong>author</strong> Igor Grebenkov</p>
-<p><strong>license</strong> BSD</p>
-<h2 id="gpmdp">gpmdp</h2>
-<p><img alt="gpmdp example 0" src="../screenshots/gpmdp-0.png" /></p>
-<p>Display song currently playing in Google Play Music Desktop Player.</p>
-<p>Configuration parameters:</p>
-<ul>
-<li>
-<p><code>cache_timeout</code>  refresh interval for this module <em>(default 5)</em></p>
-</li>
-<li>
-<p><code>format</code>         specify the items and ordering of the data in the status bar.
-    These area 1:1 match to gpmdp-remote's options
-    <em>(default '♫ {info}')</em></p>
-</li>
-</ul>
-<p>Format placeholders:</p>
-<ul>
-<li>
-<p><code>{info}</code>            Print info about now playing song</p>
-</li>
-<li>
-<p><code>{title}</code>           Print current song title</p>
-</li>
-<li>
-<p><code>{artist}</code>          Print current song artist</p>
-</li>
-<li>
-<p><code>{album}</code>           Print current song album</p>
-</li>
-<li>
-<p><code>{album_art}</code>       Print current song album art URL</p>
-</li>
-<li>
-<p><code>{time_current}</code>    Print current song time in milliseconds</p>
-</li>
-<li>
-<p><code>{time_total}</code>      Print total song time in milliseconds</p>
-</li>
-<li>
-<p><code>{status}</code>          Print whether GPMDP is paused or playing</p>
-</li>
-<li>
-<p><code>{current}</code>         Print now playing song in "artist - song" format</p>
-</li>
-</ul>
-<p>Requires:</p>
-<ul>
-<li>
-<p><code>gpmdp</code> https://www.googleplaymusicdesktopplayer.com/</p>
-</li>
-<li>
-<p><code>gpmdp-remote</code> https://github.com/iandrewt/gpmdp-remote</p>
-</li>
-</ul>
-<p><strong>author</strong> Aaron Fields https://twitter.com/spirotot</p>
 <p><strong>license</strong> BSD</p>
 <h2 id="graphite">graphite</h2>
 <p><img alt="graphite example 0" src="../screenshots/graphite-0.png" /></p>
@@ -7055,50 +6945,6 @@ Pingdom API doc : https://www.pingdom.com/features/api/documentation/</p>
 <li><code>requests</code> https://pypi.python.org/pypi/requests</li>
 </ul>
 <p><strong>author</strong> ultrabug</p>
-<h2 id="player_control">player_control</h2>
-<p><img alt="player_control example 0" src="../screenshots/player_control-0.png" /></p>
-<p><img alt="player_control example 1" src="../screenshots/player_control-1-stop.png" /></p>
-<p><img alt="player_control example 2" src="../screenshots/player_control-2-pause.png" /></p>
-<p>Control Audacious or VLC media player.</p>
-<p>Provides an icon to control simple functions of audio/video players:
-  - start (left click)
-  - stop  (left click)
-  - pause (middle click)</p>
-<p>Configuration parameters:</p>
-<ul>
-<li>
-<p><code>cache_timeout</code> how often to update in seconds <em>(default 10)</em></p>
-</li>
-<li>
-<p><code>debug</code> enable verbose logging (bool) <em>(default False)</em></p>
-</li>
-<li>
-<p><code>format</code> format of the output <em>(default "{icon}")</em></p>
-</li>
-<li>
-<p><code>pause_icon</code> <em>(default '❚❚')</em></p>
-</li>
-<li>
-<p><code>play_icon</code> <em>(default '▶')</em></p>
-</li>
-<li>
-<p><code>stop_icon</code> <em>(default '◼')</em></p>
-</li>
-<li>
-<p><code>supported_players</code> supported players (str) (comma separated list)
-    <em>(default 'audacious,vlc')</em></p>
-</li>
-<li>
-<p><code>volume_tick</code> percentage volume change on mouse wheel (int) (positive number
-    or None to disable it) <em>(default 1)</em></p>
-</li>
-</ul>
-<p>Format placeholders:</p>
-<ul>
-<li><code>{icon}</code> an icon to control music/video players</li>
-</ul>
-<p><strong>author</strong> Federico Ceratto &lt;federico.ceratto@gmail.com&gt;, rixx</p>
-<p><strong>license</strong> BSD</p>
 <h2 id="playerctl">playerctl</h2>
 <p><img alt="playerctl example 0" src="../screenshots/playerctl-0.png" /></p>
 <p><img alt="playerctl example 1" src="../screenshots/playerctl-1-Paused.png" /></p>
