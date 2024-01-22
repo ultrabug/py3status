@@ -225,8 +225,20 @@ RETIRED_MODULES = {
         "new": ["coin_market"],
         "msg": "Module {old} is no longer available due to unmaintained APIs. You can try a different module {new}.",
     },
+    "clementine": {
+        "new": ["playerctl"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
+    "gpmdp": {
+        "new": ["playerctl"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "nvidia_temp": {
         "new": ["nvidia_smi"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
+    "player_control": {
+        "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
     "scratchpad_async": {
