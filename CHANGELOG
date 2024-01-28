@@ -1,3 +1,10 @@
+version 3.56 (2024-01-28)
+* remove audio modules in favor of playerctl (#2231), by lasers
+* new module dexcom:  display glucose readings from your Dexcom CGM system (#2229), by lasers
+* arch_updates module: hourly cache_timeout, add a note about alpm-hooks (#2219), by lasers
+* volume_status module: pamixer fix command if device is 0 (#2230), by Václav Kubernát
+* volume_status module: pamixer: Use default device if none specified (#2228), by Václav Kubernát
+
 version 3.55 (2024-01-12)
 * pkg: add dbus tag to pull dependencies 'pip install py3status[dbus]'
 * pkg: drop eol python 3.7 support, add python 3.12
