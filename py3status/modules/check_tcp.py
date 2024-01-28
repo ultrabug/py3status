@@ -24,6 +24,7 @@ SAMPLE OUTPUT
 down
 {'color': '#FF0000', 'full_text': u'localhost:22 DOWN'}
 """
+
 import socket
 
 

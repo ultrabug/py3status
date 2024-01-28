@@ -65,6 +65,7 @@ Paused
 Stopped
 {'color': '#FF0000', 'full_text': '.. This Song Has No Title - Elton John'}
 """
+
 import time
 from fnmatch import fnmatch
 from threading import Thread

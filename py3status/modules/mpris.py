@@ -101,6 +101,7 @@ SAMPLE OUTPUT
     {'color': '#00FF00', 'full_text': u'Happy Mondays - Fat Lady Wrestlers'}
 ]
 """
+
 import re
 import sys
 from datetime import timedelta

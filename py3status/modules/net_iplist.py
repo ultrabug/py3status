@@ -55,7 +55,6 @@ SAMPLE OUTPUT
  'full_text': u'Network: wls1: 192.168.1.3 fe80::f861:44bd:694a:b99c'}
 """
 
-
 import re
 from fnmatch import fnmatch
 

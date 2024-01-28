@@ -69,6 +69,7 @@ Color options:
 SAMPLE OUTPUT
 {'full_text': '412 req/s'}
 """
+
 from syslog import LOG_INFO, syslog
 
 from requests import get

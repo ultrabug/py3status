@@ -83,7 +83,6 @@ waiting
 {'color': '#FF0000', 'full_text': '.. cmus: waiting for user input'}
 """
 
-
 STRING_NOT_INSTALLED = "not installed"
 
 

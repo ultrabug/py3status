@@ -45,7 +45,6 @@ SAMPLE OUTPUT
 {'full_text': '826.4 mb'}
 """
 
-
 STRING_NOT_INSTALLED = "not installed"
 STRING_INVALID_TYPE = "invalid statistics_type"
 

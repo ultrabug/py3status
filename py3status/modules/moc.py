@@ -72,7 +72,6 @@ stopped
 {'color': '#FF0000', 'full_text': '[] moc'}
 """
 
-
 STRING_NOT_INSTALLED = "not installed"
 
 

@@ -61,6 +61,7 @@ OAuth:
 SAMPLE OUTPUT
 {'full_text': 'Mail: 36', 'color': '#00FF00'}
 """
+
 import imaplib
 from pathlib import Path
 from socket import error as socket_error

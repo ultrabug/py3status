@@ -37,7 +37,6 @@ SAMPLE OUTPUT
 {'color': '#FF0000', 'full_text': u'Time: 0 day 0:00 Cost: 0.13$'}
 """
 
-
 import time
 from pathlib import Path
 

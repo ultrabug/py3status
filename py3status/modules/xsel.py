@@ -33,7 +33,6 @@ SAMPLE OUTPUT
 {'full_text': 'selected text'}
 """
 
-
 import time
 from pathlib import Path
 
