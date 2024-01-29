@@ -14,7 +14,7 @@ Configuration parameters:
         (default 4)
     cache_timeout: How often we refresh this module in seconds (default 10)
     command: The program to use to change the backlight.
-        Currently xbacklight and light are supported. The program needs
+        Currently xbacklight, light and brightnessctl are supported. The program needs
         to be installed and on your path. If no program is installed, this
         module will attempt to use logind support instead
         (default 'xbacklight')
@@ -35,6 +35,7 @@ Format placeholders:
 Requires: one of
     xbacklight: need for changing brightness, not detection
     light: program to easily change brightness on backlight-controllers
+    brightnessctl: change brightness wayland compatible
     dbus-python + logind v243: logind to change brightness without X
 
 @author Tjaart van der Walt (github:tjaartvdwalt), Jérémy Rosen (github:boucman)
@@ -62,11 +63,18 @@ def get_device():
 commands = {
     "xbacklight": {
         "get": lambda: ["xbacklight", "-get"],
+        "get_percent": True,
         "set": lambda level: ["xbacklight", "-time", "0", "-set", str(level)],
     },
     "light": {
         "get": lambda: ["light", "-G"],
+        "get_percent": True,
         "set": lambda level: ["light", "-S", str(level)],
+    },
+    "brightnessctl": {
+        "get": lambda: ["brightnessctl", "g"],
+        "get_percent": False,
+        "set": lambda level: ["brightnessctl", "s", str(level) + "%"],
     },
 }
 
@@ -160,10 +168,15 @@ class Py3status:
 
     def _get_backlight_level(self):
         if self.command_available:
-            return float(self.py3.command_output(self._command_get()))
-        brightness = int(Path(f"{self.device}/brightness").read_text())
-        brightness_max = int(Path(f"{self.device}/max_brightness").read_text())
-        return brightness * 100 / brightness_max
+            brightness = float(self.py3.command_output(self._command_get()))
+        else:
+            brightness = int(Path(f"{self.device}/brightness").read_text())
+
+        if not self.command_available or (not commands[self.command]["get_percent"]):
+            brightness_max = int(Path(f"{self.device}/max_brightness").read_text())
+            return brightness * 100 / brightness_max
+        else:
+            return brightness
 
     # Returns the string array for the command to get the current backlight level
     def _command_get(self):
