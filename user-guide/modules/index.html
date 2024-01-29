@@ -2097,7 +2097,7 @@ Take care about the cache_timeout to limit these fees!</strong></p>
 </li>
 <li>
 <p><code>command</code> The program to use to change the backlight.
-    Currently xbacklight and light are supported. The program needs
+    Currently xbacklight, light and brightnessctl are supported. The program needs
     to be installed and on your path. If no program is installed, this
     module will attempt to use logind support instead
     <em>(default 'xbacklight')</em></p>
@@ -2128,6 +2128,7 @@ Take care about the cache_timeout to limit these fees!</strong></p>
 <p>Requires: one of
     xbacklight: need for changing brightness, not detection
     light: program to easily change brightness on backlight-controllers
+    brightnessctl: change brightness wayland compatible
     dbus-python + logind v243: logind to change brightness without X</p>
 <p><strong>author</strong> Tjaart van der Walt (github:tjaartvdwalt), Jérémy Rosen (github:boucman)</p>
 <p><strong>license</strong> BSD</p>
