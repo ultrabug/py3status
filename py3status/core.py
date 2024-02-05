@@ -27,6 +27,7 @@ LOGGING_LEVELS = {
     "error": logging.ERROR,
     "warning": logging.WARNING,
     "info": logging.INFO,
+    "debug": logging.DEBUG,
 }
 
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
