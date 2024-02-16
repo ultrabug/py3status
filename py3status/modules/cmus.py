@@ -16,6 +16,11 @@ Configuration parameters:
         *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
         '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
         '|\?show cmus: waiting for user input]]')*
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     sleep_timeout: sleep interval for this module. when cmus is not running,
         this interval will be used. this allows some flexible timing where one
         might want to refresh constantly with some placeholders... or to refresh
@@ -83,6 +88,8 @@ waiting
 {'color': '#FF0000', 'full_text': '.. cmus: waiting for user input'}
 """
 
+from py3status.constants import DEFAULT_SANITIZE_WORDS
+
 STRING_NOT_INSTALLED = "not installed"
 
 
@@ -100,6 +107,8 @@ class Py3status:
         r"[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]"
         r"|\?show cmus: waiting for user input]]"
     )
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -149,6 +158,9 @@ class Py3status:
                 temporary[key] = True
             elif value in ("false", "disabled"):
                 temporary[key] = False
+            # sanitize album and title
+            elif self.sanitize_titles and key in ("album", "title"):
+                temporary[key] = self.py3.sanitize_title(self.sanitize_words, value)
             # string not modified
             else:
                 temporary[key] = value

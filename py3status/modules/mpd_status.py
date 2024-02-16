@@ -19,6 +19,11 @@ Configuration parameters:
     max_width: maximum status length (default 120)
     password: mpd password (default None)
     port: mpd port (default '6600')
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     state_pause: label to display for "paused" state (default '[pause]')
     state_play: label to display for "playing" state (default '[play]')
     state_stop: label to display for "stopped" state (default '[stop]')
@@ -74,33 +79,7 @@ from time import sleep
 from mpd import CommandError, ConnectionError, MPDClient
 
 from py3status.composite import Composite
-
-
-def song_attr(song, attr):
-    def parse_mtime(date_str):
-        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
-
-    if attr == "time":
-        try:
-            duration = int(song["time"])
-            if duration > 0:
-                minutes, seconds = divmod(duration, 60)
-                return f"{minutes:d}:{seconds:02d}"
-            raise ValueError
-        except (KeyError, ValueError):
-            return ""
-    elif attr == "position":
-        try:
-            return "{}".format(int(song["pos"]) + 1)
-        except (KeyError, ValueError):
-            return ""
-    elif attr == "mtime":
-        return parse_mtime(song["last-modified"]).strftime("%c")
-    elif attr == "mdate":
-        return parse_mtime(song["last-modified"]).strftime("%x")
-
-    return song.get(attr, "")
-
+from py3status.constants import DEFAULT_SANITIZE_WORDS
 
 class Py3status:
     """ """
@@ -117,6 +96,8 @@ class Py3status:
     max_width = 120
     password = None
     port = "6600"
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     state_pause = "[pause]"
     state_play = "[play]"
     state_stop = "[stop]"
@@ -132,6 +113,34 @@ class Py3status:
         self.client = None
         self.current_status = None
         self.idle_thread = Thread()
+
+    def _song_attr(self, song, attr):
+        def parse_mtime(date_str):
+            return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+
+        if attr == "time":
+            try:
+                duration = int(song["time"])
+                if duration > 0:
+                    minutes, seconds = divmod(duration, 60)
+                    return f"{minutes:d}:{seconds:02d}"
+                raise ValueError
+            except (KeyError, ValueError):
+                return ""
+        elif attr == "position":
+            try:
+                return "{}".format(int(song["pos"]) + 1)
+            except (KeyError, ValueError):
+                return ""
+        elif attr == "mtime":
+            return parse_mtime(song["last-modified"]).strftime("%c")
+        elif attr == "mdate":
+            return parse_mtime(song["last-modified"]).strftime("%x")
+        # Sanitize album and title
+        elif self.sanitize_titles and attr in ("album", "title"):
+            return self.py3.sanitize_title(self.sanitize_words, song.get(attr, ""))
+
+        return song.get(attr, "")
 
     def _get_mpd(self, disconnect=False):
         if disconnect:
@@ -229,8 +238,8 @@ class Py3status:
 
                     def attr_getter(attr):
                         if attr.startswith("next_"):
-                            return song_attr(next_song, attr[5:])
-                        return song_attr(song, attr)
+                            return self._song_attr(next_song, attr[5:])
+                        return self._song_attr(song, attr)
 
                     text = self.py3.safe_format(self.format, attr_getter=attr_getter)
                     if isinstance(text, Composite):
@@ -277,4 +286,4 @@ if __name__ == "__main__":
     """
     from py3status.module_test import module_test
 
-    module_test(Py3status)
+    module_test(Py3status, config={"format": "{artist} - {title}"})

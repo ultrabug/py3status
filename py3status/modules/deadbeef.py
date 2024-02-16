@@ -4,6 +4,11 @@ Display songs currently playing in DeaDBeeF.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '[{artist} - ][{title}]')
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     sleep_timeout: when deadbeef is not running, this interval will be used
         to allow faster refreshes with time-related placeholders and/or
         to refresh few times per minute rather than every few seconds
@@ -49,6 +54,8 @@ paused
 {'color': '#ffff00', 'full_text': 'Music For Programming - Lackluster'}
 """
 
+from py3status.constants import DEFAULT_SANITIZE_WORDS
+
 STRING_NOT_INSTALLED = "not installed"
 
 
@@ -58,6 +65,8 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = "[{artist} - ][{title}]"
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     sleep_timeout = 20
 
     class Meta:
@@ -118,6 +127,14 @@ class Py3status:
             line = self._get_deadbeef_data()
             beef_data = dict(zip(self.placeholders, line.split(self.separator)))
             cached_until = self.cache_timeout
+
+            # Sanitize album and title
+            if self.sanitize_titles:
+                if "album" in beef_data:
+                    beef_data["album"] = self.py3.sanitize_title(self.sanitize_words, beef_data["album"])
+
+                if "title" in beef_data:
+                    beef_data["title"] = self.py3.sanitize_title(self.sanitize_words, beef_data["title"])
 
             if beef_data["isplaying"]:
                 color = self.color_playing

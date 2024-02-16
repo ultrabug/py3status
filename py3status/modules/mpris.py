@@ -29,13 +29,18 @@ Configuration parameters:
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
         paused and bomi is playing than bomi wins. (default [])
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     state_pause: specify icon for pause state (default u'\u25eb')
     state_play: specify icon for play state (default u'\u25b7')
     state_stop: specify icon for stop state (default u'\u25a1')
 
 Format placeholders:
     {album} album name
-    {artist} artiste name (first one)
+    {artist} artist name (first one)
     {length} time duration of the song
     {player} show name of the player
     {player_shortname} show name of the player from busname (usually command line name)
@@ -117,6 +122,7 @@ from mpris2 import Player as dPlayer
 from mpris2 import get_players_uri
 from mpris2.types import Metadata_Map
 
+from py3status.constants import DEFAULT_SANITIZE_WORDS
 
 class STATE(IntEnum):
     Playing = 0
@@ -282,6 +288,14 @@ class Player:
 
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
+            # Sanitize album and title
+            if self.parent.sanitize_titles:
+                if "album" in self._metadata:
+                    self._metadata["album"] = self.parent.py3.sanitize_title(self.parent.sanitize_words, self._metadata["album"])
+
+                if "title" in self._metadata:
+                    self._metadata["title"] = self.parent.py3.sanitize_title(self.parent.sanitize_words, self._metadata["title"])
+
         if not self._metadata.get("title"):
             self._metadata["title"] = "No Track"
 
@@ -382,6 +396,8 @@ class Py3status:
     max_width = None
     player_hide_non_canplay = []
     player_priority = []
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"

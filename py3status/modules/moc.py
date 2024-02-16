@@ -14,6 +14,11 @@ Configuration parameters:
     format: display format for this module
         *(default '\?if=is_started [\?if=is_stopped \[\] moc|'
         '[\?if=is_paused \|\|][\?if=is_playing >] {title}]')*
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     sleep_timeout: when moc is not running, this interval will be used to
         allow one to refresh constantly with time placeholders and/or
         to refresh once every minute rather than every few seconds
@@ -72,6 +77,8 @@ stopped
 {'color': '#FF0000', 'full_text': '[] moc'}
 """
 
+from py3status.constants import DEFAULT_SANITIZE_WORDS
+
 STRING_NOT_INSTALLED = "not installed"
 
 
@@ -88,6 +95,8 @@ class Py3status:
         r"\?if=is_started [\?if=is_stopped \[\] moc|"
         r"[\?if=is_paused \|\|][\?if=is_playing >] {title}]"
     )
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -121,6 +130,14 @@ class Py3status:
             for line in moc_data.splitlines():
                 category, value = line.split(": ", 1)
                 data[category.lower()] = value
+
+            # Sanitize album and title
+            if self.sanitize_titles:
+                if "album" in data:
+                    data["album"] = self.py3.sanitize_title(self.sanitize_words, data["album"])
+
+                if "title" in data:
+                    data["title"] = self.py3.sanitize_title(self.sanitize_words, data["title"])
 
             self.state = data["state"]
             if self.state == "PLAY":
