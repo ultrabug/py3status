@@ -5,7 +5,7 @@ from numbers import Number
 from urllib.parse import parse_qsl
 
 from py3status.composite import Composite
-from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
+from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED, SANITIZE_PATTERNS
 
 
 def expand_color(color, default=None, passthrough=False, block=None):
@@ -296,9 +296,34 @@ class Placeholder:
     Class representing a {placeholder}
     """
 
+    sanitized_regex_cache = {}
+    sanitized_string_cache = {}
+
     def __init__(self, key, format):
         self.key = key
         self.format = format
+
+    def _sanitize(self, string):
+        """
+        Remove redundant metadata from string and return it
+        """
+        try:
+            return self.sanitized_string_cache[string]
+        except KeyError:
+            cache_key = string
+
+        # add compiled sanitized regexes to the cache
+        if not self.sanitized_regex_cache:
+            for sanitize_key, sanitize_value in SANITIZE_PATTERNS.items():
+                self.sanitized_regex_cache[sanitize_key] = re.compile(sanitize_value, re.IGNORECASE)
+
+        # sanitize the strings
+        for pattern in self.sanitized_regex_cache.values():
+            string = re.sub(pattern, "", string).strip()
+
+        # add sanitized strings to the cache
+        self.sanitized_string_cache[cache_key] = string
+        return string
 
     def get(self, get_params, block):
         """
@@ -327,6 +352,8 @@ class Placeholder:
                         value = float(value)
                     if "d" in self.format:
                         value = int(float(value))
+                    if "sanitize" in self.format:
+                        value = self._sanitize(value)
                     output = f"{{[{self.key}]{self.format}}}"
                     value = output.format({self.key: value})
                     value_ = float(value)
