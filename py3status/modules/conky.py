@@ -392,11 +392,10 @@ class Py3status:
             self.process = Popen(self.conky_command, stdout=PIPE, stderr=STDOUT)
             while True:
                 line = self.process.stdout.readline().decode()
-                # workaround to: https://github.com/brndnmtthws/conky/issues/1479
-                BUG_STR= "conky: invalid setting of type 'table'"
-                if line.startswith(BUG_STR):
-                    continue
                 if self.process.poll() is not None or "conky:" in line:
+                    # workaround to https://github.com/brndnmtthws/conky/issues/1479
+                    if "conky: invalid setting of type 'table'" in line:
+                        continue
                     raise Exception(line)
                 if self.line != line:
                     self.line = line
