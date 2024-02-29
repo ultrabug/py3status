@@ -384,7 +384,7 @@ class Py3status:
 
     def _cleanup(self):
         self.process.kill()
-        Path(self.tmpfile).unlink()
+        Path(self.tmpfile.name).unlink()
         self.py3.update()
 
     def _start_loop(self):
