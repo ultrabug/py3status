@@ -101,7 +101,7 @@ Run setup.py to install
 $ cd py3status
 
 # install you may need to use sudo to have required permissions
-$ python setup.py develop
+$ pip install -e .
 ```
 
 you can now run py3status and any changes to the code you make will be
@@ -119,6 +119,18 @@ available after a reload.
 ## Python versions
 
 Starting with version 3.26, py3status will only run using python 3.
+
+## Documentation
+
+Documentation pages are located under the docs/ folder.
+
+To run the documentation site locally (useful for previewing changes), use:
+
+```bash
+# you need to install hatch
+# pip install --user hatch
+hatch -e docs mkdocs serve
+```
 
 ## tox
 
