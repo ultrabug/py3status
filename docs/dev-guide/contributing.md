@@ -101,7 +101,7 @@ Run setup.py to install
 $ cd py3status
 
 # install you may need to use sudo to have required permissions
-$ pip install .
+$ pip install -e .
 ```
 
 you can now run py3status and any changes to the code you make will be
