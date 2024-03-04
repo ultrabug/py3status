@@ -769,6 +769,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tox" class="md-nav__link">
     <span class="md-ellipsis">
       tox
@@ -940,7 +949,7 @@ $ git clone git@github.com:ultrabug/py3status.git
 $ cd py3status
 
 # install you may need to use sudo to have required permissions
-$ python setup.py develop
+$ pip install -e .
 </code></pre>
 <p>you can now run py3status and any changes to the code you make will be
 available after a reload.</p>
@@ -955,6 +964,13 @@ edit the hashbang to point to your chosen python version.</p>
 </div>
 <h2 id="python-versions">Python versions</h2>
 <p>Starting with version 3.26, py3status will only run using python 3.</p>
+<h2 id="documentation">Documentation</h2>
+<p>Documentation pages are located under the docs/ folder.</p>
+<p>To run the documentation site locally (useful for previewing changes), use:</p>
+<pre><code class="language-bash"># you need to install hatch
+# pip install --user hatch
+hatch -e docs mkdocs serve
+</code></pre>
 <h2 id="tox">tox</h2>
 <p>Py3status uses tox for testing. All submissions to the project must pass
 testing. To install these via pip use</p>
