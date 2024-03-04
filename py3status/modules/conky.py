@@ -384,7 +384,7 @@ class Py3status:
 
     def _cleanup(self):
         self.process.kill()
-        Path(self.tmpfile).unlink()
+        Path(self.tmpfile.name).unlink()
         self.py3.update()
 
     def _start_loop(self):
@@ -393,6 +393,9 @@ class Py3status:
             while True:
                 line = self.process.stdout.readline().decode()
                 if self.process.poll() is not None or "conky:" in line:
+                    # workaround to https://github.com/brndnmtthws/conky/issues/1479
+                    if "conky: invalid setting of type 'table'" in line:
+                        continue
                     raise Exception(line)
                 if self.line != line:
                     self.line = line
