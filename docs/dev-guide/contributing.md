@@ -128,7 +128,7 @@ To run the documentation site locally (useful for previewing changes), use:
 
 ```bash
 # you need to install hatch
-# pip install hatch
+# pip install --user hatch
 hatch -e docs mkdocs serve
 ```
 
