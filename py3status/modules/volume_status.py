@@ -171,10 +171,13 @@ class Amixer(Audio):
 
 class Pamixer(Audio):
     def setup(self, parent):
-        is_input = "--source" if self.is_input else "--sink"
-        self.cmd = ["pamixer", "--allow-boost"] + (
-            [is_input, self.device] if self.device is not None else []
-        )
+        if self.device is not None:
+            dev_target = ["--source" if self.is_input else "--sink", self.device]
+        elif self.is_input:
+            dev_target = ["--default-source"]
+        else:
+            dev_target = []
+        self.cmd = ["pamixer", "--allow-boost"] + dev_target
 
     def get_volume(self):
         try:
