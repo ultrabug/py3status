@@ -1,3 +1,11 @@
+version 3.57 (2024-03-26)
+* docs: explain how to serve mkdocs locally (#2239), by Lujeni
+* add CodeQL workflow for GitHub code scanning (#2159), by lgtm-com[bot]
+* fmt: fix newer black
+* backlight module: add brightnessctl support (#2233), by Gabriele Fioco
+* conky module: workaround upstream issues/1479 (#2238), by ntorresalberto
+* volume_status module: fix for default source with pamixer (#2240), by oceyral
+
 version 3.56 (2024-01-28)
 * remove audio modules in favor of playerctl (#2231), by lasers
 * new module dexcom:  display glucose readings from your Dexcom CGM system (#2229), by lasers
