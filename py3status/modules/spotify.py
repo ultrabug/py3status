@@ -15,11 +15,13 @@ Configuration parameters:
         (default 'Spotify not running')
     format_stopped: define output if spotify is not playing
         (default 'Spotify stopped')
-    sanitize_titles: whether to remove meta data from album/track title
-        (default True)
-    sanitize_words: which meta data to remove
-        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
-            'feat', 'mono', 'remaster', 'stereo', 'version'])*
+    replacements: specify string replacements to use on placeholders
+        *(default {
+            "artist": [
+                "([\(\[][^)\]]*?(bonus|demo|edit|explicit|extended|feat|mono|remaster|stereo|version)[^)\]]*?[\)\]])",
+                "([\-,;/])([^\-,;/])*(bonus|demo|edit|explicit|extended|feat|mono|remaster|stereo|version).*"
+            ]
+        })*
 
 Format placeholders:
     {album} album name
@@ -60,7 +62,6 @@ stopped
 {'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
-import re
 from datetime import timedelta
 from time import sleep
 
@@ -82,46 +83,15 @@ class Py3status:
     format = "{artist} : {title}"
     format_down = "Spotify not running"
     format_stopped = "Spotify stopped"
-    sanitize_titles = True
-    sanitize_words = [
-        "bonus",
-        "demo",
-        "edit",
-        "explicit",
-        "extended",
-        "feat",
-        "mono",
-        "remaster",
-        "stereo",
-        "version",
-    ]
+    replacements = {
+        "artist": [
+            "([\(\[][^)\]]*?(bonus|demo|edit|explicit|extended|feat|mono|remaster|stereo|version)[^)\]]*?[\)\]])",
+            "([\-,;/])([^\-,;/])*(bonus|demo|edit|explicit|extended|feat|mono|remaster|stereo|version).*",
+        ]
+    }
 
     def _spotify_cmd(self, action):
         return SPOTIFY_CMD.format(dbus_client=self.dbus_client, cmd=action)
-
-    def post_config_hook(self):
-        """ """
-        # Match string after hyphen, comma, semicolon or slash containing any metadata word
-        # examples:
-        # - Remastered 2012
-        # / Radio Edit
-        # ; Remastered
-        self.after_delimiter = self._compile_re(r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*")
-
-        # Match brackets with their content containing any metadata word
-        # examples:
-        # (Remastered 2017)
-        # [Single]
-        # (Bonus Track)
-        self.inside_brackets = self._compile_re(r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])")
-
-    def _compile_re(self, expression):
-        """
-        Compile given regular expression for current sanitize words
-        """
-        meta_words = "|".join(self.sanitize_words)
-        expression = expression.replace("META_WORDS_HERE", meta_words)
-        return re.compile(expression, re.IGNORECASE)
 
     def _get_playback_status(self):
         """
@@ -145,10 +115,6 @@ class Py3status:
                 microtime = metadata.get("mpris:length")
                 rtime = str(timedelta(seconds=microtime // 1_000_000))
                 title = metadata.get("xesam:title")
-                if self.sanitize_titles:
-                    album = self._sanitize_title(album)
-                    title = self._sanitize_title(title)
-
                 playback_status = self._get_playback_status()
                 if playback_status == "Playing":
                     color = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
@@ -160,29 +126,25 @@ class Py3status:
                     self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED,
                 )
 
-            return (
-                self.py3.safe_format(
-                    self.format,
-                    dict(
-                        title=title,
-                        artist=artist,
-                        album=album,
-                        time=rtime,
-                        playback=playback_status,
-                    ),
-                ),
-                color,
+            spotify_data = dict(
+                title=title,
+                artist=artist,
+                album=album,
+                time=rtime,
+                playback=playback_status,
             )
+
+            # Replace the values
+            for x in self.placeholders:
+                for x in spotify_data:
+                    spotify_data[x] = self.py3.replace(spotify_data[x], x)
+
+            return (self.py3.safe_format(self.format, spotify_data), color)
         except Exception:
             return (self.format_down, self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
 
-    def _sanitize_title(self, title):
-        """
-        Remove redundant metadata from title and return it
-        """
-        title = re.sub(self.inside_brackets, "", title)
-        title = re.sub(self.after_delimiter, "", title)
-        return title.strip()
+    def post_config_hook(self):
+        self.placeholders = self.py3.get_placeholders_list(self.format)
 
     def spotify(self):
         """
