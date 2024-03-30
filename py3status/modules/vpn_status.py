@@ -5,6 +5,7 @@ Expands on the i3status module by displaying the name of the connected vpn
 using pydbus. Asynchronously updates on dbus signals unless check_pid is True.
 
 Configuration parameters:
+    button_copy_ipv4: mouse button to copy the IPv4 address to your clipboard (default 1)
     cache_timeout: How often to refresh in seconds when check_pid is True.
         (default 10)
     check_pid: If True, act just like the default i3status module.
@@ -47,13 +48,14 @@ from time import sleep
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GLib
+from gi.repository import Gdk, GLib, Gtk
 
 
 class Py3status:
     """ """
 
     # available configuration parameters
+    button_copy_ipv4 = 1
     cache_timeout = 10
     check_pid = False
     format = "VPN: {format_vpn}|VPN: no"
@@ -64,6 +66,8 @@ class Py3status:
     def post_config_hook(self):
         self.thread_started = False
         self.active = []
+        self.vpns = []
+        self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 
     def _start_handler_thread(self):
         """Called once to start the event handler thread."""
@@ -154,6 +158,13 @@ class Py3status:
         """Returns True if pidfile exists, False otherwise."""
         return Path(self.pidfile).is_file()
 
+    def _get_vpn_from_index(self, index):
+        for vpn in self.vpns:
+            if vpn["name"] == index:
+                return vpn
+
+        return None
+
     # Method run by py3status
     def vpn_status(self):
         """Returns response dict"""
@@ -162,27 +173,29 @@ class Py3status:
         if not self.check_pid and not self.thread_started:
             self._start_handler_thread()
 
-        vpns = []
+        self.vpns = []
+        format_vpns = []
 
         # If we are acting like the default i3status module
         if self.check_pid:
             if self._check_pid():
                 format_vpn = self.py3.safe_format(self.format_vpn, {"name": "yes"})
-                vpns.append(format_vpn)
+                format_vpns.append(format_vpn)
 
         # Otherwise, find the VPN name, if it is active
         else:
-            vpn_info = self._get_vpn_status()
-            for vpn in vpn_info:
+            self.vpns = self._get_vpn_status()
+            for vpn in self.vpns:
                 format_vpn = self.py3.safe_format(self.format_vpn, vpn)
-                vpns.append(format_vpn)
+                self.py3.composite_update(format_vpn, {"index": vpn["name"]})
+                format_vpns.append(format_vpn)
 
-        color = self.py3.COLOR_GOOD if vpns else self.py3.COLOR_BAD
+        color = self.py3.COLOR_GOOD if format_vpns else self.py3.COLOR_BAD
 
         # Format and create the response dict
         format_vpn_separator = self.py3.safe_format(self.format_vpn_separator)
-        format_vpns = self.py3.composite_join(format_vpn_separator, vpns)
-        full_text = self.py3.safe_format(self.format, {"format_vpn": format_vpns})
+        formatted_vpns = self.py3.composite_join(format_vpn_separator, format_vpns)
+        full_text = self.py3.safe_format(self.format, {"format_vpn": formatted_vpns})
         response = {
             "full_text": full_text,
             "color": color,
@@ -193,6 +206,18 @@ class Py3status:
         if self.check_pid:
             response["cached_until"] = self.py3.time_in(self.cache_timeout)
         return response
+
+    def on_click(self, event):
+        button = event["button"]
+        index = event["index"]
+
+        self.py3.prevent_refresh()
+
+        vpn = self._get_vpn_from_index(index)
+        if not vpn or not vpn["ipv4"] or button != self.button_copy_ipv4:
+            return
+
+        self.clipboard.set_text(vpn["ipv4"], -1)
 
 
 if __name__ == "__main__":
