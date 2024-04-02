@@ -129,7 +129,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
-        self.placeholders = self.py3.get_placeholders_list(self.format_player)
+        self.replacements = self.py3.get_replacements_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
         self.cache_timeout = getattr(self, "cache_timeout", 1)
 
@@ -294,7 +294,7 @@ class Py3status:
                 cached_until = self.cache_timeout
 
             # Replace the values
-            for x in self.placeholders:
+            for x in self.replacements:
                 if x in player_data:
                     player_data[x] = self.py3.replace(player_data[x], x)
 

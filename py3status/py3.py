@@ -727,6 +727,28 @@ class Py3:
                     found.add(name)
         return list(found)
 
+    def get_replacements_list(self, format_string):
+        """
+        If possible, returns a list of filtered placeholders in ``format_string``.
+        """
+        replacements = getattr(self._py3status_module, "replacements", None)
+        if not replacements or not format_string:
+            return []
+
+        if format_string not in self._format_placeholders:
+            placeholders = self._formatter.get_placeholders(format_string)
+            self._format_placeholders[format_string] = placeholders
+        else:
+            placeholders = self._format_placeholders[format_string]
+
+        # filter placeholders
+        found = set()
+        for replacement in replacements:
+            for placeholder in placeholders:
+                if placeholder == replacement:
+                    found.add(placeholder)
+        return list(found or placeholders)
+
     def get_placeholders_list(self, format_string, matches=None):
         """
         Returns a list of placeholders in ``format_string``.

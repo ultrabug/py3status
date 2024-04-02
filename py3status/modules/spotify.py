@@ -142,8 +142,8 @@ class Py3status:
                 "playback": playback_status,
             }
 
-            # Replace the values
-            for x in self.placeholders:
+            # replace the values
+            for x in self.replacements:
                 if x in spotify_data:
                     spotify_data[x] = self.py3.replace(spotify_data[x], x)
 
@@ -153,6 +153,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.placeholders = self.py3.get_placeholders_list(self.format)
+        self.replacements = self.py3.get_replacements_list(self.format)
 
     def spotify(self):
         """
