@@ -363,7 +363,7 @@ class Py3status:
         self.config.update({"out_to_x": False, "out_to_console": True})
         self.separator = "|SEPARATOR|"  # must be upper
 
-        # make an output.
+        # make an output
         config = dumps(self.config, separators=(",", "=")).replace('"', "")
         text = self.separator.join([f"${{{x}}}" for x in conky_placeholders])
         tmp = f"conky.config = {config}\nconky.text = [[{text}]]"
@@ -373,6 +373,12 @@ class Py3status:
         self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
         self.conky_command = f"conky -c {self.tmpfile.name}".split()
+
+        # skip invalid conky errors
+        self.invalid_conky_errors = [
+            "conky: invalid setting of type 'table'",
+            "conky: FOUND:",
+        ]
 
         # thread
         self.line = ""
@@ -393,8 +399,7 @@ class Py3status:
             while True:
                 line = self.process.stdout.readline().decode()
                 if self.process.poll() is not None or "conky:" in line:
-                    # workaround to https://github.com/brndnmtthws/conky/issues/1479
-                    if "conky: invalid setting of type 'table'" in line:
+                    if any(x in line for x in self.invalid_conky_errors):
                         continue
                     raise Exception(line)
                 if self.line != line:
