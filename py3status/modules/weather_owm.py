@@ -8,11 +8,11 @@ as it gets.
 
 This module uses OpenWeatherMap API (https://openweathermap.org).
 
-setting `location` or `city` allows you to specify the location for the weather
-you want displaying.
+Requires a 3.0 API key for OpenWeatherMap (OWM) with a subscription which this
+module will try as hard as it can to stay under the free tier limit.
 
-Requires an API key for OpenWeatherMap (OWM), but the free tier allows you
-enough requests/sec to get accurate weather even up to the minute.
+Setting `location` or `city` allows you to specify the location for the weather
+you want displaying.
 
 I would highly suggest you install an additional font, such as the incredible
 (and free!) Weather Icons font (https://erikflowers.github.io/weather-icons),
@@ -261,11 +261,12 @@ diff
 """
 
 import datetime
+import json
 
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
-OWM_ONECALL_ENDPOINT = "https://api.openweathermap.org/data/2.5/onecall?"
+OWM_ONECALL_ENDPOINT = "https://api.openweathermap.org/data/3.0/onecall?exclude=alerts,minutely"
 IP_ENDPOINT = "http://geo.ultrabug.fr"
 
 # Paths of information to extract from JSON
@@ -447,6 +448,18 @@ class Py3status:
 
         # Generate our icon array
         self.icons = self._get_icons()
+
+        # Implement safe-to-reload rate limit
+        cached_day = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d")
+        self.cached_hits = json.loads(
+            self.py3.storage_get("cached_hits") or json.dumps({cached_day: 0})
+        )
+        self.cached_onecall_response = self.py3.storage_get("cached_onecall_response")
+
+        # We want to make sure users to not exceed the request limit
+        # to 3.0 API and get billed while taking into account that
+        # OWM does refresh its API data every 10min anyway.
+        self.cache_timeout = max(600, self.cache_timeout)
 
         # Verify the units configuration
         if self.unit_rain.lower() not in RAIN_UNITS:
@@ -817,6 +830,9 @@ class Py3status:
         return self.py3.safe_format(self.format, today)
 
     def weather_owm(self):
+        # Prepare rate limit cache
+        cached_day = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d")
+        cached_hits = self.cached_hits.get(cached_day, 0)
         # Get weather information
         loc_tz_info = self._get_loc_tz_info()
         text = ""
@@ -840,9 +856,19 @@ class Py3status:
             except Exception:
                 raise Exception("no latitude/longitude found for your config")
 
-            # onecall = forecasts
-            onecall_api_params = {"lat": lat, "lon": lon}
-            onecall = self._get_onecall(onecall_api_params)
+            # onecall = forecasts rate limited
+            if cached_hits < 999:
+                onecall_api_params = {"lat": lat, "lon": lon}
+                onecall = self._get_onecall(onecall_api_params)
+                # update and store caches
+                self.cached_onecall_response = onecall
+                self.cached_hits[cached_day] = cached_hits + 1
+                self.py3.storage_set("cached_onecall_response", onecall)
+                self.py3.storage_set(
+                    "cached_hits", json.dumps({cached_day: self.cached_hits[cached_day]})
+                )
+            else:
+                onecall = self.cached_onecall_response
             onecall_daily = onecall["daily"]
 
             fcsts_days = self.forecast_days + 1
