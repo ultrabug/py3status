@@ -1,3 +1,7 @@
+version 3.58 (2024-05-31)
+* conky module: skip invalid conky errors (#2248), by lasers
+* weather_owm module: switch to 3.0 API endpoint as 2.5 is deprecated (#2249)
+
 version 3.57 (2024-03-26)
 * docs: explain how to serve mkdocs locally (#2239), by Lujeni
 * add CodeQL workflow for GitHub code scanning (#2159), by lgtm-com[bot]
