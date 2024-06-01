@@ -270,3 +270,16 @@ RETIRED_MODULES = {
 MARKUP_LANGUAGES = ["pango", "none"]
 
 ON_ERROR_VALUES = ["hide", "show"]
+
+DEFAULT_SANITIZE_WORDS = [
+    "bonus",
+    "demo",
+    "edit",
+    "explicit",
+    "extended",
+    "feat",
+    "mono",
+    "remaster",
+    "stereo",
+    "version",
+]

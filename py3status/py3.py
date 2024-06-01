@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import sys
 import time
@@ -102,6 +103,7 @@ class Py3:
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._module = module
+        self._sanitize_title_regex_cache = {}
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
@@ -1291,3 +1293,36 @@ class Py3:
         self.log(f"HTTP request retry {retry_times}/{retry_times}")
         sleep(retry_wait)
         return get_http_response()
+
+    def sanitize_title(self, words, title):
+        """
+        Remove the provided redundant metadata from the title and return it
+        """
+
+        # If our title is None or an empty string, we can return early
+        if title is None or title == "":
+            return title
+
+        meta_words = "|".join(words)
+
+        # If our regexes haven't already been compiled, do that and store them in the cache
+        if meta_words not in self._sanitize_title_regex_cache:
+            self._sanitize_title_regex_cache[meta_words] = {
+                # Match brackets with their content containing any metadata word
+                # examples:
+                # (Remastered 2017)
+                # [Single]
+                # (Bonus Track)
+                "inside_brackets": re.compile(r"([\(\[][^)\]]*?({})[^)\]]*?[\)\]])".format(meta_words), re.IGNORECASE),
+                # Match string after hyphen, comma, semicolon or slash containing any metadata word
+                # examples:
+                # - Remastered 2012
+                # / Radio Edit
+                # ; Remastered
+                "after_delimiter": re.compile(r"([\-,;/])([^\-,;/])*({}).*".format(meta_words), re.IGNORECASE),
+            }
+
+        title = re.sub(self._sanitize_title_regex_cache[meta_words]["inside_brackets"], "", title)
+        title = re.sub(self._sanitize_title_regex_cache[meta_words]["after_delimiter"], "", title)
+
+        return title.strip()
