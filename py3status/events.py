@@ -118,7 +118,7 @@ class Events(Thread):
             partial_text = partial["full_text"]
         else:
             partial_text = full_text
-        return full_text, partial_text
+        return (x.strip() for x in (full_text, partial_text))
 
     def on_click_dispatcher(self, module_name, event, command):
         """
