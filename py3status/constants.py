@@ -270,3 +270,31 @@ RETIRED_MODULES = {
 MARKUP_LANGUAGES = ["pango", "none"]
 
 ON_ERROR_VALUES = ["hide", "show"]
+
+SANITIZE_TITLES = "|".join(
+    [
+        "bonus",
+        "demo",
+        "edit",
+        "explicit",
+        "extended",
+        "feat",
+        "mono",
+        "remaster",
+        "stereo",
+        "version",
+    ]
+)
+
+SANITIZE_PATTERNS = {
+    # Match brackets with their content containing any metadata word.
+    #   (Remastered 2017)
+    #   [Single]
+    #   (Bonus Track)
+    "inside_brackets": r"([\(\[][^)\]]*?({})[^)\]]*?[\)\]])".format(SANITIZE_TITLES),
+    # Match string after hyphen, comma, semicolon or slash containing any metadata word.
+    #   - Remastered 2012
+    #   / Radio Edit
+    #   ; Remastered
+    "after_delimiter": r"([\-,;/])([^\-,;/])*({}).*".format(SANITIZE_TITLES),
+}
