@@ -87,7 +87,7 @@ dependencies = [
 check = [
     "isort --check-only --diff py3status",
     "black -q --check --diff py3status",
-    "ruff py3status",
+    "ruff check py3status",
 ]
 format = [
     "isort -q py3status",
