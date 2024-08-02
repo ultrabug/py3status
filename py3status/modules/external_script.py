@@ -105,7 +105,7 @@ class Py3status:
             output = ""
 
         response["full_text"] = self.py3.safe_format(
-            self.format, {"output": output, "lines": len(output_lines)}
+            self.format, {"output": self.py3.safe_format(output), "lines": len(output_lines)}
         )
         return response
 
