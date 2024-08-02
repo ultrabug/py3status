@@ -566,7 +566,7 @@ class Py3status:
         name_from_id = player_id_parts_list[3]
 
         identity = None
-        if name_from_id != "chromium":
+        if name_from_id not in ["chromium", "kdeconnect"]:
             identity = self._identity_cache.get(name_from_id)
 
         if not identity:
