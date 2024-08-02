@@ -1,7 +1,7 @@
 r"""
 Display song/video and control players supported by playerctl
 
-Playerctl is a command-line utility for controlling media players 
+Playerctl is a command-line utility for controlling media players
 that implement the MPRIS D-Bus Interface Specification. With Playerctl
 you can bind player actions to keys and get metadata about the currently
 playing song or video.
@@ -25,6 +25,11 @@ Configuration parameters:
         '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
     players: list of players to track. An empty list tracks all players (default [])
+    sanitize_titles: whether to remove meta data from album/track title
+        (default True)
+    sanitize_words: which meta data to remove
+        *(default ['bonus', 'demo', 'edit', 'explicit', 'extended',
+            'feat', 'mono', 'remaster', 'stereo', 'version'])*
     seek_delta: time (in seconds) to change the playback's position by (default 5)
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]})
@@ -73,6 +78,8 @@ from threading import Thread
 import gi
 from gi.repository import GLib, Playerctl
 
+from py3status.constants import DEFAULT_SANITIZE_WORDS
+
 gi.require_version("Playerctl", "2.0")
 
 
@@ -99,6 +106,8 @@ class Py3status:
     )
     format_player_separator = " "
     players = []
+    sanitize_titles = True
+    sanitize_words = DEFAULT_SANITIZE_WORDS
     seek_delta = 5
     thresholds = {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]}
     volume_delta = 10
@@ -233,6 +242,11 @@ class Py3status:
         data["shuffle"] = player.props.shuffle
         data["status"] = player.props.status
         data["volume"] = int(player.props.volume * 100)
+
+        # Sanitize album and title
+        if self.sanitize_titles:
+            data["album"] = self.py3.sanitize_title(self.sanitize_words, data["album"])
+            data["title"] = self.py3.sanitize_title(self.sanitize_words, data["title"])
 
         return data
 
