@@ -1,3 +1,9 @@
+version 3.59 (2024-08-02)
+* core: strip whitespaces from OUTPUT, OUTPUT_PART events (#2245), by lasers
+* ci(ruff): use new ruff check path command (#2253)
+* external_script module: fix clicking on parts of message thx to @lasers (#2254)
+* mpris module: kdeconnect mpris interface will skip identity cache, because mobile device can run different media players (#2251), by Valdur Kana
+
 version 3.58 (2024-05-31)
 * conky module: skip invalid conky errors (#2248), by lasers
 * weather_owm module: switch to 3.0 API endpoint as 2.5 is deprecated (#2249)
