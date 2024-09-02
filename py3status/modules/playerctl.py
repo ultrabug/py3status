@@ -53,6 +53,7 @@ Format player placeholders:
 Requires:
     playerctl: mpris media player controller and lib for spotify, vlc, audacious,
         bmp, xmms2, and others.
+    python-gobject: Python Bindings for GLib/GObject/GIO/GTK+
 
 @author jdholtz
 
