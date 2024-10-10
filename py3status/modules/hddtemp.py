@@ -36,8 +36,7 @@ Color thresholds:
 
 Requires:
     hddtemp: utility to monitor hard drive temperatures
-    netcat: (nc) is a command-line utility for reading
-        data from hddtemp telnet interface
+    netcat: command-line utility for reading data from hddtemp telnet interface
 
 Bible of HDD failures:
     Hard disk temperatures higher than 45°C led to higher failure rates.
@@ -111,6 +110,8 @@ compact
 
 from string import printable
 
+STRING_NOT_INSTALLED = "netcat not installed"
+
 
 class Py3status:
     """ """
@@ -134,9 +135,11 @@ class Py3status:
         self.keys = ["path", "name", "temperature", "unit"]
         self.cache_names = {}
         self.thresholds_init = self.py3.get_color_names_list(self.format_hdd)
+        if not self.py3.check_commands("netcat"):
+            raise Exception(STRING_NOT_INSTALLED)
 
     def hddtemp(self):
-        line = self.py3.command_output("nc localhost 7634")
+        line = self.py3.command_output("netcat localhost 7634")
         new_data = []
 
         for chunk in line[1:-1].split("||"):
