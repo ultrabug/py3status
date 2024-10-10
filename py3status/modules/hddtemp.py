@@ -132,11 +132,12 @@ class Py3status:
     ]
 
     def post_config_hook(self):
+        if not self.py3.check_commands("netcat"):
+            raise Exception(STRING_NOT_INSTALLED)
+
         self.keys = ["path", "name", "temperature", "unit"]
         self.cache_names = {}
         self.thresholds_init = self.py3.get_color_names_list(self.format_hdd)
-        if not self.py3.check_commands("netcat"):
-            raise Exception(STRING_NOT_INSTALLED)
 
     def hddtemp(self):
         line = self.py3.command_output("netcat localhost 7634")
