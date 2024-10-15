@@ -74,7 +74,7 @@ Color thresholds:
 Requires:
     modemmanager: mobile broadband modem management service
     networkmanager: network connection manager and user applications
-    pydbus: pythonic dbus library
+    dbus-python: Python bindings for dbus
 
 Examples:
 ```
@@ -163,12 +163,21 @@ down
 
 from datetime import timedelta
 
-from pydbus import SystemBus
+from dbus import Interface, SystemBus
 
-STRING_MODEMMANAGER_DBUS = "org.freedesktop.ModemManager1"
-STRING_MODEMMANAGER_SMS_PATH = "/org/freedesktop/ModemManager1/SMS/"
 STRING_MODEM_ERROR = "MM_MODEM_STATE_FAILED"
 STRING_NOT_INSTALLED = "not installed"
+
+DBUS_INTERFACE_PROPERTIES = 'org.freedesktop.DBus.Properties'
+MM_DBUS_PATH = '/org/freedesktop/ModemManager1'
+
+MM_DBUS_INTERFACE = "org.freedesktop.ModemManager1"
+MM_DBUS_INTERFACE_SMS = MM_DBUS_INTERFACE + '.Sms'
+MM_DBUS_INTERFACE_BEARER = MM_DBUS_INTERFACE + '.Bearer'
+MM_DBUS_INTERFACE_MODEM = MM_DBUS_INTERFACE + '.Modem'
+
+MM_DBUS_INTERFACE_MODEM_SIMPLE = MM_DBUS_INTERFACE_MODEM + '.Simple'
+MM_DBUS_INTERFACE_MODEM_MESSAGING = MM_DBUS_INTERFACE_MODEM + '.Messaging'
 
 
 class Py3status:
@@ -196,7 +205,7 @@ class Py3status:
         network_manager = ["NetworkManager", "/usr/sbin/NetworkManager"]
         for command in (modem_manager, network_manager):
             if not self.py3.check_commands(command):
-                raise Exception("{} {}".format(command[0], STRING_NOT_INSTALLED))
+                raise Exception(f"{command[0]} {STRING_NOT_INSTALLED}")
 
         # search: modemmanager flags and enumerations
         # enum 1: #MMModemState
@@ -322,7 +331,7 @@ class Py3status:
             256: "auto",
         }
 
-        self.bus = SystemBus()
+        self._dbus = SystemBus()
         self.init = {
             "ip": [],
             "sms_message": [],
@@ -369,43 +378,47 @@ class Py3status:
                             if name not in self.init["sms_message"]:
                                 self.init["sms_message"].append(name)
 
-    def _get_modem_proxy(self):
-        modemmanager_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS)
-        modems = modemmanager_proxy.GetManagedObjects()
-
-        for objects in modems.items():
-            modem_path = objects[0]
-            modem_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, modem_path)
-            eqid = modem_proxy.EquipmentIdentifier
+    def _set_modem_proxy(self):
+        manager_proxy = self._dbus.get_object(MM_DBUS_INTERFACE, MM_DBUS_PATH)
+        manager_iface = Interface(
+            manager_proxy, dbus_interface="org.freedesktop.DBus.ObjectManager"
+        )
+        modems = manager_iface.GetManagedObjects()
+        for m in modems:
+            _dbus_proxy = self._dbus.get_object(MM_DBUS_INTERFACE, m)
+            _dbus_props_iface = Interface(_dbus_proxy, dbus_interface=DBUS_INTERFACE_PROPERTIES)
+            eqid = _dbus_props_iface.Get(MM_DBUS_INTERFACE_MODEM, 'EquipmentIdentifier')
 
             if self.modem is None or self.modem == eqid:
-                return modem_proxy
-        else:
-            return {}
+                self._dbus_proxy = _dbus_proxy
+                self._dbus_props_iface = _dbus_props_iface
+                return
 
-    def _get_modem_status_data(self, modem_proxy):
+        self._dbus_proxy = None
+        self._dbus_props_iface = None
+
+    def _get_modem_status_data(self):
         modem_data = {}
         try:
-            modem_data = modem_proxy.GetStatus()
+            modem_data = self._dbus_proxy.get_dbus_method(
+                "GetStatus", MM_DBUS_INTERFACE_MODEM_SIMPLE
+            )(True)
         except:  # noqa e722
             pass
         return modem_data
 
-    def _get_bearer(self, modem_proxy):
+    def _get_bearer(self):
         bearer = {}
         try:
-            bearer = modem_proxy.Bearers[0]
+            bearer = self._dbus_props_iface.Get(MM_DBUS_INTERFACE_MODEM, 'Bearers')[0]
         except:  # noqa e722
             pass
         return bearer
 
-    def _get_interface(self, bearer):
-        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Interface
-
-    def _get_message_data(self, modem_proxy):
+    def _get_message_data(self):
         message_data = {}
         try:
-            message_data = modem_proxy.Messages
+            message_data = self._dbus_props_iface.Get(MM_DBUS_INTERFACE_MODEM_MESSAGING, 'Messages')
         except:  # noqa e722
             pass
         return message_data
@@ -420,14 +433,15 @@ class Py3status:
         new_message = []
         for index, msg in sorted(enumerate(data, 1), reverse=True):
             try:
-                sms_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, msg)
+                sms_proxy = self._dbus.get_object(MM_DBUS_INTERFACE, msg)
+                sms_props_iface = Interface(sms_proxy, dbus_interface=DBUS_INTERFACE_PROPERTIES)
                 new_message.append(
                     self.py3.safe_format(
                         self.format_message,
                         {
                             "index": index,
-                            "number": sms_proxy.Number,
-                            "text": sms_proxy.Text,
+                            "number": sms_props_iface.Get(MM_DBUS_INTERFACE_SMS, 'Number'),
+                            "text": sms_props_iface.Get(MM_DBUS_INTERFACE_SMS, 'Text'),
                         },
                     )
                 )
@@ -439,12 +453,15 @@ class Py3status:
 
         return format_message
 
-    def _get_network_config(self, bearer):
-        bearer_proxy = self.bus.get(STRING_MODEMMANAGER_DBUS, bearer)
-        return {"ipv4": bearer_proxy.Ip4Config, "ipv6": bearer_proxy.Ip6Config}
+    def _get_bearer_network_config(self):
+        return {
+            "ipv4": self._get_bearer_prop("Ip4Config"),
+            "ipv6": self._get_bearer_prop("Ip6Config"),
+        }
 
-    def _get_stats(self, bearer):
-        return self.bus.get(STRING_MODEMMANAGER_DBUS, bearer).Stats
+    def _get_bearer_prop(self, prop):
+        result = self._bearer_props_iface.Get(MM_DBUS_INTERFACE_BEARER, prop)
+        return result
 
     def _organize(self, data):
         new_data = {}
@@ -467,8 +484,8 @@ class Py3status:
         name = "_name"
 
         # get wwan data
-        modem_proxy = self._get_modem_proxy()
-        wwan_data = self._get_modem_status_data(modem_proxy)
+        self._set_modem_proxy()
+        wwan_data = self._get_modem_status_data()
         wwan_data = self._organize(wwan_data)
 
         # state and name
@@ -505,15 +522,21 @@ class Py3status:
                 wwan_data[new_key] = self.registration_states[wwan_data[key]]
 
             # get bearer
-            bearer = self._get_bearer(modem_proxy)
+            bearer = self._get_bearer()
+            self._bearer_props_iface = None
+
             if bearer:
+                self._bearer_props_iface = Interface(
+                    self._dbus.get_object(MM_DBUS_INTERFACE, bearer),
+                    dbus_interface=DBUS_INTERFACE_PROPERTIES,
+                )
                 # interface name
                 if self.init["interface_name"]:
-                    wwan_data["interface_name"] = self._get_interface(bearer)
+                    wwan_data["interface_name"] = self._get_bearer_prop("Interface")
 
                 # ipv4 and ipv6 network config
                 if self.init["ip"]:
-                    network_config = self._get_network_config(bearer)
+                    network_config = self._get_bearer_network_config()
                     format_ip = {"ipv4": self.format_ipv4, "ipv6": self.format_ipv6}
                     for ip in self.init["ip"]:
                         wwan_data["format_" + ip] = self.py3.safe_format(
@@ -522,7 +545,7 @@ class Py3status:
 
                 # network connection statistics
                 if self.init["stats"]:
-                    stats = self._organize(self._get_stats(bearer))
+                    stats = self._organize(self._get_bearer_prop("Stats"))
                     if stats:
                         stats["duration_hms"] = format(timedelta(seconds=stats["duration"]))
                     wwan_data["format_stats"] = self.py3.safe_format(self.format_stats, stats)
@@ -530,7 +553,7 @@ class Py3status:
         # message and format message
         if self.init["sms_message"]:
             if wwan_data["state"] >= 1:
-                message_data = self._get_message_data(modem_proxy)
+                message_data = self._get_message_data()
                 # count messages
                 keys = ["message", "messages"]
                 wwan_data.update(zip(keys, self._count_messages(message_data)))
