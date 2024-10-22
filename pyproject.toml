@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "py3status: an extensible i3status wrapper written in python"
 readme = "README.md"
 license = "BSD-2-Clause"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "Ultrabug", email = "ultrabug@ultrabug.net" },
 ]
@@ -20,11 +20,11 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -72,7 +72,7 @@ test = [
 ]
 
 [[tool.hatch.envs.test.matrix]]
-python = ["py38", "py39", "py310", "py311", "py312"]
+python = ["py39", "py310", "py311", "py312", "py313"]
 type = ["default"]
 
 [tool.hatch.envs.style]
@@ -96,7 +96,7 @@ format = [
 
 [tool.black]
 line-length = 100
-target-version = ["py311"]
+target-version = ["py312"]
 skip-string-normalization = true
 
 [tool.isort]
