@@ -25,6 +25,7 @@ Configuration parameters:
 Format placeholders:
     {lines} number of lines in the output
     {output} output of script given by "script_path"
+    {composite} composite output of script given by "script_path"
 
 Examples:
 ```
@@ -104,9 +105,12 @@ class Py3status:
         else:
             output = ""
 
-        response["full_text"] = self.py3.safe_format(
-            self.format, {"output": self.py3.safe_format(output), "lines": len(output_lines)}
-        )
+        script_data = {
+            "output": output,
+            "lines": len(output_lines),
+            "composite": self.py3.safe_format(output),
+        }
+        response["full_text"] = self.py3.safe_format(self.format, script_data)
         return response
 
     def on_click(self, event):
