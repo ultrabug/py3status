@@ -6294,10 +6294,10 @@ to define the button parameters in your config.</p>
 <p><code>button_next</code> mouse button to play the next entry <em>(default None)</em></p>
 </li>
 <li>
-<p><code>button_next_player</code> (Experimental) mouse button to switch next player in list (Same status as top player) <em>(default None)</em></p>
+<p><code>button_next_player</code> mouse button to switch next player in list (Same status as top player) <em>(default None)</em></p>
 </li>
 <li>
-<p><code>button_prev_player</code> (Experimental) mouse button to switch previous player in list (Same status as top player) <em>(default None)</em></p>
+<p><code>button_prev_player</code> mouse button to switch previous player in list (Same status as top player) <em>(default None)</em></p>
 </li>
 <li>
 <p><code>button_previous</code> mouse button to play the previous entry <em>(default None)</em></p>
@@ -6313,9 +6313,6 @@ to define the button parameters in your config.</p>
 </li>
 <li>
 <p><code>cache_timeout</code> time (s) between Position update <em>(default 0.5)</em></p>
-</li>
-<li>
-<p><code>format</code> see placeholders below</p>
 </li>
 <li>
 <p><code>format</code> display format for this module
@@ -6343,7 +6340,9 @@ to define the button parameters in your config.</p>
 <p><code>max_width</code> maximum status length <em>(default None)</em></p>
 </li>
 <li>
-<p><code>player_hide_non_canplay</code> Experimental. Used to hide chrome/chromium players on idle state. Add 'chromium' into list and try. <em>(default [])</em></p>
+<p><code>player_hide_non_canplay</code> For hiding players which doesn't close mpris interface after media closing
+    (for example chromium based browsers)
+    <em>(default [])</em></p>
 </li>
 <li>
 <p><code>player_priority</code> priority of the players.
@@ -6436,7 +6435,8 @@ to define the button parameters in your config.</p>
 <p><code>mpris2</code> Python usable definiton of MPRIS2</p>
 </li>
 <li>
-<p><code>dbus</code> Python bindings for dbus</p>
+<p><code>dbus-python</code> Python bindings for dbus
+    PyGObject: Python bindings for GObject Introspection</p>
 </li>
 </ul>
 <p>Tested players:</p>
