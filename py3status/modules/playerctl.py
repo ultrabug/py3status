@@ -24,8 +24,6 @@ Configuration parameters:
         *(default '[\?color=status [\?if=status=Playing > ][\?if=status=Paused \|\| ]'
         '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
-    player_hide_non_canplay: For hiding players which doesn't close mpris interface after media closing
-        (default ['chromium', 'chrome'])
     players: list of players to track. An empty list tracks all players (default [])
     seek_delta: time (in seconds) to change the playback's position by (default 5)
     thresholds: specify color thresholds to use for different placeholders
@@ -100,7 +98,6 @@ class Py3status:
         r"[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]"
     )
     format_player_separator = " "
-    player_hide_non_canplay = ["chromium", "chrome"]
     players = []
     seek_delta = 5
     thresholds = {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]}
@@ -276,10 +273,7 @@ class Py3status:
         players = []
         cached_until = self.py3.CACHE_FOREVER
         for player in tracked_players:
-            if (
-                not player.props.can_play
-                and player.props.player_name in self.player_hide_non_canplay
-            ):
+            if not player.props.can_play:
                 continue
 
             player_data = self._get_player_data(player)
