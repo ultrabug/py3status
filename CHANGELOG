@@ -1,3 +1,14 @@
+version 3.60 (2024-10-24)
+* THANKS to Valdur Kana and @lasers for their long and continued efforts in improving py3status!
+* core: drop EOL python 3.8 and add new 3.13 to CI (#2266)
+* external_script module: add composite placeholder (#2263), by lasers
+* hddtemp module: remove deprecated telnetlib dependency (fixes #2261) (#2262), by Valdur Kana
+* kdeconnector module: replace pydbus with dbus-python (#2264), by Valdur Kana
+* mpris module: improve documentation (#2257), by Valdur Kana
+* playerctl module: hide non-can-play players and use chrome and chromium as default value. (#2256), by Valdur Kana
+* playerctl module: list python-gobject as dependency (#2258), by Joey Holtzman
+* wwan module: replace pydbus with dbus-python (#2265), by Valdur Kana
+
 version 3.59 (2024-08-02)
 * core: strip whitespaces from OUTPUT, OUTPUT_PART events (#2245), by lasers
 * ci(ruff): use new ruff check path command (#2253)
