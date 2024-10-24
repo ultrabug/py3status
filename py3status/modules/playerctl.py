@@ -274,6 +274,9 @@ class Py3status:
         players = []
         cached_until = self.py3.CACHE_FOREVER
         for player in tracked_players:
+            if not player.props.can_play:
+                continue
+
             player_data = self._get_player_data(player)
 
             # Check if the player should cause the module to continuously update
