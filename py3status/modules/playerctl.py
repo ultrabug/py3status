@@ -72,9 +72,9 @@ from fnmatch import fnmatch
 from threading import Thread
 
 import gi
-from gi.repository import GLib, Playerctl
 
 gi.require_version("Playerctl", "2.0")
+from gi.repository import GLib, Playerctl  # noqa e402
 
 
 class Py3status:
