@@ -369,7 +369,9 @@ class Py3status:
         tmp = f"conky.config = {config}\nconky.text = [[{text}]]"
 
         # write tmp output to '/tmp/py3status-conky_*', make a command
-        self.tmpfile = NamedTemporaryFile(prefix="py3status_conky-", suffix=".conf", delete_on_close=False)
+        self.tmpfile = NamedTemporaryFile(
+            prefix="py3status_conky-", suffix=".conf", delete_on_close=False
+        )
         self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
         self.conky_command = f"conky -c {self.tmpfile.name}".split()
