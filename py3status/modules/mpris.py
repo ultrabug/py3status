@@ -23,9 +23,6 @@ Configuration parameters:
     icon_previous: specify icon for previous button (default u'\u25c3')
     icon_stop: specify icon for stop button (default u'\u25a1')
     max_width: maximum status length (default None)
-    player_hide_non_canplay: For hiding players which doesn't close mpris interface after media closing
-        (for example chromium based browsers)
-        (default [])
     player_priority: priority of the players.
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
@@ -152,7 +149,6 @@ class Player:
         self._player_shortname = name_from_id
         self._dPlayer = dPlayer(dbus_interface_info={"dbus_uri": player_id})
         self._full_name = f"{self._identity} {self._identity_index}"
-        self._hide_non_canplay = self._player_shortname in self.parent.player_hide_non_canplay
 
         self._placeholders = {
             "player": self._identity,
@@ -348,7 +344,7 @@ class Player:
 
     @property
     def hide(self):
-        return self._hide_non_canplay and not self._can.get("CanPlay")
+        return not self._can.get("CanPlay")
 
     @property
     def id(self):
@@ -382,11 +378,20 @@ class Py3status:
     icon_previous = "\u25c3"
     icon_stop = "\u25a1"
     max_width = None
-    player_hide_non_canplay = []
     player_priority = []
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"
+
+    class Meta:
+        deprecated = {
+            'remove': [
+                {
+                    'param': 'player_hide_non_canplay',
+                    'msg': 'obsolete because we now hide all non canplay players',
+                },
+            ],
+        }
 
     def post_config_hook(self):
         self._name_owner_change_match = None
@@ -485,7 +490,7 @@ class Py3status:
                 self._format_contains_control_buttons = True
                 self._used_can_properties.append(value["clickable"])
 
-        if len(self.player_hide_non_canplay) and "CanPlay" not in self._used_can_properties:
+        if "CanPlay" not in self._used_can_properties:
             self._used_can_properties.append("CanPlay")
 
         self._format_contains_time = self.py3.format_contains(self.format, "time")
