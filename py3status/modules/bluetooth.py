@@ -100,7 +100,7 @@ class Py3status:
     format = "{format_adapter}"
     format_adapter = "{format_device}"
     format_adapter_separator = " "
-    format_device = "\?if=connected&color=connected {alias}"
+    format_device = r"\?if=connected&color=connected {alias}"
     format_device_separator = " "
     thresholds = [(False, "bad"), (True, "good")]
 

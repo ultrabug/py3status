@@ -1,4 +1,4 @@
-"""
+r"""
 Display sway inhibit idle status.
 
 This Module shows an indicator, if an idle is inhibited by an inhibitor.

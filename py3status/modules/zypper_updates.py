@@ -1,4 +1,4 @@
-"""
+r"""
 Display number of pending updates for OpenSUSE Linux.
 
 Configuration parameters:
@@ -31,7 +31,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 600
-    format = "zypper: [\?color=update {update}]"
+    format = r"zypper: [\?color=update {update}]"
     thresholds = [(0, "good"), (50, "degraded"), (100, "bad")]
 
     def post_config_hook(self):

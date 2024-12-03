@@ -895,8 +895,8 @@ if __name__ == "__main__":
 
     def colorize(names, color="lightgreen", separator=None):
         if separator is None:
-            separator = "[\?color={c}&show  / ]".format(c=color)
-        body = "[\?color={c}&show {n}] [\?color={n} {{{n}}}]"
+            separator = r"[\?color={c}&show  / ]".format(c=color)
+        body = r"[\?color={c}&show {n}] [\?color={n} {{{n}}}]"
         return separator.join([body.format(c=color, n=name) for name in names])
 
     # fmt: off
@@ -911,7 +911,7 @@ if __name__ == "__main__":
         # Miscellaneous
         "api_key": getenv("OWM_API_KEY"),
         "icons": {"200": "☔", "230_232": "🌧"},
-        "format_forecast_separator": "\?color=tomato  separator ",
+        "format_forecast_separator": r"\?color=tomato  separator ",
         "forecast_days": 1,
         # Format
         "format": colorize(format_placeholders, "lightblue"),
