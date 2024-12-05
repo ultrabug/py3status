@@ -1,3 +1,10 @@
+version 3.61 (2024-12-05)
+* argparsers: pgrep i3 with shmlog (#2272), by lasers
+* modules: fix SyntaxWarning for python 3.12+ thx to @sdelafond (#2274)
+* conky module: fix tempfile and ignore new output (#2273), by ntorresalberto
+* mpris module: hide all non can_play players (#2267), by Valdur Kana
+* playerctl module: gi.require_version notification fix (#2270), by Valdur Kana
+
 version 3.60 (2024-10-24)
 * THANKS to Valdur Kana and @lasers for their long and continued efforts in improving py3status!
 * core: drop EOL python 3.8 and add new 3.13 to CI (#2266)
