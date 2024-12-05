@@ -23,7 +23,7 @@ Configuration parameters:
 
 Format placeholders:
     {album} album name
-    {artist} artiste name (first one)
+    {artist} artist name (first one)
     {playback} state of the playback: Playing, Paused
     {time} time duration of the song
     {title} name of the song
@@ -60,11 +60,12 @@ stopped
 {'color': '#FF0000', 'full_text': 'Spotify stopped'}
 """
 
-import re
 from datetime import timedelta
 from time import sleep
 
 import dbus
+
+from py3status.constants import DEFAULT_SANITIZE_WORDS
 
 SPOTIFY_CMD = """dbus-send --print-reply --dest={dbus_client}
                  /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.{cmd}"""
@@ -83,45 +84,10 @@ class Py3status:
     format_down = "Spotify not running"
     format_stopped = "Spotify stopped"
     sanitize_titles = True
-    sanitize_words = [
-        "bonus",
-        "demo",
-        "edit",
-        "explicit",
-        "extended",
-        "feat",
-        "mono",
-        "remaster",
-        "stereo",
-        "version",
-    ]
+    sanitize_words = DEFAULT_SANITIZE_WORDS
 
     def _spotify_cmd(self, action):
         return SPOTIFY_CMD.format(dbus_client=self.dbus_client, cmd=action)
-
-    def post_config_hook(self):
-        """ """
-        # Match string after hyphen, comma, semicolon or slash containing any metadata word
-        # examples:
-        # - Remastered 2012
-        # / Radio Edit
-        # ; Remastered
-        self.after_delimiter = self._compile_re(r"([\-,;/])([^\-,;/])*(META_WORDS_HERE).*")
-
-        # Match brackets with their content containing any metadata word
-        # examples:
-        # (Remastered 2017)
-        # [Single]
-        # (Bonus Track)
-        self.inside_brackets = self._compile_re(r"([\(\[][^)\]]*?(META_WORDS_HERE)[^)\]]*?[\)\]])")
-
-    def _compile_re(self, expression):
-        """
-        Compile given regular expression for current sanitize words
-        """
-        meta_words = "|".join(self.sanitize_words)
-        expression = expression.replace("META_WORDS_HERE", meta_words)
-        return re.compile(expression, re.IGNORECASE)
 
     def _get_playback_status(self):
         """
@@ -145,9 +111,11 @@ class Py3status:
                 microtime = metadata.get("mpris:length")
                 rtime = str(timedelta(seconds=microtime // 1_000_000))
                 title = metadata.get("xesam:title")
+
+                # Sanitize album and title
                 if self.sanitize_titles:
-                    album = self._sanitize_title(album)
-                    title = self._sanitize_title(title)
+                    album = self.py3.sanitize_title(self.sanitize_words, album)
+                    title = self.py3.sanitize_title(self.sanitize_words, title)
 
                 playback_status = self._get_playback_status()
                 if playback_status == "Playing":
@@ -175,14 +143,6 @@ class Py3status:
             )
         except Exception:
             return (self.format_down, self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
-
-    def _sanitize_title(self, title):
-        """
-        Remove redundant metadata from title and return it
-        """
-        title = re.sub(self.inside_brackets, "", title)
-        title = re.sub(self.after_delimiter, "", title)
-        return title.strip()
 
     def spotify(self):
         """
