@@ -16,6 +16,7 @@ Configuration parameters:
         *(default '[\?if=is_started [\?if=is_playing > ][\?if=is_paused \|\| ]'
         '[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]'
         '|\?show cmus: waiting for user input]]')*
+    replacements: specify a list/dict of string placeholders to modify (default None)
     sleep_timeout: sleep interval for this module. when cmus is not running,
         this interval will be used. this allows some flexible timing where one
         might want to refresh constantly with some placeholders... or to refresh
@@ -100,6 +101,7 @@ class Py3status:
         r"[\?if=is_stopped .. ][[{artist}][\?soft  - ][{title}]"
         r"|\?show cmus: waiting for user input]]"
     )
+    replacements = None
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -109,6 +111,7 @@ class Py3status:
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+        self.replacements_init = self.py3.get_replacements_list(self.format)
 
     def _seconds_to_time(self, value):
         m, s = divmod(int(value), 60)
@@ -165,14 +168,14 @@ class Py3status:
         cached_until = self.sleep_timeout
         color = self.py3.COLOR_BAD
 
-        is_started, data = self._get_cmus_data()
+        is_started, cmus_data = self._get_cmus_data()
 
         if is_started:
             cached_until = self.cache_timeout
-            data = self._organize_data(data)
-            data = self._manipulate_data(data)
+            cmus_data = self._organize_data(cmus_data)
+            cmus_data = self._manipulate_data(cmus_data)
 
-            status = data.get("status")
+            status = cmus_data.get("status")
             if status == "playing":
                 is_playing = True
                 color = self.color_playing
@@ -183,19 +186,23 @@ class Py3status:
                 is_stopped = True
                 color = self.color_stopped
 
+        for x in self.replacements_init:
+            if x in cmus_data:
+                cmus_data[x] = self.py3.replace(cmus_data[x], x)
+
+        cmus_data.update(
+            {
+                "is_paused": is_paused,
+                "is_playing": is_playing,
+                "is_started": is_started,
+                "is_stopped": is_stopped,
+            }
+        )
+
         return {
             "cached_until": self.py3.time_in(cached_until),
             "color": color,
-            "full_text": self.py3.safe_format(
-                self.format,
-                dict(
-                    is_paused=is_paused,
-                    is_playing=is_playing,
-                    is_started=is_started,
-                    is_stopped=is_stopped,
-                    **data,
-                ),
-            ),
+            "full_text": self.py3.safe_format(self.format, cmus_data),
         }
 
     def on_click(self, event):

@@ -14,6 +14,7 @@ Configuration parameters:
     format: display format for this module
         *(default '\?if=is_started [\?if=is_stopped \[\] moc|'
         '[\?if=is_paused \|\|][\?if=is_playing >] {title}]')*
+    replacements: specify a list/dict of string placeholders to modify (default None)
     sleep_timeout: when moc is not running, this interval will be used to
         allow one to refresh constantly with time placeholders and/or
         to refresh once every minute rather than every few seconds
@@ -88,6 +89,7 @@ class Py3status:
         r"\?if=is_started [\?if=is_stopped \[\] moc|"
         r"[\?if=is_paused \|\|][\?if=is_playing >] {title}]"
     )
+    replacements = None
     sleep_timeout = 20
 
     def post_config_hook(self):
@@ -97,6 +99,7 @@ class Py3status:
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
+        self.replacements_init = self.py3.get_replacements_list(self.format)
 
     def _get_moc_data(self):
         try:
@@ -133,19 +136,23 @@ class Py3status:
                 is_stopped = True
                 color = self.color_stopped
 
+        for x in self.replacements_init:
+            if x in moc_data:
+                moc_data[x] = self.py3.replace(moc_data[x], x)
+
+        moc_data.update(
+            {
+                "is_paused": is_paused,
+                "is_playing": is_playing,
+                "is_started": is_started,
+                "is_stopped": is_stopped,
+            }
+        )
+
         return {
             "cached_until": self.py3.time_in(cached_until),
             "color": color,
-            "full_text": self.py3.safe_format(
-                self.format,
-                dict(
-                    is_paused=is_paused,
-                    is_playing=is_playing,
-                    is_started=is_started,
-                    is_stopped=is_stopped,
-                    **data,
-                ),
-            ),
+            "full_text": self.py3.safe_format(self.format, moc_data),
         }
 
     def on_click(self, event):
