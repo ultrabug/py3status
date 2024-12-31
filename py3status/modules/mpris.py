@@ -40,6 +40,7 @@ Format placeholders:
     {state} playback status of the player
     {time} played time of the song
     {title} name of the song
+    {trackno} track number of the song
     {nowplaying} now playing field provided by VLC for stream info
 
 Button placeholders:
@@ -278,6 +279,10 @@ class Player:
 
             self._metadata["length"] = self._get_time_str(metadata.get(Metadata_Map.LENGTH))
 
+            # we are converting the attribute name to lowercase because although the spec 
+            # says it's `xesam:trackNumber`, VLC exposes it as `xesam:tracknumber`
+            self._metadata["trackno"] = metadata.get(Metadata_Map.TRACK_NUMBER.lower());
+
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
         if not self._metadata.get("title"):
@@ -407,6 +412,7 @@ class Py3status:
             "artist": None,
             "length": None,
             "title": None,
+            "trackno": None,
             "nowplaying": None,
             "time": None,
             "state": None,
@@ -477,7 +483,7 @@ class Py3status:
         self._color_inactive = self.py3.COLOR_CONTROL_INACTIVE or self.py3.COLOR_BAD
 
         self._format_contains_metadata = False
-        self._metadata_keys = ["album", "artist", "title", "nowplaying", "length"]
+        self._metadata_keys = ["album", "artist", "title", "nowplaying", "length", "trackno"]
         for key in self._metadata_keys:
             if self.py3.format_contains(self.format, key):
                 self._format_contains_metadata = True
