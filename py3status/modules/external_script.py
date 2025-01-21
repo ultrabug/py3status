@@ -3,10 +3,10 @@ Display output of a given script.
 
 Display output of any executable script set by `script_path`. Only the first
 two lines of output will be used. The first line is used as the displayed
-text. If the output has two or more lines, the second line is set as the text
-color (and should hence be a valid hex color code such as #FF0000 for red).
-If the second line is `urgent`, or has `!` prefixing the hex color, then the
-"urgent" flag will be set.
+text. If the output has two or more lines, the second line contains additional
+information as whitespace separated tokens.  Valid tokens are:
+    `#rrggbb`: the text color as a hex color code (eg. `#FF0000` for red)
+    `urgent`: the word `urgent` to set the urgent flag
 The script should not have any parameters, but it could work.
 
 Configuration parameters:
@@ -77,15 +77,12 @@ class Py3status:
             )
             output_lines = self.output.splitlines()
             if len(output_lines) > 1:
-                output_color = output_lines[1]
-                if output_color == "urgent":
-                    response["urgent"] = True
-                elif re.search(r"^!?#[0-9a-fA-F]{6}$", output_color):
-                    if output_color[0] == "!":
+                words = output_lines[1].split()
+                for word in words:
+                    if re.search(r"^#[0-9a-fA-F]{6}$", word):
+                        response["color"] = word
+                    elif word == "urgent":
                         response["urgent"] = True
-                        response["color"] = output_color[1:]
-                    else:
-                        response["color"] = output_color
         except self.py3.CommandError as e:
             # something went wrong show error to user
             output = e.output or e.error
