@@ -50,7 +50,8 @@ class Py3status:
 
     def post_config_hook(self):
         self.selection_cache = None
-        self.log_file = Path(self.log_file).expanduser()
+        if self.log_file:
+            self.log_file = Path(self.log_file).expanduser()
 
     def xsel(self):
         selection = self.py3.command_output(self.command).strip()

@@ -5,8 +5,9 @@ from py3status.module import Module
 class TestModule:
     static_variable = 123
 
-    def __init__(self):
-        self.instance_variable = 321
+    @classmethod
+    def setup_class(cls):
+        cls.instance_variable = 321
 
     def post_config_hook(self):
         pass

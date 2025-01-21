@@ -4,6 +4,7 @@ Display songs currently playing in DeaDBeeF.
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 5)
     format: display format for this module (default '[{artist} - ][{title}]')
+    replacements: specify a list/dict of string placeholders to modify (default None)
     sleep_timeout: when deadbeef is not running, this interval will be used
         to allow faster refreshes with time-related placeholders and/or
         to refresh few times per minute rather than every few seconds
@@ -58,6 +59,7 @@ class Py3status:
     # available configuration parameters
     cache_timeout = 5
     format = "[{artist} - ][{title}]"
+    replacements = None
     sleep_timeout = 20
 
     class Meta:
@@ -89,6 +91,7 @@ class Py3status:
         self.color_paused = self.py3.COLOR_PAUSED or self.py3.COLOR_DEGRADED
         self.color_playing = self.py3.COLOR_PLAYING or self.py3.COLOR_GOOD
         self.color_stopped = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
+        self.replacements_init = self.py3.get_replacements_list(self.format)
 
     def _is_running(self):
         try:
@@ -123,6 +126,10 @@ class Py3status:
                 color = self.color_playing
             else:
                 color = self.color_paused
+
+        for x in self.replacements_init:
+            if x in beef_data:
+                beef_data[x] = self.py3.replace(beef_data[x], x)
 
         return {
             "cached_until": self.py3.time_in(cached_until),
