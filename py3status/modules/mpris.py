@@ -27,13 +27,14 @@ Configuration parameters:
         Keep in mind that the state has a higher priority than
         player_priority. So when player_priority is "[mpd, bomi]" and mpd is
         paused and bomi is playing than bomi wins. (default [])
+    replacements: specify a list/dict of string placeholders to modify (default None)
     state_pause: specify icon for pause state (default u'\u25eb')
     state_play: specify icon for play state (default u'\u25b7')
     state_stop: specify icon for stop state (default u'\u25a1')
 
 Format placeholders:
     {album} album name
-    {artist} artiste name (first one)
+    {artist} artist name (first one)
     {length} time duration of the song
     {player} show name of the player
     {player_shortname} show name of the player from busname (usually command line name)
@@ -280,6 +281,10 @@ class Player:
 
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
+            for x in self.parent.replacements_init:
+                if x in self._metadata and self._metadata[x]:
+                    self._metadata[x] = self.parent.py3.replace(self._metadata[x], x)
+
         if not self._metadata.get("title"):
             self._metadata["title"] = "No Track"
 
@@ -379,6 +384,7 @@ class Py3status:
     icon_stop = "\u25a1"
     max_width = None
     player_priority = []
+    replacements = None
     state_pause = "\u25eb"
     state_play = "\u25b7"
     state_stop = "\u25a1"
@@ -394,6 +400,7 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        self.replacements_init = self.py3.get_replacements_list(self.format)
         self._name_owner_change_match = None
         self._kill = False
         self._mpris_players: dict[Player] = {}
