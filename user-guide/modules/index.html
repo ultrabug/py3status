@@ -3804,11 +3804,11 @@ emerge_status {
 <p>Display output of a given script.</p>
 <p>Display output of any executable script set by <code>script_path</code>. Only the first
 two lines of output will be used. The first line is used as the displayed
-text. If the output has two or more lines, the second line is set as the text
-color (and should hence be a valid hex color code such as #FF0000 for red).
-If the second line is <code>urgent</code>, or has <code>!</code> prefixing the hex color, then the
-"urgent" flag will be set.
-The script should not have any parameters, but it could work.</p>
+text. If the output has two or more lines, the second line contains additional
+information as whitespace separated tokens.  Valid tokens are:
+    <code>#rrggbb</code>: the text color as a hex color code (eg. <code>#FF0000</code> for red)
+    <code>urgent</code>: the word <code>urgent</code> to set the urgent flag
+    The script should not have any parameters, but it could work.</p>
 <p>Configuration parameters:</p>
 <ul>
 <li>
