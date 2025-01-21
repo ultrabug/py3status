@@ -279,9 +279,9 @@ class Player:
 
             self._metadata["length"] = self._get_time_str(metadata.get(Metadata_Map.LENGTH))
 
-            # we are converting the attribute name to lowercase because although the spec 
+            # we are converting the attribute name to lowercase because although the spec
             # says it's `xesam:trackNumber`, VLC exposes it as `xesam:tracknumber`
-            self._metadata["tracknumber"] = metadata.get(Metadata_Map.TRACK_NUMBER.lower());
+            self._metadata["tracknumber"] = metadata.get(Metadata_Map.TRACK_NUMBER.lower())
 
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
