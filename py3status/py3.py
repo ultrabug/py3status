@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import sys
 import time
@@ -102,6 +103,7 @@ class Py3:
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
         self._module = module
+        self._replacements = None
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
@@ -177,7 +179,7 @@ class Py3:
             except TypeError:
                 pass
             self._thresholds[None] = [(x[0], self._get_color(x[1])) for x in thresholds]
-            return
+
         elif isinstance(thresholds, dict):
             for key, value in thresholds.items():
                 if isinstance(value, list):
@@ -186,6 +188,25 @@ class Py3:
                     except TypeError:
                         pass
                     self._thresholds[key] = [(x[0], self._get_color(x[1])) for x in value]
+
+    def _replacements_init(self):
+        """
+        Initiate and check any replacements set
+        """
+        replacements = getattr(self._py3status_module, "replacements", [])
+        self._replacements = {}
+
+        if isinstance(replacements, list):
+            self._replacements[None] = [
+                (re.compile(x[0], re.IGNORECASE), x[1]) for x in replacements
+            ]
+
+        elif isinstance(replacements, dict):
+            for key, value in replacements.items():
+                if isinstance(value, list):
+                    self._replacements[key] = [
+                        (re.compile(x[0], re.IGNORECASE), x[1]) for x in value
+                    ]
 
     def _get_module_info(self, module_name):
         """
@@ -710,6 +731,28 @@ class Py3:
                     found.add(name)
         return list(found)
 
+    def get_replacements_list(self, format_string):
+        """
+        If possible, returns a list of filtered placeholders in ``format_string``.
+        """
+        replacements = getattr(self._py3status_module, "replacements", None)
+        if not replacements or not format_string:
+            return []
+
+        if format_string not in self._format_placeholders:
+            placeholders = self._formatter.get_placeholders(format_string)
+            self._format_placeholders[format_string] = placeholders
+        else:
+            placeholders = self._format_placeholders[format_string]
+
+        # filter placeholders
+        found = set()
+        for replacement in replacements:
+            for placeholder in placeholders:
+                if placeholder == replacement:
+                    found.add(placeholder)
+        return list(found or placeholders)
+
     def get_placeholders_list(self, format_string, matches=None):
         """
         Returns a list of placeholders in ``format_string``.
@@ -1213,6 +1256,29 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def replace(self, value, name=None):
+        """
+        Replace string using replacements.
+
+        :param value: string value to be replaced
+        :param name: accepts a name
+        """
+        # If first run, then process the replacements data.
+        if self._replacements is None:
+            self._replacements_init()
+
+        if not value or not isinstance(value, str):
+            return value
+
+        name_used = name
+        if name_used not in self._replacements:
+            name_used = None
+
+        for pattern, replacement in self._replacements.get(name_used, []):
+            value = re.sub(pattern, replacement, value)
+
+        return value
 
     def request(
         self,

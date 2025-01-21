@@ -1,7 +1,7 @@
 r"""
 Display song/video and control players supported by playerctl
 
-Playerctl is a command-line utility for controlling media players 
+Playerctl is a command-line utility for controlling media players
 that implement the MPRIS D-Bus Interface Specification. With Playerctl
 you can bind player actions to keys and get metadata about the currently
 playing song or video.
@@ -25,6 +25,7 @@ Configuration parameters:
         '[\?if=status=Stopped .. ][[{artist}][\?soft  - ][{title}|{player}]]]')*
     format_player_separator: show separator if more than one player (default ' ')
     players: list of players to track. An empty list tracks all players (default [])
+    replacements: specify a list/dict of string placeholders to modify (default None)
     seek_delta: time (in seconds) to change the playback's position by (default 5)
     thresholds: specify color thresholds to use for different placeholders
         (default {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]})
@@ -100,6 +101,7 @@ class Py3status:
     )
     format_player_separator = " "
     players = []
+    replacements = None
     seek_delta = 5
     thresholds = {"status": [("Playing", "good"), ("Paused", "degraded"), ("Stopped", "bad")]}
     volume_delta = 10
@@ -117,6 +119,7 @@ class Py3status:
 
     def post_config_hook(self):
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
+        self.replacements_init = self.py3.get_replacements_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
         self.cache_timeout = getattr(self, "cache_timeout", 1)
 
@@ -282,6 +285,11 @@ class Py3status:
             # Check if the player should cause the module to continuously update
             if self.position and player_data["status"] == "Playing" and player_data["position"]:
                 cached_until = self.cache_timeout
+
+            # Replace the values
+            for x in self.replacements_init:
+                if x in player_data:
+                    player_data[x] = self.py3.replace(player_data[x], x)
 
             # Set the color of a player
             for key in self.thresholds_init:
