@@ -282,7 +282,7 @@ class Player:
             self._metadata["nowplaying"] = metadata.get("vlc:nowplaying", None)
 
             for x in self.parent.replacements_init:
-                if x in self._metadata and self._metadata[x]:
+                if x in self._metadata:
                     self._metadata[x] = self.parent.py3.replace(self._metadata[x], x)
 
         if not self._metadata.get("title"):
