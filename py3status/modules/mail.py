@@ -77,7 +77,7 @@ mail {                                       #
                 'name': 'home',              # <----│----│----└── {home}
                 'user': 'lasers',            #      │    │
                 'password': 'kiss_my_butt!', #      │    │
-                'server': 'imap.gmail.com',  #      │    │ 
+                'server': 'imap.gmail.com',  #      │    │
                                              #  <---│----│ no filters to
                 'port': 993,                 #      │    │ search folders, use
                                              #      │    │ filters ['^INBOX$']
