@@ -1,3 +1,4 @@
+import importlib.metadata
 import sys
 import time
 from collections import deque
@@ -8,8 +9,6 @@ from subprocess import Popen
 from syslog import LOG_ERR, LOG_INFO, LOG_WARNING, syslog
 from threading import Event, Thread
 from traceback import extract_tb, format_stack, format_tb
-
-import pkg_resources
 
 from py3status.command import CommandServer
 from py3status.events import Events
@@ -458,7 +457,14 @@ class Py3statusWrapper:
 
     def _get_entry_point_based_modules(self):
         classes_from_entry_points = {}
-        for entry_point in pkg_resources.iter_entry_points(ENTRY_POINT_NAME):
+        # TODO: drop on 3.9 EOL
+        if sys.version_info.minor < 10:
+            eps = importlib.metadata.entry_points().get(ENTRY_POINT_NAME, [])
+        else:
+            eps = importlib.metadata.entry_points(group=ENTRY_POINT_NAME)
+        print("eps", ENTRY_POINT_NAME, eps)
+
+        for entry_point in eps:
             try:
                 module = entry_point.load()
             except Exception as err:
@@ -466,9 +472,9 @@ class Py3statusWrapper:
                 continue
             klass = getattr(module, Module.EXPECTED_CLASS, None)
             if klass:
-                module_name = entry_point.module_name.split(".")[-1]
+                module_name = entry_point.name.split(".")[-1]
                 classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
-                self.log(f"available module from {ENTRY_POINT_KEY}: {module_name}")
+                self.log(f"available module from entry point {ENTRY_POINT_KEY}: {module_name}")
         return classes_from_entry_points
 
     def get_user_configured_modules(self):
