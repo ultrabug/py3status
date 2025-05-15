@@ -51,16 +51,16 @@ kdeconnector {
 @author Moritz Lüdecke, valdur55
 
 SAMPLE OUTPUT
-{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2B06 97%'}
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2709 \u2b06 97%'}
 
 charging
-{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2B06 97%'}
+{'color': '#00FF00', 'full_text': u'Samsung Galaxy S6 \u2b06 97%'}
 
 transition
-{'color': '#FFFF00', 'full_text': u'Samsung Galaxy S6 \u2B07 93%'}
+{'color': '#FFFF00', 'full_text': u'Samsung Galaxy S6 \u2b07 93%'}
 
 not-plugged
-{'color': '#FF0000', 'full_text': u'Samsung Galaxy S6 \u2B07 92%'}
+{'color': '#FF0000', 'full_text': u'Samsung Galaxy S6 \u2b07 92%'}
 
 disconnected
 {'color': '#FF0000', 'full_text': u'device disconnected'}
