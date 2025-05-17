@@ -1,7 +1,8 @@
 import argparse
+import sys
 from pathlib import Path
 
-import pkg_resources
+import importlib.metadata
 import pytest
 
 import py3status
@@ -28,7 +29,7 @@ def test__get_path_based_modules(status_wrapper):
 
 
 def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
-    def return_fake_entry_points(*_):
+    def return_fake_entry_points(*args, **kwargs):
         class FakePy3status:
             Py3status = "I am a fake class"
 
@@ -42,9 +43,13 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
 
                 return air_quality
 
-        return [FakePy3status("spam"), FakePy3status("eggs")]
+        # TODO: drop on 3.9 EOL
+        if sys.version_info.minor < 10:
+            return {"py3status": [FakePy3status("spam"), FakePy3status("eggs")]}
+        else:
+            return [FakePy3status("spam"), FakePy3status("eggs")]
 
-    monkeypatch.setattr(pkg_resources, "iter_entry_points", return_fake_entry_points)
+    monkeypatch.setattr(importlib.metadata, "entry_points", return_fake_entry_points)
 
     user_modules = status_wrapper._get_entry_point_based_modules()
     assert len(user_modules) == 2
