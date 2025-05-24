@@ -1,3 +1,16 @@
+version 3.62 (2025-05-24)
+* core: fix usage of deprecated pkg_resources to the @sdelafond (#2286)
+* py3: add new helper: get_replacements_list (#2242), by lasers
+* conky module: add fallback delete parameter for py3.11 or less (#2275), by lasers
+* external_script module: adjust how urgent is specified (#2283), by Kevin Pulo
+* external_script module: allow scripts to specify urgent (#2282), by Kevin Pulo
+* getjson module: fix examples (#2278), by lasers
+* mpris module: implement track number support (#2280), by James Walker
+* mpris module: use new helper: get_replacements_list introduced with (#2242) (#2284), by Valdur Kana
+* tests: stop warning py3status/tests/test_module_load.py:5 (#2276), by lasers
+* whatismyip module: add an example with more url_geo choices (#2277), by lasers
+* xsel module: fix TypeError (#2279), by Eduardo Suarez-Santana
+
 version 3.61 (2024-12-05)
 * argparsers: pgrep i3 with shmlog (#2272), by lasers
 * modules: fix SyntaxWarning for python 3.12+ thx to @sdelafond (#2274)
