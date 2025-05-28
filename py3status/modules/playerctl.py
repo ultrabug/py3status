@@ -193,7 +193,7 @@ class Py3status:
 
     @staticmethod
     def _microseconds_to_time(microseconds):
-        seconds = microseconds // 1_000_000
+        seconds = int(microseconds // 1_000_000)
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         time = f"{h}:{m:02d}:{s:02d}"
