@@ -160,6 +160,7 @@ sensor_names
 ]
 """
 
+import re
 from collections import OrderedDict
 from fnmatch import fnmatch
 from json import loads
@@ -191,6 +192,7 @@ class Py3status:
         self.sensor_placeholders = [x for x in placeholders if x != "name"]
         self.format_sensor = self.py3.update_placeholder_formats(self.format_sensor, format_sensor)
 
+        self.lm_sensors_pattern = re.compile(r'(?<=})\n(?={)', re.MULTILINE)
         self.first_run = True
 
         if self.chips:
@@ -229,11 +231,7 @@ class Py3status:
         output = self.py3.command_output(self.lm_sensors_command)
         temporary = OrderedDict()
 
-        for chunk in output.strip().split("}\n{"):
-            if not chunk.startswith("{"):
-                chunk = "{" + chunk
-            if not chunk.endswith("}"):
-                chunk = chunk + "}"
+        for chunk in self.lm_sensors_pattern.split(output):
             temporary.update(loads(chunk))
 
         return temporary
