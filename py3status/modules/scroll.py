@@ -8,6 +8,19 @@ Configuration parameters:
 Format placeholders:
     {output} output
 
+Examples:
+```
+scroll {
+    length = 30
+
+    playerctl {}
+    networkmanager {}
+    static_string {
+        format = "some long long text"
+    }
+}
+```
+
 @author farnoy
 
 SAMPLE OUTPUT
