@@ -110,22 +110,25 @@ class Py3status:
             is_started = False
         return is_started, data
 
+    def _organize_data(self, data):
+        temporary = {}
+        for line in data.splitlines():
+            category, value = line.split(": ", 1)
+            temporary[category.lower()] = value
+        return temporary
+
     def moc(self):
         is_paused = is_playing = is_stopped = None
         cached_until = self.sleep_timeout
         color = self.py3.COLOR_BAD
-        data = {}
 
         is_started, moc_data = self._get_moc_data()
 
         if is_started:
             cached_until = self.cache_timeout
+            moc_data = self._organize_data(moc_data)
 
-            for line in moc_data.splitlines():
-                category, value = line.split(": ", 1)
-                data[category.lower()] = value
-
-            self.state = data["state"]
+            self.state = moc_data["state"]
             if self.state == "PLAY":
                 is_playing = True
                 color = self.color_playing
