@@ -229,6 +229,10 @@ RETIRED_MODULES = {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
+    "fedora_updates": {
+        "new": ["dnf_updates"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "gpmdp": {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
