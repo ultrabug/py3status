@@ -11,9 +11,9 @@ Button 1 starts/pauses the countdown.
 Button 2 resets timer.
 
 Configuration parameters:
+    command: shell command to run when the timer ends (default None)
     format: display format for this module (default 'Timer {timer}')
     sound: play sound file path when the timer ends (default None)
-    command: shell command to run when the timer ends (default None)
     time: number of seconds to start countdown with (default 60)
 
 Format placeholders:
@@ -53,9 +53,9 @@ class Py3status:
     """ """
 
     # available configuration parameters
+    command = None
     format = "Timer {timer}"
     sound = None
-    command = None
     time = 60
 
     def post_config_hook(self):
