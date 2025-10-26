@@ -110,8 +110,6 @@ class Py3status:
         update_config = {
             "update_placeholder_format": [
                 {
-                    # Escape the title by default because many contain special characters
-                    "placeholder_formats": {"title": ":escape"},
                     "format_strings": ["format_player"],
                 }
             ]
