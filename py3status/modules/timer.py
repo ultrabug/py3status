@@ -11,6 +11,7 @@ Button 1 starts/pauses the countdown.
 Button 2 resets timer.
 
 Configuration parameters:
+    command: shell command to run when the timer ends (default None)
     format: display format for this module (default 'Timer {timer}')
     sound: play sound file path when the timer ends (default None)
     time: number of seconds to start countdown with (default 60)
@@ -52,6 +53,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
+    command = None
     format = "Timer {timer}"
     sound = None
     time = 60
@@ -76,6 +78,8 @@ class Py3status:
         if self.sound:
             self.py3.play_sound(self.sound)
             self.alarm = True
+        if self.command:
+            self.py3.command_run(self.command)
         self.timer()
 
     def timer(self):
