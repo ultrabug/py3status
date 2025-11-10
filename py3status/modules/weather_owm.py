@@ -263,6 +263,8 @@ diff
 import datetime
 import json
 
+from py3status.py3 import ModuleErrorException
+
 # API information
 OWM_CURR_ENDPOINT = "https://api.openweathermap.org/data/2.5/weather?"
 OWM_FUTURE_ENDPOINT = "https://api.openweathermap.org/data/2.5/forecast?"
@@ -856,20 +858,23 @@ class Py3status:
             except Exception:
                 raise Exception("no latitude/longitude found for your config")
 
-            # onecall = forecasts rate limited
-            if cached_hits < 999:
-                onecall_api_params = {"lat": lat, "lon": lon}
-                onecall = self._get_onecall(onecall_api_params)
-                # update and store caches
-                self.cached_onecall_response = onecall
-                self.cached_hits[cached_day] = cached_hits + 1
-                self.py3.storage_set("cached_onecall_response", onecall)
-                self.py3.storage_set(
-                    "cached_hits", json.dumps({cached_day: self.cached_hits[cached_day]})
-                )
-            else:
-                onecall = self.cached_onecall_response
-            onecall_daily = onecall["daily"]
+            try:
+                # onecall = forecasts rate limited
+                if cached_hits < 999:
+                    onecall_api_params = {"lat": lat, "lon": lon}
+                    onecall = self._get_onecall(onecall_api_params)
+                    # update and store caches
+                    self.cached_onecall_response = onecall
+                    self.cached_hits[cached_day] = cached_hits + 1
+                    self.py3.storage_set("cached_onecall_response", onecall)
+                    self.py3.storage_set(
+                        "cached_hits", json.dumps({cached_day: self.cached_hits[cached_day]})
+                    )
+                else:
+                    onecall = self.cached_onecall_response
+                onecall_daily = onecall["daily"]
+            except ModuleErrorException:
+                onecall_daily = []
 
             fcsts_days = self.forecast_days + 1
             text = self._format(
