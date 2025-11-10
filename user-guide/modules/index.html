@@ -683,6 +683,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dnf_updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      dnf_updates
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#do_not_disturb" class="md-nav__link">
     <span class="md-ellipsis">
       do_not_disturb
@@ -731,15 +740,6 @@
   <a href="#external_script" class="md-nav__link">
     <span class="md-ellipsis">
       external_script
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fedora_updates" class="md-nav__link">
-    <span class="md-ellipsis">
-      fedora_updates
     </span>
   </a>
   
@@ -3567,6 +3567,70 @@ dexcom {
 </ul>
 <p><strong>author</strong> guiniol</p>
 <p><strong>license</strong> BSD</p>
+<h2 id="dnf_updates">dnf_updates</h2>
+<p><img alt="dnf_updates example 0" src="../screenshots/dnf_updates-0.png" /></p>
+<p><img alt="dnf_updates example 1" src="../screenshots/dnf_updates-1-no_updates.png" /></p>
+<p>Display number of pending updates for Fedora Linux.</p>
+<p>Configuration parameters:</p>
+<ul>
+<li>
+<p><code>cache_timeout</code> refresh interval for this module <em>(default 600)</em></p>
+</li>
+<li>
+<p><code>format</code> display format for this module
+    <em>(default "DNF [\?if=security&amp;color=bad {available}|\?color=available {available}]")</em></p>
+</li>
+<li>
+<p><code>thresholds</code> specify color thresholds to use
+    <em>(default [(0, 'good'), (1, 'degraded')])</em></p>
+</li>
+</ul>
+<p>Format placeholders:</p>
+<ul>
+<li>
+<p><code>{available}</code> number of pending available updates</p>
+</li>
+<li>
+<p><code>{bugfix}</code> number of pending bugfix updates</p>
+</li>
+<li>
+<p><code>{enhancement}</code> number of pending enhancement updates</p>
+</li>
+<li>
+<p><code>{security}</code> number of pending security updates</p>
+</li>
+<li>
+<p><code>{unspecified}</code> number of pending unspecified updates</p>
+</li>
+</ul>
+<p>Color thresholds:</p>
+<ul>
+<li><code>format</code>
+    <code>xxx</code>: print a color based on the value of <code>xxx</code> placeholder</li>
+</ul>
+<p>Examples:</p>
+<pre><code># i3status theme
+dnf_updates {
+    format = &quot;[\?if=security&amp;color=bad DNF: {available}&quot;
+    format += &quot;|\?color=available DNF: {available}]&quot;
+}
+
+# hide module when no available updates
+dnf_updates {
+    format = &quot;[\?if=available DNF [\?if=security&amp;color=bad {available}&quot;
+    format += &quot;|\?color=available {available}]]&quot;
+}
+
+# individual colorized updates
+dnf_updates {
+    format = &quot;[\?if=security SECURITY [\?color=tomato {security}]][\?soft  ]&quot;
+    format += &quot;[\?if=bugfix BUGFIX [\?color=limegreen {bugfix}]][\?soft  ]&quot;
+    format += &quot;[\?if=enhancement ENHANCEMENT [\?color=lightskyblue {enhancement}]][\?soft  ]&quot;
+    format += &quot;[\?if=unspecified OTHER [\?color=darkgray {unspecified}]]&quot;
+}
+</code></pre>
+<p><strong>author</strong> tobes</p>
+<p><strong>license</strong> BSD</p>
 <h2 id="do_not_disturb">do_not_disturb</h2>
 <p><img alt="do_not_disturb example 0" src="../screenshots/do_not_disturb-0.png" /></p>
 <p><img alt="do_not_disturb example 1" src="../screenshots/do_not_disturb-1-off.png" /></p>
@@ -3898,44 +3962,6 @@ information as whitespace separated tokens.  Valid tokens are:
 }
 </code></pre>
 <p><strong>author</strong> frimdo ztracenastopa@centrum.cz</p>
-<h2 id="fedora_updates">fedora_updates</h2>
-<p><img alt="fedora_updates example 0" src="../screenshots/fedora_updates-0.png" /></p>
-<p>Display number of pending updates for Fedora Linux.</p>
-<p>This will display a count of how many <code>dnf</code> updates are waiting
-to be installed. Additionally check for update security notices.</p>
-<p>Configuration parameters:</p>
-<ul>
-<li>
-<p><code>cache_timeout</code> How often we refresh this module in seconds
-    <em>(default 600)</em></p>
-</li>
-<li>
-<p><code>check_security</code> Check for security updates
-    <em>(default True)</em></p>
-</li>
-<li>
-<p><code>format</code> Display format to use
-    <em>(default 'DNF: {updates}')</em></p>
-</li>
-</ul>
-<p>Format placeholders:</p>
-<ul>
-<li><code>{updates}</code> number of pending dnf updates</li>
-</ul>
-<p>Color options:</p>
-<ul>
-<li>
-<p><code>color_bad</code> Security notice</p>
-</li>
-<li>
-<p><code>color_degraded</code> Upgrade available</p>
-</li>
-<li>
-<p><code>color_good</code> No upgrades needed</p>
-</li>
-</ul>
-<p><strong>author</strong> tobes</p>
-<p><strong>license</strong> BSD</p>
 <h2 id="file_status">file_status</h2>
 <p><img alt="file_status example 0" src="../screenshots/file_status-0.png" /></p>
 <p><img alt="file_status example 1" src="../screenshots/file_status-1-missing.png" /></p>
