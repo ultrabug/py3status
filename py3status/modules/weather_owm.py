@@ -262,6 +262,7 @@ diff
 
 import datetime
 import json
+
 from py3status.py3 import ModuleErrorException
 
 # API information
