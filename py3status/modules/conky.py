@@ -386,7 +386,7 @@ class Py3status:
         self.ignored_conky_outputs = [
             "conky: invalid setting of type 'table'",
             "conky: FOUND:",
-            "x11 session running",
+            "session running",
         ]
 
         # thread
