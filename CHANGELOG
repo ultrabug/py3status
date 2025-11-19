@@ -1,3 +1,15 @@
+version 3.63 (2025-11-19)
+* build: update hatch to the latest version (#2295), by Joey Holtzman
+* docs: add scroll example (#2292), by Isidro
+* project: bump minimal version of hatchling* moc module: fix type mismatch in moc_data (#2288), by Joan Bruguera Micó
+* conky module: update ignored_conky_outputs (#2298), by lasers
+* dnf_updates: new module from scratch replaces fedora_updates (#2291), by lasers
+* lm_sensors module: update broken json parser (#2289), by lasers
+* playerctl module: Ensure duration is always an integer (#2287), by Joey Holtzman
+* playerctl module: remove default title escape (#2294), by Joey Holtzman
+* timer module: add command parameter (#2293), by Paul Doidge
+* weather_own module: implemented onecall 401 failure fallback (#2296), by Jacotsu
+
 version 3.62 (2025-05-24)
 * core: fix usage of deprecated pkg_resources to the @sdelafond (#2286)
 * py3: add new helper: get_replacements_list (#2242), by lasers
