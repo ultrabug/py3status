@@ -5,6 +5,7 @@ dist
 .tox/
 .cache/
 .pytest_cache
+CLAUDE.md
 
 # sphinx build system
 doc/screenshots
