@@ -140,12 +140,9 @@ single_2
 {'full_text': 'DP1'}
 """
 
-import logging
 from collections import OrderedDict, deque
 from itertools import combinations
 from time import sleep
-
-_logger = logging.getLogger("xrandr")
 
 
 class Py3status:
@@ -226,7 +223,7 @@ class Py3status:
                 else:
                     continue
             except Exception as err:
-                _logger.exception("xrandr error", err)
+                self.py3.log(f'xrandr error="{err}"')
             else:
                 layout[state][output] = {"infos": infos, "mode": mode, "state": state}
 
@@ -310,7 +307,7 @@ class Py3status:
             if force_refresh:
                 self.displayed = self.available_combinations[0]
             else:
-                _logger.warning('xrandr error="displayed combination is not available"')
+                self.py3.log('xrandr error="displayed combination is not available"')
 
     def _center(self, s):
         """
@@ -346,7 +343,7 @@ class Py3status:
                 resolution = f"--mode {resolution}" if resolution else "--auto"
                 rotation = getattr(self, f"{output}_rotate", "normal")
                 if rotation not in ["inverted", "left", "normal", "right"]:
-                    _logger.warning("configured rotation %s is not valid", rotation)
+                    self.py3.log(f"configured rotation {rotation} is not valid")
                     rotation = "normal"
                 #
                 if primary is True and not primary_added:
@@ -368,7 +365,7 @@ class Py3status:
             self.active_comb = combination
             self.active_layout = self.displayed
             self.active_mode = mode
-        _logger.info('command "%s" exit code %s', cmd, code)
+        self.py3.log(f'command "{cmd}" exit code {code}')
 
         if self.command:
             self.py3.command_run(self.command)
@@ -398,7 +395,7 @@ class Py3status:
                     cmd = '{} move workspace to output "{}"'.format(self.py3.get_wm_msg(), output)
                     self.py3.command_run(cmd)
                     # log this
-                    _logger.info("moved workspace %s to output %s", workspace, output)
+                    self.py3.log(f"moved workspace {workspace} to output {output}")
 
     def _fallback_to_available_output(self):
         """
@@ -497,7 +494,7 @@ class Py3status:
 
         # follow on change
         if not self._no_force_on_change and self.force_on_change and self._layout_changed():
-            _logger.info("detected change of monitor setup")
+            self.py3.log("detected change of monitor setup")
             self._force_on_change()
 
         # this was a click event triggered update

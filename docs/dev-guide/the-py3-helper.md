@@ -309,7 +309,9 @@ checking.
 ### log(message, level='info')
 
 Log the message.
-The level must be one of LOG_ERROR, LOG_INFO or LOG_WARNING
+The level can be any valid logging level name (e.g. "error", info",
+"warning") or integer (e.g. `10` -> `logging.INFO``). Constants
+LOG_ERROR, LOG_WARNING, and LOG_INFO are also supported.
 
 ### notify_user(msg, level='info', rate_limit=5, title=None, icon=None)
 
