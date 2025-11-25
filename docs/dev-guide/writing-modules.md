@@ -811,6 +811,19 @@ Loadavg 1.41 1.61 1.82
 Loadavg 1.41 1.61 1.82
 ^C
 ```
+
+## Logging
+
+Modules are encouraged to use Python's standard
+[`logging`](https://docs.python.org/3/library/logging.config.html?highlight=logging#logging-config-dictschema)
+module for debugging. Logging is not enabled by default. Logs however will be
+written to syslog with a minimum level of `INFO` with --debug or --log-file.
+
+Several modules can write to logs, with varying levels of details.
+Therefore, when debugging a specific module, it may be useful to show only the
+one you're interested in. Add a `logging` dict under the `py3status` section of
+your config following `logging`'s configuration schema.
+
 ## Publishing custom modules on PyPI
 
 You can share your custom modules and make them available for py3status
