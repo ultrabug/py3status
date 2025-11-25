@@ -82,12 +82,27 @@ def parse_cli_args():
         type=Path,
     )
     parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help="enable debug logging in syslog or log file if --log-file option is passed",
+    )
+    parser.add_argument(
         "-i",
         "--include",
         action="append",
         dest="include_paths",
         help="append additional user-defined module paths",
         metavar="PATH",
+        type=Path,
+    )
+    parser.add_argument(
+        "-l",
+        "--log-file",
+        action="store",
+        dest="log_file",
+        help="enable logging to FILE (this option is not set by default)",
+        metavar="FILE",
         type=Path,
     )
     parser.add_argument(
@@ -139,33 +154,6 @@ def parse_cli_args():
         default=wm,
         choices=["i3", "sway"],
         help="specify window manager i3 or sway",
-    )
-
-    logging_args = parser.add_argument_group()
-    logging_args.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="enable debug logging in syslog or log file if --log-file option is passed",
-    )
-    logging_args.add_argument(
-        "-l",
-        "--log-file",
-        action="store",
-        dest="log_file",
-        help="enable logging to FILE (this option is not set by default)",
-        metavar="FILE",
-        type=Path,
-    )
-    logging_args.add_argument(
-        "--log-config",
-        action="store",
-        dest="log_config",
-        help="path to a file that fully configures the 'logging' module. This "
-        "must contain a JSON dictionary in the format expected by "
-        "logging.config.dictConfig.",
-        metavar="FILE",
-        type=Path,
     )
 
     # parse options, command, etc
