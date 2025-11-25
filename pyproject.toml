@@ -94,6 +94,11 @@ format = [
     "black -q py3status",
 ]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::SyntaxWarning",
+]
+
 [tool.black]
 line-length = 100
 target-version = ["py312"]
