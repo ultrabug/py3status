@@ -102,6 +102,9 @@ format_event and format_notification placeholders:
     {format_timer} The time until the event starts (or until it is over
         if already in progress).
 
+format_event placeholders:
+    {active} Whether the event is currently active.
+
 format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
@@ -456,6 +459,7 @@ class Py3status:
                     "start_date": event_dict["start_date"],
                     "end_date": event_dict["end_date"],
                     "format_timer": event_dict["format_timer"],
+                    "active": event_active,
                 },
             )
 
