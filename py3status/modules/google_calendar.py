@@ -106,6 +106,7 @@ format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
+    {is_current} Whether the event is currently ongoing.
 
 Color options:
     color_event: Color for a single event.
@@ -456,6 +457,7 @@ class Py3status:
                     "start_date": event_dict["start_date"],
                     "end_date": event_dict["end_date"],
                     "format_timer": event_dict["format_timer"],
+                    "is_current": is_current,
                 },
             )
 
