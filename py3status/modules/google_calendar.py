@@ -102,6 +102,9 @@ format_event and format_notification placeholders:
     {format_timer} The time until the event starts (or until it is over
         if already in progress).
 
+format_event placeholders:
+    {is_current} Whether the event is currently ongoing.
+
 format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
