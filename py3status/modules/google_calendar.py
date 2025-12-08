@@ -373,7 +373,7 @@ class Py3status:
             "total_minutes": total_minutes,
         }
 
-    def _format_timedelta(self, index, time_delta, is_current):
+    def _format_timedelta(self, index, time_delta, event_active):
         """
         Formats the dict time_to containing days/hours/minutes until an
         event starts into a composite according to time_to_formatted.
@@ -389,7 +389,7 @@ class Py3status:
                     "days": time_delta["days"],
                     "hours": time_delta["hours"],
                     "minutes": time_delta["minutes"],
-                    "is_current": is_current,
+                    "is_current": event_active,
                 },
             )
 
@@ -435,11 +435,11 @@ class Py3status:
             time_delta = self._delta_time(start_dt)
             if time_delta["days"] < 0:
                 time_delta = self._delta_time(end_dt)
-                is_current = True
+                event_active = True
             else:
-                is_current = False
+                event_active = False
 
-            event_dict["format_timer"] = self._format_timedelta(index, time_delta, is_current)
+            event_dict["format_timer"] = self._format_timedelta(index, time_delta, event_active)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
