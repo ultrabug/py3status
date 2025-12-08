@@ -53,7 +53,7 @@ Configuration parameters:
     format_timer: The format used for the {format_timer} placeholder to display
         time until an event starts or time until an event in progress is over.
         *(default '\\?color=time ([\\?if=days {days}d ][\\?if=hours {hours}h ]'
-        '[\\?if=minutes {minutes}m])[\\?if=is_current  left]')*
+        '[\\?if=minutes {minutes}m])[\\?if=active  left]')*
     ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
@@ -109,6 +109,7 @@ format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
+    {active} Whether the event is currently active.
 
 Color options:
     color_event: Color for a single event.
@@ -202,7 +203,7 @@ class Py3status:
     format_time = "%I:%M %p"
     format_timer = (
         r"\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]"
-        r"[\?if=minutes {minutes}m])[\?if=is_current  left]"
+        r"[\?if=minutes {minutes}m])[\?if=active  left]"
     )
     ignore_all_day_events = False
     num_events = 3
@@ -392,7 +393,8 @@ class Py3status:
                     "days": time_delta["days"],
                     "hours": time_delta["hours"],
                     "minutes": time_delta["minutes"],
-                    "is_current": event_active,
+                    "is_current": event_active,  # For backwards compatibility, was never documented.
+                    "active": event_active,
                 },
             )
 
