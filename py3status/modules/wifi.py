@@ -146,11 +146,13 @@ class Py3status:
             msg += "parameters you should update to use the new format."
             self.py3.log(msg)
 
-    def _dbm_to_percent(self, dbm):
-        return 2 * (dbm + 100)
+    def _dbm_to_percent(self, dbm, dbm_min=-90, dbm_max=-20):
+        dbm = max(dbm_min, min(dbm, dbm_max))
+        return 100 - 70 * (dbm_max - dbm) / (dbm_max - dbm_min)
 
-    def _percent_to_dbm(self, percent):
-        return (percent / 2) - 100
+    def _percent_to_dbm(self, percent, dbm_min=-90, dbm_max=-20):
+        dbm = dbm_max - (1 - percent / 100.0) * (dbm_max - dbm_min) * (100.0 / 70.0)
+        return min(max(dbm, dbm_min), dbm_max)
 
     def _get_wifi_data(self, command):
         for _ in range(2):
