@@ -53,7 +53,7 @@ Configuration parameters:
     format_timer: The format used for the {format_timer} placeholder to display
         time until an event starts or time until an event in progress is over.
         *(default '\\?color=time ([\\?if=days {days}d ][\\?if=hours {hours}h ]'
-        '[\\?if=minutes {minutes}m])[\\?if=is_current  left]')*
+        '[\\?if=minutes {minutes}m])[\\?if=active  left]')*
     ignore_all_day_events: Sets whether to display all day events or not.
         (default False)
     num_events: The maximum number of events to display.
@@ -102,10 +102,14 @@ format_event and format_notification placeholders:
     {format_timer} The time until the event starts (or until it is over
         if already in progress).
 
+format_event placeholders:
+    {active} Whether the event is currently active.
+
 format_timer placeholders:
     {days} The number of days until the event.
     {hours} The number of hours until the event.
     {minutes} The number of minutes until the event.
+    {active} Whether the event is currently active.
 
 Color options:
     color_event: Color for a single event.
@@ -199,7 +203,7 @@ class Py3status:
     format_time = "%I:%M %p"
     format_timer = (
         r"\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]"
-        r"[\?if=minutes {minutes}m])[\?if=is_current  left]"
+        r"[\?if=minutes {minutes}m])[\?if=active  left]"
     )
     ignore_all_day_events = False
     num_events = 3
@@ -373,7 +377,7 @@ class Py3status:
             "total_minutes": total_minutes,
         }
 
-    def _format_timedelta(self, index, time_delta, is_current):
+    def _format_timedelta(self, index, time_delta, event_active):
         """
         Formats the dict time_to containing days/hours/minutes until an
         event starts into a composite according to time_to_formatted.
@@ -389,7 +393,8 @@ class Py3status:
                     "days": time_delta["days"],
                     "hours": time_delta["hours"],
                     "minutes": time_delta["minutes"],
-                    "is_current": is_current,
+                    "is_current": event_active,  # For backwards compatibility, was never documented.
+                    "active": event_active,
                 },
             )
 
@@ -435,11 +440,11 @@ class Py3status:
             time_delta = self._delta_time(start_dt)
             if time_delta["days"] < 0:
                 time_delta = self._delta_time(end_dt)
-                is_current = True
+                event_active = True
             else:
-                is_current = False
+                event_active = False
 
-            event_dict["format_timer"] = self._format_timedelta(index, time_delta, is_current)
+            event_dict["format_timer"] = self._format_timedelta(index, time_delta, event_active)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
@@ -456,6 +461,7 @@ class Py3status:
                     "start_date": event_dict["start_date"],
                     "end_date": event_dict["end_date"],
                     "format_timer": event_dict["format_timer"],
+                    "active": event_active,
                 },
             )
 
