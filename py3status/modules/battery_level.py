@@ -524,6 +524,7 @@ class Py3status:
             self.response["color"] = self.py3.COLOR_GOOD
             battery_status = "full"
         else:
+            self.response["color"] = self.py3.COLOR_GOOD
             battery_status = "good"
 
         if notify_msg and self.notify_low_level and self.last_known_status != battery_status:
