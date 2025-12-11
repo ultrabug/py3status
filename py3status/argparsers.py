@@ -1,6 +1,5 @@
 import argparse
 import os
-import subprocess
 from pathlib import Path
 from platform import python_version
 from shutil import which
@@ -18,11 +17,11 @@ def parse_cli_args():
     xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
     # get window manager
-    with Path(os.devnull).open("w") as devnull:
-        if subprocess.call(["pgrep", "^(i3|i3-with-shmlog)$"], stdout=devnull) == 0:
-            wm = "i3"
-        else:
-            wm = "sway"
+    sock = os.environ.get('I3SOCK')
+    if sock and Path(sock).is_socket():
+        wm = "i3"
+    else:
+        wm = "sway"
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
