@@ -462,7 +462,6 @@ class Py3statusWrapper:
             eps = importlib.metadata.entry_points().get(ENTRY_POINT_NAME, [])
         else:
             eps = importlib.metadata.entry_points(group=ENTRY_POINT_NAME)
-        print("eps", ENTRY_POINT_NAME, eps)
 
         for entry_point in eps:
             try:
