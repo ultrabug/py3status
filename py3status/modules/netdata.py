@@ -106,9 +106,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.last_transmitted_bytes = 0
-        self.last_received_bytes = 0
-        self.last_time = time.monotonic()
         # Get default gateway from /proc.
         if self.nic is None:
             with Path("/proc/net/route").open() as fh:
@@ -122,6 +119,8 @@ class Py3status:
             self.py3.log(f"selected nic: {self.nic}")
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
+        self.last_received_bytes, self.last_transmitted_bytes = self._get_bytes()
+        self.last_time = time.monotonic()
 
     def _get_bytes(self):
         with Path("/proc/net/dev").open() as fh:
