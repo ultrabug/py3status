@@ -18,10 +18,12 @@ Configuration parameters:
     format: display format for this module
         (default '[\?color=aqi {city_name}: {aqi} {category}]')
     format_datetime: specify strftime characters to format (default {})
-    location: location or uid to query. To search for nearby stations in Kraków,
-        try `https://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
+    location: location or uid to query. If left empty or set to None, the
+        informations from the nearest station will be used, based on the
+        IP address. To search for nearby stations in Kraków, try
+        `https://api.waqi.info/search/?token=YOUR_TOKEN&keyword=kraków`
         For best results, use uid instead of name in location, eg `@8691`.
-        (default 'Shanghai')
+        (default None)
     quality_thresholds: specify a list of tuples, eg (number, 'color', 'name')
         *(default [(0, '#009966', 'Good'),
             (51, '#FFDE33', 'Moderate'),
@@ -121,7 +123,7 @@ class Py3status:
     cache_timeout = 3600
     format = r"[\?color=aqi {city_name}: {aqi} {category}]"
     format_datetime = {}
-    location = "Shanghai"
+    location = None
     quality_thresholds = [
         (0, "#009966", "Good"),
         (51, "#FFDE33", "Moderate"),
@@ -134,7 +136,10 @@ class Py3status:
 
     def post_config_hook(self):
         self.auth_token = {"token": self.auth_token}
-        self.url = f"https://api.waqi.info/feed/{self.location}/"
+        if not self.location:
+            self.url = "https://api.waqi.info/feed/here"
+        else:
+            self.url = f"https://api.waqi.info/feed/{self.location}/"
         self.init_datetimes = []
         for word in self.format_datetime:
             if (self.py3.format_contains(self.format, word)) and (word in self.format_datetime):
