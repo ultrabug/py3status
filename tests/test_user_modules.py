@@ -1,12 +1,11 @@
 import argparse
-import sys
+import importlib.metadata
 from pathlib import Path
 
-import importlib.metadata
 import pytest
 
 import py3status
-from py3status.core import Py3statusWrapper, ENTRY_POINT_KEY
+from py3status.core import ENTRY_POINT_KEY, Py3statusWrapper
 
 
 @pytest.fixture(name="status_wrapper")
@@ -21,9 +20,7 @@ def test__get_path_based_modules(status_wrapper):
     included_modules_path = Path(py3status.__file__).resolve().parent / "modules"
     status_wrapper.options.__dict__["include_paths"] = [included_modules_path]
     assert included_modules_path.exists()
-    expected_keys = [
-        n.stem for n in included_modules_path.iterdir() if n.suffix == ".py"
-    ]
+    expected_keys = [n.stem for n in included_modules_path.iterdir() if n.suffix == ".py"]
     modules = status_wrapper._get_path_based_modules()
     assert sorted(modules) == sorted(expected_keys)
 
@@ -43,11 +40,7 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
 
                 return air_quality
 
-        # TODO: drop on 3.9 EOL
-        if sys.version_info.minor < 10:
-            return {"py3status": [FakePy3status("spam"), FakePy3status("eggs")]}
-        else:
-            return [FakePy3status("spam"), FakePy3status("eggs")]
+        return [FakePy3status("spam"), FakePy3status("eggs")]
 
     monkeypatch.setattr(importlib.metadata, "entry_points", return_fake_entry_points)
 

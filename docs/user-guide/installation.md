@@ -112,5 +112,5 @@ packages that come with i3 (dmenu, i3status, i3lock) have to be
 mentioned if they should still be there.
 
 ```bash
-$ nix-env -i python3.6-py3status
+$ nix-env -i python3.13-py3status
 ```
