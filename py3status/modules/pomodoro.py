@@ -163,9 +163,9 @@ class Py3status:
                     self._active = True
                     self._running = False
                     return
-                else:
-                    # NORMAL per-cycle message
-                    self._cycle_message = f"Cycle {self._cycle_count} completed"
+
+                # NORMAL per-cycle message
+                self._cycle_message = f"Cycle {self._cycle_count} completed"
 
             self._time_left = self.timer_pomodoro
             self._section_time = self.timer_pomodoro
