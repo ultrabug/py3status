@@ -31,7 +31,7 @@ Configuration parameters:
 Format placeholders:
     {bar} display time in bars
     {breakno} current break number
-    {CycleNumber} = current cycle in progress (1-based)
+    {cycleno} = current cycle in progress (1-based)
     {ss} display time in total seconds (1500)
     {mm} display time in total minutes (25)
     {mmss} display time in (hh-)mm-ss (25:00)
@@ -84,7 +84,6 @@ class Py3status:
     timer_break = 5 * 60
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
-   
 
     class Meta:
         deprecated = {
@@ -134,7 +133,7 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
-            self._long_break_active = False  
+            self._long_break_active = False
             if self._break_number >= self.pomodoros:
                 self._time_left = self.timer_long_break
                 self._section_time = self.timer_long_break
@@ -144,17 +143,16 @@ class Py3status:
         else:
             if not user_action:
                 self.py3.play_sound(self.sound_break_end)
-             # NEW: increment cycle only after long break completion
-        
+            # NEW: increment cycle only after long break completion
+
             if self._long_break_active:
                 self._cycle_count += 1
                 self._alert = True
 
                 if self.cycles is not None and self._cycle_count == self.cycles:
-                     final_cycle = self._cycle_count  # capture before reset
-
+                    final_cycle = self._cycle_count  # capture before reset
                     # FINAL cycle message ONLY
-                     self._cycle_message = f"All {final_cycle} cycles completed — reset"
+                    self._cycle_message = f"All {final_cycle} cycles completed — reset"
                     self.py3.notify_user("Pomodoro cycles completed")
                     # reset for next batch
                     self._cycle_count = 0
@@ -245,7 +243,7 @@ class Py3status:
         else:
             time_left = ceil(self._time_left)
 
-        vals = {"ss": int(time_left), "mm": ceil(time_left / 60), "CycleNumber": self._cycle_count + 1}
+        vals = {"ss": int(time_left), "mm": ceil(time_left / 60), "cycleno": self._cycle_count + 1}
 
         if self.py3.format_contains(self.format, "mmss"):
             hours, rest = divmod(time_left, 3600)
@@ -264,9 +262,9 @@ class Py3status:
 
         formatted = self.format.format(**vals)
 
-         # show cycle message once if present
+        # show cycle message once if present
         if self._cycle_message:
-            formatted = self._cycle_message
+            formatted = f"{formatted} | {self._cycle_message}"
             self._cycle_message = None
 
         if self._running:
@@ -308,5 +306,3 @@ if __name__ == "__main__":
     from py3status.module_test import module_test
 
     module_test(Py3status)
-
-
