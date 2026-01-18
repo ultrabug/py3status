@@ -20,6 +20,7 @@ Configuration parameters:
         (default 'Pomodoro ({format})')
     num_progress_bars: number of progress bars (default 5)
     pomodoros: specify a number of pomodoros (intervals) (default 4)
+    cycles: number of full pomodoro cycles before stopping (default None = infinite)
     sound_break_end: break end sound (file path) (default None)
     sound_pomodoro_end: pomodoro end sound (file path) (default None)
     sound_pomodoro_start: pomodoro start sound (file path) (default None)
@@ -30,6 +31,7 @@ Configuration parameters:
 Format placeholders:
     {bar} display time in bars
     {breakno} current break number
+    {cycleno} = current cycle in progress (1-based)
     {ss} display time in total seconds (1500)
     {mm} display time in total minutes (25)
     {mmss} display time in (hh-)mm-ss (25:00)
@@ -75,6 +77,7 @@ class Py3status:
     format_stopped = "Pomodoro ({format})"
     num_progress_bars = 5
     pomodoros = 4
+    cycles = None  # NEW: optional cycle limit
     sound_break_end = None
     sound_pomodoro_end = None
     sound_pomodoro_start = None
@@ -105,6 +108,10 @@ class Py3status:
         self._timer = None
         self._end_time = None
         self._alert = False
+        # NEW: cycle tracking (additive, does not affect defaults)
+        self._cycle_count = 0
+        self._long_break_active = False
+        self._cycle_message = None
         if self.display_bar is True:
             self.format = "{bar}"
         self._initialized = True
@@ -126,14 +133,40 @@ class Py3status:
             self._time_left = self.timer_break
             self._section_time = self.timer_break
             self._break_number += 1
+            self._long_break_active = False
             if self._break_number >= self.pomodoros:
                 self._time_left = self.timer_long_break
                 self._section_time = self.timer_long_break
                 self._break_number = 0
+                self._long_break_active = True
             self._active = False
         else:
             if not user_action:
                 self.py3.play_sound(self.sound_break_end)
+            # NEW: increment cycle only after long break completion
+
+            if self._long_break_active:
+                self._cycle_count += 1
+                self._alert = True
+
+                if self.cycles is not None and self._cycle_count == self.cycles:
+                    final_cycle = self._cycle_count  # capture before reset
+                    # FINAL cycle message ONLY
+                    self._cycle_message = f"All {final_cycle} cycles completed — reset"
+                    self.py3.notify_user("Pomodoro cycles completed")
+                    # reset for next batch
+                    self._cycle_count = 0
+                    self._break_number = 0
+                    self._long_break_active = False
+                    self._time_left = self.timer_pomodoro
+                    self._section_time = self.timer_pomodoro
+                    self._active = True
+                    self._running = False
+                    return
+
+                # NORMAL per-cycle message
+                self._cycle_message = f"Cycle {self._cycle_count} completed"
+
             self._time_left = self.timer_pomodoro
             self._section_time = self.timer_pomodoro
             self._active = True
@@ -210,7 +243,7 @@ class Py3status:
         else:
             time_left = ceil(self._time_left)
 
-        vals = {"ss": int(time_left), "mm": ceil(time_left / 60)}
+        vals = {"ss": int(time_left), "mm": ceil(time_left / 60), "cycleno": self._cycle_count + 1}
 
         if self.py3.format_contains(self.format, "mmss"):
             hours, rest = divmod(time_left, 3600)
@@ -228,6 +261,11 @@ class Py3status:
             vals["bar"] = self._setup_bar()
 
         formatted = self.format.format(**vals)
+
+        # show cycle message once if present
+        if self._cycle_message:
+            formatted = f"{formatted} | {self._cycle_message}"
+            self._cycle_message = None
 
         if self._running:
             if self._active:
