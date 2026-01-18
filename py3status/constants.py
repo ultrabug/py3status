@@ -10,6 +10,40 @@ GENERAL_DEFAULTS = {
     "output_format": None,
 }
 
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "syslog": {
+            "formatter": "default",
+            "class": "logging.handlers.SysLogHandler",
+            "address": "/dev/log",
+        },
+    },
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s %(levelname)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        }
+    },
+    "root": {"handlers": ["syslog"], "level": "INFO"},
+}
+
+LOGGING_LOG_FILE_CONFIG = {
+    "__log_file": {"formatter": "default", "class": "logging.FileHandler", "filename": None}
+}
+
+LOGGING_LOG_LEVELS = {
+    'CRITICAL': 50,
+    'FATAL': 50,
+    'ERROR': 40,
+    'WARN': 30,
+    'WARNING': 30,
+    'INFO': 20,
+    'DEBUG': 10,
+    'NOTSET': 0,
+}
+
 MAX_NESTING_LEVELS = 4
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
