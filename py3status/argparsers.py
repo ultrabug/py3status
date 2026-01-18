@@ -17,11 +17,11 @@ def parse_cli_args():
     xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
 
     # get window manager
-    sock = os.environ.get('I3SOCK')
+    sock = os.environ.get('SWAYSOCK')
     if sock and Path(sock).is_socket():
-        wm = "i3"
-    else:
         wm = "sway"
+    else:
+        wm = "i3"
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
