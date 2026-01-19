@@ -4820,7 +4820,7 @@ https://developers.google.com/calendar/v3/reference/events</p>
 <p><code>format_timer</code> The format used for the {format_timer} placeholder to display
     time until an event starts or time until an event in progress is over.
     <em>(default '\?color=time ([\?if=days {days}d ][\?if=hours {hours}h ]'
-    '[\?if=minutes {minutes}m])[\?if=is_current  left]')</em></p>
+    '[\?if=minutes {minutes}m])[\?if=active  left]')</em></p>
 </li>
 <li>
 <p><code>ignore_all_day_events</code> Sets whether to display all day events or not.
@@ -4904,6 +4904,10 @@ https://developers.google.com/calendar/v3/reference/events</p>
     if already in progress).</p>
 </li>
 </ul>
+<p>format_event placeholders:</p>
+<ul>
+<li><code>{active}</code> Whether the event is currently active.</li>
+</ul>
 <p>format_timer placeholders:</p>
 <ul>
 <li>
@@ -4914,6 +4918,9 @@ https://developers.google.com/calendar/v3/reference/events</p>
 </li>
 <li>
 <p><code>{minutes}</code> The number of minutes until the event.</p>
+</li>
+<li>
+<p><code>{active}</code> Whether the event is currently active.</p>
 </li>
 </ul>
 <p>Color options:</p>
