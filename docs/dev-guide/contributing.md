@@ -141,7 +141,7 @@ testing. To install these via pip use
 $ pip install pytest
 $ pip install pytest-flake8
 $ pip install tox
-$ pip install black  # needs python 3.6+
+$ pip install black
 ```
 
 The tests can be run by using `tox` in the py3status root directory.

@@ -457,11 +457,7 @@ class Py3statusWrapper:
 
     def _get_entry_point_based_modules(self):
         classes_from_entry_points = {}
-        # TODO: drop on 3.9 EOL
-        if sys.version_info.minor < 10:
-            eps = importlib.metadata.entry_points().get(ENTRY_POINT_NAME, [])
-        else:
-            eps = importlib.metadata.entry_points(group=ENTRY_POINT_NAME)
+        eps = importlib.metadata.entry_points(group=ENTRY_POINT_NAME)
 
         for entry_point in eps:
             try:
