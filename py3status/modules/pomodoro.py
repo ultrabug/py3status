@@ -6,6 +6,7 @@ Button 2 switch Pomodoro/Break.
 Button 3 resets timer.
 
 Configuration parameters:
+    cycles: number of full pomodoro cycles before stopping (default None)
     display_bar: display time in bars when True, otherwise in seconds
         (default False)
     format: define custom time format. See placeholders below (default '{ss}')
@@ -20,7 +21,6 @@ Configuration parameters:
         (default 'Pomodoro ({format})')
     num_progress_bars: number of progress bars (default 5)
     pomodoros: specify a number of pomodoros (intervals) (default 4)
-    cycles: number of full pomodoro cycles before stopping (default None = infinite)
     sound_break_end: break end sound (file path) (default None)
     sound_pomodoro_end: pomodoro end sound (file path) (default None)
     sound_pomodoro_start: pomodoro start sound (file path) (default None)
@@ -68,6 +68,7 @@ class Py3status:
     """ """
 
     # available configuration parameters
+    cycles = None
     display_bar = False
     format = "{ss}"
     format_active = "Pomodoro [{format}]"
@@ -77,7 +78,6 @@ class Py3status:
     format_stopped = "Pomodoro ({format})"
     num_progress_bars = 5
     pomodoros = 4
-    cycles = None  # NEW: optional cycle limit
     sound_break_end = None
     sound_pomodoro_end = None
     sound_pomodoro_start = None
