@@ -2073,10 +2073,12 @@ air quality standards.</p>
 <p><code>format_datetime</code> specify strftime characters to format <em>(default {})</em></p>
 </li>
 <li>
-<p><code>location</code> location or uid to query. To search for nearby stations in Kraków,
-    try <code>https://api.waqi.info/search/?token=YOUR_TOKEN&amp;keyword=kraków</code>
+<p><code>location</code> location or uid to query. If left empty or set to None, the
+    informations from the nearest station will be used, based on the
+    IP address. To search for nearby stations in Kraków, try
+    <code>https://api.waqi.info/search/?token=YOUR_TOKEN&amp;keyword=kraków</code>
     For best results, use uid instead of name in location, eg <code>@8691</code>.
-    <em>(default 'Shanghai')</em></p>
+    <em>(default None)</em></p>
 </li>
 <li>
 <p><code>quality_thresholds</code> specify a list of tuples, eg (number, 'color', 'name')
