@@ -85,7 +85,7 @@ class Py3status:
         return (temporary, cached_until)
 
     def dnf_updates(self):
-        (dnf_data, cached_until) = self._get_dnf_data()
+        dnf_data, cached_until = self._get_dnf_data()
 
         for x in self.thresholds_init:
             self.py3.threshold_get_color(dnf_data[x], x)

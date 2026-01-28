@@ -66,8 +66,8 @@ class Py3status:
             connect_timeout=self.timeout,
         )
         mycr = mydb.cursor()
-        mycr.execute(
-            """select q.Name as queue, coalesce(total,0) as total
+        # fmt: off
+        mycr.execute("""select q.Name as queue, coalesce(total,0) as total
             from Queues as q
             left join (
                 select t.Queue as queue, count(t.id) as total
@@ -75,8 +75,8 @@ class Py3status:
                 where Status = 'new' or Status = 'open' or Status = 'stalled'
                 group by t.Queue)
             as s on s.Queue = q.id
-            group by q.Name;"""
-        )
+            group by q.Name;""")
+        # fmt: on
         for row in mycr.fetchall():
             queue, nb_tickets = row
             if queue == "___Approvals":

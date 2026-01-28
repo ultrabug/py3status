@@ -546,7 +546,7 @@ class Py3status:
             raise KeyboardInterrupt
 
         if self._bus_initialized:
-            (text, color) = self._get_text()
+            text, color = self._get_text()
             cached_until = self.py3.CACHE_FOREVER
 
         else:

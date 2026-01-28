@@ -389,9 +389,9 @@ class Py3status:
             free_percent = 100 - used_percent
 
         unit = "B" if unit == "dynamic" else unit
-        (total, total_unit) = self.py3.format_units(total_mem_kib * 1024, unit)
-        (used, used_unit) = self.py3.format_units(used_mem_kib * 1024, unit)
-        (free, free_unit) = self.py3.format_units(free_mem_kib * 1024, unit)
+        total, total_unit = self.py3.format_units(total_mem_kib * 1024, unit)
+        used, used_unit = self.py3.format_units(used_mem_kib * 1024, unit)
+        free, free_unit = self.py3.format_units(free_mem_kib * 1024, unit)
         return (
             total,
             total_unit,

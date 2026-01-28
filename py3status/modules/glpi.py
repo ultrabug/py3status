@@ -59,11 +59,11 @@ class Py3status:
             connect_timeout=self.timeout,
         )
         mycr = mydb.cursor()
-        mycr.execute(
-            """select count(*)
+        # fmt: off
+        mycr.execute("""select count(*)
                         from glpi_tickets
-                        where closedate is NULL and solvedate is NULL;"""
-        )
+                        where closedate is NULL and solvedate is NULL;""")
+        # fmt: on
         row = mycr.fetchone()
         if row:
             open_tickets = int(row[0])
