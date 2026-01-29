@@ -509,7 +509,7 @@ class Py3status:
                 # This represents a key:index expression, representing first
                 # selecting a key, then an index
                 if ":" in part:
-                    (part, index) = tuple(part.split(":"))
+                    part, index = tuple(part.split(":"))
                     data = data[part]
                     data = data[int(index)]
 
@@ -839,7 +839,7 @@ class Py3status:
         loc_tz_info = self._get_loc_tz_info()
         text = ""
         if loc_tz_info is not None:
-            (coords, city, country) = loc_tz_info
+            coords, city, country = loc_tz_info
             if coords:
                 current_api_params = {"lat": coords[0], "lon": coords[1]}
             elif city:

@@ -565,7 +565,7 @@ class ConfigParser:
             if type(value).__name__ not in ["str", "unicode"]:
                 self.error("Only strings can be obfuscated")
 
-            (name, scheme) = name.split(":")
+            name, scheme = name.split(":")
             if scheme == "base64":
                 value = PrivateBase64(value, module_name)
             elif scheme == "hide":

@@ -178,9 +178,9 @@ class Py3status:
             self._get_status()
 
         # II - format response
-        (text, state) = ("", "")
+        text, state = ("", "")
         if self.current_status is not None:
-            (text, state) = self.current_status
+            text, state = self.current_status
 
         if len(text) > self.max_width:
             text = "{}...".format(text[: self.max_width - 3])

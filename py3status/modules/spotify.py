@@ -145,7 +145,7 @@ class Py3status:
         """
         Get the current "artist - title" and return it.
         """
-        (text, color) = self._get_text()
+        text, color = self._get_text()
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
             "color": color,
