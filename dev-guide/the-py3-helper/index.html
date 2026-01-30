@@ -1617,7 +1617,10 @@ they have.</p>
 checking.</p>
 <h3 id="logmessage-levelinfo">log(message, level='info')</h3>
 <p>Log the message.
-The level must be one of LOG_ERROR, LOG_INFO or LOG_WARNING</p>
+The level can be any valid logging level name (e.g. "error", info",
+"warning") or integer (e.g. <code>10</code> -&gt; <code>logging.INFO``). Constants
+LOG_ERROR, LOG_INFO, and LOG_WARNING are also supported.
+Specifying</code>name` uses a logger with a given name or module_name if None.</p>
 <h3 id="notify_usermsg-levelinfo-rate_limit5-titlenone-iconnone">notify_user(msg, level='info', rate_limit=5, title=None, icon=None)</h3>
 <p>Send a notification to the user.
 level must be 'info', 'error' or 'warning'.
