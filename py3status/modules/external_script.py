@@ -113,7 +113,7 @@ class Py3status:
         script_data = {
             "output": output,
             "lines": len(output_lines),
-            "composite": self.py3.safe_format(output),
+            "composite": self.py3.safe_format(str(output)),
         }
         response["full_text"] = self.py3.safe_format(self.format, script_data)
         return response
