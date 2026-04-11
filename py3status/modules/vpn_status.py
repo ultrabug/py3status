@@ -31,6 +31,7 @@ Color options:
 Requires:
     dbus-python: to interact with dbus
     pygobject: which in turn requires libcairo2-dev, libgirepository1.0-dev
+    NetworkManager: provides the org.freedesktop.NetworkManager DBus service
 
 @author Nathan Smith <nathan AT praisetopia.org>
 
@@ -125,8 +126,9 @@ class Py3status:
             interface = dbus.Interface(manager, "org.freedesktop.DBus.Properties")
             try:
                 properties = interface.GetAll("org.freedesktop.NetworkManager.Connection.Active")
-                if properties.get("Vpn") or properties.get("Type") in ("wireguard", "tun"):
-                    ipv4, ipv6 = self._get_ips(bus, properties["Connection"])
+                conn_settings = self._get_connection_settings(bus, properties["Connection"])
+                if self._is_vpn(properties, conn_settings):
+                    ipv4, ipv6 = self._get_ips(conn_settings)
                     vpns.append({"name": properties.get("Id"), "ipv4": ipv4, "ipv6": ipv6})
             except dbus.DBusException:
                 # the connection id has disappeared
@@ -134,17 +136,35 @@ class Py3status:
 
         return vpns
 
-    def _get_ips(self, bus, connection_path):
+    def _get_connection_settings(self, bus, connection_path):
         conn = bus.get_object("org.freedesktop.NetworkManager", connection_path)
         interface = dbus.Interface(conn, "org.freedesktop.NetworkManager.Settings.Connection")
+        return interface.GetSettings()
 
-        settings = interface.GetSettings()
-        ipv4 = self._get_ip(settings["ipv4"])
-        ipv6 = self._get_ip(settings["ipv6"])
+    def _is_vpn(self, properties, settings):
+        if properties.get("Vpn"):
+            return True
+
+        # Only accept wireguard or tun type interfaces
+        type = properties.get("Type")
+        if type == "wireguard":
+            return True
+        if type != "tun":
+            return False
+
+        # tun interfaces in NetworkManager refer to TUN/TAP virtual interfaces. If the connection is
+        # a port, it is part of a virtualized network, not a standalone VPN
+        conn = settings.get("connection", {})
+        # 'slave-type' is the deprecated alias of 'port-type'
+        return not (conn.get("port-type") or conn.get("slave-type"))
+
+    def _get_ips(self, conn_settings):
+        ipv4 = self._get_ip(conn_settings.get("ipv4", {}))
+        ipv6 = self._get_ip(conn_settings.get("ipv6", {}))
         return ipv4, ipv6
 
     def _get_ip(self, ip_settings):
-        address_data = ip_settings["address-data"]
+        address_data = ip_settings.get("address-data")
         if address_data:
             return address_data[0].get("address")
 
