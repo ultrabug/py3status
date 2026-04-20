@@ -865,6 +865,7 @@ class Py3statusWrapper:
                 # rate limiting
                 return
         update_i3status = False
+        debug = self.log_enabled("debug")
         for name, module in self.output_modules.items():
             if (
                 module_string is None
@@ -872,10 +873,12 @@ class Py3statusWrapper:
                 or (not exact and name.startswith(module_string))
             ):
                 if module["type"] == "py3status":
-                    self.log(f"refresh py3status module {name}", level="debug")
+                    if debug:
+                        self.log(f"refresh py3status module {name}", level="debug")
                     module["module"].force_update()
                 else:
-                    self.log(f"refresh i3status module {name}", level="debug")
+                    if debug:
+                        self.log(f"refresh i3status module {name}", level="debug")
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
@@ -950,6 +953,15 @@ class Py3statusWrapper:
         """
         log this information to syslog or user provided logfile.
         """
+        if not isinstance(level, int):
+            # logging.getLevelNamesMapping() is python 3.11+
+            # use local mapping instead to support python 3.9+
+            level = LOGGING_LOG_LEVELS.get(level.upper(), logging.DEBUG)
+
+        logger = logging.getLogger(name)
+        if not logger.isEnabledFor(level):
+            return
+
         # nice formatting of data structures using pretty print
         if isinstance(msg, (dict, list, set, tuple)):
             msg = pformat(msg)
@@ -958,13 +970,13 @@ class Py3statusWrapper:
             if "\n" in msg:
                 msg = "\n" + msg
 
-        if not isinstance(level, int):
-            # logging.getLevelNamesMapping() is python 3.11+
-            # use local mapping instead to support python 3.9+
-            level = LOGGING_LOG_LEVELS.get(level.upper(), logging.DEBUG)
-
-        logger = logging.getLogger(name)
         logger.log(level, msg)
+
+    def log_enabled(self, level, name=None):
+        """Return True if the given level would be logged for logger `name`."""
+        if not isinstance(level, int):
+            level = LOGGING_LOG_LEVELS.get(level.upper(), logging.DEBUG)
+        return logging.getLogger(name).isEnabledFor(level)
 
     def create_output_modules(self):
         """
