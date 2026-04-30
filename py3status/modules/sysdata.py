@@ -111,6 +111,7 @@ from pathlib import Path
 
 INVALID_CPU_TEMP_UNIT = "invalid cpu_temp_unit"
 STRING_NOT_INSTALLED = "not installed"
+ZFS_SIZE_REGEX = re.compile(r"^size\s+\d+\s+(\d+)")
 
 
 class Py3status:
@@ -410,7 +411,6 @@ class Py3status:
 
     def _get_zfs_arc_size(self):
         """will raise OSError on failures"""
-        ZFS_SIZE_REGEX = re.compile(r"^size\s+\d+\s+(\d+)")
         try:
             with Path("/proc/spl/kstat/zfs/arcstats").open() as f:
                 for line in f.readlines():
