@@ -4,7 +4,7 @@ from collections import OrderedDict
 from importlib import util
 from pathlib import Path
 from string import Template
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, TimeoutExpired, check_output
 
 from py3status.constants import (
     CONFIG_FILE_SPECIAL_SECTIONS,
@@ -689,13 +689,18 @@ def process_config(config_path, py3_wrapper=None):
 
     # get the file encoding this is important with multi-byte unicode chars
     try:
-        encoding = check_output(["file", "-b", "--mime-encoding", "--dereference", config_path])
+        encoding = check_output(
+            ["file", "-b", "--mime-encoding", "--dereference", config_path],
+            timeout=3,
+        )
         encoding = encoding.strip().decode("utf-8")
     except FileNotFoundError:
         # can be missing on NixOS (see #1961)
         notify_user("the 'file' command is missing, please install it.")
         encoding = "utf-8"
-    except CalledProcessError:
+    except (CalledProcessError, TimeoutExpired):
+        # timeout can occur on some architectures where the magic
+        # database takes too long to load.
         # bsd does not have the --mime-encoding so assume utf-8
         encoding = "utf-8"
     try:
@@ -704,7 +709,7 @@ def process_config(config_path, py3_wrapper=None):
                 config_info = parse_config(f)
             except ParseException as e:
                 config_info = parse_config_error(e, config_path)
-    except LookupError:
+    except (LookupError, UnicodeDecodeError):
         with config_path.open() as f:
             try:
                 config_info = parse_config(f)
