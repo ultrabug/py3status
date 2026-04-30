@@ -457,6 +457,11 @@ class Py3:
         Constants LOG_ERROR, LOG_INFO, and LOG_WARNING are also supported.
         Specifying `name` uses a logger with a given name or module_name if None.
         """
+        module_name = self._module.module_full_name
+        logger_name = name or module_name
+        if not self._py3_wrapper.log_enabled(level, logger_name):
+            return
+
         # nicely format logs if we can using pretty print
         if isinstance(message, (dict, list, set, tuple)):
             message = pformat(message)
@@ -466,9 +471,8 @@ class Py3:
                 message = "\n" + message
         except:  # noqa e722
             pass
-        module_name = self._module.module_full_name
         message = f"Module `{module_name}`: {message}"
-        self._py3_wrapper.log(message, level, name or module_name)
+        self._py3_wrapper.log(message, level, logger_name)
 
     def update(self, module_name=None):
         """

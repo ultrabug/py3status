@@ -156,7 +156,8 @@ class CommandRunner:
                     if requested_name == name.split(" ")[0]:
                         found_modules.add(module_name)
 
-        self.py3_wrapper.log(f"found {found_modules}", level="debug")
+        if self.py3_wrapper.log_enabled("debug"):
+            self.py3_wrapper.log(f"found {found_modules}", level="debug")
         return found_modules
 
     def refresh(self, data):
@@ -166,9 +167,11 @@ class CommandRunner:
         modules = data.get("module")
         # for i3status modules we have to refresh the whole i3status output.
         update_i3status = False
+        debug = self.py3_wrapper.log_enabled("debug")
         for module_name in self.find_modules(modules):
             module = self.py3_wrapper.output_modules[module_name]
-            self.py3_wrapper.log(f"refresh {module}", level="debug")
+            if debug:
+                self.py3_wrapper.log(f"refresh {module}", level="debug")
             if module["type"] == "py3status":
                 module["module"].force_update()
             else:
@@ -194,7 +197,8 @@ class CommandRunner:
             for name, message in CLICK_OPTIONS:
                 event[name] = data.get(name)
 
-            self.py3_wrapper.log(event, level="debug")
+            if self.py3_wrapper.log_enabled("debug"):
+                self.py3_wrapper.log(event, level="debug")
             # trigger the event
             self.py3_wrapper.events_thread.dispatch_event(event)
 
@@ -203,7 +207,8 @@ class CommandRunner:
         check the given command and send to the correct dispatcher
         """
         command = data.get("command")
-        self.py3_wrapper.log(f"Running remote command {command}", level="debug")
+        if self.py3_wrapper.log_enabled("debug"):
+            self.py3_wrapper.log(f"Running remote command {command}", level="debug")
         if command == "refresh":
             self.refresh(data)
         elif command == "refresh_all":
@@ -238,7 +243,8 @@ class CommandServer(threading.Thread):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(server_address.as_posix())
 
-        self.py3_wrapper.log(f"Unix domain socket at {server_address}", level="debug")
+        if self.py3_wrapper.log_enabled("debug"):
+            self.py3_wrapper.log(f"Unix domain socket at {server_address}", level="debug")
 
         # Listen for incoming connections
         sock.listen(1)
@@ -263,16 +269,20 @@ class CommandServer(threading.Thread):
             try:
                 data = None
                 # Wait for a connection
-                self.py3_wrapper.log("waiting for a connection", level="debug")
+                debug = self.py3_wrapper.log_enabled("debug")
+                if debug:
+                    self.py3_wrapper.log("waiting for a connection", level="debug")
 
                 connection, client_address = self.sock.accept()
                 try:
-                    self.py3_wrapper.log("connection from", level="debug")
+                    if debug:
+                        self.py3_wrapper.log("connection from", level="debug")
 
                     data = connection.recv(MAX_SIZE)
                     if data:
                         data = json.loads(data.decode("utf-8"))
-                        self.py3_wrapper.log(f"received {data}", level="debug")
+                        if debug:
+                            self.py3_wrapper.log(f"received {data}", level="debug")
                         self.command_runner.run_command(data)
                 finally:
                     # Clean up the connection
