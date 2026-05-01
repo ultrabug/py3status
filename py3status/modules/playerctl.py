@@ -11,12 +11,12 @@ Configuration parameters:
     button_next: mouse button to skip to the next track (default None)
     button_pause: mouse button to pause the playback (default None)
     button_play: mouse button to play the playback (default None)
-    button_play_pause: mouse button to play/pause the playback (default None)
+    button_play_pause: mouse button to play/pause the playback (default 1)
     button_previous: mouse button to skip to the previous track (default None)
     button_seek_backward: mouse button to playback's position backward (default None)
     button_seek_forward: mouse button to playback's position forward (default None)
     button_shuffle: mouse button to toggle the shuffle mode of the player (default None)
-    button_stop: mouse button to stop the playback (default None)
+    button_stop: mouse button to stop the playback (default 3)
     button_volume_down: mouse button to decrease the volume of the player (default None)
     button_volume_up: mouse button to increase the volume of the player (default None)
     format: display format for this module (default '{format_player}')
@@ -86,7 +86,8 @@ import gi
 gi.require_version("Playerctl", "2.0")
 from gi.repository import GLib, Playerctl  # noqa e402
 
-STRING_ERROR = "invalid buttons"
+STRING_DUPLICATE_BUTTONS = "duplicate buttons"
+DEFAULT_BUTTONS = {"button_play_pause": 1, "button_stop": 3}
 
 
 class Py3status:
@@ -97,12 +98,12 @@ class Py3status:
     button_next = None
     button_pause = None
     button_play = None
-    button_play_pause = None
+    button_play_pause = 1
     button_previous = None
     button_seek_backward = None
     button_seek_forward = None
     button_shuffle = None
-    button_stop = None
+    button_stop = 3
     button_volume_down = None
     button_volume_up = None
     format = "{format_player}"
@@ -128,7 +129,7 @@ class Py3status:
 
     def post_config_hook(self):
         # Initialize module settings
-        self._validate_buttons()
+        self._setup_buttons()
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
         self.replacements_init = self.py3.get_replacements_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
@@ -145,16 +146,41 @@ class Py3status:
 
         self._start_loop()
 
-    def _validate_buttons(self):
+    def _setup_buttons(self):
+        button_names = [name for name in dir(self) if name.startswith("button_")]
+        configured_buttons = {}
+        displaced_buttons = set()
+
+        # find user configured buttons
+        for name in button_names:
+            value = getattr(self, name)
+            default_value = DEFAULT_BUTTONS.get(name)
+            if value == default_value:
+                continue
+            configured_buttons[name] = value
+            if name not in DEFAULT_BUTTONS and value is not None:
+                displaced_buttons.add(value)
+
+        # resolve buttons with new values
+        for name in button_names:
+            if name in configured_buttons:
+                value = configured_buttons[name]
+            else:
+                value = DEFAULT_BUTTONS.get(name)
+                if value in displaced_buttons:
+                    value = None
+            if value != getattr(self, name):
+                setattr(self, name, value)
+
+        # avoid duplicates
         seen = set()
-        for name in dir(self):
-            if name.startswith("button_"):
-                value = getattr(self, name)
-                if value is None:
-                    continue
-                if not isinstance(value, int) or value in seen:
-                    raise ValueError(STRING_ERROR)
-                seen.add(value)
+        for name in button_names:
+            value = getattr(self, name)
+            if value is None:
+                continue
+            if not isinstance(value, int) or value in seen:
+                raise ValueError(STRING_DUPLICATE_BUTTONS)
+            seen.add(value)
 
     def _player_should_be_tracked(self, player_name):
         for _filter in self.players:
