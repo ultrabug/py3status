@@ -56,6 +56,15 @@ Requires:
         bmp, xmms2, and others.
     python-gobject: Python Bindings for GLib/GObject/GIO/GTK+
 
+Examples:
+```
+# add buttons
+playerctl {
+    button_play_pause = 1
+    button_stop = 3
+}
+```
+
 @author jdholtz
 
 SAMPLE OUTPUT
@@ -76,6 +85,9 @@ import gi
 
 gi.require_version("Playerctl", "2.0")
 from gi.repository import GLib, Playerctl  # noqa e402
+
+STRING_DUPLICATE_BUTTONS = "duplicate buttons"
+DEFAULT_BUTTONS = {"button_play_pause": 1, "button_stop": 3}
 
 
 class Py3status:
@@ -116,6 +128,8 @@ class Py3status:
         }
 
     def post_config_hook(self):
+        # Initialize module settings
+        self._setup_buttons()
         self.thresholds_init = self.py3.get_color_names_list(self.format_player)
         self.replacements_init = self.py3.get_replacements_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
@@ -131,6 +145,42 @@ class Py3status:
             self._init_player(player_name)
 
         self._start_loop()
+
+    def _setup_buttons(self):
+        button_names = [name for name in dir(self) if name.startswith("button_")]
+        configured_buttons = {}
+        displaced_buttons = set()
+
+        # find user configured buttons
+        for name in button_names:
+            value = getattr(self, name)
+            default_value = DEFAULT_BUTTONS.get(name)
+            if value == default_value:
+                continue
+            configured_buttons[name] = value
+            if name not in DEFAULT_BUTTONS and value is not None:
+                displaced_buttons.add(value)
+
+        # resolve buttons with new values
+        for name in button_names:
+            if name in configured_buttons:
+                value = configured_buttons[name]
+            else:
+                value = DEFAULT_BUTTONS.get(name)
+                if value in displaced_buttons:
+                    value = None
+            if value != getattr(self, name):
+                setattr(self, name, value)
+
+        # avoid duplicates
+        seen = set()
+        for name in button_names:
+            value = getattr(self, name)
+            if value is None:
+                continue
+            if not isinstance(value, int) or value in seen:
+                raise ValueError(STRING_DUPLICATE_BUTTONS)
+            seen.add(value)
 
     def _player_should_be_tracked(self, player_name):
         for _filter in self.players:
