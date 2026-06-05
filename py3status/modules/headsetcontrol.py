@@ -6,6 +6,9 @@ This module displays the connection state and battery for supported headsets.
 Configuration parameters:
     cache_timeout: How often we refresh this module in seconds (default 10)
     format: Display format (default 'Headsetcontrol: {devices}')
+    format_battery: Display format for the battery level value (default '({battery_level}%)')
+    format_device: Display format for devices (default '{product} {battery}')
+    format_device_separator: Seperator if more than one device (default ' ')
 
 Format placeholders:
     {devices}: The list of devices attached.
@@ -18,7 +21,6 @@ Requires:
     headsetcontrol: A cross-platform tool to control USB gaming headsets.
 
 Example:
-
 ```
 headsetcontrol {
     format = "{devices}"
@@ -38,12 +40,14 @@ import json
 
 
 class Py3status:
+    """ """
+
     # available configuration parameters
     cache_timeout = 10
     format = "Headsetcontrol: {devices}"
+    format_battery = "({battery_level}%)"
     format_device = "{product} {battery}"
     format_device_separator = " "
-    format_battery = "({battery_level}%)"
 
     def _get_headset_data(self):
         try:
@@ -54,29 +58,22 @@ class Py3status:
         except self.py3.CommandError:
             return {"devices": []}
 
-    def headsetcontol(self):
-
+    def headsetcontrol(self):
         headset_data = self._get_headset_data()
-
         devices = []
-
         for device in headset_data["devices"]:
             headset_data_flat = {
                 "vendor": self.py3.safe_format(device["vendor"]),
                 "product": self.py3.safe_format(device["product"]),
                 "battery": "",
             }
-
             if "CAP_BATTERY_STATUS" in device["capabilities"]:
                 headset_data_flat["battery"] = self.py3.safe_format(
                     self.format_battery, {"battery_level": device["battery"]["level"]}
                 )
-
             devices.append(self.py3.safe_format(self.format_device, headset_data_flat))
-
         format_device_separator = self.py3.safe_format(self.format_device_separator)
         devices = self.py3.composite_join(format_device_separator, devices)
-
         return {
             "full_text": self.py3.safe_format(self.format, param_dict={"devices": devices}),
             "cached_until": self.py3.time_in(self.cache_timeout),
