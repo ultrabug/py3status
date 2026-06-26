@@ -318,9 +318,7 @@ class Pactl(Audio):
 
 class Wpctl(Audio):
     def setup(self, parent):
-        if self.device is not None:
-            self.dev_target = self.device
-        elif self.is_input:
+        if self.is_input:
             self.dev_target = "@DEFAULT_AUDIO_SOURCE@"
         else:
             self.dev_target = "@DEFAULT_AUDIO_SINK@"
