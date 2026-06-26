@@ -343,11 +343,10 @@ class Wpctl(Audio):
         perc, muted = self.get_volume()
         # wpctl clamps to 100% unless an explicit limit is passed
         limit = f"{self.max_volume / 100}"
-        if int(perc) + delta >= self.max_volume:
+        if perc + delta >= self.max_volume:
             change = f"{self.max_volume}%"
         else:
             change = f"{delta}%+"
-
         self.run_cmd(["wpctl", "set-volume", "-l", limit, self.dev_target, change])
 
     def volume_down(self, delta):
