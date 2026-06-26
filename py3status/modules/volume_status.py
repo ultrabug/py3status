@@ -12,7 +12,7 @@ Configuration parameters:
     card: Card to use. amixer supports this. (default None)
     channel: channel to track. Default value is backend dependent.
         (default None)
-    command: Choose between "amixer", "pamixer" or "pactl".
+    command: Choose between "amixer", "pamixer", "pactl" or "wpctl".
         If None, try to guess based on available commands.
         (default None)
     device: Device to use. Defaults value is backend dependent.
@@ -25,7 +25,7 @@ Configuration parameters:
     is_input: Is this an input device or an output device?
         (default False)
     max_volume: Allow the volume to be increased past 100% if available.
-        pactl and pamixer supports this. (default 120)
+        pactl, pamixer and wpctl support this. (default 120)
     thresholds: Threshold for percent volume.
         (default [(0, 'bad'), (20, 'degraded'), (50, 'good')])
     volume_delta: Percentage amount that the volume is increased or
@@ -44,6 +44,7 @@ Color options:
 Requires:
     alsa-utils: an alternative implementation of linux sound support
     pamixer: pulseaudio command-line mixer like amixer
+    wireplumber: provides wpctl, the PipeWire session manager control tool
 
 Notes:
     If you are changing volume state by external scripts etc and
@@ -315,6 +316,47 @@ class Pactl(Audio):
         self.run_cmd(["pactl", f"set-{self.device_type}-mute", self.device, "toggle"])
 
 
+class Wpctl(Audio):
+    def setup(self, parent):
+        if self.device is not None:
+            self.dev_target = self.device
+        elif self.is_input:
+            self.dev_target = "@DEFAULT_AUDIO_SOURCE@"
+        else:
+            self.dev_target = "@DEFAULT_AUDIO_SINK@"
+
+    def get_volume(self):
+        try:
+            line = self.command_output(["wpctl", "get-volume", self.dev_target])
+        except CommandError as ce:
+            # fall back to the error output if the command failed
+            line = ce.output
+        try:
+            parts = line.split()
+            muted = "[MUTED]" in parts
+            perc = int(float(parts[1]) * 100)
+        except (ValueError, IndexError):
+            muted, perc = None, None
+        return perc, muted
+
+    def volume_up(self, delta):
+        perc, muted = self.get_volume()
+        # wpctl clamps to 100% unless an explicit limit is passed
+        limit = f"{self.max_volume / 100}"
+        if int(perc) + delta >= self.max_volume:
+            change = f"{self.max_volume}%"
+        else:
+            change = f"{delta}%+"
+
+        self.run_cmd(["wpctl", "set-volume", "-l", limit, self.dev_target, change])
+
+    def volume_down(self, delta):
+        self.run_cmd(["wpctl", "set-volume", self.dev_target, f"{delta}%-"])
+
+    def toggle_mute(self):
+        self.run_cmd(["wpctl", "set-mute", self.dev_target, "toggle"])
+
+
 class Py3status:
     """"""
 
@@ -366,12 +408,12 @@ class Py3status:
 
     def post_config_hook(self):
         if not self.command:
-            commands = ["pamixer", "pactl", "amixer"]
+            commands = ["pamixer", "pactl", "amixer", "wpctl"]
             # pamixer, pactl requires pulseaudio to work
             if not self.py3.check_commands(["pulseaudio", "pipewire"]):
                 commands = ["amixer"]
             self.command = self.py3.check_commands(commands)
-        elif self.command not in ["amixer", "pamixer", "pactl"]:
+        elif self.command not in ["amixer", "pamixer", "pactl", "wpctl"]:
             raise Exception(STRING_ERROR.format(self.command))
         elif not self.py3.check_commands(self.command):
             raise Exception(COMMAND_NOT_INSTALLED.format(self.command))
