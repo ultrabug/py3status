@@ -6,18 +6,18 @@ import sys
 import time
 from collections import deque
 from pathlib import Path
-from pprint import pformat
 from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
 from subprocess import Popen
 from threading import Event, Thread
 from traceback import extract_tb, format_stack, format_tb
 
 from py3status.command import CommandServer
-from py3status.constants import LOGGING_CONFIG, LOGGING_LOG_FILE_CONFIG, LOGGING_LOG_LEVELS
+from py3status.constants import LOGGING_CONFIG, LOGGING_LOG_FILE_CONFIG
 from py3status.events import Events
 from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
+from py3status.log import module_logger_name, resolve_log_level
 from py3status.module import Module
 from py3status.output import OutputFormat
 from py3status.parse_config import process_config
@@ -39,6 +39,7 @@ CONFIG_SPECIAL_SECTIONS = [
 
 ENTRY_POINT_NAME = "py3status"
 ENTRY_POINT_KEY = "entry_point"
+logger = logging.getLogger(__name__)
 
 
 class Runner(Thread):
@@ -105,7 +106,7 @@ class CheckI3StatusThread(Task):
         if not self.i3status_thread.is_alive():
             err = self.i3status_thread.error
             if not err:
-                err = "I3status died horribly."
+                err = "i3status died horribly"
             self.notify_user(err)
         else:
             # check again in 5 seconds
@@ -165,7 +166,7 @@ class Common:
             param = expand_color(param.lower(), self.none_setting)
         return param
 
-    def report_exception(self, msg, notify_user=True, level="error", error_frame=None):
+    def report_exception(self, msg, notify_user=True, level="error", error_frame=None, name=None):
         """
         Report details of an exception to the user.
         This should only be called within an except: block Details of the
@@ -217,15 +218,16 @@ class Common:
                     if found:
                         break
             # all done!  create our message.
-            msg = "{} ({}) {} line {}.".format(msg, exc_type.__name__, filename, line_no)
+            msg = "{} ({}) {} line {}".format(msg, exc_type.__name__, filename, line_no)
         except:  # noqa e722
-            # something went wrong report what we can.
-            msg = f"{msg}."
+            # something went wrong, report msg as-is.
+            pass
         finally:
             # delete tb!
             del tb
         # log the exception and notify user
-        self.py3_wrapper.log(msg, "warning")
+        tmp_logger = logging.getLogger(name) if name else logger
+        tmp_logger.log(resolve_log_level(level), msg)
         if traceback:
             # if debug is not in the config  then we are at an early stage of
             # running py3status and logging is not yet available so output the
@@ -233,7 +235,7 @@ class Common:
             if "debug" not in self.config:
                 print_stderr("\n".join(traceback))
             elif self.config.get("log_file"):
-                self.py3_wrapper.log("".join(["Traceback\n"] + traceback))
+                tmp_logger.info("traceback\n%s", "".join(traceback))
         if notify_user:
             self.py3_wrapper.notify_user(msg, level=level)
 
@@ -258,6 +260,7 @@ class Py3statusWrapper:
         self.options = options
         self.output_modules = {}
         self.py3_modules = []
+        self.loaded_entry_points = None
         self.running = True
         self.stop_signal = SIGTSTP
         self.update_queue = deque()
@@ -422,84 +425,110 @@ class Py3statusWrapper:
         if self.timeout_due is not None:
             return max(0, self.timeout_due - time.monotonic())
 
-    def get_user_modules(self):
+    def _get_default_modules(self):
+        modules_path = Path(__file__).resolve().parent / "modules"
+        return sorted(
+            p.stem for p in modules_path.iterdir() if p.suffix == ".py" and p.stem != "__init__"
+        )
+
+    def get_discoverable_modules(self):
         """Mapping from module name to relevant objects.
 
         There are two ways of discovery and storage:
         `include_paths` (no installation): include_path, f_name
         `entry_point` (from installed package): "entry_point", <Py3Status class>
 
-        Modules of the same name from entry points shadow all other modules.
+        Modules of the same name from entry-point packages shadow all other modules.
         """
-        user_modules = self._get_path_based_modules()
-        user_modules.update(self._get_entry_point_based_modules())
-        return user_modules
+        discoverable_modules = self._get_path_included_modules()
+        discoverable_modules.update(self._get_entry_point_based_modules())
+        return discoverable_modules
 
-    def _get_path_based_modules(self):
+    def _get_path_included_modules(self):
         """
         Search configured include directories for user provided modules.
 
-        user_modules: {
+        path_included_modules: {
             'weather_yahoo': ('~/i3/py3status/', 'weather_yahoo.py')
         }
         """
-        user_modules = {}
+        path_included_modules = {}
         for include_path in self.config["include_paths"]:
-            for f_name in sorted(include_path.iterdir()):
+            for f_name in include_path.iterdir():
                 if f_name.suffix != ".py":
                     continue
                 module_name = f_name.stem
                 # do not overwrite modules if already found
-                if module_name in user_modules:
+                if module_name in path_included_modules:
                     pass
-                user_modules[module_name] = (include_path, f_name)
-                self.log(f"available module from {include_path}: {module_name}")
-        return user_modules
+                path_included_modules[module_name] = (include_path, f_name)
+        return dict(sorted(path_included_modules.items()))
 
-    def _get_entry_point_based_modules(self):
-        classes_from_entry_points = {}
+    def _get_loaded_entry_points(self):
+        if self.loaded_entry_points is not None:
+            return self.loaded_entry_points
+
+        loaded_entry_points = []
         eps = importlib.metadata.entry_points(group=ENTRY_POINT_NAME)
 
         for entry_point in eps:
             try:
                 module = entry_point.load()
             except Exception as err:
-                self.log(f"entry_point '{entry_point}' error: {err}")
+                logger.error(
+                    "entry-point module '%s' (%s) %s",
+                    entry_point.name,
+                    entry_point.value,
+                    err,
+                )
                 continue
             klass = getattr(module, Module.EXPECTED_CLASS, None)
             if klass:
-                module_name = entry_point.name.split(".")[-1]
-                classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
-                self.log(f"available module from entry point {ENTRY_POINT_KEY}: {module_name}")
+                loaded_entry_points.append(
+                    (entry_point.name.split(".")[-1], entry_point.value, klass)
+                )
+        self.loaded_entry_points = loaded_entry_points
+        return self.loaded_entry_points
+
+    def _get_entry_point_based_modules(self):
+        classes_from_entry_points = {}
+        for module_name, _value, klass in self._get_loaded_entry_points():
+            classes_from_entry_points[module_name] = (ENTRY_POINT_KEY, klass)
         return classes_from_entry_points
 
-    def get_user_configured_modules(self):
+    def _get_entry_point_debug_modules(self):
+        return sorted(
+            f"{module_name} ({value})"
+            for module_name, value, _klass in self._get_loaded_entry_points()
+        )
+
+    def get_configured_discoverable_modules(self):
         """
-        Get a dict of all available and configured py3status modules
+        Get a dict of all configured discoverable py3status modules
         in the user's i3status.conf.
 
         As we already have a convenient way of loading the module, we'll
         populate the map with the Py3Status class right away
         """
-        user_modules = {}
+        discoverable_modules = {}
         if not self.py3_modules:
-            return user_modules
-        for module_name, module_info in self.get_user_modules().items():
+            return discoverable_modules
+        for module_name, module_info in self.get_discoverable_modules().items():
             for module in self.py3_modules:
                 if module_name == module.split(" ")[0]:
                     source, item = module_info
-                    user_modules[module_name] = (source, item)
-        return user_modules
+                    discoverable_modules[module_name] = (source, item)
+        return discoverable_modules
 
-    def load_modules(self, modules_list, user_modules):
+    def load_modules(self, modules_list, discoverable_modules):
         """
         Load the given modules from the list (contains instance name) with
-        respect to the user provided modules dict.
+        respect to the discoverable modules dict.
 
         modules_list: ['weather_yahoo paris', 'pewpew', 'net_rate']
-        user_modules: {
+        discoverable_modules: {
             'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py'),
-            'pewpew': ('entry_point', <Py3Status class>),
+            'pewpew': ('entry_point', <Py3Status class>),  # entry-point module
         }
         """
         for module in modules_list:
@@ -508,20 +537,20 @@ class Py3statusWrapper:
                 continue
             try:
                 instance = None
-                payload = user_modules.get(module.split(" ")[0])
+                payload = discoverable_modules.get(module.split(" ")[0])
                 if payload:
                     kind, Klass = payload
                     if kind == ENTRY_POINT_KEY:
                         instance = Klass()
-                my_m = Module(module, user_modules, self, instance=instance)
+                my_m = Module(module, discoverable_modules, self, instance=instance)
                 # only handle modules with available methods
                 if my_m.methods:
                     self.modules[module] = my_m
                 else:
-                    self.log(f'ignoring module "{module}" (no methods found)', level="debug")
+                    logger.debug("ignoring module '%s' (no methods found)", module)
             except Exception:
                 err = sys.exc_info()[1]
-                msg = f'Loading module "{module}" failed ({err}).'
+                msg = f'loading module "{module}" failed ({err})'
                 self.report_exception(msg, level="warning")
 
     def _setup_logging(self):
@@ -548,7 +577,11 @@ class Py3statusWrapper:
             handler_cfg = dict(handler_cfg)
             handler_cfg["filename"] = self.config["log_file"]
             init_logging_config["handlers"][handler_name] = handler_cfg
-            init_logging_config["root"]["handlers"].append(handler_name)
+            user_root_handlers = user_logging_config.get("root", {}).get("handlers")
+            if user_root_handlers is None:
+                init_logging_config["root"]["handlers"] = [handler_name]
+            elif handler_name not in init_logging_config["root"]["handlers"]:
+                init_logging_config["root"]["handlers"].append(handler_name)
 
         logging.config.dictConfig(init_logging_config)
 
@@ -564,7 +597,7 @@ class Py3statusWrapper:
         if not git_path.exists():
             return
 
-        self.log("Running within git repo")
+        logger.info("running within git repo")
 
         try:
             import git
@@ -581,24 +614,24 @@ class Py3statusWrapper:
                 with (git_path / "HEAD").open() as f:
                     out = f.readline()
             except OSError:
-                self.log(
-                    "Unable to read git HEAD. " "Use python git package for more repo information"
+                logger.warning(
+                    "unable to read git HEAD, use python git package for more repo information"
                 )
                 return
             branch = "/".join(out.strip().split("/")[2:])
-            self.log(f"git branch: {branch}")
+            logger.info("git branch: %s", branch)
             # last commit
             log_path = git_path / "logs" / "refs" / "heads" / branch
             with log_path.open() as f:
                 out = f.readlines()[-1]
             sha = out.split(" ")[1][:7]
             msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
-            self.log(f"git commit: {sha}{msg}")
+            logger.info("git commit: %s%s", sha, msg)
         else:
             commit = repo.head.commit
-            self.log(f"git branch: {repo.active_branch.name}")
-            self.log(f"git commit: {commit.hexsha[:7]} {commit.summary}")
-            self.log(f"git clean: {not repo.is_dirty()!s}")
+            logger.info("git branch: %s", repo.active_branch.name)
+            logger.info("git commit: %s %s", commit.hexsha[:7], commit.summary)
+            logger.info("git clean: %s", not repo.is_dirty())
 
     def setup(self):
         """
@@ -613,19 +646,17 @@ class Py3statusWrapper:
         self._setup_logging()
 
         # log py3status and python versions
-        self.log("=" * 8)
-        msg = "Starting py3status version {version} python {python_version}"
-        self.log(msg.format(**self.config))
+        logger.info("=" * 8)
+        msg = "starting py3status version {version} python {python_version}"
+        logger.info(msg.format(**self.config))
 
         # if running from git then log the branch and last commit
         self._log_gitversion()
 
-        # log window manager
-        self.log("window manager: {}".format(self.config["wm_name"]))
-
-        # log config
-        self.log(f"py3status started with config {self.config}", level="debug")
-        self.log(f"config file: {self.config['i3status_config_path']}")
+        # log config file and window manager
+        logger.info("config file: %s", self.config["i3status_config_path"])
+        logger.info("window manager: %s", self.config["wm_name"])
+        logger.debug("py3status started with config %s", self.config)
 
         # autodetect output_format
         output_format = self.config["py3_config"]["general"]["output_format"]
@@ -657,7 +688,7 @@ class Py3statusWrapper:
             i3s_mode = "mocked"
         else:
             for module in i3s_modules:
-                self.log(f"adding module {module}")
+                logger.info("adding i3status module '%s'", module)
             i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -671,7 +702,7 @@ class Py3statusWrapper:
                     break
                 time.sleep(0.1)
 
-        self.log(f"i3status thread {i3s_mode} with config {py3_config}", level="debug")
+        logger.debug("i3status thread %s with config %s", i3s_mode, py3_config)
 
         # add i3status thread monitoring task
         if i3s_mode == "started":
@@ -682,13 +713,13 @@ class Py3statusWrapper:
         self.events_thread = Events(self)
         self.events_thread.daemon = True
         self.events_thread.start()
-        self.log("events thread started", level="debug")
+        logger.debug("events thread started")
 
         # initialise the command server
         self.commands_thread = CommandServer(self)
         self.commands_thread.daemon = True
         self.commands_thread.start()
-        self.log("commands thread started", level="debug")
+        logger.debug("commands thread started")
 
         # initialize the udev monitor (lazy)
         self.udev_monitor = UdevMonitor(self)
@@ -714,7 +745,7 @@ class Py3statusWrapper:
                     f"py3status.stop_signal '{custom_stop_signal}' is invalid "
                     f"and should be a number between 0 (disable) and 31"
                 )
-                self.log(error, level="error")
+                logger.error(error)
                 raise Exception(error)
 
         # SIGTSTP can be received and indicates that all output should
@@ -728,14 +759,17 @@ class Py3statusWrapper:
         # get the list of py3status configured modules
         self.py3_modules = self.config["py3_config"]["py3_modules"]
 
-        # get a dict of all user provided modules
-        self.log("modules include paths: {}".format(self.config["include_paths"]))
-        user_modules = self.get_user_configured_modules()
-        self.log(f"user_modules={user_modules}", level="debug")
+        # print available modules
+        # logger.debug("default modules: %s", self._get_default_modules())
+        logger.info("path-included module paths: %s", list(map(str, self.config["include_paths"])))
+        logger.debug("path-included modules: %s", list(self._get_path_included_modules()))
+        logger.debug("entry-point modules: %s", self._get_entry_point_debug_modules())
 
+        # get a dict of all configured discoverable modules
+        discoverable_modules = self.get_configured_discoverable_modules()
         if self.py3_modules:
             # load and spawn i3status.conf configured modules threads
-            self.load_modules(self.py3_modules, user_modules)
+            self.load_modules(self.py3_modules, discoverable_modules)
 
         # determine the target output format
         self.output_format = OutputFormat.instance_for(
@@ -795,11 +829,12 @@ class Py3statusWrapper:
         msg_hash = hash(f"{module_name}#{limit_key}#{msg}#{title}")
         if msg_hash in self.notified_messages:
             return
-        elif module_name:
-            log_msg = 'Module `{}` sent a notification. "{}: {}"'.format(module_name, title, msg)
-            self.log(log_msg, level)
+        log_level = resolve_log_level(level)
+        if module_name:
+            notification_logger = logging.getLogger(module_logger_name(module_name))
+            notification_logger.log(log_level, "notification: '%s: %s'", title, msg)
         else:
-            self.log(msg, level)
+            logger.log(log_level, msg)
         self.notified_messages.add(msg_hash)
 
         try:
@@ -826,7 +861,7 @@ class Py3statusWrapper:
                 stderr=Path("/dev/null").open("w"),
             )
         except Exception as err:
-            self.log(f"notify_user error: {err}")
+            logger.error("notify_user: %s", err)
 
     def stop(self):
         """
@@ -841,7 +876,7 @@ class Py3statusWrapper:
 
         try:
             self.lock.set()
-            self.log("lock set, exiting", level="debug")
+            logger.debug("lock set, exiting")
             # run kill() method on all py3status modules
             for module in self.modules.values():
                 module.kill()
@@ -872,10 +907,10 @@ class Py3statusWrapper:
                 or (not exact and name.startswith(module_string))
             ):
                 if module["type"] == "py3status":
-                    self.log(f"refresh py3status module {name}", level="debug")
+                    logger.debug("refreshing py3status module '%s'", name)
                     module["module"].force_update()
                 else:
-                    self.log(f"refresh i3status module {name}", level="debug")
+                    logger.debug("refreshing i3status module '%s'", name)
                     update_i3status = True
         if update_i3status:
             self.i3status_thread.refresh_i3status()
@@ -884,14 +919,14 @@ class Py3statusWrapper:
         """
         SIGUSR1 was received, the user asks for an immediate refresh of the bar
         """
-        self.log("received USR1")
+        logger.info("received USR1")
         self.refresh_modules()
 
     def terminate(self, signum, frame):
         """
         Received request to terminate (SIGTERM), exit nicely.
         """
-        self.log("received SIGTERM")
+        logger.info("received SIGTERM")
         raise KeyboardInterrupt()
 
     def purge_module(self, module_name):
@@ -945,26 +980,6 @@ class Py3statusWrapper:
         # we need to update the output
         if self.update_queue:
             self.update_request.set()
-
-    def log(self, msg, level="info", name=None):
-        """
-        log this information to syslog or user provided logfile.
-        """
-        # nice formatting of data structures using pretty print
-        if isinstance(msg, (dict, list, set, tuple)):
-            msg = pformat(msg)
-            # if multiline then start the data output on a fresh line
-            # to aid readability.
-            if "\n" in msg:
-                msg = "\n" + msg
-
-        if not isinstance(level, int):
-            # logging.getLevelNamesMapping() is python 3.11+
-            # use local mapping instead to support python 3.9+
-            level = LOGGING_LOG_LEVELS.get(level.upper(), logging.DEBUG)
-
-        logger = logging.getLogger(name)
-        logger.log(level, msg)
 
     def create_output_modules(self):
         """
@@ -1037,24 +1052,24 @@ class Py3statusWrapper:
 
     def i3bar_stop(self, signum, frame):
         if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
-            self.log(f"received stop_signal {Signals(signum).name}")
+            logger.info("received stop_signal %s", Signals(signum).name)
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
             self.sleep_modules()
             self.next_allowed_signal = SIGCONT
         else:
-            self.log(f"inhibited stop_signal {Signals(signum).name}", level="warning")
+            logger.warning("inhibited stop_signal %s", Signals(signum).name)
             self.inhibit_signal_ts = time.monotonic() + 0.1
 
     def i3bar_start(self, signum, frame):
         if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
-            self.log(f"received resume signal {Signals(signum).name}")
+            logger.info("received resume signal %s", Signals(signum).name)
             self.i3bar_running = True
             self.wake_modules()
             self.next_allowed_signal = self.stop_signal
         else:
-            self.log(f"inhibited start_signal {Signals(signum).name}", level="warning")
+            logger.warning("inhibited start_signal %s", Signals(signum).name)
             self.inhibit_signal_ts = time.monotonic() + 0.1
 
     def sleep_modules(self):

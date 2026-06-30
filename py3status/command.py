@@ -1,9 +1,12 @@
 import argparse
 import json
+import logging
 import os
 import socket
 import threading
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 SERVER_ADDRESS = "/tmp/py3status_uds"
 MAX_SIZE = 1024
@@ -156,7 +159,7 @@ class CommandRunner:
                     if requested_name == name.split(" ")[0]:
                         found_modules.add(module_name)
 
-        self.py3_wrapper.log(f"found {found_modules}", level="debug")
+        logger.debug("matched modules: %s", sorted(found_modules))
         return found_modules
 
     def refresh(self, data):
@@ -168,7 +171,7 @@ class CommandRunner:
         update_i3status = False
         for module_name in self.find_modules(modules):
             module = self.py3_wrapper.output_modules[module_name]
-            self.py3_wrapper.log(f"refresh {module}", level="debug")
+            logger.debug("refreshing module '%s'", module_name)
             if module["type"] == "py3status":
                 module["module"].force_update()
             else:
@@ -194,7 +197,7 @@ class CommandRunner:
             for name, message in CLICK_OPTIONS:
                 event[name] = data.get(name)
 
-            self.py3_wrapper.log(event, level="debug")
+            logger.debug("dispatching click event %s", event)
             # trigger the event
             self.py3_wrapper.events_thread.dispatch_event(event)
 
@@ -203,7 +206,7 @@ class CommandRunner:
         check the given command and send to the correct dispatcher
         """
         command = data.get("command")
-        self.py3_wrapper.log(f"Running remote command {command}", level="debug")
+        logger.debug("running command '%s'", command)
         if command == "refresh":
             self.refresh(data)
         elif command == "refresh_all":
@@ -237,8 +240,7 @@ class CommandServer(threading.Thread):
         # Create a UDS socket
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(server_address.as_posix())
-
-        self.py3_wrapper.log(f"Unix domain socket at {server_address}", level="debug")
+        logger.debug("socket listening on %s", server_address)
 
         # Listen for incoming connections
         sock.listen(1)
@@ -262,25 +264,20 @@ class CommandServer(threading.Thread):
         while True:
             try:
                 data = None
-                # Wait for a connection
-                self.py3_wrapper.log("waiting for a connection", level="debug")
-
-                connection, client_address = self.sock.accept()
+                connection, _client_address = self.sock.accept()
+                logger.debug("connection accepted")
                 try:
-                    self.py3_wrapper.log("connection from", level="debug")
-
                     data = connection.recv(MAX_SIZE)
                     if data:
                         data = json.loads(data.decode("utf-8"))
-                        self.py3_wrapper.log(f"received {data}", level="debug")
+                        logger.debug("received payload %s", data)
                         self.command_runner.run_command(data)
                 finally:
                     # Clean up the connection
                     connection.close()
             except Exception:
                 if data:
-                    self.py3_wrapper.log("Command error")
-                    self.py3_wrapper.log(data)
+                    logger.error("payload: %s", data)
                 self.py3_wrapper.report_exception("command failed")
 
 

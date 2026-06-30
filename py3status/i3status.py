@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 from copy import deepcopy
@@ -18,6 +19,8 @@ from py3status.constants import (
 from py3status.events import IOPoller
 from py3status.profiling import profile
 from py3status.py3 import Py3
+
+logger = logging.getLogger(__name__)
 
 
 class I3statusModule:
@@ -344,8 +347,7 @@ class I3status(Thread):
     def refresh_i3status(self):
         # refresh i3status.  This is rate limited
         if time.monotonic() > (self.last_refresh_ts + 0.1):
-            if self.py3_wrapper.config["debug"]:
-                self.py3_wrapper.log("refreshing i3status")
+            logger.debug("refreshing i3status")
             if self.i3status_pipe:
                 self.i3status_pipe.send_signal(SIGUSR1)
             self.last_refresh_ts = time.monotonic()
@@ -380,7 +382,7 @@ class I3status(Thread):
                     preexec_fn=lambda: signal(SIGTSTP, SIG_IGN),
                 )
 
-                self.py3_wrapper.log(f"i3status spawned using config file {tmpfile.name}")
+                logger.info("started with config file: %s", tmpfile.name)
 
                 self.poller_inp = IOPoller(i3status_pipe.stdout)
                 self.poller_err = IOPoller(i3status_pipe.stderr)
@@ -406,16 +408,15 @@ class I3status(Thread):
                             err = self.poller_err.readline()
                             code = i3status_pipe.poll()
                             if code is not None:
-                                msg = "i3status died"
                                 if err:
-                                    msg += f" and said: {err}"
+                                    msg = err.split("i3status", 1)[-1].strip(" .:")
                                 else:
-                                    msg += f" with code {code}"
+                                    msg = f"exiting due to code {code}"
                                 raise OSError(msg)
                 except OSError:
                     err = sys.exc_info()[1]
                     self.error = err
-                    self.py3_wrapper.log(err, "error")
+                    logger.error(err)
         except OSError:
             self.error = "Problem starting i3status maybe it is not installed"
         except Exception:

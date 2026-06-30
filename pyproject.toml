@@ -110,6 +110,7 @@ line_length = 100
 [tool.ruff]
 line-length = 100
 lint.ignore = ["E501"]
+lint.extend-select = ["G004"]
 
 [tool.hatch.envs.docs]
 dependencies = [

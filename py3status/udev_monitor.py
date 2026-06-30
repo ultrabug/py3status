@@ -1,3 +1,4 @@
+import logging
 from collections import Counter, defaultdict
 from datetime import datetime
 from time import sleep
@@ -8,6 +9,8 @@ try:
     import pyudev
 except ImportError:
     pyudev = None
+
+logger = logging.getLogger(__name__)
 
 
 class UdevMonitor:
@@ -33,14 +36,16 @@ class UdevMonitor:
         monitor = pyudev.Monitor.from_netlink(context)
         self.udev_observer = pyudev.MonitorObserver(monitor, self._udev_event)
         self.udev_observer.start()
-        self.py3_wrapper.log("udev monitoring enabled")
+        logger.info("enabled")
 
     def _udev_event(self, action, device):
         """
         This is a callback method that will trigger a refresh on subscribers.
         """
-        # self.py3_wrapper.log(
-        #     f"detected udev action '{action}' on subsystem '{device.subsystem}'"
+        # logger.info(
+        #     "detected action '%s' on subsystem '%s'",
+        #     action,
+        #     device.subsystem,
         # )
         if not self.py3_wrapper.i3bar_running:
             return
@@ -58,20 +63,21 @@ class UdevMonitor:
             if self.udev_observer is None:
                 self._setup_pyudev_monitoring()
             if trigger_action not in ON_TRIGGER_ACTIONS:
-                self.py3_wrapper.log(
-                    f"module {py3_module.module_full_name}: invalid action "
-                    f"{trigger_action} on udev events subscription"
+                py3_module._logger.info(
+                    "invalid action '%s' on events subscription",
+                    trigger_action,
                 )
                 return False
             self.udev_consumers[subsystem].append((py3_module, trigger_action))
-            self.py3_wrapper.log(
-                f"module {py3_module.module_full_name} subscribed to udev events on {subsystem}"
+            py3_module._logger.info(
+                "subscribed to events on %s",
+                subsystem,
             )
             return True
         else:
-            self.py3_wrapper.log(
-                f"pyudev module not installed: module {py3_module.module_full_name} "
-                f"not subscribed to events on {subsystem}"
+            py3_module._logger.info(
+                "pyudev module not installed; not subscribed to events on %s",
+                subsystem,
             )
             return False
 
@@ -86,13 +92,15 @@ class UdevMonitor:
                 occurences = self.throttle[event_key][resolution]
                 # we allow at most 5 events per 10 seconds window
                 if occurences >= 5:
-                    self.py3_wrapper.log(
-                        f"udev event {event_key}: throttled after {occurences} occurences",
-                        level="warning",
+                    py3_module._logger.warning(
+                        "event '%s' throttled after %s occurrences",
+                        event_key,
+                        occurences,
                     )
                     continue
-                self.py3_wrapper.log(
-                    f"{event_key} udev event: refresh consumer {py3_module.module_full_name}"
+                py3_module._logger.info(
+                    "event '%s' refreshing consumer",
+                    event_key,
                 )
                 sleep(0.1)
                 py3_module.force_update()

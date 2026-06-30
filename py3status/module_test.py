@@ -1,9 +1,33 @@
+import logging
 import time
 from ast import literal_eval
 from sys import argv
 from threading import Event
 
 from py3status.core import Common, Module
+from py3status.log import log_message, resolve_log_level
+
+
+class ExcludeModuleFilter(logging.Filter):
+    """Suppress module.py framework logs during module_test runs."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def filter(self, record):
+        return record.pathname != self.path
+
+
+def setup_logging(level="INFO"):
+    level = resolve_log_level(level)
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s [%(name)s] %(message)s",
+    )
+    module_path = __file__.replace("_test.py", ".py")
+    module_filter = ExcludeModuleFilter(module_path)
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(module_filter)
 
 
 class MockPy3statusWrapper:
@@ -18,10 +42,11 @@ class MockPy3statusWrapper:
             pass
 
     def __init__(self, config):
+        self.logger = logging.getLogger(__name__)
+
         self.config = {
             "py3_config": config,
             "include_paths": [],
-            "debug": False,
             "cache_timeout": 1,
             "minimum_interval": 0.1,
             "testing": True,
@@ -54,27 +79,43 @@ class MockPy3statusWrapper:
     def clear_timeout_due(self, *arg, **kw):
         pass
 
-    def log(self, *arg, **kw):
-        print(arg[0])
+    def log(self, message, level="info"):
+        log_message(self.logger, message=message, level=level)
 
 
 def module_test(module_class, config=None):
     if not config:
         config = {}
 
-    # config cli arguments
-    arguments, term = argv[1:], False
-    for index, arg in enumerate(arguments):
-        if "--term" in arg:
+    # user cli arguments
+    log_level = "INFO"
+    term = False
+
+    arguments = argv[1:]
+    index = 0
+    while index < len(arguments):
+        arg = arguments[index]
+        if arg == "--term":
             term = True
-        elif arg[0:2] == "--":
-            key = arguments[index][2:]
+            index += 1
+            continue
+        if arg == "--log-level" and index + 1 < len(arguments):
+            log_level = arguments[index + 1]
+            index += 2
+            continue
+        if arg[0:2] == "--" and index + 1 < len(arguments):
+            key = arg[2:]
             value = arguments[index + 1]
             try:
                 value = literal_eval(value)
             except (SyntaxError, ValueError):
                 pass
             config[key] = value
+            index += 2
+            continue
+        index += 1
+
+    setup_logging(log_level)
 
     py3_config = {
         "general": {

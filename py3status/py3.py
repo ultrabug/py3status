@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shlex
@@ -8,7 +9,6 @@ from copy import deepcopy
 from fnmatch import fnmatch
 from math import log10
 from pathlib import Path
-from pprint import pformat
 from shutil import which
 from subprocess import PIPE, STDOUT, Popen
 from time import sleep
@@ -16,6 +16,7 @@ from uuid import uuid4
 
 from py3status import exceptions
 from py3status.formatter import Composite, Formatter, expand_color
+from py3status.log import log_message, module_logger_name
 from py3status.request import HttpResponse
 from py3status.storage import Storage
 from py3status.util import Gradients
@@ -102,6 +103,7 @@ class Py3:
         self._format_color_names = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
+        self._logger = None
         self._module = module
         self._replacements = None
         self._report_exception_cache = set()
@@ -457,18 +459,14 @@ class Py3:
         Constants LOG_ERROR, LOG_INFO, and LOG_WARNING are also supported.
         Specifying `name` uses a logger with a given name or module_name if None.
         """
-        # nicely format logs if we can using pretty print
-        if isinstance(message, (dict, list, set, tuple)):
-            message = pformat(message)
-        # start on new line if multi-line output
-        try:
-            if "\n" in message:
-                message = "\n" + message
-        except:  # noqa e722
-            pass
-        module_name = self._module.module_full_name
-        message = f"Module `{module_name}`: {message}"
-        self._py3_wrapper.log(message, level, name or module_name)
+        if name:
+            logger = logging.getLogger(name)
+        else:
+            logger = self._logger
+            if logger is None:
+                logger = logging.getLogger(module_logger_name(self._module.module_full_name))
+                self._logger = logger
+        log_message(logger, message, level)
 
     def update(self, module_name=None):
         """
@@ -1135,7 +1133,7 @@ class Py3:
         module_name = self._module.module_full_name
         for key in self._storage.storage_keys(module_name):
             value = self._storage.storage_get(module_name, key)
-            items.add((key, value))
+            items.append((key, value))
         return items
 
     def play_sound(self, sound_file):
