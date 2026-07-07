@@ -318,40 +318,77 @@ class Pactl(Audio):
 
 class Wpctl(Audio):
     def setup(self, parent):
-        if self.is_input:
-            self.dev_target = "@DEFAULT_AUDIO_SOURCE@"
+        if self.device:
+            # a named device is resolved on demand; see _resolve_device_id()
+            self.dev_target = None
         else:
-            self.dev_target = "@DEFAULT_AUDIO_SINK@"
+            self.dev_target = "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
 
     def get_volume(self):
+        self._resolve_device_id()
+        if not self.dev_target:
+            return None, None
         try:
             line = self.command_output(["wpctl", "get-volume", self.dev_target])
         except CommandError as ce:
             # fall back to the error output if the command failed
             line = ce.output
+        parts = line.split()
         try:
-            parts = line.split()
             muted = "[MUTED]" in parts
-            perc = int(float(parts[1]) * 100)
+            perc = round(float(parts[1]) * 100)
+            return perc, muted
         except (ValueError, IndexError):
-            muted, perc = None, None
-        return perc, muted
+            return None, None
 
     def volume_up(self, delta):
         perc, muted = self.get_volume()
+        if perc is None:
+            return
         # wpctl clamps to 100% unless an explicit limit is passed
         limit = f"{self.max_volume / 100}"
         if perc + delta >= self.max_volume:
             change = f"{self.max_volume}%"
         else:
             change = f"{delta}%+"
-        self.run_cmd(["wpctl", "set-volume", "-l", limit, self.dev_target, change])
+
+        if self.dev_target:
+            self.run_cmd(["wpctl", "set-volume", "-l", limit, self.dev_target, change])
 
     def volume_down(self, delta):
-        self.run_cmd(["wpctl", "set-volume", self.dev_target, f"{delta}%-"])
+        self._resolve_device_id()
+        if self.dev_target:
+            self.run_cmd(["wpctl", "set-volume", self.dev_target, f"{delta}%-"])
 
     def toggle_mute(self):
-        self.run_cmd(["wpctl", "set-mute", self.dev_target, "toggle"])
+        self._resolve_device_id()
+        if self.dev_target:
+            self.run_cmd(["wpctl", "set-mute", self.dev_target, "toggle"])
+
+    def _resolve_device_id(self):
+        # the @DEFAULT_AUDIO_*@ sentinels are resolved by wpctl itself, but a
+        # named device gets a node id that changes as it connects/disconnects,
+        # so re-resolve it on each access
+        if self.device is None:
+            return
+
+        # map a configured device name to its wpctl node id
+        try:
+            lines = self.command_output(["wpctl", "status", "-n"])
+        except CommandError as ce:
+            self.dev_target = None
+            return
+
+        for line in lines.splitlines():
+            if self.device in line:
+                # Remove default device indicator before splitting line
+                parts = line.replace("*", "").split()
+                try:
+                    self.dev_target = parts[1].replace(".", "")
+                    return
+                except IndexError:
+                    break
+        self.dev_target = None
 
 
 class Py3status:
