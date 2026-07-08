@@ -375,7 +375,7 @@ class Wpctl(Audio):
         # map a configured device name to its wpctl node id
         try:
             lines = self.command_output(["wpctl", "status", "-n"])
-        except CommandError as ce:
+        except CommandError:
             self.dev_target = None
             return
 
