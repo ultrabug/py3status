@@ -16,7 +16,7 @@ Configuration parameters:
         If None, try to guess based on available commands.
         (default None)
     device: Device to use. Defaults value is backend dependent.
-        "aplay -L", "pactl list sinks short", "pamixer --list-sinks"
+        "aplay -L", "pactl list sinks short", "pamixer --list-sinks", "wpctl status -n"
         (default None)
     format: Format of the output.
         (default '[\\?if=is_input 😮|♪]: {percentage}%')
@@ -232,7 +232,7 @@ class Pactl(Audio):
                 self.device_type_cap, self.device, self.device
             ),
             re.M | re.DOTALL,
-        )
+            )
 
     def get_default_device(self):
         device_id = None
@@ -320,9 +320,12 @@ class Wpctl(Audio):
     def setup(self, parent):
         self.device_re = re.compile(r"(?P<id>\d+)\.\s+(?P<name>.+)$")
         self.volume_re = re.compile(r"\[vol:\s*(?P<volume>[0-9.]+)(?:\s+(?P<muted>MUTED))?\]")
-        self.target_input = "Sources" if self.is_input else "Sinks"
+
+        self.max_volume = f"{self.max_volume / 100}"
+
+        self.selected_device_category = "Sources" if self.is_input else "Sinks"
         if not self.device:
-            self.target_id = "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
+            self.selected_device_id = "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
 
     def get_volume(self):
         device = self._get_selected_device()
@@ -331,35 +334,24 @@ class Wpctl(Audio):
         return device["volume"], device["muted"]
 
     def volume_up(self, delta):
-        # Use get_selected_device+minimal_code instead of get_target_id
-        # to avoid parsing duplicate call used to get target_id later.
-        device = self._get_selected_device()
-        if not device:
-            return
-        target_id = device["id"] if self.device else self.target_id
-        perc = device["volume"]
-
-        # wpctl clamps to 100% unless an explicit limit is passed
-        limit = f"{self.max_volume / 100}"
-        if perc + delta >= self.max_volume:
-            change = f"{self.max_volume}%"
-        else:
-            change = f"{delta}%+"
-        self.run_cmd(["wpctl", "set-volume", "-l", limit, target_id, change])
+        device_id = self._get_selected_device_id()
+        if device_id:
+            # wpctl clamps to 100% unless an explicit limit is passed
+            self.run_cmd(["wpctl", "set-volume", "-l", self.max_volume, device_id, f"{delta}%+"])
 
     def volume_down(self, delta):
-        target_id = self._get_target_id()
-        if target_id:
-            self.run_cmd(["wpctl", "set-volume", target_id, f"{delta}%-"])
+        device_id = self._get_selected_device_id()
+        if device_id:
+            self.run_cmd(["wpctl", "set-volume", device_id, f"{delta}%-"])
 
     def toggle_mute(self):
-        target_id = self._get_target_id()
-        if target_id:
-            self.run_cmd(["wpctl", "set-mute", target_id, "toggle"])
+        device_id = self._get_selected_device_id()
+        if device_id:
+            self.run_cmd(["wpctl", "set-mute", device_id, "toggle"])
 
-    def _get_target_id(self):
+    def _get_selected_device_id(self):
         if not self.device:
-            return self.target_id
+            return self.selected_device_id
         device = self._get_selected_device()
         return device["id"] if device else None
 
@@ -367,11 +359,14 @@ class Wpctl(Audio):
         return self.command_output(["wpctl", "status", "-n"])
 
     def _get_selected_device(self):
+        if not self.device:
+            return self._get_default_device()
+
         status_output = self._get_wpctl_status_output()
         audio_devices = self._get_audio_devices(status_output)
 
         selected_device = None
-        for device in audio_devices.get(self.target_input, []):
+        for device in audio_devices.get(self.selected_device_category, []):
             if self.device:
                 if device["name"] == self.device:
                     return device
@@ -412,11 +407,25 @@ class Wpctl(Audio):
                         "id": match.group("id"),
                         "muted": bool(volume_match.group("muted")),
                         "name": match.group("name"),
-                        "volume": float(volume_match.group("volume")) * 100,
+                        "volume": self._format_volume(volume_match.group("volume")),
                     }
                 )
             return audio_devices
         return audio_devices
+
+    def _get_default_device(self):
+        parts = self.command_output(["wpctl", "get-volume", self.selected_device_id]).lower().split()
+        try:
+            return {
+                "volume" : self._format_volume(parts[1]),
+                "muted" :  "[muted]" in parts,
+            }
+        except (ValueError, IndexError):
+            return None
+
+    @staticmethod
+    def _format_volume(volume):
+        return int(float(volume) * 100)
 
 
 class Py3status:
@@ -520,7 +529,7 @@ class Py3status:
                 min(
                     len(self.blocks) - 1,
                     math.ceil(int(perc) / 100 * (len(self.blocks) - 1)),
-                )
+                    )
             ]
 
         volume_data = {"icon": icon, "percentage": perc}
@@ -551,7 +560,11 @@ if __name__ == "__main__":
     config = {
         "format": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] " + Py3status.format,
         "format_muted": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] "
-        + Py3status.format_muted,
+                        + Py3status.format_muted,
+
+        "command": "wpctl",
+        "device": "alsa_output.usb-0d8c_USB_PnP_Sound_Device-00.analog-stereo",
+        # "is_input": True,
     }
     from py3status.module_test import module_test
 
