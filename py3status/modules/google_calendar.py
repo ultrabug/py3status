@@ -117,8 +117,9 @@ Color options:
 
 Requires:
     1. Python library google-api-python-client.
-    2. Python library python-dateutil.
-    3. OAuth 2.0 credentials for the Google Calendar api.
+    2. Python library google-auth-oauthlib.
+    3. Python library python-dateutil.
+    4. OAuth 2.0 credentials for the Google Calendar api.
 
     Follow Step 1 of the guide here to obtain your OAuth 2.0 credentials:
     https://developers.google.com/google-apps/calendar/quickstart/python
@@ -160,8 +161,6 @@ import datetime
 import time
 from pathlib import Path
 
-import httplib2
-
 try:
     from googleapiclient import discovery
 except ImportError:
@@ -169,11 +168,11 @@ except ImportError:
 
 from dateutil import parser
 from dateutil.tz import tzlocal
-from httplib2 import ServerNotFoundError
-from oauth2client import client, clientsecrets, tools
-from oauth2client.file import Storage
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = "https://www.googleapis.com/auth/calendar.readonly"
+SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 APPLICATION_NAME = "py3status google_calendar module"
 
 
@@ -234,46 +233,38 @@ class Py3status:
 
         Returns: Credentials, the obtained credential.
         """
-        client_secret_path = self.client_secret.parent
-        auth_token_path = self.auth_token.parent
+        self.auth_token.parent.mkdir(parents=True, exist_ok=True)
+        self.client_secret.parent.mkdir(parents=True, exist_ok=True)
 
-        auth_token_path.mkdir(parents=True, exist_ok=True)
-        client_secret_path.mkdir(parents=True, exist_ok=True)
+        credentials = None
+        if self.auth_token.exists():
+            credentials = Credentials.from_authorized_user_file(str(self.auth_token), SCOPES)
 
-        flags = tools.argparser.parse_args(args=[])
-        store = Storage(self.auth_token)
-        credentials = store.get()
-
-        if not credentials or credentials.invalid:
-            try:
-                flow = client.flow_from_clientsecrets(self.client_secret, SCOPES)
-                flow.user_agent = APPLICATION_NAME
-                if flags:
-                    credentials = tools.run_flow(flow, store, flags)
-                else:  # Needed only for compatibility with Python 2.6
-                    credentials = tools.run(flow, store)
-            except clientsecrets.InvalidClientSecretsError:
-                raise Exception("missing client_secret")
-            """
-            Have to restart i3 after getting credentials to prevent bad output.
-            This only has to be done once on the first run of the module.
-            """
-            self.py3.command_run(f"{self.py3.get_wm_msg()} restart")
+        if not credentials or not credentials.valid:
+            if credentials and credentials.expired and credentials.refresh_token:
+                credentials.refresh(Request())
+                self.auth_token.write_text(credentials.to_json())
+            else:
+                if not self.client_secret.exists():
+                    raise Exception("missing client_secret")
+                flow = InstalledAppFlow.from_client_secrets_file(str(self.client_secret), SCOPES)
+                credentials = flow.run_local_server(port=0)
+                self.auth_token.write_text(credentials.to_json())
+                # restart i3 after first authorization to prevent bad output
+                self.py3.command_run(f"{self.py3.get_wm_msg()} restart")
 
         return credentials
 
     def _authorize_credentials(self):
         """
-        Fetches an access/refresh token by authorizing OAuth 2.0 credentials.
+        Builds the Google Calendar API service from credentials.
 
-        Returns: True, if the authorization was successful.
-                 False, if a ServerNotFoundError is thrown.
+        Returns: True on success, False on network/auth failure.
         """
         try:
-            http = self.credentials.authorize(httplib2.Http())
-            self.service = discovery.build("calendar", "v3", http=http)
+            self.service = discovery.build("calendar", "v3", credentials=self.credentials)
             return True
-        except ServerNotFoundError:
+        except Exception:
             return False
 
     def _get_events(self):
