@@ -451,14 +451,6 @@ If key is not supplied then all values for the module are removed.
 
 Retrieve a value for the module.
 
-### storage_items()
-
-Return key, value pairs of the stored data for the module.
-
-Keys will contain the following metadata entries:
-- '_ctime': storage creation timestamp
-- '_mtime': storage last modification timestamp
-
 ### storage_keys()
 
 Return a list of the keys for values stored for the module.
