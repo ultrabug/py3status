@@ -13,24 +13,34 @@ GENERAL_DEFAULTS = {
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {"shortname": {"()": "py3status.log.ShortnameFilter"}},
     "handlers": {
         "syslog": {
-            "formatter": "default",
+            "formatter": "syslog",
+            "filters": ["shortname"],
             "class": "logging.handlers.SysLogHandler",
             "address": "/dev/log",
         },
     },
     "formatters": {
-        "default": {
-            "format": "%(asctime)s %(levelname)s %(message)s",
+        "syslog": {
+            "format": "[%(shortname)s] %(message)s",
+        },
+        "logfile": {
+            "format": "%(asctime)s %(levelname)s [%(shortname)s] %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
-        }
+        },
     },
     "root": {"handlers": ["syslog"], "level": "INFO"},
 }
 
 LOGGING_LOG_FILE_CONFIG = {
-    "__log_file": {"formatter": "default", "class": "logging.FileHandler", "filename": None}
+    "__log_file": {
+        "formatter": "logfile",
+        "filters": ["shortname"],
+        "class": "logging.FileHandler",
+        "filename": None,
+    }
 }
 
 LOGGING_LOG_LEVELS = {

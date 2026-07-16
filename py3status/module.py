@@ -1,4 +1,5 @@
 import inspect
+import logging
 import time
 from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
@@ -9,6 +10,7 @@ from types import FunctionType
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
 from py3status.formatter import Formatter
+from py3status.log import module_logger_name
 from py3status.profiling import profile
 from py3status.py3 import ModuleErrorException, Py3
 
@@ -31,7 +33,7 @@ class Module:
     PARAMS_LEGACY = "legacy"
     EXPECTED_CLASS = "Py3status"
 
-    def __init__(self, module, user_modules, py3_wrapper, instance=None):
+    def __init__(self, module, discoverable_modules, py3_wrapper, instance=None):
         """
         We need quite some stuff to occupy ourselves don't we ?
         """
@@ -74,8 +76,12 @@ class Module:
         # should only use it on the understanding that it is not supported.
         self._py3_wrapper = py3_wrapper
 
+        # create namespaced module identity for consistent formatting/filtering
+        self.module_logger_name = module_logger_name(self.module_full_name)
+        self._logger = logging.getLogger(self.module_logger_name)
+
         try:
-            self.load_methods(module, user_modules)
+            self.load_methods(module, discoverable_modules)
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
@@ -87,15 +93,15 @@ class Module:
             ]
             self.error_output(self.error_messages[0])
             # log the error
-            msg = f"Module `{self.module_full_name}` could not be loaded ({e})"
             if isinstance(e, SyntaxError):
                 # provide full traceback
-                self._py3_wrapper.report_exception(msg, notify_user=False)
+                self._py3_wrapper.report_exception(
+                    "could not be loaded", notify_user=False, name=self.module_logger_name
+                )
             else:
                 # module import error we can just report the module that cannot
                 # be imported
-                self._py3_wrapper.log(msg)
-                self._py3_wrapper.log(str(e))
+                self._logger.error("could not be loaded (%s)", e)
 
         # check module/py3status config section
         if not self.disabled:
@@ -152,9 +158,10 @@ class Module:
                     f"{e}",
                 ]
                 self.runtime_error(self.error_messages[1], "post_config_hook")
-                msg = f"Exception in `{self.module_full_name}` post_config_hook() : {self.error_messages}"
-                self._py3_wrapper.report_exception(msg, notify_user=False)
-                self._py3_wrapper.log(f"terminating module {self.module_full_name}")
+                self._py3_wrapper.report_exception(
+                    "post_config_hook failed", notify_user=False, name=self.module_logger_name
+                )
+                self._logger.error("terminating module")
         self.enabled = True
 
     def runtime_error(self, msg, method):
@@ -229,7 +236,7 @@ class Module:
         self.prepare_module()
         if not (self.disabled or self.terminated):
             # Start the module and call its output method(s)
-            self._py3_wrapper.log(f"starting module {self.module_full_name}")
+            self._logger.info("starting module")
             self._py3_wrapper.timeout_queue_add(self)
 
     def force_update(self):
@@ -241,8 +248,10 @@ class Module:
         # clear cached_until for each method to allow update
         for meth, my_method in self.methods.items():
             my_method["cached_until"] = time.monotonic()
-            if self.config["debug"]:
-                self._py3_wrapper.log(f"clearing cache for method {meth}")
+            self._logger.debug(
+                "clearing cache for method '%s'",
+                meth,
+            )
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -255,7 +264,7 @@ class Module:
         # purge from any container modules
         self._py3_wrapper.purge_module(self.module_full_name)
         self.error_output("")
-        self._py3_wrapper.log(f"disabling module `{self.module_full_name}`")
+        self._logger.info("disabling module")
 
     def wake(self):
         self.sleeping = False
@@ -580,7 +589,7 @@ class Module:
         else:
             return self.PARAMS_LEGACY
 
-    def load_methods(self, module, user_modules):
+    def load_methods(self, module, discoverable_modules):
         """
         Read the given user-written py3status class file and store its methods.
         Those methods will be executed, so we will deliberately ignore:
@@ -591,17 +600,42 @@ class Module:
         """
         if not self.module_class:
             # user provided modules take precedence over py3status provided modules
-            if self.module_name in user_modules:
-                include_path, f_name = user_modules[self.module_name]
+            if self.module_name in discoverable_modules:
+                include_path, f_name = discoverable_modules[self.module_name]
                 module_path = Path(include_path) / f_name
-                self._py3_wrapper.log(f'loading module "{module}" from {module_path}')
+                self._logger.info(
+                    "loading module from path-included:%s",
+                    module_path,
+                )
                 self.module_class = self.load_from_file(module_path)
             # load from py3status provided modules
             else:
-                self._py3_wrapper.log(
-                    'loading module "{}" from py3status.modules.{}'.format(module, self.module_name)
+                try:
+                    self.module_class = self.load_from_namespace(self.module_name)
+                except ModuleNotFoundError as err:
+                    module_namespace = f"py3status.modules.{self.module_name}"
+                    if err.name == module_namespace:
+                        entry_point_modules = sorted(
+                            name
+                            for name, module_info in self._py3_wrapper.get_discoverable_modules().items()
+                            if module_info[0] == "entry_point"
+                        )
+                        if entry_point_modules:
+                            raise ModuleNotFoundError(
+                                f"module '{self.module_name}' not found"
+                            ) from err
+                    raise
+                self._logger.info(
+                    "loading module from py3status.modules.%s",
+                    self.module_name,
                 )
-                self.module_class = self.load_from_namespace(self.module_name)
+        elif self.module_name in discoverable_modules:
+            source, class_inst = discoverable_modules[self.module_name]
+            if source == "entry_point":
+                self._logger.info(
+                    "loading module from entry-point:%s",
+                    class_inst.__module__,
+                )
 
         class_inst = self.module_class
         if class_inst:
@@ -663,7 +697,7 @@ class Module:
                         if param:
                             msg = f"`{param}` {msg}"
                         msg = "DEPRECATION WARNING: {} {}".format(self.module_full_name, msg)
-                        self._py3_wrapper.log(msg)
+                        self._logger.info(msg)
 
                 if "rename" in deprecated:
                     # renamed parameters
@@ -864,12 +898,12 @@ class Module:
                             self.methods[method] = method_obj
 
         # done, log some debug info
-        if self.config["debug"]:
-            self._py3_wrapper.log(
-                'module "{}" click_events={} has_kill={} methods={}'.format(
-                    module, self.click_events, self.has_kill, list(self.methods)
-                )
-            )
+        self._logger.debug(
+            "click_events=%s has_kill=%s methods=%s",
+            self.click_events,
+            self.has_kill,
+            list(self.methods),
+        )
 
     def click_event(self, event):
         """
@@ -910,8 +944,10 @@ class Module:
                 # nothing has happened so no need for refresh
                 self.prevent_refresh = True
         except Exception:
-            msg = f"on_click event in `{self.module_full_name}` failed"
-            self._py3_wrapper.report_exception(msg)
+            self._py3_wrapper.report_exception(
+                "on_click event failed",
+                name=self.module_logger_name,
+            )
 
     @profile
     def run(self):
@@ -1008,8 +1044,11 @@ class Module:
                         my_method["last_output"] = result
 
                     # debug info
-                    if self.config["debug"]:
-                        self._py3_wrapper.log(f"method {meth} returned {result} ")
+                    self._logger.debug(
+                        "method '%s' returned %s",
+                        meth,
+                        result,
+                    )
                     # module working correctly so ensure module works as
                     # expected
                     self.allow_config_clicks = True
@@ -1035,10 +1074,12 @@ class Module:
                         )
 
                 except Exception as e:
-                    msg = "Instance `{}`, user method `{}` failed"
-                    msg = msg.format(self.module_full_name, meth)
                     if not self.testing:
-                        self._py3_wrapper.report_exception(msg, notify_user=False)
+                        self._py3_wrapper.report_exception(
+                            f"user method '{meth}' failed",
+                            notify_user=False,
+                            name=self.module_logger_name,
+                        )
                     # added error
                     self.runtime_error(str(e) or e.__class__.__name__, meth)
                     cache_time = time.monotonic() + getattr(

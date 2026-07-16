@@ -1,8 +1,11 @@
+import logging
 import os
 import time
 from pathlib import Path
 from pickle import dump, load
 from tempfile import NamedTemporaryFile
+
+logger = logging.getLogger(__name__)
 
 
 class Storage:
@@ -35,9 +38,7 @@ class Storage:
 
         # move legacy storage cache to new desired / default location
         if legacy_storage_path:
-            self.py3_wrapper.log(
-                "moving legacy storage_path {} to {}".format(legacy_storage_path, self.storage_path)
-            )
+            logger.info("moving legacy path %s to %s", legacy_storage_path, self.storage_path)
             legacy_storage_path.rename(self.storage_path)
 
         try:
@@ -46,9 +47,12 @@ class Storage:
         except OSError:
             pass
 
-        self.py3_wrapper.log(f"storage_path: {self.storage_path}")
+        logger.info("path: %s", self.storage_path)
         if self.data:
-            self.py3_wrapper.log(f"storage_data: {self.data}")
+            logger.debug(
+                "keys: %s",
+                {module_name: list(module_data) for module_name, module_data in self.data.items()},
+            )
         self.initialized = True
 
     def get_legacy_storage_path(self):

@@ -1,3 +1,4 @@
+import logging
 import select
 import sys
 from json import loads
@@ -6,6 +7,8 @@ from subprocess import PIPE, Popen
 from threading import Thread
 
 from py3status.profiling import profile
+
+logger = logging.getLogger(__name__)
 
 
 class IOPoller:
@@ -152,10 +155,12 @@ class Events(Thread):
         """
         wm_msg = self.config["wm"]["msg"]
         pipe = Popen([wm_msg, command], stdout=PIPE)
-        self.py3_wrapper.log(
-            '{} module="{}" command="{}" stdout={}'.format(
-                wm_msg, module_name, command, pipe.stdout.read()
-            )
+        logger.info(
+            '%s module="%s" command="%s" stdout=%s',
+            wm_msg,
+            module_name,
+            command,
+            pipe.stdout.read(),
         )
 
     def process_event(self, module_name, event, default_event=False):
@@ -171,9 +176,8 @@ class Events(Thread):
         # if module is a py3status one call it.
         if module_info["type"] == "py3status":
             module = module_info["module"]
+            logger.debug("dispatching event %s", event)
             module.click_event(event)
-            if self.config["debug"]:
-                self.py3_wrapper.log(f"dispatching event {event}")
 
             # to make the bar more responsive to users we refresh the module
             # unless the on_click event called py3.prevent_refresh()
@@ -183,8 +187,7 @@ class Events(Thread):
 
         if default_event:
             # default button 2 action is to clear this method's cache
-            if self.config["debug"]:
-                self.py3_wrapper.log(f"dispatching default event {event}")
+            logger.debug("dispatching default event %s", event)
             self.py3_wrapper.refresh_modules(module_name)
 
         # find container that holds the module and call its onclick
@@ -198,8 +201,7 @@ class Events(Thread):
         Takes an event dict.  Logs the event if needed and cleans up the dict
         such as setting the index needed for composits.
         """
-        if self.config["debug"]:
-            self.py3_wrapper.log(f"received event {event}")
+        logger.debug("received event %s", event)
 
         # usage variables
         event["index"] = event.get("index", "")
@@ -218,11 +220,6 @@ class Events(Thread):
                 pass
             event["index"] = index
             event["instance"] = instance
-
-        if self.config["debug"]:
-            self.py3_wrapper.log(
-                'trying to dispatch event to module "{}"'.format(f"{name} {instance}".strip())
-            )
 
         # guess the module config name
         module_name = f"{name} {instance}".strip()
@@ -272,8 +269,8 @@ class Events(Thread):
                     event = loads(event_str)
                     self.dispatch_event(event)
                 except Exception:
-                    self.py3_wrapper.report_exception("Event failed")
+                    self.py3_wrapper.report_exception("event failed")
         except:  # noqa e722
-            err = "Events thread died, click events are disabled."
+            err = "events thread died, click events are disabled"
             self.py3_wrapper.report_exception(err, notify_user=False)
             self.py3_wrapper.notify_user(err, level="warning")

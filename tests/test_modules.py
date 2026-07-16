@@ -15,13 +15,13 @@ def make_status_wrapper():
     return status_wrapper
 
 
-def test__get_path_based_modules(status_wrapper):
+def test__get_path_included_modules(status_wrapper):
     """Use the list of inbuilt modules as reference to check against."""
-    included_modules_path = Path(py3status.__file__).resolve().parent / "modules"
-    status_wrapper.options.__dict__["include_paths"] = [included_modules_path]
-    assert included_modules_path.exists()
-    expected_keys = [n.stem for n in included_modules_path.iterdir() if n.suffix == ".py"]
-    modules = status_wrapper._get_path_based_modules()
+    path_included_modules_path = Path(py3status.__file__).resolve().parent / "modules"
+    status_wrapper.options.__dict__["include_paths"] = [path_included_modules_path]
+    assert path_included_modules_path.exists()
+    expected_keys = [n.stem for n in path_included_modules_path.iterdir() if n.suffix == ".py"]
+    modules = status_wrapper._get_path_included_modules()
     assert sorted(modules) == sorted(expected_keys)
 
 
@@ -32,7 +32,7 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
 
             def __init__(self, name):
                 self.name = name
-                self.module_name = "module_name_" + self.name
+                self.value = f"{name}.module"
 
             @staticmethod
             def load():
@@ -44,9 +44,9 @@ def test__get_entry_point_based_modules(status_wrapper, monkeypatch):
 
     monkeypatch.setattr(importlib.metadata, "entry_points", return_fake_entry_points)
 
-    user_modules = status_wrapper._get_entry_point_based_modules()
-    assert len(user_modules) == 2
-    for name, info in user_modules.items():
+    discoverable_modules = status_wrapper._get_entry_point_based_modules()
+    assert len(discoverable_modules) == 2
+    for name, info in discoverable_modules.items():
         assert any(n in name for n in ["spam", "eggs"])
         kind, klass = info
         assert kind == ENTRY_POINT_KEY
