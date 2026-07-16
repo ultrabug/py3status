@@ -1118,24 +1118,6 @@ class Py3:
         module_name = self._module.module_full_name
         return self._storage.storage_keys(module_name)
 
-    def storage_items(self):
-        """
-        Return key, value pairs of the stored data for the module.
-
-        Keys will contain the following metadata entries:
-        - '_ctime': storage creation timestamp
-        - '_mtime': storage last modification timestamp
-        """
-        if not self._module:
-            return {}.items()
-        self._storage_init()
-        items = []
-        module_name = self._module.module_full_name
-        for key in self._storage.storage_keys(module_name):
-            value = self._storage.storage_get(module_name, key)
-            items.append((key, value))
-        return items
-
     def play_sound(self, sound_file):
         """
         Plays sound_file if possible.
