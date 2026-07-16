@@ -232,7 +232,7 @@ class Pactl(Audio):
                 self.device_type_cap, self.device, self.device
             ),
             re.M | re.DOTALL,
-            )
+        )
 
     def get_default_device(self):
         device_id = None
@@ -325,7 +325,9 @@ class Wpctl(Audio):
 
         self.selected_device_category = "Sources" if self.is_input else "Sinks"
         if not self.device:
-            self.selected_device_id = "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
+            self.selected_device_id = (
+                "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
+            )
 
     def get_volume(self):
         device = self._get_selected_device()
@@ -370,8 +372,6 @@ class Wpctl(Audio):
             if self.device:
                 if device["name"] == self.device:
                     return device
-            elif device["default"] and selected_device is None:
-                selected_device = device
         return selected_device
 
     def _get_audio_devices(self, status):
@@ -379,7 +379,7 @@ class Wpctl(Audio):
 
         for chunk in status.split("\n\n"):
             lines = chunk.splitlines()
-            if lines[0].strip() != "Audio":
+            if not lines or lines[0].strip() != "Audio":
                 continue
 
             current_target = None
@@ -408,17 +408,18 @@ class Wpctl(Audio):
                         "muted": bool(volume_match.group("muted")),
                         "name": match.group("name"),
                         "volume": self._format_volume(volume_match.group("volume")),
-                    }
+                       }
                 )
-            return audio_devices
         return audio_devices
 
     def _get_default_device(self):
-        parts = self.command_output(["wpctl", "get-volume", self.selected_device_id]).lower().split()
+        parts = (
+            self.command_output(["wpctl", "get-volume", self.selected_device_id]).lower().split()
+        )
         try:
             return {
-                "volume" : self._format_volume(parts[1]),
-                "muted" :  "[muted]" in parts,
+                "volume": self._format_volume(parts[1]),
+                "muted": "[muted]" in parts,
             }
         except (ValueError, IndexError):
             return None
@@ -529,7 +530,7 @@ class Py3status:
                 min(
                     len(self.blocks) - 1,
                     math.ceil(int(perc) / 100 * (len(self.blocks) - 1)),
-                    )
+                )
             ]
 
         volume_data = {"icon": icon, "percentage": perc}
@@ -560,10 +561,9 @@ if __name__ == "__main__":
     config = {
         "format": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] " + Py3status.format,
         "format_muted": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] "
-                        + Py3status.format_muted,
-
+        + Py3status.format_muted,
         "command": "wpctl",
-        "device": "alsa_output.usb-0d8c_USB_PnP_Sound_Device-00.analog-stereo",
+        # "device": "alsa_output.usb-0d8c_USB_PnP_Sound_Device-00.analog-stereo",
         # "is_input": True,
     }
     from py3status.module_test import module_test
