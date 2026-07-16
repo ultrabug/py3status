@@ -365,33 +365,28 @@ class Wpctl(Audio):
             return self._get_default_device()
 
         status_output = self._get_wpctl_status_output()
-        audio_devices = self._get_audio_devices(status_output)
-
-        selected_device = None
-        for device in audio_devices.get(self.selected_device_category, []):
-            if self.device:
-                if device["name"] == self.device:
-                    return device
-        return selected_device
+        for device in self._get_audio_devices(status_output):
+            if device["name"] == self.device:
+                return device
+        return None
 
     def _get_audio_devices(self, status):
-        audio_devices = {"Sinks": [], "Sources": []}
+        devices = []
 
         for chunk in status.split("\n\n"):
             lines = chunk.splitlines()
             if not lines or lines[0].strip() != "Audio":
                 continue
 
-            current_target = None
+            in_category = False
             for raw_line in lines[1:]:
                 line = raw_line.lstrip(" │├─")
                 if not line:
                     continue
                 if line.endswith(":"):
-                    header = line[:-1]
-                    current_target = header if header in audio_devices else None
+                    in_category = line[:-1] == self.selected_device_category
                     continue
-                if current_target is None:
+                if not in_category:
                     continue
 
                 volume_match = self.volume_re.search(line)
@@ -401,16 +396,16 @@ class Wpctl(Audio):
                 if not match:
                     continue
 
-                audio_devices[current_target].append(
+                devices.append(
                     {
-                        "default": "*" in line,
                         "id": match.group("id"),
                         "muted": bool(volume_match.group("muted")),
                         "name": match.group("name"),
                         "volume": self._format_volume(volume_match.group("volume")),
-                       }
+                    }
                 )
-        return audio_devices
+            break
+        return devices
 
     def _get_default_device(self):
         parts = (
