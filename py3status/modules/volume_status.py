@@ -421,7 +421,7 @@ class Wpctl(Audio):
 
     @staticmethod
     def _format_volume(volume):
-        return int(float(volume) * 100)
+        return round(float(volume) * 100)
 
 
 class Py3status:
