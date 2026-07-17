@@ -305,6 +305,9 @@ class Py3status:
                                     "sensor": sensor,
                                 }
                                 break
+                        else:
+                            continue
+                        break
                     break
             else:
                 self.init["cpu_temp"] = []
