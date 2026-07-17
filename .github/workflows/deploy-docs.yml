@@ -5,7 +5,9 @@ on:
     branches:
       - master
 
-permissions: {}
+permissions:
+  pages: write
+
 jobs:
   build:
     name: Deploy docs

@@ -9,6 +9,7 @@ on:
     - cron: "11 1 * * 0"
 
 permissions: {}
+
 jobs:
   analyze:
     name: Analyze
