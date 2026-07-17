@@ -60,7 +60,6 @@ class I3ipc(Ipc):
     i3ipc - an improved python library to control i3wm and sway
     """
 
-    _focused_workspace = None
     _focused_window = None
 
     def setup(self, parent):
@@ -89,7 +88,6 @@ class I3ipc(Ipc):
         self.i3.main()
 
     def _on_workplace_focus(self, i3, event):
-        self._focused_workspace = event.current
         self._focused_window = None
         if event.current.nodes or event.current.floating_nodes:
             return
