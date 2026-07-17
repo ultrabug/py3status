@@ -8,6 +8,7 @@ on:
   schedule:
     - cron: "11 1 * * 0"
 
+permissions: {}
 jobs:
   analyze:
     name: Analyze
@@ -24,18 +25,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@dd196fa9ce80b6bacc74ca1c32bd5b0ba22efca7 # v3.28.3
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@dd196fa9ce80b6bacc74ca1c32bd5b0ba22efca7 # v3.28.3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@dd196fa9ce80b6bacc74ca1c32bd5b0ba22efca7 # v3.28.3
         with:
           category: "/language:${{ matrix.language }}"

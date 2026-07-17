@@ -5,15 +5,18 @@ on:
     branches:
       - master
 
+permissions: {}
 jobs:
   build:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
       - name: Download source
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        with:
+          persist-credentials: false
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
         with:
           python-version: '3.x'
       - name: Install Python dependencies
@@ -23,7 +26,7 @@ jobs:
         run: hatch -e docs run mkdocs build
       - name: Deploy to gh-pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: oprypin/push-to-gh-pages@v3
+        uses: oprypin/push-to-gh-pages@b16c4c1926875f4d9fce26ffc60a623b003231d2 # v3.7.2
         with:
           publish_dir: site
           commit_message: 'Generate docs: '
