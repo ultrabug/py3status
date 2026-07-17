@@ -118,8 +118,7 @@ Color options:
 Requires:
     1. Python library google-api-python-client.
     2. Python library google-auth-oauthlib.
-    3. Python library python-dateutil.
-    4. OAuth 2.0 credentials for the Google Calendar api.
+    3. OAuth 2.0 credentials for the Google Calendar api.
 
     Follow Step 1 of the guide here to obtain your OAuth 2.0 credentials:
     https://developers.google.com/google-apps/calendar/quickstart/python
@@ -166,8 +165,6 @@ try:
 except ImportError:
     from apiclient import discovery
 
-from dateutil import parser
-from dateutil.tz import tzlocal
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -338,11 +335,11 @@ class Py3status:
 
     def _gstr_to_date(self, date_str):
         """Returns a dateime object from calendar date string."""
-        return parser.parse(date_str).replace(tzinfo=tzlocal())
+        return datetime.datetime.fromisoformat(date_str).astimezone()
 
     def _gstr_to_datetime(self, date_time_str):
         """Returns a datetime object from calendar date/time string."""
-        return parser.parse(date_time_str)
+        return datetime.datetime.fromisoformat(date_time_str.replace("Z", "+00:00"))
 
     def _datetime_to_str(self, date_time, dt_format):
         """Returns a strftime formatted string from a datetime object."""
@@ -353,7 +350,7 @@ class Py3status:
         Returns in a dict the number of days/hours/minutes and total minutes
         until date_time.
         """
-        now = datetime.datetime.now(tzlocal())
+        now = datetime.datetime.now().astimezone()
         diff = date_time - now
 
         days = int(diff.days)
@@ -419,7 +416,7 @@ class Py3status:
                 start_dt = self._gstr_to_datetime(event["start"].get("dateTime"))
                 end_dt = self._gstr_to_datetime(event["end"].get("dateTime"))
 
-            if end_dt < datetime.datetime.now(tzlocal()):
+            if end_dt < datetime.datetime.now().astimezone():
                 continue
 
             event_dict["start_time"] = self._datetime_to_str(start_dt, self.format_time)
