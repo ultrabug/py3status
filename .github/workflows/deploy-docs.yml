@@ -5,14 +5,13 @@ on:
     branches:
       - master
 
-permissions:
-  contents: write
-  pages: write
-
 jobs:
   build:
     name: Deploy docs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
     steps:
       - name: Download source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
