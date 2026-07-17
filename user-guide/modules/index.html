@@ -1068,6 +1068,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#librelinkup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        librelinkup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lm_sensors" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5952,6 +5963,113 @@ keyboard_locks {
 </ul>
 <p><strong>author</strong> @xenrox</p>
 <p><strong>license</strong> BSD</p>
+<h2 id="librelinkup">librelinkup</h2>
+<p><img alt="librelinkup example 0" src="../screenshots/librelinkup-0.png" /></p>
+<p>Display glucose readings from LibreLinkUp-connected patients.</p>
+<p>LibreLinkUp provides glucose readings every five minutes, allowing
+family, friends, and caregivers of LibreLinkUp-connected patients
+to easily keep track of their blood glucose levels with ease.</p>
+<p>Configuration parameters:</p>
+<ul>
+<li>
+<p><code>cache_timeout</code> refresh interval for this module <em>(default 300)</em></p>
+</li>
+<li>
+<p><code>format</code> display format for this module <em>(default '{format_patient}')</em></p>
+</li>
+<li>
+<p><code>format_datetime</code> specify strftime characters to format <em>(default {"timestamp": "%-I:%M %p"})</em></p>
+</li>
+<li>
+<p><code>format_patient</code> display format for LibreLinkUp-connected patients
+    <em>(default '{first_name} [\?color=mg_dl {mg_dl} mg/dL {trend_arrow}]'
+    ' [\?color=darkgrey {timestamp}]')</em></p>
+</li>
+<li>
+<p><code>format_patient_separator</code> show separator if more than one <em>(default ' ')</em></p>
+</li>
+<li>
+<p><code>password</code> specify password for the LibreLinkUp account <em>(default None)</em></p>
+</li>
+<li>
+<p><code>thresholds</code> specify color thresholds to use
+    <em>(default {
+    "mg_dl": [(79, "bad"), (80, "good"), (181, "degraded"), (251, "orange")],
+    "mmol_l": [(4.4, "bad"), (4.5, "good"), (10.1, "degraded"), (14.0, "orange")],
+    })</em></p>
+</li>
+<li>
+<p><code>username</code> specify username for the LibreLinkUp account <em>(default None)</em></p>
+</li>
+</ul>
+<p>Format placeholders:</p>
+<ul>
+<li><code>{format_patient}</code> format for LibreLinkUp-connected patients</li>
+</ul>
+<p>format_patient placeholders:</p>
+<ul>
+<li>
+<p><code>{factory_timestamp}</code> glucose reading recorded time as datetime (utc aware)</p>
+</li>
+<li>
+<p><code>{first_name}</code> patient first name</p>
+</li>
+<li>
+<p><code>{id}</code> patient id</p>
+</li>
+<li>
+<p><code>{last_name}</code> patient last name</p>
+</li>
+<li>
+<p><code>{mg_dl}</code> blood glucose value in mg/dL, eg 80</p>
+</li>
+<li>
+<p><code>{mmol_l}</code> blood glucose value in mmol/L, eg 4.4</p>
+</li>
+<li>
+<p><code>{patient_id}</code> patient id</p>
+</li>
+<li>
+<p><code>{timestamp}</code> glucose reading recorded time as datetime</p>
+</li>
+<li>
+<p><code>{trend}</code> blood glucose trend information, eg 3</p>
+</li>
+<li>
+<p><code>{trend_arrow}</code> blood glucose trend as unicode arrow, eg →</p>
+</li>
+<li>
+<p><code>{trend_description}</code> blood glucose trend information description, eg Stable</p>
+</li>
+</ul>
+<p>format_datetime placeholders:</p>
+<ul>
+<li>
+<p><code>key</code> epoch_placeholder, eg {timestamp}</p>
+</li>
+<li>
+<p><code>value</code> % strftime characters to be translated, eg '%b %d' ----&gt; 'Jan 1'</p>
+</li>
+</ul>
+<p>Color thresholds:</p>
+<ul>
+<li><code>xxx</code> print a color based on the value of <code>xxx</code> placeholder</li>
+</ul>
+<p>Requires:</p>
+<ul>
+<li><code>pylibrelinkup</code> A simple Python API to interact with LibreLinkUp service</li>
+</ul>
+<p>Notes:
+    IF GLUCOSE ALERTS AND CGM READINGS DO NOT MATCH SYMPTOMS OR EXPECTATIONS,
+    USE A BLOOD GLUCOSE METER TO MAKE DIABETES TREATMENT DECISIONS.</p>
+<p>Examples:</p>
+<pre><code># compact version
+librelinkup {
+    format_patient = &quot;[\?color=mg_dl {mg_dl}{trend_arrow} ][\?color=darkgrey {timestamp}]&quot;
+    format_datetime = {&quot;timestamp&quot;: &quot;%-I:%M&quot;}
+}
+</code></pre>
+<p><strong>author</strong> lasers</p>
 <h2 id="lm_sensors">lm_sensors</h2>
 <p><img alt="lm_sensors example 0" src="../screenshots/lm_sensors-0.png" /></p>
 <p><img alt="lm_sensors example 1" src="../screenshots/lm_sensors-1-chip_names.png" /></p>
