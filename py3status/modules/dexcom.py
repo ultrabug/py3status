@@ -13,8 +13,8 @@ Configuration parameters:
     password: specify password for the Dexcom Share user (default None)
     thresholds: specify color thresholds to use
         *(default {
-            "mg_dl": [(55, "bad"), (70, "degraded"), (80, "good"), (130, "degraded"), (180, "bad")],
-            "mmol_l": [(3.1, "bad"), (3.9, "degraded"), (4.4, "good"), (7.2, "degraded"), (10.0, "bad")],
+            "mg_dl": [(79, "bad"), (80, "good"), (181, "degraded"), (251, "orange")],
+            "mmol_l": [(4.4, "bad"), (4.5, "good"), (10.1, "degraded"), (14.0, "orange")],
         })*
     username: specify username for the Dexcom Share user, not follower (default None)
 
@@ -78,18 +78,16 @@ class Py3status:
     password = None
     thresholds = {
         "mg_dl": [
-            (55, "bad"),
-            (70, "degraded"),
+            (79, "bad"),
             (80, "good"),
-            (130, "degraded"),
-            (180, "bad"),
+            (181, "degraded"),
+            (251, "orange"),
         ],
         "mmol_l": [
-            (3.1, "bad"),
-            (3.9, "degraded"),
-            (4.4, "good"),
-            (7.2, "degraded"),
-            (10.0, "bad"),
+            (4.4, "bad"),
+            (4.5, "good"),
+            (10.1, "degraded"),
+            (14.0, "orange"),
         ],
     }
     username = None
