@@ -45,10 +45,10 @@ You can see the help of py3status by issuing `py3status --help`:
 ```bash
 $ py3status --help
 
-usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
-                 [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
+usage: py3status [-h] [-b] [-c FILE] [-d] [-i PATH] [-l FILE]
+                 [-t INT] [-m] [-v] [--wm WINDOW_MANAGER]
 
-The agile, python-powered, i3status wrapper
+The agile, python-powered statusline generator
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -60,11 +60,9 @@ optional arguments:
   -i, --include PATH    append additional user-defined module paths (default:
                         None)
   -l, --log-file FILE   enable logging to FILE (default: None)
-  -s, --standalone      run py3status without i3status (default: False)
   -t, --timeout INT     default module cache timeout in seconds (default: 60)
   -m, --disable-click-events
                         disable all click events (default: False)
-  -u, --i3status PATH   specify i3status path (default: /usr/bin/i3status)
   -v, --version         show py3status version and exit (default: False)
   --wm WINDOW_MANAGER   specify window manager i3 or sway (default: i3)
 ```

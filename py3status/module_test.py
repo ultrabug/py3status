@@ -55,7 +55,7 @@ class MockPy3statusWrapper:
         }
         self.events_thread = self.EventThread()
         self.udev_monitor = self.UdevMonitor()
-        self.i3status_thread = None
+        self.json_list = []
         self.lock = Event()
         self.output_modules = {}
         self.running = True
