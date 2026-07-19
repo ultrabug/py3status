@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "py3status"
 dynamic = ["version"]
-description = "py3status: an extensible i3status wrapper written in python"
+description = "py3status: an agile, python-powered statusline generator"
 readme = "README.md"
 license = "BSD-2-Clause"
 requires-python = ">=3.10"

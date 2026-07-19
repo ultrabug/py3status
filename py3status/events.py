@@ -93,7 +93,6 @@ class Events(Thread):
         self.py3_config = py3_wrapper.config["py3_config"]
         self.modules = py3_wrapper.modules
         self.on_click = self.py3_config["on_click"]
-        self.output_modules = py3_wrapper.output_modules
         self.poller_inp = IOPoller(sys.stdin)
         self.py3_wrapper = py3_wrapper
 
@@ -145,8 +144,7 @@ class Events(Thread):
 
             # this is a i3 message
             self.wm_msg(module_name, command)
-            # to make the bar more responsive to users we ask for a refresh
-            # of the module or of i3status if the module is an i3status one
+            # to make the bar more responsive to users we ask for a module refresh
             self.py3_wrapper.refresh_modules(module_name)
 
     def wm_msg(self, module_name, command):
@@ -163,27 +161,30 @@ class Events(Thread):
             pipe.stdout.read(),
         )
 
+    def resolve_output_module_name(self, name, instance):
+        module_name = f"{name} {instance}".strip()
+        if module_name in self.py3_wrapper.output_modules:
+            return module_name
+        return self.py3_wrapper.output_module_name_map.get((name, instance), module_name)
+
     def process_event(self, module_name, event, default_event=False):
         """
         Process the event for the named module.
-        Events may have been declared in i3status.conf, modules may have
-        on_click() functions. There is a default middle click event etc.
+        Events may have been declared in config, modules may have on_click()
+        functions. There is a default middle click event etc.
         """
 
         # get the module that the event is for
-        module_info = self.output_modules.get(module_name)
+        module_info = self.py3_wrapper.output_modules.get(module_name)
+        module = module_info["module"]
+        logger.debug("dispatching event %s", event)
+        module.click_event(event)
 
-        # if module is a py3status one call it.
-        if module_info["type"] == "py3status":
-            module = module_info["module"]
-            logger.debug("dispatching event %s", event)
-            module.click_event(event)
-
-            # to make the bar more responsive to users we refresh the module
-            # unless the on_click event called py3.prevent_refresh()
-            if not module.prevent_refresh:
-                self.py3_wrapper.refresh_modules(module_name)
-                default_event = False
+        # to make the bar more responsive to users we refresh the module
+        # unless the on_click event called py3.prevent_refresh()
+        if not module.prevent_refresh:
+            self.py3_wrapper.refresh_modules(module_name)
+            default_event = False
 
         if default_event:
             # default button 2 action is to clear this method's cache
@@ -222,14 +223,13 @@ class Events(Thread):
             event["instance"] = instance
 
         # guess the module config name
-        module_name = f"{name} {instance}".strip()
-
-        default_event = False
-        module_info = self.output_modules.get(module_name)
+        module_name = self.resolve_output_module_name(name, instance)
+        module_info = self.py3_wrapper.output_modules.get(module_name)
         module = module_info["module"]
         # execute any configured i3-msg command
         # we do not do this for containers
         # modules that have failed do not execute their config on_click
+        default_event = False
         if module.allow_config_clicks:
             button = event.get("button", 0)
             on_click = self.on_click.get(module_name, {}).get(str(button))
