@@ -483,7 +483,7 @@ class Py3status:
                     "placeholder_formats": {
                         "percentage": ":.0f",
                     },
-                    "format_strings": ["format"],
+                    "format_strings": ["format", "format_muted"],
                 }
             ]
         }
