@@ -1,3 +1,30 @@
+version 3.64 (2026-07-21)
+* core: rework py3status logging (#2333), by lasers
+* core, py3: integrate standard logging library (#2232), by lasers
+* core: fix debug mode outputs valid json (closes #2309) (#2310), by Valdur Kana
+* project: drop EOL python 3.9, add python 3.14 (#2311), by lasers
+* project: fix black + python 3.9 (#2316), by lasers
+* project: add zizmor gh action security fixes and audit ci (#2337)
+* project: update hatch for virtualenv 21 (#2323), by lasers
+* project: add dependabot.yml
+* project: use lint-ignore (#2300), by lasers
+* parse_config: add timeout to file --mime-encoding subprocess call (#2318), by Nadzeya Hutsko
+* py3: remove unused storage_items() (#2335), by lasers
+* new module: librelinkup to monitor indicators of diabates (#2317), by lasers
+* argparser: correctly detect i3 (#2308), by aguilbau
+* argparsers: correctly detect sway (#2315), by lasers
+* air_quality module: location based on ip if set to None (#2306), by aguilbau
+* external_script module: always pass a string to safe_format (#2320), by Kevin Pulo
+* google_calendar module: add active placeholder to use in format event (#2301), by Václav Kubernát
+* google_calendar module: drop inconsistent dateutil (#2336)
+* google_calendar module: update code to recent dependencies for newer python (#2334)
+* netdata module: skip first run to not display incorrect data on startup (#2304), by aguilbau
+* pomodoro module: add cycles threshold feature (#2313), by Pramod Tenacious
+* sysdata module: compile ZFS_SIZE_REGEX regex only once per module load instead of every update cycle. (#2329), by Valdur Kana
+* sysdata module: fix picking last matching temp sensor instead of the preferred one (#2330), by donob4n
+* vpn_status module: better VPN detection - prevent libvirt false-positive (#2322), by Joey Holtzman
+* window module: cleanup i3ipc mode _focused_workspace was updated on every workspace switch, but never read (#2326), by Valdur Kana
+
 version 3.63 (2025-11-19)
 * build: update hatch to the latest version (#2295), by Joey Holtzman
 * docs: add scroll example (#2292), by Isidro
