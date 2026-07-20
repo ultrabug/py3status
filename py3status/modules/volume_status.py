@@ -329,6 +329,12 @@ class Wpctl(Audio):
                 "@DEFAULT_AUDIO_SOURCE@" if self.is_input else "@DEFAULT_AUDIO_SINK@"
             )
 
+        # Default audio sink is always present, even if all sinks are disabled (as null device)
+        # empty response indicates that wpctl isn't yet fully loaded
+        volume = self.command_output(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"])
+        if volume == "":
+            raise Exception("wpctl: no data for default audio sink found")
+
     def get_volume(self):
         device = self._get_selected_device()
         if not device:
@@ -408,10 +414,12 @@ class Wpctl(Audio):
         return devices
 
     def _get_default_device(self):
-        parts = (
-            self.command_output(["wpctl", "get-volume", self.selected_device_id]).lower().split()
-        )
         try:
+            parts = (
+                self.command_output(["wpctl", "get-volume", self.selected_device_id])
+                .lower()
+                .split()
+            )
             return {
                 "volume": self._format_volume(parts[1]),
                 "muted": "[muted]" in parts,
@@ -421,7 +429,7 @@ class Wpctl(Audio):
 
     @staticmethod
     def _format_volume(volume):
-        return round(float(volume) * 100)
+        return float(volume) * 100
 
 
 class Py3status:
@@ -471,6 +479,17 @@ class Py3status:
                     "msg": "obsolete parameter",
                 },
             ],
+        }
+
+        update_config = {
+            "update_placeholder_format": [
+                {
+                    "placeholder_formats": {
+                        "percentage": ":.0f",
+                    },
+                    "format_strings": ["format"],
+                }
+            ]
         }
 
     def post_config_hook(self):
