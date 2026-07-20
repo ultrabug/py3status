@@ -407,7 +407,7 @@ class Wpctl(Audio):
                         "id": match.group("id"),
                         "muted": bool(volume_match.group("muted")),
                         "name": match.group("name"),
-                        "volume": self._format_volume(volume_match.group("volume")),
+                        "volume": float(volume_match.group("volume")) * 100,
                     }
                 )
             break
@@ -421,15 +421,11 @@ class Wpctl(Audio):
                 .split()
             )
             return {
-                "volume": self._format_volume(parts[1]),
+                "volume": float(parts[1]) * 100,
                 "muted": "[muted]" in parts,
             }
         except (ValueError, IndexError):
             return None
-
-    @staticmethod
-    def _format_volume(volume):
-        return float(volume) * 100
 
 
 class Py3status:
@@ -577,7 +573,7 @@ if __name__ == "__main__":
         "format_muted": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] "
         + Py3status.format_muted,
         "command": "wpctl",
-        # "device": "alsa_output.usb-0d8c_USB_PnP_Sound_Device-00.analog-stereo",
+        # "device": "alsa_output.pci-0000_00_1b.0.analog-stereo",
         # "is_input": True,
     }
     from py3status.module_test import module_test
