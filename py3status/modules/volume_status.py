@@ -570,7 +570,7 @@ if __name__ == "__main__":
     """
     config = {
         "format": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] " + Py3status.format,
-        "format_muted": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] "
+        "format_muted": r"[\?if=is_input SOURCE|SINK] \[{command}\] \[{device}\] \[{percentage}%\] "
         + Py3status.format_muted,
         "command": "wpctl",
         # "device": "alsa_output.pci-0000_00_1b.0.analog-stereo",
