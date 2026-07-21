@@ -74,26 +74,6 @@ class Py3status:
         if self.user is None or self.password is None:
             raise ValueError("user and password must be provided")
 
-    def rss_aggregator(self):
-        if self.aggregator == "owncloud":
-            rss_count = self._get_count_owncloud()
-        elif self.aggregator == "ttrss":
-            rss_count = self._get_count_ttrss()
-
-        self._cached = self._cached if rss_count is None else rss_count
-
-        response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": self.py3.safe_format(self.format, {"unseen": self._cached}),
-        }
-
-        if rss_count is None:
-            response["color"] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
-        elif rss_count != 0:
-            response["color"] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
-
-        return response
-
     def _get_count_owncloud(self):
         try:
             rss_count = 0
@@ -153,6 +133,27 @@ class Py3status:
 
         except:  # noqa e722
             return None
+
+    def rss_aggregator(self):
+        rss_count = None
+        if self.aggregator == "owncloud":
+            rss_count = self._get_count_owncloud()
+        elif self.aggregator == "ttrss":
+            rss_count = self._get_count_ttrss()
+
+        self._cached = self._cached if rss_count is None else rss_count
+
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": self.py3.safe_format(self.format, {"unseen": self._cached}),
+        }
+
+        if rss_count is None:
+            response["color"] = self.py3.COLOR_ERROR or self.py3.COLOR_BAD
+        elif rss_count != 0:
+            response["color"] = self.py3.COLOR_NEW_ITEMS or self.py3.COLOR_GOOD
+
+        return response
 
 
 if __name__ == "__main__":

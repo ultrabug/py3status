@@ -141,22 +141,6 @@ class Py3status:
         if self.brightness_initial:
             self._set_backlight_level(self.brightness_initial)
 
-    def on_click(self, event):
-        level = self._get_backlight_level()
-        button = event["button"]
-        if button == self.button_up:
-            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
-            level += delta
-            if level > 100:
-                level = 100
-            self._set_backlight_level(level)
-        elif button == self.button_down:
-            delta = self.brightness_delta if level > self.low_tune_threshold else 1
-            level -= delta
-            if level < self.brightness_minimal:
-                level = self.brightness_minimal
-            self._set_backlight_level(level)
-
     def _set_backlight_level(self, level):
         if self.command_available:
             self.py3.command_run(self._command_set(level))
@@ -197,6 +181,22 @@ class Py3status:
             "full_text": full_text,
         }
         return response
+
+    def on_click(self, event):
+        level = self._get_backlight_level()
+        button = event["button"]
+        if button == self.button_up:
+            delta = self.brightness_delta if level >= self.low_tune_threshold else 1
+            level += delta
+            if level > 100:
+                level = 100
+            self._set_backlight_level(level)
+        elif button == self.button_down:
+            delta = self.brightness_delta if level > self.low_tune_threshold else 1
+            level -= delta
+            if level < self.brightness_minimal:
+                level = self.brightness_minimal
+            self._set_backlight_level(level)
 
 
 if __name__ == "__main__":

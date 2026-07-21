@@ -191,47 +191,6 @@ class Py3status:
             raise NameError(f"invalid {msg}")
         self.py3.log(f"selected {msg}")
 
-    def battery_level(self):
-        battery_list = self.get_battery_info()
-        if not battery_list:
-            return {
-                "full_text": "",
-                "cached_until": self.py3.time_in(self.cache_timeout),
-            }
-
-        self._refresh_battery_info(battery_list)
-        self._update_icon()
-        self._update_ascii_bar()
-        self._update_status()
-        self._update_full_text()
-
-        return self._build_response()
-
-    def on_click(self, event):
-        """
-        Display a notification following the specified format
-        """
-        if not self.notification:
-            return
-
-        if self.charging:
-            format = self.format_notify_charging
-        else:
-            format = self.format_notify_discharging
-
-        message = self.py3.safe_format(
-            format,
-            dict(
-                ascii_bar=self.ascii_bar,
-                icon=self.icon,
-                percent=self.percent_charged,
-                time_remaining=self.time_remaining,
-            ),
-        )
-
-        if message:
-            self.py3.notify_user(message, "info")
-
     def _extract_battery_info_from_acpi(self):
         """
         Get the battery info from acpi
@@ -535,6 +494,47 @@ class Py3status:
 
     def _set_cache_timeout(self):
         self.response["cached_until"] = self.py3.time_in(self.cache_timeout)
+
+    def battery_level(self):
+        battery_list = self.get_battery_info()
+        if not battery_list:
+            return {
+                "full_text": "",
+                "cached_until": self.py3.time_in(self.cache_timeout),
+            }
+
+        self._refresh_battery_info(battery_list)
+        self._update_icon()
+        self._update_ascii_bar()
+        self._update_status()
+        self._update_full_text()
+
+        return self._build_response()
+
+    def on_click(self, event):
+        """
+        Display a notification following the specified format
+        """
+        if not self.notification:
+            return
+
+        if self.charging:
+            format = self.format_notify_charging
+        else:
+            format = self.format_notify_discharging
+
+        message = self.py3.safe_format(
+            format,
+            dict(
+                ascii_bar=self.ascii_bar,
+                icon=self.icon,
+                percent=self.percent_charged,
+                time_remaining=self.time_remaining,
+            ),
+        )
+
+        if message:
+            self.py3.notify_user(message, "info")
 
 
 if __name__ == "__main__":
