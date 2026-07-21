@@ -71,8 +71,7 @@ class Storage:
         Save our data to disk. We want to always have a valid file.
         """
         with NamedTemporaryFile(dir=self.storage_path.parent, delete=False) as f:
-            # we use protocol=2 for python 2/3 compatibility
-            dump(self.data, f, protocol=2)
+            dump(self.data, f)
             f.flush()
             os.fsync(f.fileno())
             tmppath = Path(f.name)

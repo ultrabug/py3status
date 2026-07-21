@@ -39,7 +39,7 @@ class IOPoller:
                 # skip first event line wrt issue #19
                 line = self.io.readline().strip()
             try:
-                # python3 compatibility code
+                # decode bytes input when needed
                 line = line.decode()
             except (AttributeError, UnicodeDecodeError):
                 pass
