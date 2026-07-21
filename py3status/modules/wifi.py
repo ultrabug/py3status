@@ -80,12 +80,6 @@ class Py3status:
     thresholds = []
 
     class Meta:
-        deprecated = {
-            "remove": [
-                {"param": "use_sudo", "msg": "obsolete"},
-                {"param": "round_bitrate", "msg": "obsolete"},
-            ]
-        }
         update_config = {
             "update_placeholder_format": [
                 {

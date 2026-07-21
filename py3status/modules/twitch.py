@@ -107,18 +107,6 @@ class Py3status:
     tag_delimiter = " "
     trace = False
 
-    class Meta:
-        deprecated = {
-            "remove": [{"param": "format_invalid", "msg": "obsolete"}],
-            "rename_placeholder": [
-                {
-                    "placeholder": "stream_name",
-                    "new": "display_name",
-                    "format_strings": ["format"],
-                }
-            ],
-        }
-
     def _trace(self, msg):
         if not self.trace:
             return

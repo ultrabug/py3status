@@ -79,31 +79,6 @@ class Py3status:
     mode = "ip"
     url_geo = URL_GEO_NEW_DEFAULT
 
-    class Meta:
-        deprecated = {
-            "remove": [
-                {"param": "url", "msg": "obsolete parameter, use `url_geo` instead"},
-                {"param": "negative_cache_timeout", "msg": "obsolete parameter"},
-            ],
-            "rename": [
-                {
-                    "param": "format_online",
-                    "new": "icon_on",
-                    "msg": "obsolete parameter, use `icon_on` instead",
-                },
-                {
-                    "param": "format_offline",
-                    "new": "icon_off",
-                    "msg": "obsolete parameter, use `icon_off` instead",
-                },
-                {
-                    "param": "timeout",
-                    "new": "request_timeout",
-                    "msg": "obsolete parameter use `request_timeout`",
-                },
-            ],
-        }
-
     def post_config_hook(self):
         if self.expected is None:
             self.expected = {}

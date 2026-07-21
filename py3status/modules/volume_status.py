@@ -335,35 +335,6 @@ class Py3status:
     thresholds = [(0, "bad"), (20, "degraded"), (50, "good")]
     volume_delta = 5
 
-    class Meta:
-        def deprecate_function(config):
-            # support old thresholds
-            return {
-                "thresholds": [
-                    (0, "bad"),
-                    (config.get("threshold_bad", 20), "degraded"),
-                    (config.get("threshold_degraded", 50), "good"),
-                ]
-            }
-
-        deprecated = {
-            "function": [{"function": deprecate_function}],
-            "remove": [
-                {
-                    "param": "threshold_bad",
-                    "msg": "obsolete set using thresholds parameter",
-                },
-                {
-                    "param": "threshold_degraded",
-                    "msg": "obsolete set using thresholds parameter",
-                },
-                {
-                    "param": "start_delay",
-                    "msg": "obsolete parameter",
-                },
-            ],
-        }
-
     def post_config_hook(self):
         if not self.command:
             commands = ["pamixer", "pactl", "amixer"]

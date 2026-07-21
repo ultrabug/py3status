@@ -142,37 +142,6 @@ class Py3status:
     threshold_degraded = 30
     threshold_full = 100
 
-    class Meta:
-        deprecated = {
-            "format_fix_unnamed_param": [
-                {
-                    "param": "format",
-                    "placeholder": "percent",
-                    "msg": "{} should not be used in format use `{percent}`",
-                }
-            ],
-            "substitute_by_value": [
-                {
-                    "param": "mode",
-                    "value": "ascii_bar",
-                    "substitute": {"param": "format", "value": "{ascii_bar}"},
-                    "msg": 'obsolete parameter use `format = "{ascii_bar}"`',
-                },
-                {
-                    "param": "mode",
-                    "value": "text",
-                    "substitute": {"param": "format", "value": "Battery: {percent}"},
-                    "msg": 'obsolete parameter use `format = "{percent}"`',
-                },
-                {
-                    "param": "show_percent_with_blocks",
-                    "value": True,
-                    "substitute": {"param": "format", "value": "{icon} {percent}%"},
-                    "msg": 'obsolete parameter use `format = "{icon} {percent}%"`',
-                },
-            ],
-        }
-
     def post_config_hook(self):
         self.last_known_status = ""
         # Guess mode if not set

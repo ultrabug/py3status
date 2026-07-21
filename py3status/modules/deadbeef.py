@@ -62,23 +62,6 @@ class Py3status:
     replacements = None
     sleep_timeout = 20
 
-    class Meta:
-        deprecated = {
-            "remove": [{"param": "delimiter", "msg": "obsolete parameter"}],
-            "rename_placeholder": [
-                {
-                    "placeholder": "elapsed",
-                    "new": "playback_time",
-                    "format_strings": ["format"],
-                },
-                {
-                    "placeholder": "tracknum",
-                    "new": "tracknumber",
-                    "format_strings": ["format"],
-                },
-            ],
-        }
-
     def post_config_hook(self):
         if not self.py3.check_commands("deadbeef"):
             raise Exception(STRING_NOT_INSTALLED)

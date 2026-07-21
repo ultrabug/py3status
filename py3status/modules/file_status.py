@@ -68,30 +68,6 @@ class Py3status:
     paths = None
     thresholds = [(0, "bad"), (1, "good")]
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "format_available",
-                    "new": "icon_available",
-                    "msg": "obsolete parameter use `icon_available`",
-                },
-                {
-                    "param": "format_unavailable",
-                    "new": "icon_unavailable",
-                    "msg": "obsolete parameter use `icon_unavailable`",
-                },
-                {
-                    "param": "path",
-                    "new": "paths",
-                    "msg": "obsolete parameter use `paths`",
-                },
-            ],
-            "rename_placeholder": [
-                {"placeholder": "paths", "new": "path", "format_strings": ["format"]}
-            ],
-        }
-
     def post_config_hook(self):
         if not self.paths:
             raise Exception(STRING_NO_PATHS)
