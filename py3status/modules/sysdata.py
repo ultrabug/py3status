@@ -103,7 +103,6 @@ SAMPLE OUTPUT
 ]
 """
 
-import re
 from fnmatch import fnmatch
 from json import loads
 from os import getloadavg
@@ -111,7 +110,6 @@ from pathlib import Path
 
 INVALID_CPU_TEMP_UNIT = "invalid cpu_temp_unit"
 STRING_NOT_INSTALLED = "not installed"
-ZFS_SIZE_REGEX = re.compile(r"^size\s+\d+\s+(\d+)")
 
 
 class Py3status:
@@ -166,7 +164,6 @@ class Py3status:
         }
 
     def post_config_hook(self):
-        self.first_run = True
         self.init = {"meminfo": [], "stat": []}
         names_and_matches = [
             ("cpu_freq", ["cpu_freq_avg", "cpu_freq_max"]),
@@ -174,6 +171,7 @@ class Py3status:
             ("cpu_percent", "cpu_used_percent"),
             ("cpu_per_core", "format_cpu"),
             ("load", "load*"),
+            ("max_used_percent", "max_used_percent"),
             ("mem", "mem_*"),
             ("swap", "swap_*"),
         ]
@@ -194,9 +192,24 @@ class Py3status:
             "format": self.py3.get_color_names_list(self.format),
             "format_cpu": self.py3.get_color_names_list(self.format_cpu),
         }
+        self.paths = {
+            "cpuinfo": Path("/proc/cpuinfo"),
+            "meminfo": Path("/proc/meminfo"),
+            "stat": Path("/proc/stat"),
+            "zfs_arcstats": Path("/proc/spl/kstat/zfs/arcstats"),
+        }
+        if not self.paths["zfs_arcstats"].is_file():
+            self._get_zfs_arc_size = self._get_zfs_arc_size_noop
 
         if self.init["stat"]:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
+            if self.cpus["cpus"]:
+                for line in self._get_stat():
+                    cpu_name = line.split()[0]
+                    for cpu_filter in self.cpus["cpus"]:
+                        if fnmatch(cpu_name, cpu_filter):
+                            self.cpus["list"].append(cpu_name)
+                            break
 
         if self.init["cpu_temp"]:
             command, args = ("sensors", "-jA")
@@ -232,8 +245,23 @@ class Py3status:
             else:
                 self.init["cpu_temp"] = []
 
+            if self.init["cpu_temp"]:
+                self.py3.log(f"cpu_temp source: {self.lm_sensors}", level="debug")
+
+        self.sysdata_updates = []
+        for name, update in [
+            ("cpu_freq", self._update_cpu_freq),
+            ("stat", self._update_stat),
+            ("cpu_temp", self._update_cpu_temp),
+            ("load", self._update_load),
+            ("meminfo", self._update_meminfo),
+            ("max_used_percent", self._update_max_used_percent),  # must be last
+        ]:
+            if self.init[name]:
+                self.sysdata_updates.append(update)
+
     def _get_cpuinfo(self):
-        with Path("/proc/cpuinfo").open() as f:
+        with self.paths["cpuinfo"].open() as f:
             return [float(line.split()[-1]) for line in f if "cpu MHz" in line]
 
     def _calc_cpu_freqs(self, cpu_freqs, unit, keys):
@@ -250,9 +278,9 @@ class Py3status:
     def _get_stat(self):
         # kernel/system statistics. man -P 'less +//proc/stat' procfs
         stat = []
-        with Path("/proc/stat").open() as f:
+        with self.paths["stat"].open() as f:
             for line in f:
-                if "cpu" in line:
+                if line.startswith("cpu"):
                     stat.append(line)
                 else:
                     return stat
@@ -268,13 +296,8 @@ class Py3status:
         for line in stat:
             fields = line.split()
             cpu_name = fields[0]
-            if self.cpus["cpus"]:
-                if self.first_run:
-                    for _filter in self.cpus["cpus"]:
-                        if fnmatch(cpu_name, _filter):
-                            self.cpus["list"].append(cpu_name)
-                if cpu_name not in self.cpus["list"]:
-                    continue
+            if self.cpus["cpus"] and cpu_name not in self.cpus["list"]:
+                continue
 
             new_stat.append((cpu_name, int(fields[4]), sum(int(x) for x in fields[1:])))
         return new_stat
@@ -327,22 +350,19 @@ class Py3status:
         )
 
     def _get_meminfo(self, head=28):
-        with Path("/proc/meminfo").open() as f:
+        with self.paths["meminfo"].open() as f:
             info = [next(f).split() for _ in range(head)]
             return {fields[0]: float(fields[1]) for fields in info}
 
     def _get_zfs_arc_size(self):
-        """will raise OSError on failures"""
-        try:
-            with Path("/proc/spl/kstat/zfs/arcstats").open() as f:
-                for line in f.readlines():
-                    m = ZFS_SIZE_REGEX.match(line)
-                    if m:
-                        return int(m.group(1)) / 1024
-        except (OSError, ValueError):
-            # skip errors if file is missing or inaccessible, or
-            # doesn't have the expected syntax
-            pass
+        with self.paths["zfs_arcstats"].open() as f:
+            for line in f:
+                if line.startswith("size"):
+                    return int(line.split()[2]) / 1024
+        return 0
+
+    @staticmethod
+    def _get_zfs_arc_size_noop():
         return 0
 
     def _calc_cpu_percent(self, cpu):
@@ -376,86 +396,77 @@ class Py3status:
 
         return cpu_temp, cpu_temp_unit
 
-    def sysdata(self):
-        sys = {"max_used_percent": 0}
-
-        if self.init["cpu_freq"]:
-            cpu_freqs = self._calc_cpu_freqs(
-                self._get_cpuinfo(), self.cpu_freq_unit, self.init["cpu_freq"]
-            )
-            cpu_freq_keys = ["cpu_freq_avg", "cpu_freq_max"]
-            sys.update(zip(cpu_freq_keys, cpu_freqs))
-
-        if self.init["stat"]:
-            stat = self._get_stat()
-
-            if self.init["cpu_percent"]:
-                cpu = self._filter_stat(stat, avg=True)
-                sys["cpu_used_percent"] = self._calc_cpu_percent(cpu)
-
-            if self.init["cpu_per_core"]:
-                cpu_keys = ["name", "used_percent"]
-                new_cpu = []
-                for cpu in self._filter_stat(stat):
-                    cpu = dict(zip(cpu_keys, [cpu[0], self._calc_cpu_percent(cpu)]))
-                    for x in self.thresholds_init["format_cpu"]:
-                        if x in cpu:
-                            self.py3.threshold_get_color(cpu[x], x)
-                    new_cpu.append(self.py3.safe_format(self.format_cpu, cpu))
-
-                format_cpu_separator = self.py3.safe_format(self.format_cpu_separator)
-                format_cpu = self.py3.composite_join(format_cpu_separator, new_cpu)
-                sys["format_cpu"] = format_cpu
-
-        if self.init["cpu_temp"]:
-            cputemp = self._get_cputemp(self.cpu_temp_unit)
-            cputemp_keys = ["cpu_temp", "cpu_temp_unit"]
-            sys.update(zip(cputemp_keys, cputemp))
-
-        if self.init["load"]:
-            load_keys = ["load1", "load5", "load15"]
-            sys.update(zip(load_keys, getloadavg()))
-
-        if self.init["meminfo"]:
-            meminfo = self._get_meminfo()
-
-            if self.init["mem"]:
-                mem = self._calc_mem_info(self.mem_unit, meminfo, True)
-                mem_keys = [
-                    "mem_total",
-                    "mem_total_unit",
-                    "mem_used",
-                    "mem_used_unit",
-                    "mem_used_percent",
-                    "mem_free",
-                    "mem_free_unit",
-                    "mem_free_percent",
-                ]
-                sys.update(zip(mem_keys, mem))
-
-            if self.init["swap"]:
-                swap = self._calc_mem_info(self.swap_unit, meminfo, False)
-                swap_keys = [
-                    "swap_total",
-                    "swap_total_unit",
-                    "swap_used",
-                    "swap_used_unit",
-                    "swap_used_percent",
-                    "swap_free",
-                    "swap_free_unit",
-                    "swap_free_percent",
-                ]
-                sys.update(zip(swap_keys, swap))
-
-        sys["max_used_percent"] = max(
-            [perc for name, perc in sys.items() if "used_percent" in name]
+    def _update_cpu_freq(self, sys):
+        sys["cpu_freq_avg"], sys["cpu_freq_max"] = self._calc_cpu_freqs(
+            self._get_cpuinfo(), self.cpu_freq_unit, self.init["cpu_freq"]
         )
+
+    def _update_stat(self, sys):
+        stat = self._get_stat()
+
+        if self.init["cpu_percent"]:
+            cpu = self._filter_stat(stat, avg=True)
+            sys["cpu_used_percent"] = self._calc_cpu_percent(cpu)
+
+        if self.init["cpu_per_core"]:
+            new_cpu = []
+            for cpu in self._filter_stat(stat):
+                cpu = {"name": cpu[0], "used_percent": self._calc_cpu_percent(cpu)}
+                for x in self.thresholds_init["format_cpu"]:
+                    if x in cpu:
+                        self.py3.threshold_get_color(cpu[x], x)
+                new_cpu.append(self.py3.safe_format(self.format_cpu, cpu))
+
+            format_cpu_separator = self.py3.safe_format(self.format_cpu_separator)
+            sys["format_cpu"] = self.py3.composite_join(format_cpu_separator, new_cpu)
+
+    def _update_cpu_temp(self, sys):
+        sys["cpu_temp"], sys["cpu_temp_unit"] = self._get_cputemp(self.cpu_temp_unit)
+
+    def _update_load(self, sys):
+        sys["load1"], sys["load5"], sys["load15"] = getloadavg()
+
+    def _update_meminfo(self, sys):
+        meminfo = self._get_meminfo()
+
+        if self.init["mem"]:
+            (
+                sys["mem_total"],
+                sys["mem_total_unit"],
+                sys["mem_used"],
+                sys["mem_used_unit"],
+                sys["mem_used_percent"],
+                sys["mem_free"],
+                sys["mem_free_unit"],
+                sys["mem_free_percent"],
+            ) = self._calc_mem_info(self.mem_unit, meminfo, True)
+
+        if self.init["swap"]:
+            (
+                sys["swap_total"],
+                sys["swap_total_unit"],
+                sys["swap_used"],
+                sys["swap_used_unit"],
+                sys["swap_used_percent"],
+                sys["swap_free"],
+                sys["swap_free_unit"],
+                sys["swap_free_percent"],
+            ) = self._calc_mem_info(self.swap_unit, meminfo, False)
+
+    def _update_max_used_percent(self, sys):
+        sys["max_used_percent"] = max(
+            (perc for name, perc in sys.items() if "used_percent" in name), default=0
+        )
+
+    def sysdata(self):
+        sys = {}
+
+        for update in self.sysdata_updates:
+            update(sys)
 
         for x in self.thresholds_init["format"]:
             if x in sys:
                 self.py3.threshold_get_color(sys[x], x)
-
-        self.first_run = False
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
