@@ -35,17 +35,6 @@ class Py3status:
     format = "{descriptions}"
     report = ""
 
-    class Meta:
-        deprecated = {
-            "rename_placeholder": [
-                {
-                    "placeholder": "task",
-                    "new": "descriptions",
-                    "format_strings": ["format"],
-                }
-            ]
-        }
-
     def post_config_hook(self):
         if not self.py3.check_commands("task"):
             raise Exception(STRING_NOT_INSTALLED)

@@ -80,12 +80,6 @@ class Py3status:
         # list of units, first one - value/initial_multi, second - value/1024,
         # third - value/1024^2, etc...
         self.units = ["kb", "mb", "gb", "tb"]
-
-        # deprecations
-        self.coloring = getattr(self, "coloring", None)
-        if self.coloring and not self.thresholds:
-            self.thresholds = [(num * 1024**2, col) for num, col in self.coloring.items()]
-
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def _divide_and_format(self, value):

@@ -66,17 +66,6 @@ class Py3status:
     status_off = "isn't running"
     status_on = "Up to date"
 
-    class Meta:
-        deprecated = {
-            "format_fix_unnamed_param": [
-                {
-                    "param": "format",
-                    "placeholder": "status",
-                    "msg": "{} should not be used in format use `{status}`",
-                }
-            ]
-        }
-
     def post_config_hook(self):
         if not self.py3.check_commands("dropbox-cli"):
             raise Exception(STRING_NOT_INSTALLED)

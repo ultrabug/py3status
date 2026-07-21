@@ -40,22 +40,6 @@ class Py3status:
     icon_on = "●"
     process = None
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "format_running",
-                    "new": "icon_on",
-                    "msg": "obsolete parameter use `icon_on`",
-                },
-                {
-                    "param": "format_not_running",
-                    "new": "icon_off",
-                    "msg": "obsolete parameter use `icon_off`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         if not self.process:
             raise Exception(STRING_ERROR)

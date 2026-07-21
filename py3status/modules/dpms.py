@@ -37,22 +37,6 @@ class Py3status:
     icon_off = "DPMS"
     icon_on = "DPMS"
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "format_on",
-                    "new": "icon_on",
-                    "msg": "obsolete parameter use `icon_on`",
-                },
-                {
-                    "param": "format_off",
-                    "new": "icon_off",
-                    "msg": "obsolete parameter use `icon_off`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD
