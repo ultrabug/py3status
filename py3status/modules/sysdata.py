@@ -134,81 +134,12 @@ class Py3status:
     thresholds = [(0, "good"), (40, "degraded"), (75, "bad")]
 
     class Meta:
-        def update_deprecated_placeholder_format(config):
-            padding = config.get("padding", 0)
-            precision = config.get("precision", 2)
-            format_vals = ":{padding}.{precision}f".format(padding=padding, precision=precision)
-            return {
-                "cpu_freq_avg": format_vals,
-                "cpu_freq_max": format_vals,
-                "cpu_usage": format_vals,
-                "cpu_used_percent": format_vals,
-                "cpu_temp": format_vals,
-                "load1": format_vals,
-                "load5": format_vals,
-                "load15": format_vals,
-                "mem_total": format_vals,
-                "mem_used": format_vals,
-                "mem_used_percent": format_vals,
-                "mem_free": format_vals,
-                "mem_free_percent": format_vals,
-                "swap_total": format_vals,
-                "swap_used": format_vals,
-                "swap_used_percent": format_vals,
-                "swap_free": format_vals,
-                "swap_free_percent": format_vals,
-            }
-
-        deprecated = {
-            "rename": [
-                {
-                    "param": "temp_unit",
-                    "new": "cpu_temp_unit",
-                    "msg": "obsolete parameter use `cpu_temp_unit`",
-                },
-            ],
-            "rename_placeholder": [
-                {
-                    "placeholder": "temp_unit",
-                    "new": "cpu_temp_unit",
-                    "format_strings": ["format"],
-                },
-                {
-                    "placeholder": "cpu_usage",
-                    "new": "cpu_used_percent",
-                    "format_strings": ["format"],
-                },
-                {
-                    "placeholder": "mem_unit",
-                    "new": "mem_total_unit",
-                    "format_strings": ["format"],
-                },
-                {
-                    "placeholder": "swap_unit",
-                    "new": "swap_total_unit",
-                    "format_strings": ["format"],
-                },
-            ],
-            "remove": [
-                {"param": "padding", "msg": "obsolete, use the format_* parameters"},
-                {"param": "precision", "msg": "obsolete, use the format_* parameters"},
-                {"param": "zone", "msg": "obsolete"},
-            ],
-            "update_placeholder_format": [
-                {
-                    "function": update_deprecated_placeholder_format,
-                    "format_strings": ["format"],
-                }
-            ],
-        }
-
         update_config = {
             "update_placeholder_format": [
                 {
                     "placeholder_formats": {
                         "cpu_freq_avg": ":.2f",
                         "cpu_freq_max": ":.2f",
-                        "cpu_usage": ":.2f",
                         "cpu_used_percent": ":.2f",
                         "cpu_temp": ":.2f",
                         "load1": ":.2f",
@@ -262,19 +193,7 @@ class Py3status:
         self.thresholds_init = {
             "format": self.py3.get_color_names_list(self.format),
             "format_cpu": self.py3.get_color_names_list(self.format_cpu),
-            "legacy": {
-                "cpu": "cpu_used_percent",
-                "temp": "cpu_temp",
-                "mem": "mem_used_percent",
-                "swap": "swap_used_percent",
-                "load": "load1",
-                "max_cpu_mem": "max_used_percent",
-            },
         }
-
-        if self.init["cpu_freq"]:
-            name = sorted(self.init["cpu_freq"])[0]
-            self.thresholds_init["legacy"]["cpu_freq"] = name
 
         if self.init["stat"]:
             self.cpus = {"cpus": self.cpus, "last": {}, "list": []}
@@ -535,10 +454,6 @@ class Py3status:
         for x in self.thresholds_init["format"]:
             if x in sys:
                 self.py3.threshold_get_color(sys[x], x)
-            elif x in self.thresholds_init["legacy"]:
-                y = self.thresholds_init["legacy"][x]
-                if y in sys:
-                    self.py3.threshold_get_color(sys[y], x)
 
         self.first_run = False
 
