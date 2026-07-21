@@ -61,7 +61,7 @@ class Py3status:
         self.config_file = Path(self.config_file).expanduser()
         self.running = False
         self.saved_time = 0
-        self.start_time = self.current_time
+        self.start_time = self._current_time
         try:
             # Use file to refer to the file object
             with self.config_file.open() as file:
@@ -70,7 +70,7 @@ class Py3status:
             pass
 
     @property
-    def current_time(self):
+    def _current_time(self):
         """Get the current time.
 
         Using a helper property to make it easy to keep consistency.
@@ -78,7 +78,7 @@ class Py3status:
         return time.monotonic()
 
     @staticmethod
-    def secs_to_dhms(time_in_secs):
+    def _secs_to_dhms(time_in_secs):
         """Convert seconds to days, hours, minutes, seconds.
 
         Using days as the largest unit of time.  Blindly using the days in
@@ -91,12 +91,12 @@ class Py3status:
 
     def _start_timer(self):
         if not self.running:
-            self.start_time = self.current_time - self.saved_time
+            self.start_time = self._current_time - self.saved_time
             self.running = True
 
     def _stop_timer(self):
         if self.running:
-            self.saved_time = self.current_time - self.start_time
+            self.saved_time = self._current_time - self.start_time
             self.running = False
 
     def _toggle_timer(self):
@@ -104,17 +104,6 @@ class Py3status:
             self._stop_timer()
         else:
             self._start_timer()
-
-    def kill(self):
-        self._stop_timer()
-        with self.config_file.open("w") as f:
-            f.write(str(self.saved_time))
-
-    def on_click(self, event):
-        if event["button"] == 1:
-            self._toggle_timer()
-        elif event["button"] == 3:
-            self._reset()
 
     def _reset(self):
         if not self.running:
@@ -126,12 +115,12 @@ class Py3status:
         running_time = 0.0
         if self.running:
             color = self.py3.COLOR_RUNNING or self.py3.COLOR_GOOD
-            running_time = self.current_time - self.start_time
+            running_time = self._current_time - self.start_time
         else:
             color = self.py3.COLOR_STOPPED or self.py3.COLOR_BAD
             running_time = self.saved_time
 
-        days, hours, mins, secs = self.secs_to_dhms(running_time)
+        days, hours, mins, secs = self._secs_to_dhms(running_time)
         subtotal = self.hour_price * running_time / SECS_IN_HOUR
         total = subtotal * float(self.tax)
         subtotal_cost = self.py3.safe_format(self.format_money, {"price": f"{subtotal:.2f}"})
@@ -156,6 +145,17 @@ class Py3status:
             ),
         }
         return response
+
+    def kill(self):
+        self._stop_timer()
+        with self.config_file.open("w") as f:
+            f.write(str(self.saved_time))
+
+    def on_click(self, event):
+        if event["button"] == 1:
+            self._toggle_timer()
+        elif event["button"] == 3:
+            self._reset()
 
 
 if __name__ == "__main__":
