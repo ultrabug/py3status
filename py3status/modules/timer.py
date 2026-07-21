@@ -128,6 +128,11 @@ class Py3status:
             response["urgent"] = True
         return response
 
+    def kill(self):
+        # remove any timer
+        if self.alarm_timer:
+            self.alarm_timer.cancel()
+
     def on_click(self, event):
         deltas = {"hours": 3600, "minutes": 60, "seconds": 1}
         index = event["index"]
@@ -190,11 +195,6 @@ class Py3status:
                 self.time_left = t
             else:
                 self.time = t
-
-    def kill(self):
-        # remove any timer
-        if self.alarm_timer:
-            self.alarm_timer.cancel()
 
 
 if __name__ == "__main__":

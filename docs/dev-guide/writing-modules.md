@@ -395,6 +395,33 @@ configuration parameters have been set. This is useful for any work a
 module must do before its output methods are run for the first time.
 `post_config_hook()` introduced in version 3.1
 
+### Method order
+
+Modules submitted to py3status should define methods in this order: optional
+`post_config_hook()`, optional private helper methods, required module method named
+after the file, optional `kill()`, and optional `on_click()`.
+
+For example, a module named `my_module.py` that defines every optional method
+should use this layout:
+
+```python
+class Py3status:
+    def post_config_hook(self):
+        ...
+
+    def _get_data(self):
+        ...
+
+    def my_module(self):
+        ...
+
+    def kill(self):
+        ...
+
+    def on_click(self, event):
+        ...
+```
+
 ## Py3 module helper
 
 Py3 is a special helper object that gets injected into py3status

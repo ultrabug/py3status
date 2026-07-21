@@ -171,49 +171,6 @@ class Py3status:
             self._section_time = self.timer_pomodoro
             self._active = True
 
-    def kill(self):
-        """
-        cancel any timer
-        """
-        if self._timer:
-            self._timer.cancel()
-
-    def on_click(self, event):
-        """
-        Handles click events:
-            - left click starts an inactive counter and pauses a running
-              Pomodoro
-            - middle click resets everything
-            - right click starts (and ends, if needed) a break
-        """
-        if event["button"] == 1:
-            if self._running:
-                self._running = False
-                self._time_left = self._end_time - time.monotonic()
-                if self._timer:
-                    self._timer.cancel()
-            else:
-                self._running = True
-                self._end_time = time.monotonic() + self._time_left
-                if self._timer:
-                    self._timer.cancel()
-                self._timer = Timer(self._time_left, self._time_up)
-                self._timer.start()
-                if self._active:
-                    self.py3.play_sound(self.sound_pomodoro_start)
-
-        elif event["button"] == 2:
-            # reset
-            self._init()
-            if self._timer:
-                self._timer.cancel()
-
-        elif event["button"] == 3:
-            # advance
-            self._advance(user_action=True)
-            if self._timer:
-                self._timer.cancel()
-
     def _setup_bar(self):
         """
         Setup the process bar.
@@ -297,6 +254,47 @@ class Py3status:
                 response["color"] = self.py3.COLOR_DEGRADED
 
         return response
+
+    def kill(self):
+        """
+        cancel any timer
+        """
+        if self._timer:
+            self._timer.cancel()
+
+    def on_click(self, event):
+        """
+        Left click starts an inactive counter and pauses a running Pomodoro
+        Middle click resets everything
+        Right click starts (and ends, if needed) a break
+        """
+        if event["button"] == 1:
+            if self._running:
+                self._running = False
+                self._time_left = self._end_time - time.monotonic()
+                if self._timer:
+                    self._timer.cancel()
+            else:
+                self._running = True
+                self._end_time = time.monotonic() + self._time_left
+                if self._timer:
+                    self._timer.cancel()
+                self._timer = Timer(self._time_left, self._time_up)
+                self._timer.start()
+                if self._active:
+                    self.py3.play_sound(self.sound_pomodoro_start)
+
+        elif event["button"] == 2:
+            # reset
+            self._init()
+            if self._timer:
+                self._timer.cancel()
+
+        elif event["button"] == 3:
+            # advance
+            self._advance(user_action=True)
+            if self._timer:
+                self._timer.cancel()
 
 
 if __name__ == "__main__":
