@@ -685,36 +685,44 @@ def process_config(config_path, py3_wrapper=None):
         error_config = Template(ERROR_CONFIG).substitute(error=error)
         return parse_config(error_config)
 
-    config = {}
+    def load_config(encoding=None):
+        with config_path.open("r", encoding=encoding) as f:
+            try:
+                return parse_config(f)
+            except ParseException as e:
+                return parse_config_error(e, config_path)
+
+    def get_encoding(encoding):
+        if not encoding:
+            return None
+        encoding = encoding.lower()
+        if encoding in ["binary", "unknown-8bit"]:
+            return None
+        if encoding in ["utf-16le", "utf-16be", "utf-32le", "utf-32be"]:
+            return encoding[:-2]
+        return encoding
 
     # get the file encoding. this is important with multi-byte characters
     try:
-        encoding = check_output(
-            ["file", "-b", "--mime-encoding", "--dereference", config_path],
-            timeout=3,
-        )
-        encoding = encoding.strip().decode("utf-8")
-    except FileNotFoundError:
-        # can be missing on NixOS (see #1961)
-        notify_user("the 'file' command is missing, please install it.")
-        encoding = "utf-8"
-    except (CalledProcessError, TimeoutExpired):
-        # timeout can occur on some architectures where the magic
-        # database takes too long to load.
-        # bsd does not have the --mime-encoding so assume utf-8
-        encoding = "utf-8"
-    try:
-        with config_path.open("r", encoding=encoding) as f:
-            try:
-                config_info = parse_config(f)
-            except ParseException as e:
-                config_info = parse_config_error(e, config_path)
-    except (LookupError, UnicodeDecodeError):
-        with config_path.open() as f:
-            try:
-                config_info = parse_config(f)
-            except ParseException as e:
-                config_info = parse_config_error(e, config_path)
+        config_info = load_config("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            # detect config encoding only if utf-8 decoding fails
+            cmd = ["file", "-b", "--mime-encoding", "--dereference", config_path]
+            encoding = get_encoding(check_output(cmd, timeout=3).strip().decode("utf-8"))
+        except FileNotFoundError:
+            # can be missing on NixOS (see #1961)
+            notify_user("the 'file' command is missing, please install it.")
+            encoding = None
+        except (CalledProcessError, TimeoutExpired):
+            encoding = None
+            # timeout can occur on some architectures where the magic
+            # database takes too long to load. and bsd does not have
+            # the --mime-encoding so we cannot determine the encoding.
+        config_info = load_config(encoding)
+
+    # the beginning of something beautiful
+    config = {}
 
     # update general section with defaults
     general_defaults = GENERAL_DEFAULTS.copy()
