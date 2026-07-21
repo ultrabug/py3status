@@ -65,17 +65,6 @@ class Py3status:
     )
     prefix = "emrg"
 
-    def _emerge_running(self):
-        """
-        Check if emerge is running.
-        Returns true if at least one instance of emerge is running.
-        """
-        try:
-            self.py3.command_output(["pgrep", "emerge"])
-            return True
-        except Exception:
-            return False
-
     def post_config_hook(self):
         if not self.py3.check_commands("emerge"):
             raise Exception(STRING_NOT_INSTALLED)
@@ -87,6 +76,17 @@ class Py3status:
             "pkg": "",
             "total": 0,
         }
+
+    def _emerge_running(self):
+        """
+        Check if emerge is running.
+        Returns true if at least one instance of emerge is running.
+        """
+        try:
+            self.py3.command_output(["pgrep", "emerge"])
+            return True
+        except Exception:
+            return False
 
     def _get_progress(self):
         """

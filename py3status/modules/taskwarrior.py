@@ -58,19 +58,19 @@ class Py3status:
             self.taskwarrior_command += " " + self.report
 
     @staticmethod
-    def descriptions(tasks_json):
+    def _descriptions(tasks_json):
         return ", ".join(f"{t['id']} {t['description']}" for t in tasks_json)
 
     @staticmethod
-    def tasks(tasks_json):
+    def _tasks(tasks_json):
         return len(tasks_json)
 
     def taskwarrior(self):
         tasks_json = json.loads(self.py3.command_output(self.taskwarrior_command))
         taskwarrior_data = {}
         for ph in self.placeholders:
-            if hasattr(self, ph):
-                ph_func = getattr(self, ph)
+            ph_func = getattr(self, f"_{ph}", None)
+            if ph_func:
                 taskwarrior_data[ph] = ph_func(tasks_json)
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

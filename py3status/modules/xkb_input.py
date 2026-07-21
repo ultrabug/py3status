@@ -168,6 +168,7 @@ class Listener:
         try:
             self.process.kill()
         except AttributeError:
+            # kill the process
             pass
 
 
