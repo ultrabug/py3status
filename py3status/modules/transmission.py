@@ -173,10 +173,6 @@ class Py3status:
         self.count_torrent = 0
         self.summary_data = {}
 
-        self.thresholds_init = {}
-        for name in ["format", "format_torrent"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _scroll(self, direction=0):
         self.is_scrolling = True
         data = self.shared
@@ -241,9 +237,7 @@ class Py3status:
             t["index"] = index
             if not self.is_scrolling:
                 t["is_focused"] = False
-            for x in self.thresholds_init["format_torrent"]:
-                if x in t:
-                    self.py3.threshold_get_color(t[x], x)
+            self.py3.threshold_update(t, self.format_torrent)
 
             new_data.append(self.py3.safe_format(self.format_torrent, t))
         return new_data
@@ -269,9 +263,7 @@ class Py3status:
 
         summary_data.update({"torrent": self.count_torrent, "format_torrent": format_torrent})
 
-        for x in self.thresholds_init["format"]:
-            if x in summary_data:
-                self.py3.threshold_get_color(summary_data[x], x)
+        self.py3.threshold_update(summary_data, self.format)
 
         self.is_scrolling = False
         return {

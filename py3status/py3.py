@@ -109,6 +109,7 @@ class Py3:
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
+        self._threshold_update_names = {}
         self._uid = uuid4()
 
         if module:
@@ -1233,6 +1234,26 @@ class Py3:
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def threshold_update(self, data, format_string):
+        """
+        Convenience helper for static threshold updates.
+
+        This checks threshold names from the format string against
+        values in the data dict and updates matching threshold colors.
+
+        :param data: dict containing placeholder values
+        :param format_string: format string to check for threshold names
+        """
+        try:
+            names = self._threshold_update_names[format_string]
+        except KeyError:
+            names = self.get_color_names_list(format_string)
+            self._threshold_update_names[format_string] = names
+
+        for name in names:
+            if name in data:
+                self.threshold_get_color(data[name], name)
 
     def replace(self, value, name=None):
         """

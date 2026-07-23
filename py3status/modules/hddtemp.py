@@ -140,7 +140,6 @@ class Py3status:
 
         self.keys = ["path", "name", "temperature", "unit"]
         self.cache_names = {}
-        self.thresholds_init = self.py3.get_color_names_list(self.format_hdd)
 
     def hddtemp(self):
         line = self.py3.command_output("nc localhost 7634")
@@ -157,9 +156,7 @@ class Py3status:
                     key = "GB".join(key.rsplit("G B", 1))
                 hdd["name"] = self.cache_names[hdd["name"]] = key
 
-            for x in self.thresholds_init:
-                if x in hdd:
-                    self.py3.threshold_get_color(hdd[x], x)
+            self.py3.threshold_update(hdd, self.format_hdd)
 
             new_data.append(self.py3.safe_format(self.format_hdd, hdd))
 

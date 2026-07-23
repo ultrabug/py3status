@@ -102,6 +102,7 @@ filterwarnings = [
 [tool.black]
 line-length = 100
 skip-string-normalization = true
+target-version = ["py310"]
 
 [tool.isort]
 profile = "black"
@@ -109,6 +110,7 @@ line_length = 100
 
 [tool.ruff]
 line-length = 100
+lint.select = ["E4", "E7", "E9", "F"]
 lint.ignore = ["E501"]
 lint.extend-select = ["G004"]
 

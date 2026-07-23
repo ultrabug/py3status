@@ -59,6 +59,15 @@ class Py3status:
     server = None
     units = None
 
+    def _query(self, query):
+        r = self.py3.request(self.server + "/api/v1/query", params={"query": query})
+        if r.status_code != 200:
+            return []
+        r = r.json()
+        if r["status"] != "success" or r["data"]["resultType"] != "vector":
+            return []
+        return r["data"]["result"]
+
     def prometheus(self):
         self._rows = []
         self._rownum = 0
@@ -92,15 +101,6 @@ class Py3status:
                 if getattr(self.py3, entry):
                     ret["color"] = getattr(self.py3, entry)
         return ret
-
-    def _query(self, query):
-        r = self.py3.request(self.server + "/api/v1/query", params={"query": query})
-        if r.status_code != 200:
-            return []
-        r = r.json()
-        if r["status"] != "success" or r["data"]["resultType"] != "vector":
-            return []
-        return r["data"]["result"]
 
 
 if __name__ == "__main__":

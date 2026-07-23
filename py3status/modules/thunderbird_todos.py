@@ -186,10 +186,6 @@ class Py3status:
             ):
                 self.init_datetimes.append(word)
 
-        self.thresholds_init = {}
-        for name in ["format", "format_todo"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _get_thunderbird_todos_data(self):
         connection = connect(self.path)
         cursor = connection.cursor()
@@ -232,15 +228,11 @@ class Py3status:
                         )
                     )
             # thresholds
-            for x in self.thresholds_init["format_todo"]:
-                if x in todo:
-                    self.py3.threshold_get_color(todo[x], x)
+            self.py3.threshold_update(todo, self.format_todo)
 
             new_data.append(self.py3.safe_format(self.format_todo, todo))
 
-        for x in self.thresholds_init["format"]:
-            if x in count:
-                self.py3.threshold_get_color(count[x], x)
+        self.py3.threshold_update(count, self.format)
 
         format_separator = self.py3.safe_format(self.format_separator)
         format_todo = self.py3.composite_join(format_separator, new_data)

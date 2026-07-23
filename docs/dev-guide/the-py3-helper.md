@@ -481,6 +481,16 @@ thresholds we will use a gradient between the color values.
     accepts 3-tuples to allow name with different
     values eg ('name', 'key', 'thresholds')
 
+### threshold_update(data, format_string)
+
+Convenience helper for static threshold updates.
+
+This checks threshold names from the format string against
+values in the data dict and updates matching threshold colors.
+
+- data: dict containing placeholder values
+- format_string: format string to check
+
 ### time_in(seconds=None, sync_to=None, offset=0)
 
 Returns the time a given number of seconds into the future.  Helpful

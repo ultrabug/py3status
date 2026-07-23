@@ -131,10 +131,7 @@ class Py3status:
             if not getattr(self, x):
                 raise Exception(f"missing `{x}`")
 
-        self.init = {
-            "datetimes": [],
-            "thresholds": self.py3.get_color_names_list(self.format_patient),
-        }
+        self.init = {"datetimes": []}
         for x in ["timestamp", "factory_timestamp"]:
             if self.py3.format_contains(self.format_patient, x) and x in self.format_datetime:
                 self.init["datetimes"].append(x)
@@ -181,9 +178,7 @@ class Py3status:
                 date_format = obj.strftime(self.format_datetime[x])
                 patient_data[x] = self.py3.safe_format(date_format)
 
-            for x in self.init["thresholds"]:
-                if x in patient_data:
-                    self.py3.threshold_get_color(patient_data[x], x)
+            self.py3.threshold_update(patient_data, self.format_patient)
 
             new_patient.append(self.py3.safe_format(self.format_patient, patient_data))
 

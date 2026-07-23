@@ -400,45 +400,6 @@ class Py3status:
             ],
         }
 
-    def _get_icons(self):
-        if self.icons is None:
-            self.icons = {}
-
-        # Defaults for weather ranges
-        defaults = {
-            "200_299": self.icon_thunderstorm,
-            "300_399": self.icon_rain,
-            "500_599": self.icon_rain,
-            "600_699": self.icon_snow,
-            "700_799": self.icon_atmosphere,
-            "800": self.icon_sun,
-            "801_809": self.icon_cloud,
-            "900_909": self.icon_extreme,
-            "950_959": self.icon_wind,
-            "960_999": self.icon_extreme,
-        }
-
-        # Handling ranges from OpenWeatherMap
-        data = {}
-        for source in (defaults, self.icons):
-            for key in source:
-                if not key.replace("_", "").isdigit():
-                    raise Exception(f"Invalid icon id: ({key})")
-
-                if "_" in key:
-                    if key.count("_") != 1:
-                        raise Exception("fInvalid icon range: {key}")
-
-                    # Populate each code
-                    start, _, end = key.partition("_")
-                    for code in range(int(start), int(end) + 1):
-                        data[code] = source[key]
-
-                else:
-                    data[int(key)] = source[key]
-
-        return data
-
     def post_config_hook(self):
         # Verify the API key
         if self.api_key is None:
@@ -483,10 +444,44 @@ class Py3status:
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
-        # Initialize per-format thresholds
-        self.thresholds_init = {}
-        for name in ("format_humidity",):
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
+    def _get_icons(self):
+        if self.icons is None:
+            self.icons = {}
+
+        # Defaults for weather ranges
+        defaults = {
+            "200_299": self.icon_thunderstorm,
+            "300_399": self.icon_rain,
+            "500_599": self.icon_rain,
+            "600_699": self.icon_snow,
+            "700_799": self.icon_atmosphere,
+            "800": self.icon_sun,
+            "801_809": self.icon_cloud,
+            "900_909": self.icon_extreme,
+            "950_959": self.icon_wind,
+            "960_999": self.icon_extreme,
+        }
+
+        # Handling ranges from OpenWeatherMap
+        data = {}
+        for source in (defaults, self.icons):
+            for key in source:
+                if not key.replace("_", "").isdigit():
+                    raise Exception(f"Invalid icon id: ({key})")
+
+                if "_" in key:
+                    if key.count("_") != 1:
+                        raise Exception("fInvalid icon range: {key}")
+
+                    # Populate each code
+                    start, _, end = key.partition("_")
+                    for code in range(int(start), int(end) + 1):
+                        data[code] = source[key]
+
+                else:
+                    data[int(key)] = source[key]
+
+        return data
 
     def _make_req(self, url, params=None):
         # Make a request expecting a JSON response
@@ -713,9 +708,7 @@ class Py3status:
             "humidity": self._jpath(wthr, OWM_HUMIDITY, self._jpath(wthr, OWM_CURRENT_HUMIDITY, 0)),
         }
 
-        for x in self.thresholds_init["format_humidity"]:
-            if x in humidity_data:
-                self.py3.threshold_get_color(humidity_data[x], x)
+        self.py3.threshold_update(humidity_data, self.format_humidity)
 
         return self.py3.safe_format(self.format_humidity, humidity_data)
 
