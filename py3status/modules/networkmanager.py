@@ -101,7 +101,6 @@ class Py3status:
         ).split()
         self.caches = {"lines": {}, "devices": {}}
         self.devices = {"list": [], "devices": self.devices}
-        self.thresholds_init = self.py3.get_color_names_list(self.format_device)
 
     def _update_key(self, key):
         for old, new in [("[", ""), ("]", ""), (".", "_"), ("-", "_")]:
@@ -161,9 +160,7 @@ class Py3status:
                         current_ap[key.replace(used_ap + "_", "ap_")] = device[key]
                 device.update(current_ap)
 
-            for x in self.thresholds_init:
-                if x in device:
-                    self.py3.threshold_get_color(device[x], x)
+            self.py3.threshold_update(device, self.format_device)
 
             new_device.append(self.py3.safe_format(self.format_device, device))
 

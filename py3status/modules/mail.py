@@ -224,8 +224,6 @@ class Py3status:
                             self.mailboxes[mail].append(account)
                             break
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def mail(self):
         mail_data = {"mail": 0, "urgent": False}
         for k, v in self.mailboxes.items():
@@ -288,9 +286,7 @@ class Py3status:
                 mail_data["mail"] += count_mail
                 mail_data[k] += count_mail
 
-        for x in self.thresholds_init:
-            if x in mail_data:
-                self.py3.threshold_get_color(mail_data[x], x)
+        self.py3.threshold_update(mail_data, self.format)
 
         self.first_run = False
 

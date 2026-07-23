@@ -102,7 +102,7 @@ class Py3status:
             self.url["single_project"] += "/?statistics=true"
 
         # init placeholders
-        self.init = {"thresholds": self.py3.get_color_names_list(self.format)}
+        self.init = {}
         placeholders = self.py3.get_placeholders_list(self.format)
         for x in ["open_merge_requests_count", "todos_count", "pipelines_status"]:
             self.init[x] = x in placeholders
@@ -139,9 +139,7 @@ class Py3status:
             if data:
                 gitlab_data["pipelines_status"] = data.json()[0]["status"]
 
-        for x in self.init["thresholds"]:
-            if x in gitlab_data:
-                self.py3.threshold_get_color(gitlab_data[x], x)
+        self.py3.threshold_update(gitlab_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
