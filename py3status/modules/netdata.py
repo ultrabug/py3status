@@ -118,7 +118,6 @@ class Py3status:
                 self.nic = "lo"
             self.py3.log(f"selected nic: {self.nic}")
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.last_received_bytes, self.last_transmitted_bytes = self._get_bytes()
         self.last_time = time.monotonic()
 
@@ -155,9 +154,7 @@ class Py3status:
             "nic": self.nic,
         }
 
-        for x in self.thresholds_init:
-            if x in net_data:
-                self.py3.threshold_get_color(net_data[x], x)
+        self.py3.threshold_update(net_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

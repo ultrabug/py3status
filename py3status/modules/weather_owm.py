@@ -444,11 +444,6 @@ class Py3status:
                 if name not in self.thresholds:
                     self.thresholds[name] = self.thresholds[THRESHOLDS_ALL]
 
-        # Initialize per-format thresholds
-        self.thresholds_init = {}
-        for name in ("format_humidity",):
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _get_icons(self):
         if self.icons is None:
             self.icons = {}
@@ -713,9 +708,7 @@ class Py3status:
             "humidity": self._jpath(wthr, OWM_HUMIDITY, self._jpath(wthr, OWM_CURRENT_HUMIDITY, 0)),
         }
 
-        for x in self.thresholds_init["format_humidity"]:
-            if x in humidity_data:
-                self.py3.threshold_get_color(humidity_data[x], x)
+        self.py3.threshold_update(humidity_data, self.format_humidity)
 
         return self.py3.safe_format(self.format_humidity, humidity_data)
 

@@ -102,8 +102,6 @@ class Py3status:
         self.last_stat = self._get_stat()
         self.last_time = time.monotonic()
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def _get_stat(self):
         """
         Get statistics from devfile in list of lists of words
@@ -204,9 +202,7 @@ class Py3status:
         elif not interface:
             response["full_text"] = self.format_no_connection
         else:
-            for x in self.thresholds_init:
-                if x in delta:
-                    self.py3.threshold_get_color(delta[x], x)
+            self.py3.threshold_update(delta, self.format)
 
             response["full_text"] = self.py3.safe_format(
                 self.format,

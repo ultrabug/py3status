@@ -260,7 +260,6 @@ class Py3status:
 
         self.thresholds_init = {
             "format": self.py3.get_color_names_list(self.format),
-            "format_cpu": self.py3.get_color_names_list(self.format_cpu),
             "legacy": {
                 "cpu": "cpu_used_percent",
                 "temp": "cpu_temp",
@@ -496,9 +495,7 @@ class Py3status:
             new_cpu = []
             for cpu in self._filter_stat(stat):
                 cpu = {"name": cpu[0], "used_percent": self._calc_cpu_percent(cpu)}
-                for x in self.thresholds_init["format_cpu"]:
-                    if x in cpu:
-                        self.py3.threshold_get_color(cpu[x], x)
+                self.py3.threshold_update(cpu, self.format_cpu)
                 new_cpu.append(self.py3.safe_format(self.format_cpu, cpu))
 
             format_cpu_separator = self.py3.safe_format(self.format_cpu_separator)
@@ -548,10 +545,11 @@ class Py3status:
         for update in self.sysdata_updates:
             update(sysdata)
 
+        self.py3.threshold_update(sysdata, self.format)
         for x in self.thresholds_init["format"]:
             if x in sysdata:
-                self.py3.threshold_get_color(sysdata[x], x)
-            elif x in self.thresholds_init["legacy"]:
+                continue
+            if x in self.thresholds_init["legacy"]:
                 y = self.thresholds_init["legacy"][x]
                 if y in sysdata:
                     self.py3.threshold_get_color(sysdata[y], x)

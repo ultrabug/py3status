@@ -105,7 +105,6 @@ class Py3status:
         self.seconds = CACHE_TIMEOUT + getattr(self, "cached_delay", 10)
         self.placeholders = ["value", "datetime", "mg_dl", "mmol_l", "trend"]
         self.placeholders += ["trend_arrow", "trend_description", "trend_direction"]
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.dexcom_class = Dexcom(self.username, self.password, ous=self.ous)
 
     def _get_glucose_data(self):
@@ -132,9 +131,7 @@ class Py3status:
                 date_format = datetime.strftime(obj, self.format_datetime[x])
                 glucose_data[x] = self.py3.safe_format(date_format)
 
-        for x in self.thresholds_init:
-            if x in glucose_data:
-                self.py3.threshold_get_color(glucose_data[x], x)
+        self.py3.threshold_update(glucose_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(cached_until),

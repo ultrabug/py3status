@@ -178,7 +178,6 @@ class Py3status:
         self.placeholders = self.py3.get_placeholders_list(self.format)
         self.speedtest_data = self.py3.storage_get("speedtest_data") or {}
         self.thread = None
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
         # remove elapsed_time
         if "elapsed_time" in self.placeholders:
@@ -228,9 +227,7 @@ class Py3status:
             self.py3.storage_set("speedtest_data", self.speedtest_data)
 
         # thresholds
-        for x in self.thresholds_init:
-            if x in self.speedtest_data:
-                self.py3.threshold_get_color(self.speedtest_data[x], x)
+        self.py3.threshold_update(self.speedtest_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(cached_until),

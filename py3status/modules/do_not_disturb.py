@@ -216,15 +216,12 @@ class Py3status:
             raise Exception(STRING_INVALID_STATE.format(self.state))
 
         self.name = self.server.capitalize()
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def do_not_disturb(self):
         self.state = self.backend.get_state()
         dnd_data = {"state": int(self.state), "name": self.name}
 
-        for x in self.thresholds_init:
-            if x in dnd_data:
-                self.py3.threshold_get_color(dnd_data[x], x)
+        self.py3.threshold_update(dnd_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
