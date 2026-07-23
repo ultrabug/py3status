@@ -51,14 +51,11 @@ class Py3status:
             raise Exception(STRING_DBUS_EXCEPTION)
         self.lock = None
         self.lock_types = ":".join(self.lock_types)
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def systemd_suspend_inhibitor(self):
         suspend_data = {"state": bool(self.lock)}
 
-        for x in self.thresholds_init:
-            if x in suspend_data:
-                self.py3.threshold_get_color(suspend_data[x], x)
+        self.py3.threshold_update(suspend_data, self.format)
 
         return {
             "cached_until": self.py3.CACHE_FOREVER,

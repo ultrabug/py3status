@@ -202,9 +202,6 @@ class Py3status:
                 self.init["datetimes"].append(word)
 
         self.tracking = None
-        self.thresholds_init = {}
-        for name in ("format", "format_tag", "format_time"):
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
     def _get_timewarrior_data(self):
         return json_loads(self.py3.command_output(self.timewarrior_command))
@@ -222,9 +219,7 @@ class Py3status:
             time["tags"] = time.get("tags", [])
             for tag_name in time["tags"]:
                 tag_data = {"name": tag_name, "state_tag": time["state_time"]}
-                for x in self.thresholds_init["format_tag"]:
-                    if x in tag_data:
-                        self.py3.threshold_get_color(tag_data[x], x)
+                self.py3.threshold_update(tag_data, self.format_tag)
                 new_tag.append(self.py3.safe_format(self.format_tag, tag_data))
 
             format_tag_separator = self.py3.safe_format(self.format_tag_separator)
@@ -264,9 +259,7 @@ class Py3status:
                     )
 
             # time
-            for x in self.thresholds_init["format_time"]:
-                if x in time:
-                    self.py3.threshold_get_color(time[x], x)
+            self.py3.threshold_update(time, self.format_time)
 
             new_time.append(self.py3.safe_format(self.format_time, time))
 
@@ -285,9 +278,7 @@ class Py3status:
 
         timew_data = {"format_time": format_time, "tracking": self.tracking}
 
-        for x in self.thresholds_init["format"]:
-            if x in timew_data:
-                self.py3.threshold_get_color(timew_data[x], x)
+        self.py3.threshold_update(timew_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(cached_until),

@@ -121,8 +121,6 @@ class Py3status:
         if not self.is_color_setter_running:
             self._set_color_temperature(delta=0)
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def _set_color_setter_boolean(self):
         # to improve user experience, we prevent users from shifting color
         # temperature when there are running processes that can also shift
@@ -161,9 +159,7 @@ class Py3status:
             "enabled": self.is_color_setter_running,
         }
 
-        for x in self.thresholds_init:
-            if x in hue_data:
-                self.py3.threshold_get_color(hue_data[x], x)
+        self.py3.threshold_update(hue_data, self.format)
 
         return {
             "cached_until": self.py3.CACHE_FOREVER,

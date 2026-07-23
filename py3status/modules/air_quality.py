@@ -150,8 +150,6 @@ class Py3status:
                 aqi = [(x[0], x[1]) for x in self.quality_thresholds]
                 self.thresholds["aqi"] = aqi
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def _get_aqi_data(self):
         try:
             return self.py3.request(self.url, params=self.auth_token).json()
@@ -169,9 +167,7 @@ class Py3status:
             if data["aqi"] >= index_aqi:
                 data["category"] = index_category
 
-        for x in self.thresholds_init:
-            if x in data:
-                self.py3.threshold_get_color(data[x], x)
+        self.py3.threshold_update(data, self.format)
 
         for k in self.init_datetimes:
             if k in data:

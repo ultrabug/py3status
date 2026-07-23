@@ -434,9 +434,7 @@ class Py3status:
                     self.cache_names[k] = k.replace(" ", ".")
                     conky_data[self.cache_names[k]] = conky_data[k]
 
-            for x in self.thresholds_init:
-                if x in conky_data:
-                    self.py3.threshold_get_color(conky_data[x], x)
+            self.py3.threshold_update(conky_data, self.format)
 
         return {
             "cached_until": self.py3.CACHE_FOREVER,

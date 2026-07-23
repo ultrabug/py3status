@@ -96,8 +96,6 @@ class Py3status:
             except Exception:
                 self.init["diskstats"] = {}
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def _get_df_usages(self, disk):
         try:
             df_usages = self.py3.command_output(["df", "-k"])
@@ -185,9 +183,7 @@ class Py3status:
                     self.format_rate, {"value": value, "unit": unit}
                 )
 
-        for x in self.thresholds_init:
-            if x in threshold_data:
-                self.py3.threshold_get_color(threshold_data[x], x)
+        self.py3.threshold_update(threshold_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
