@@ -305,9 +305,17 @@ RETIRED_MODULES = {
         "new": ["window"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
     },
+    "uname": {
+        "new": ["sysinfo"],
+        "msg": "Module {old} has been replaced with a consolidated module {new}.",
+    },
     "weather_yahoo": {
         "new": ["weather_owm"],
         "msg": "Module {old} is no longer available due to retired Yahoo Weather APIs and new Oath requirements. You can try a different module {new}.",
+    },
+    "whoami": {
+        "new": ["sysinfo"],
+        "msg": "Module {old} has been replaced with a consolidated module {new}.",
     },
     "xkb_layouts": {
         "new": ["xkb_input"],
