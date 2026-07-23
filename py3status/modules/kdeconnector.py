@@ -524,20 +524,6 @@ class Py3status:
         battery = self._get_battery()
         self._set_battery_status(isCharging=battery["isCharging"], charge=battery["charge"])
 
-    def kill(self):
-        self._kill = True
-        if self._signal_reachable_changed:
-            self._signal_reachable_changed.remove()
-
-        if self._signal_battery:
-            self._signal_battery.remove()
-
-        if self._signal_notifications:
-            self._signal_notifications.remove()
-
-        if self._signal_conn_report:
-            self._signal_conn_report.remove()
-
     def kdeconnector(self):
         """
         Get the current state and return it.
@@ -566,6 +552,20 @@ class Py3status:
             "color": color,
         }
         return response
+
+    def kill(self):
+        self._kill = True
+        if self._signal_reachable_changed:
+            self._signal_reachable_changed.remove()
+
+        if self._signal_battery:
+            self._signal_battery.remove()
+
+        if self._signal_notifications:
+            self._signal_notifications.remove()
+
+        if self._signal_conn_report:
+            self._signal_conn_report.remove()
 
 
 if __name__ == "__main__":

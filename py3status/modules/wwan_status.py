@@ -77,6 +77,17 @@ class Py3status:
     modem = "/dev/ttyUSB1"
     modem_timeout = 0.4
 
+    def _get_ip(self, interface):
+        """
+        Returns the interface's IPv4 address if device exists and has a valid
+        ip address. Otherwise, returns an empty string
+        """
+        if interface in ni.interfaces():
+            addresses = ni.ifaddresses(interface)
+            if ni.AF_INET in addresses:
+                return addresses[ni.AF_INET][0]["addr"]
+        return ""
+
     def wwan_status(self):
         query = "AT^SYSINFOEX"
         target_line = "^SYSINFOEX"
@@ -163,17 +174,6 @@ class Py3status:
             response["color"] = self.py3.COLOR_BAD
             response["full_text"] = self.format_down
         return response
-
-    def _get_ip(self, interface):
-        """
-        Returns the interface's IPv4 address if device exists and has a valid
-        ip address. Otherwise, returns an empty string
-        """
-        if interface in ni.interfaces():
-            addresses = ni.ifaddresses(interface)
-            if ni.AF_INET in addresses:
-                return addresses[ni.AF_INET][0]["addr"]
-        return ""
 
 
 if __name__ == "__main__":
