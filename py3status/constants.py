@@ -297,6 +297,10 @@ RETIRED_MODULES = {
         "new": ["scratchpad"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
     },
+    "transmission": {
+        "new": [],
+        "msg": "Module {old} has been deprecated.",
+    },
     "window_title": {
         "new": ["window"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
