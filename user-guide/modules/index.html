@@ -9807,13 +9807,13 @@ vnstat {
     <em>(default None)</em></p>
 </li>
 <li>
-<p><code>command</code> Choose between "amixer", "pamixer" or "pactl".
+<p><code>command</code> Choose between "amixer", "pamixer", "pactl" or "wpctl".
     If None, try to guess based on available commands.
     <em>(default None)</em></p>
 </li>
 <li>
 <p><code>device</code> Device to use. Defaults value is backend dependent.
-    "aplay -L", "pactl list sinks short", "pamixer --list-sinks"
+    "aplay -L", "pactl list sinks short", "pamixer --list-sinks", "wpctl status -n"
     <em>(default None)</em></p>
 </li>
 <li>
@@ -9830,7 +9830,7 @@ vnstat {
 </li>
 <li>
 <p><code>max_volume</code> Allow the volume to be increased past 100% if available.
-    pactl and pamixer supports this. <em>(default 120)</em></p>
+    pactl, pamixer and wpctl support this. <em>(default 120)</em></p>
 </li>
 <li>
 <p><code>thresholds</code> Threshold for percent volume.
@@ -9864,6 +9864,9 @@ vnstat {
 </li>
 <li>
 <p><code>pamixer</code> pulseaudio command-line mixer like amixer</p>
+</li>
+<li>
+<p><code>wireplumber</code> provides wpctl, the PipeWire session manager control tool</p>
 </li>
 </ul>
 <p>Notes:
