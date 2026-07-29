@@ -119,7 +119,7 @@ def catch_factory(attr):
     return _catch
 
 
-# We need to populate our base class with all the methods that unicode
+# We need to populate our base class with all the methods that str
 # has.  We will implement them using the _catch function created by out
 # factory.  We want to exclude a few select methods
 EXCLUDE = [

@@ -66,7 +66,9 @@ class Py3status:
             # Use file to refer to the file object
             with self.config_file.open() as file:
                 self.saved_time = float(file.read())
-        except:  # noqa e722 // (IOError, FileNotFoundError):  # py2/py3
+        except (OSError, ValueError):
+            # start from zero if the saved state
+            # is missing or unreadable
             pass
 
     @property

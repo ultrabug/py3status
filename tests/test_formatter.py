@@ -26,8 +26,6 @@ param_dict = {
     "?bad name": "evil",
     "☂ Very bad name ": "☂ extremely evil",
     "long_str": "I am a long string though not too long",
-    "python2_unicode": "Björk",
-    "python2_str": "Björk",
     "zero": 0,
     "zero_str": "0",
     "zero_float": 0.0,
@@ -165,10 +163,6 @@ def get_color_names(test_dict):
 
 
 def test_1():
-    run_formatter({"format": "hello ☂", "expected": "hello ☂"})
-
-
-def test_2():
     run_formatter({"format": "hello ☂", "expected": "hello ☂"})
 
 
@@ -353,27 +347,6 @@ def test_38():
     run_formatter({"format": "[{empty} ping] hello", "expected": " hello"})
 
 
-def test_39():
-    run_formatter(
-        # python 2 unicode
-        {"format": "Hello {python2_unicode}! ☂", "expected": "Hello Björk! ☂"}
-    )
-
-
-def test_40():
-    run_formatter(
-        {"format": "Hello {python2_unicode}! ☂", "expected": "Hello Björk! ☂"}
-    )
-
-
-def test_41():
-    run_formatter({"format": "Hello {python2_str}! ☂", "expected": "Hello Björk! ☂"})
-
-
-def test_42():
-    run_formatter({"format": "Hello {python2_str}! ☂", "expected": "Hello Björk! ☂"})
-
-
 def test_43():
     run_formatter(
         # formatting
@@ -386,8 +359,8 @@ def test_44():
 
 
 def test_45():
-    # the representation is different in python2 "u'Björk'"
-    run_formatter({"format": "{name!r}", "expected": "'Björk'", "py3only": True})
+    # repr formatting for strings
+    run_formatter({"format": "{name!r}", "expected": "'Björk'"})
 
 
 def test_46():

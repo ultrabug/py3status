@@ -1010,7 +1010,7 @@ class Py3:
 
     def command_output(self, command, shell=False, capture_stderr=False, localized=False):
         """
-        Run a command and return its output as unicode.
+        Run a command and return its output as text.
         The command can either be supplied as a sequence or string.
 
         :param command: command to run can be a str or list

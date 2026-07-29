@@ -283,10 +283,10 @@ class ConfigParser:
             return value[1:-1].replace("\\'", "'")
         return value
 
-    def unicode_escape_sequence_fix(self, value):
+    def escape_sequence_fix(self, value):
         """
-        It is possible to define unicode characters in the config either as the
-        actual utf-8 character or using escape sequences the following all will
+        It is possible to define Unicode characters in the config either as the
+        actual UTF-8 character or using escape sequences. The following all will
         show the Greek delta character.
         Δ \N{GREEK CAPITAL LETTER DELTA} \U00000394  \u0394
         """
@@ -303,8 +303,8 @@ class ConfigParser:
         """
         Converts to actual value, or remains as string.
         """
-        # ensure any escape sequences are converted to unicode
-        value = self.unicode_escape_sequence_fix(value)
+        # ensure any escape sequences are converted to text
+        value = self.escape_sequence_fix(value)
 
         if value and value[0] in ['"', "'"]:
             return self.remove_quotes(value)
@@ -395,7 +395,7 @@ class ConfigParser:
             if value_type == "bool":
                 value = True
             else:
-                # convert bytes to unicode
+                # convert bytes to text
                 value = value.decode("utf-8")
                 value = self.value_convert(value, value_type)
         return value
@@ -562,7 +562,7 @@ class ConfigParser:
             if module_name.split(" ")[0] in I3S_MODULE_NAMES + ["general"]:
                 self.error("Only py3status modules can use obfuscated")
 
-            if type(value).__name__ not in ["str", "unicode"]:
+            if not isinstance(value, str):
                 self.error("Only strings can be obfuscated")
 
             name, scheme = name.split(":")
@@ -687,7 +687,7 @@ def process_config(config_path, py3_wrapper=None):
 
     config = {}
 
-    # get the file encoding this is important with multi-byte unicode chars
+    # get the file encoding. this is important with multi-byte characters
     try:
         encoding = check_output(
             ["file", "-b", "--mime-encoding", "--dereference", config_path],

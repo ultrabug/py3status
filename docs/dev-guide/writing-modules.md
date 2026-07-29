@@ -449,10 +449,10 @@ composite.
 Py3status allows modules to maintain state through the use of the
 storage functions of the Py3 helper.
 
-Currently bool, int, float, None, unicode, dicts, lists, datetimes etc
+Currently bool, int, float, None, strings, dicts, lists, datetimes etc
 are supported. Basically anything that can be pickled. We do our best to
-ensure that the resulting pickles are compatible with both python
-versions 2 and 3.
+ensure that the resulting pickles remain readable across py3status
+updates where practical.
 
 The following helper functions are defined in the modules py3.
 
