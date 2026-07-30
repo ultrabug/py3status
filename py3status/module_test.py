@@ -5,7 +5,7 @@ from sys import argv
 from threading import Event
 
 from py3status.core import Common, Module
-from py3status.log import log_message, resolve_log_level
+from py3status.log import ShortnameFilter, log_message, resolve_log_level
 
 
 class ExcludeModuleFilter(logging.Filter):
@@ -22,12 +22,14 @@ def setup_logging(level="INFO"):
     level = resolve_log_level(level)
     logging.basicConfig(
         level=level,
-        format="%(levelname)s [%(name)s] %(message)s",
+        format="%(levelname)s [%(leafname)s] %(message)s",
     )
     module_path = __file__.replace("_test.py", ".py")
     module_filter = ExcludeModuleFilter(module_path)
+    shortname_filter = ShortnameFilter()
     for handler in logging.getLogger().handlers:
         handler.addFilter(module_filter)
+        handler.addFilter(shortname_filter)
 
 
 class MockPy3statusWrapper:
