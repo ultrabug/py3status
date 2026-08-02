@@ -9,14 +9,17 @@ MODULE_LOGGER_PREFIX = "py3status.modules."
 
 class ShortnameFilter(logging.Filter):
     """
-    This lets logging formats use `%(shortname)s` instead
-    of `%(name)s` when shorter logger names are preferred.
+    This lets logging formats use `%(shortname)s` or `%(leafname)s`
+    instead of `%(name)s` when shorter logger names are preferred.
 
     Examples:
         # shortname
         `py3status.core` -> `core`
         `py3status.events` -> `events`
         `py3status.modules.sysdata` -> `modules.sysdata`
+
+        # leafname
+        `py3status.modules.sysdata` -> `sysdata`
     """
 
     def filter(self, record):
@@ -24,6 +27,7 @@ class ShortnameFilter(logging.Filter):
             record.shortname = record.name[len(PACKAGE_LOGGER_PREFIX) :]
         else:
             record.shortname = record.name
+        record.leafname = record.shortname.rsplit(".", 1)[-1]
 
         return True
 
