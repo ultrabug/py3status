@@ -217,7 +217,6 @@ class Py3:
 
         'module': the instance of the module,
         'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
         """
         return self._output_modules.get(module_name)
 
@@ -1145,7 +1144,7 @@ class Py3:
         Obtain color for a value using thresholds.
 
         The value will be checked against any defined thresholds.  These should
-        have been set in the i3status configuration.  If more than one
+        have been set in the configuration.  If more than one
         threshold is needed for a module then the name can also be supplied.
         If the user has not supplied a named threshold but has defined a
         general one that will be used.

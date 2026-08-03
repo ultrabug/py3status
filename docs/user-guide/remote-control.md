@@ -1,8 +1,7 @@
 # Controlling py3status remotely
 
 Just like i3status, you can force an update of your i3bar by sending a
-SIGUSR1 signal to py3status. Note that this will also send a SIGUSR1
-signal to i3status.
+SIGUSR1 signal to py3status.
 
 ```bash
 $ killall -USR1 py3status
