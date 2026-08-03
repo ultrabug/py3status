@@ -165,41 +165,6 @@ class Py3status:
             return self.state_stop
         return "?"
 
-    def mpd_status(self):
-        # I - get current mpd status (or wait until it changes)
-        # this writes into self.current_status
-        if self.use_idle is not False:
-            if not self.idle_thread.is_alive():
-                sleep(self.cache_timeout)  # rate limit thread restarting
-                self.idle_thread = Thread(target=self._get_status)
-                self.idle_thread.daemon = True
-                self.idle_thread.start()
-        else:
-            self._get_status()
-
-        # II - format response
-        text, state = ("", "")
-        if self.current_status is not None:
-            text, state = self.current_status
-
-        if len(text) > self.max_width:
-            text = "{}...".format(text[: self.max_width - 3])
-
-        response = {
-            "cached_until": self.py3.time_in(self.cache_timeout),
-            "full_text": text if state or not self.hide_on_error else "",
-        }
-
-        if state:
-            if state == "play":
-                response["color"] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
-            elif state == "pause":
-                response["color"] = self.py3.COLOR_PAUSE or self.py3.COLOR_DEGRADED
-            elif state == "stop":
-                response["color"] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
-
-        return response
-
     def _get_status(self):
         while True:
             try:
@@ -262,6 +227,41 @@ class Py3status:
                 return
             finally:
                 self.py3.update()  # to propagate error message
+
+    def mpd_status(self):
+        # I - get current mpd status (or wait until it changes)
+        # this writes into self.current_status
+        if self.use_idle is not False:
+            if not self.idle_thread.is_alive():
+                sleep(self.cache_timeout)  # rate limit thread restarting
+                self.idle_thread = Thread(target=self._get_status)
+                self.idle_thread.daemon = True
+                self.idle_thread.start()
+        else:
+            self._get_status()
+
+        # II - format response
+        text, state = ("", "")
+        if self.current_status is not None:
+            text, state = self.current_status
+
+        if len(text) > self.max_width:
+            text = "{}...".format(text[: self.max_width - 3])
+
+        response = {
+            "cached_until": self.py3.time_in(self.cache_timeout),
+            "full_text": text if state or not self.hide_on_error else "",
+        }
+
+        if state:
+            if state == "play":
+                response["color"] = self.py3.COLOR_PLAY or self.py3.COLOR_GOOD
+            elif state == "pause":
+                response["color"] = self.py3.COLOR_PAUSE or self.py3.COLOR_DEGRADED
+            elif state == "stop":
+                response["color"] = self.py3.COLOR_STOP or self.py3.COLOR_BAD
+
+        return response
 
     def kill(self):
         if self.idle_thread.is_alive():

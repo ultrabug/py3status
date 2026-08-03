@@ -235,7 +235,6 @@ class Py3status:
 
     def post_config_hook(self):
         self.load_data = {}
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def loadavg(self):
         cpu = float(cpu_count())
@@ -244,9 +243,7 @@ class Py3status:
             self.load_data[key + "min"] = value
             self.load_data[key + "avg"] = value / cpu * 100
 
-        for x in self.thresholds_init:
-            if x in self.load_data:
-                self.py3.threshold_get_color(self.load_data[x], x)
+        self.py3.threshold_update(self.load_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

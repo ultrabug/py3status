@@ -66,9 +66,6 @@ class Py3status:
     format = "DNF [\?if=security&color=bad {available}|\?color=available {available}]"
     thresholds = [(0, "good"), (1, "degraded")]
 
-    def post_config_hook(self):
-        self.thresholds_init = self.py3.get_color_names_list(self.format, ADVISORIES)
-
     def _get_dnf_data(self):
         try:
             updates = loads(self.py3.command_output("dnf updateinfo list --json"))
@@ -87,8 +84,7 @@ class Py3status:
     def dnf_updates(self):
         dnf_data, cached_until = self._get_dnf_data()
 
-        for x in self.thresholds_init:
-            self.py3.threshold_get_color(dnf_data[x], x)
+        self.py3.threshold_update(dnf_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(cached_until),

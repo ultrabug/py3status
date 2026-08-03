@@ -103,12 +103,14 @@ class Py3:
         self._format_color_names = {}
         self._format_placeholders = {}
         self._format_placeholders_cache = {}
+        self._has_thresholds = None
         self._logger = None
         self._module = module
         self._replacements = None
         self._report_exception_cache = set()
         self._thresholds = None
         self._threshold_gradients = {}
+        self._threshold_update_names = {}
         self._uid = uuid4()
 
         if module:
@@ -171,7 +173,7 @@ class Py3:
 
     def _thresholds_init(self):
         """
-        Initiate and check any thresholds set
+        Initialize and check any thresholds set
         """
         thresholds = getattr(self._py3status_module, "thresholds", [])
         self._thresholds = {}
@@ -686,6 +688,12 @@ class Py3:
         self._format_placeholders_cache[format_string][key] = False
         return False
 
+    def _thresholds_available(self):
+        if self._has_thresholds is None:
+            module = getattr(self, "_py3status_module", None)
+            self._has_thresholds = bool(getattr(module, "thresholds", None))
+        return self._has_thresholds
+
     def get_color_names_list(self, format_string, matches=None):
         """
         Returns a list of color names in ``format_string``.
@@ -703,16 +711,14 @@ class Py3:
             [seq] 	matches any character in seq
             [!seq] 	matches any character not in seq
         """
-        if not getattr(self._py3status_module, "thresholds", None):
-            return []
-        elif not format_string:
+        if not self._thresholds_available():
             return []
 
-        if format_string not in self._format_color_names:
+        try:
+            names = self._format_color_names[format_string]
+        except KeyError:
             names = self._formatter.get_color_names(format_string)
             self._format_color_names[format_string] = names
-        else:
-            names = self._format_color_names[format_string]
 
         if not matches:
             return list(names)
@@ -1162,30 +1168,40 @@ class Py3:
         if self._thresholds is None:
             self._thresholds_init()
 
-        # allow name with different values
+        # allow one threshold name to use per-item threshold values
         if isinstance(name, tuple):
-            name_used = "{}/{}".format(name[0], name[1])
-            if name[2]:
-                self._thresholds[name_used] = [(x[0], self._get_color(x[1])) for x in name[2]]
-            name = name[0]
+            name, key, thresholds = name
+            name_used = f"{name}/{key}"
+            if thresholds:
+                self._thresholds[name_used] = [(x[0], self._get_color(x[1])) for x in thresholds]
+                self._threshold_gradients.pop(name_used, None)
         else:
             # if name not in thresholds info then use defaults
             name_used = name
-            if name_used not in self._thresholds:
+            thresholds = self._thresholds.get(name_used)
+            if thresholds is None:
                 name_used = None
+                thresholds = self._thresholds.get(name_used)
 
-        # convert value to int/float
-        thresholds = self._thresholds.get(name_used)
+        # save color so it can be accessed via safe_format()
+        if name:
+            color_name = f"color_threshold_{name}"
+        else:
+            color_name = "color_threshold"
+
+        # skip on empty thresholds/values
+        if not thresholds or value is None or value == "":
+            setattr(self._py3status_module, color_name, None)
+            return None
+
+        # conversion
         color = None
         try:
             value = float(value)
         except (TypeError, ValueError):
             pass
 
-        # skip on empty thresholds/values
-        if not thresholds or value in [None, ""]:
-            pass
-        elif isinstance(value, str):
+        if isinstance(value, str):
             # string
             for threshold in thresholds:
                 if value == threshold[0]:
@@ -1225,14 +1241,32 @@ class Py3:
             except TypeError:
                 color = None
 
-        # save color so it can be accessed via safe_format()
-        if name:
-            color_name = f"color_threshold_{name}"
-        else:
-            color_name = "color_threshold"
         setattr(self._py3status_module, color_name, color)
 
         return color
+
+    def threshold_update(self, thresholds, format_string):
+        """
+        Convenience helper for static threshold updates.
+
+        This checks threshold names from the format string against
+        values in the thresholds dict and updates matching threshold colors.
+
+        :param thresholds: dict containing threshold values
+        :param format_string: format string to check for threshold names
+        """
+        if not self._thresholds_available() or not thresholds or "color=" not in format_string:
+            return
+
+        try:
+            names = self._threshold_update_names[format_string]
+        except KeyError:
+            names = self.get_color_names_list(format_string)
+            self._threshold_update_names[format_string] = names
+
+        for name in names:
+            if name in thresholds:
+                self.threshold_get_color(thresholds[name], name)
 
     def replace(self, value, name=None):
         """

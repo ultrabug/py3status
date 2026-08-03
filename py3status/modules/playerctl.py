@@ -130,7 +130,6 @@ class Py3status:
     def post_config_hook(self):
         # Initialize module settings
         self._setup_buttons()
-        self.thresholds_init = self.py3.get_color_names_list(self.format_player)
         self.replacements_init = self.py3.get_replacements_list(self.format_player)
         self.position = self.py3.format_contains(self.format_player, "position")
         self.cache_timeout = getattr(self, "cache_timeout", 1)
@@ -340,9 +339,7 @@ class Py3status:
                     player_data[x] = self.py3.replace(player_data[x], x)
 
             # Set the color of a player
-            for key in self.thresholds_init:
-                if key in player_data:
-                    self.py3.threshold_get_color(player_data[key], key)
+            self.py3.threshold_update(player_data, self.format_player)
 
             format_player = self.py3.safe_format(self.format_player, player_data)
             self.py3.composite_update(format_player, {"index": player_data["player"]})

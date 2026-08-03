@@ -35,7 +35,6 @@ class Py3status:
     thresholds = [(0, "good"), (50, "degraded"), (100, "bad")]
 
     def post_config_hook(self):
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
         self.reg_ex_pkg = re.compile(b"v\\s\\S+", re.M)
 
     def zypper_updates(self):
@@ -47,9 +46,7 @@ class Py3status:
             "update": len(self.reg_ex_pkg.findall(output)),
         }
 
-        for x in self.thresholds_init:
-            if x in zypper_data:
-                self.py3.threshold_get_color(zypper_data[x], x)
+        self.py3.threshold_update(zypper_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
