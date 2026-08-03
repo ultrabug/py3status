@@ -678,11 +678,6 @@ class Py3status:
         if update:
             self.py3.update()
 
-    def kill(self):
-        self._kill = True
-        if self._name_owner_change_match:
-            self._dbus._clean_up_signal_match(self._name_owner_change_match)
-
     def mpris(self):
         """
         Get the current output format and return it.
@@ -746,6 +741,11 @@ class Py3status:
             "composite": composite,
         }
         return response
+
+    def kill(self):
+        self._kill = True
+        if self._name_owner_change_match:
+            self._dbus._clean_up_signal_match(self._name_owner_change_match)
 
     def on_click(self, event):
         """

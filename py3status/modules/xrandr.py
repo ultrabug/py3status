@@ -440,24 +440,6 @@ class Py3status:
                 else:
                     break
 
-    def on_click(self, event):
-        """
-        Click events
-            - left click & scroll up/down: switch between modes
-            - right click: apply selected mode
-            - middle click: force refresh of available modes
-        """
-        self._no_force_on_change = True
-        button = event["button"]
-        if button == 4:
-            self._switch_selection(-1)
-        if button in [1, 5]:
-            self._switch_selection(1)
-        if button == 2:
-            self._choose_what_to_display(force_refresh=True)
-        if button == 3:
-            self._apply()
-
     def xrandr(self):
         """
         This is the main py3status method, it will orchestrate what's being
@@ -508,6 +490,23 @@ class Py3status:
                 self._fallback_to_available_output()
 
         return response
+
+    def on_click(self, event):
+        """
+        Left click & scroll up/down: switch between modes
+        Right click: apply selected mode
+        Middle click: force refresh of available modes
+        """
+        self._no_force_on_change = True
+        button = event["button"]
+        if button == 4:
+            self._switch_selection(-1)
+        if button in [1, 5]:
+            self._switch_selection(1)
+        if button == 2:
+            self._choose_what_to_display(force_refresh=True)
+        if button == 3:
+            self._apply()
 
 
 if __name__ == "__main__":

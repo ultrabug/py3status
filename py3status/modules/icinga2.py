@@ -63,6 +63,17 @@ class Py3status:
         if not self.base_url:
             raise Exception(STRING_NOT_CONFIGURED)
 
+    def _query_service_count(self, state):
+        url_parameters = self.url_parameters
+        if self.disable_acknowledge:
+            url_parameters = url_parameters + "&service_handled=0"
+        result = requests.get(
+            self.base_url + url_parameters.format(service_state=state),
+            auth=(self.user, self.password),
+            verify=self.ca,
+        )
+        return len(result.json())
+
     def icinga2(self):
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
@@ -75,17 +86,6 @@ class Py3status:
             ),
         }
         return response
-
-    def _query_service_count(self, state):
-        url_parameters = self.url_parameters
-        if self.disable_acknowledge:
-            url_parameters = url_parameters + "&service_handled=0"
-        result = requests.get(
-            self.base_url + url_parameters.format(service_state=state),
-            auth=(self.user, self.password),
-            verify=self.ca,
-        )
-        return len(result.json())
 
 
 if __name__ == "__main__":

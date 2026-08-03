@@ -39,6 +39,16 @@ class Py3status:
         if not self.py3.check_commands("apt"):
             raise Exception(STRING_NOT_INSTALLED)
 
+    def _check_apt_updates(self):
+        """
+        This method will use the 'checkupdates' command line utility
+        to determine how many updates are waiting to be installed via
+        'apt list --upgradeable'.
+        """
+        output = str(subprocess.check_output(["apt", "list", "--upgradeable"]))
+        output = output.split(LINE_SEPARATOR)
+        return len(output[1:-1])
+
     def apt_updates(self):
         apt_updates = self._check_apt_updates()
 
@@ -51,16 +61,6 @@ class Py3status:
             "cached_until": self.py3.time_in(self.cache_timeout),
             "full_text": full_text,
         }
-
-    def _check_apt_updates(self):
-        """
-        This method will use the 'checkupdates' command line utility
-        to determine how many updates are waiting to be installed via
-        'apt list --upgradeable'.
-        """
-        output = str(subprocess.check_output(["apt", "list", "--upgradeable"]))
-        output = output.split(LINE_SEPARATOR)
-        return len(output[1:-1])
 
 
 if __name__ == "__main__":

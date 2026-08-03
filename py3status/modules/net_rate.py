@@ -104,6 +104,43 @@ class Py3status:
 
         self.thresholds_init = self.py3.get_color_names_list(self.format)
 
+    def _get_stat(self):
+        """
+        Get statistics from devfile in list of lists of words
+        """
+
+        def dev_filter(x):
+            # get first word and remove trailing interface number
+            x = x.strip().split(" ")[0][:-1]
+
+            if x in self.interfaces_blacklist:
+                return False
+
+            if self.all_interfaces:
+                return True
+
+            if x in self.interfaces:
+                return True
+
+            return False
+
+        # read devfile, skip two header files
+        x = filter(dev_filter, open(self.devfile).readlines()[2:])
+
+        try:
+            # split info into words
+            return [_x.split() for _x in x]
+
+        except StopIteration:
+            return None
+
+    def _format_value(self, value):
+        """
+        Return formatted string
+        """
+        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
+        return self.py3.safe_format(self.format_value, {"value": value, "unit": unit})
+
     def net_rate(self):
         network_stat = self._get_stat()
         deltas = {}
@@ -182,43 +219,6 @@ class Py3status:
             )
 
         return response
-
-    def _get_stat(self):
-        """
-        Get statistics from devfile in list of lists of words
-        """
-
-        def dev_filter(x):
-            # get first word and remove trailing interface number
-            x = x.strip().split(" ")[0][:-1]
-
-            if x in self.interfaces_blacklist:
-                return False
-
-            if self.all_interfaces:
-                return True
-
-            if x in self.interfaces:
-                return True
-
-            return False
-
-        # read devfile, skip two header files
-        x = filter(dev_filter, open(self.devfile).readlines()[2:])
-
-        try:
-            # split info into words
-            return [_x.split() for _x in x]
-
-        except StopIteration:
-            return None
-
-    def _format_value(self, value):
-        """
-        Return formatted string
-        """
-        value, unit = self.py3.format_units(value, unit=self.unit, si=self.si_units)
-        return self.py3.safe_format(self.format_value, {"value": value, "unit": unit})
 
 
 if __name__ == "__main__":
