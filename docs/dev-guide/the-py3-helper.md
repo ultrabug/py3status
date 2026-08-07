@@ -382,7 +382,7 @@ be added automatically following the convention:
 
 returns: HttpResponse
 
-### safe_format(format_string, param_dict=None, force_composite=False, attr_getter=None, max_width=None)
+### safe_format(format_string, param_dict=None, force_composite=False, attr_getter=None)
 
 Parser for advanced formatting.
 
@@ -434,9 +434,6 @@ returned.
 
 attr_getter is a function that will when called with an attribute name
 as a parameter will return a value.
-
-max_width lets you to control the total max width of 'full_text' the
-module is allowed to output on the bar.
 
 ### stop_sound()
 
