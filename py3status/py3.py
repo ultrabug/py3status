@@ -894,40 +894,6 @@ class Py3:
             self._report_exception(f"Invalid format `{format_string}` ({err})")
             return f"invalid format ({err})"
 
-    def build_composite(self, format_string, param_dict=None, composites=None, attr_getter=None):
-        """
-        .. note::
-            deprecated in 3.3 use safe_format().
-
-        Build a composite output using a format string.
-
-        Takes a format_string and treats it the same way as ``safe_format()`` but
-        also takes a composites dict where each key/value is the name of the
-        placeholder and either an output eg ``{'full_text': 'something'}`` or a
-        list of outputs.
-        """
-
-        if param_dict is None:
-            param_dict = {}
-
-        # merge any composites into the param_dict.
-        # as they are no longer dealt with separately
-        if composites:
-            for key, value in composites.items():
-                param_dict[key] = Composite(value)
-
-        try:
-            return self._formatter.format(
-                format_string,
-                self._py3status_module,
-                param_dict,
-                force_composite=True,
-                attr_getter=attr_getter,
-            )
-        except Exception:
-            self._report_exception(f"Invalid format `{format_string}`")
-            return [{"full_text": "invalid format"}]
-
     def composite_update(self, item, update_dict, soft=False):
         """
         Takes a Composite (item) if item is a type that can be converted into a
