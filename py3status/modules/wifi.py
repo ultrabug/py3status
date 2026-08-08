@@ -59,7 +59,6 @@ SAMPLE OUTPUT
 import math
 import re
 
-DEFAULT_FORMAT = "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}|W: down"
 STRING_NOT_INSTALLED = "iw not installed"
 STRING_NO_DEVICE = "no available device"
 
@@ -74,18 +73,12 @@ class Py3status:
     cache_timeout = 10
     device = None
     down_color = "bad"
-    format = DEFAULT_FORMAT
+    format = "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}|W: down"
     signal_bad = 29
     signal_degraded = 49
     thresholds = []
 
     class Meta:
-        deprecated = {
-            "remove": [
-                {"param": "use_sudo", "msg": "obsolete"},
-                {"param": "round_bitrate", "msg": "obsolete"},
-            ]
-        }
         update_config = {
             "update_placeholder_format": [
                 {
@@ -129,22 +122,6 @@ class Py3status:
         self.signal_dbm_bad = self._percent_to_dbm(self.signal_bad)
         self.signal_dbm_degraded = self._percent_to_dbm(self.signal_degraded)
         self.thresholds_init = self.py3.get_color_names_list(self.format)
-
-        # DEPRECATION WARNING
-        format_down = getattr(self, "format_down", None)
-        format_up = getattr(self, "format_up", None)
-
-        if self.format != DEFAULT_FORMAT:
-            return
-
-        if format_up or format_down:
-            self.format = "{}|{}".format(
-                format_up or "W: {bitrate} {bitrate_unit} {signal_percent}% {ssid}",
-                format_down or "W: down",
-            )
-            msg = "DEPRECATION WARNING: you are using old style configuration "
-            msg += "parameters you should update to use the new format."
-            self.py3.log(msg)
 
     def _dbm_to_percent(self, dbm):
         return 2 * (dbm + 100)

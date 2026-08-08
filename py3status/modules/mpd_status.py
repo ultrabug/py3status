@@ -66,7 +66,6 @@ stopped
 """
 
 import datetime
-import re
 import socket
 from threading import Thread
 from time import sleep
@@ -123,11 +122,6 @@ class Py3status:
     use_idle = None
 
     def post_config_hook(self):
-        # Convert from %placeholder% to {placeholder}
-        # This is not perfect but should be good enough
-        if not self.py3.get_placeholders_list(self.format) and "%" in self.format:
-            self.format = re.sub("%([a-z]+)%", r"{\1}", self.format)
-            self.py3.log("Old % style format DEPRECATED use { style format")
         # class variables:
         self.client = None
         self.current_status = None
