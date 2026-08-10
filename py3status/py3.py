@@ -148,10 +148,6 @@ class Py3:
                 # use color "hidden" to hide blocks
                 if _name == "hidden":
                     param = "hidden"
-                # TODO: removing this statement does not fail "test_color_10()" but would fail
-                # easily in the bar. the test is there to raise awareness about this.
-                # TODO: "test_color_11()" shows how the tests can be incorrect as it does not print
-                # everything correctly (i.e. orange vs ORaNgE) due to non composite/formatter code.
                 elif hasattr(param, "none_setting"):
                     # see if named color and use if it is
                     param = expand_color(_name)

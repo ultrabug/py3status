@@ -6,6 +6,42 @@ from py3status.py3 import Py3
 py3 = Py3()
 
 
+class MissingSetting:
+    none_setting = True
+
+
+class MockWrapper:
+    config = {"py3_config": {"general": {}}}
+    output_modules = {}
+
+    def __init__(self, settings):
+        self.settings = settings
+
+    def get_config_attribute(self, module_name, name):
+        return self.settings.get(name, MissingSetting())
+
+
+class MockModule:
+    module_full_name = "test_module"
+    module_class = object()
+
+    def __init__(self, settings):
+        self._py3_wrapper = MockWrapper(settings)
+
+
+def test_config_color_resolution(monkeypatch):
+    monkeypatch.setattr(Py3, "_formatter", None)
+
+    default_color = Py3(MockModule({})).COLOR_REBECCAPURPLE
+    disabled_color = Py3(MockModule({"color_rebeccapurple": None})).COLOR_REBECCAPURPLE
+
+    assert default_color == "#663399"
+    assert disabled_color
+    assert not py3.is_color(disabled_color)
+    assert Py3(MockModule({})).COLOR_HIDDEN == "hidden"
+    assert Py3(MockModule({})).COLOR_NOTACOLOR is None
+
+
 def test_format_units():
 
     tests = [

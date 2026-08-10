@@ -60,8 +60,10 @@ class Module:
 
     class py3:
         COLOR_BAD = "#FF0000"
+        COLOR_BLUE = "#0000FF"
         COLOR_DEGRADED = "#FFFF00"
         COLOR_GOOD = "#00FF00"
+        COLOR_ORANGE = "#FFA500"
 
     def module_method(self):
         return "method"
@@ -802,7 +804,6 @@ def test_color_9a():
 
 
 def test_color_10():
-    # correct, but code is py3 instead of composite/formatter. same w/ color=hidden.
     run_formatter(
         {
             "format": r"[\?color=None&show None][\?color=degraded&show degraded]",
@@ -815,26 +816,23 @@ def test_color_10():
 
 
 def test_color_11():
-    # one would say it's right, but maybe one would say it's wrong too.
     run_formatter(
         {
             "format": r"[\?color=ORANGE&show orange] [\?color=bLuE&show blue]",
-            "expected": "orange blue",  # wrong imho
-            # "expected": [
-            #     {"full_text": "orange", "color": "#FFA500"},
-            #     {"full_text": "blue", "color": "#0000FF"},
-            # ],
+            "expected": [
+                {"full_text": "orange ", "color": "#FFA500"},
+                {"full_text": "blue", "color": "#0000FF"},
+            ],
         }
     )
 
 
-def test_color_12():
+def test_color_12(monkeypatch):
+    monkeypatch.setattr(Module, "color_test", "#FFA500", raising=False)
     run_formatter(
         {
-            "color_test": "#FFA500",
             "format": r"\?color=test test",
-            "expected": "test",  # wrong
-            # "expected": [{"full_text": "test", "color": "#FFA500"}]
+            "expected": [{"full_text": "test", "color": "#FFA500"}],
         }
     )
 
