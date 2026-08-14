@@ -332,11 +332,7 @@ class Py3status:
         }
 
         self._dbus = SystemBus()
-        self.init = {
-            "ip": [],
-            "sms_message": [],
-            "thresholds": self.py3.get_color_names_list(self.format),
-        }
+        self.init = {"ip": [], "sms_message": []}
         self.last_messages = 0
         self.last_notification = self.py3.storage_get("notification")
 
@@ -565,9 +561,7 @@ class Py3status:
                     wwan_data["format_message"] = self._manipulate_message(message_data)
 
         # thresholds
-        for x in self.init["thresholds"]:
-            if x in wwan_data:
-                self.py3.threshold_get_color(wwan_data[x], x)
+        self.py3.threshold_update(wwan_data, self.format)
 
         # notifications
         if self.format_notification:

@@ -111,10 +111,6 @@ class Py3status:
             ("devices", "org.bluez.Device1"),
         ]
 
-        self.thresholds_init = {}
-        for name in ["format", "format_adapter", "format_device"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _dbus_init(self):
         bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
         iface = "org.freedesktop.DBus.ObjectManager"
@@ -162,9 +158,7 @@ class Py3status:
             new_device = []
 
             for device in devices:
-                for x in self.thresholds_init["format_device"]:
-                    if x in device:
-                        self.py3.threshold_get_color(device[x], x)
+                self.py3.threshold_update(device, self.format_device)
 
                 new_device.append(self.py3.safe_format(self.format_device, device))
 
@@ -173,9 +167,7 @@ class Py3status:
 
             adapter.update({"format_device": format_device, "device": len(devices)})
 
-            for x in self.thresholds_init["format_adapter"]:
-                if x in adapter:
-                    self.py3.threshold_get_color(adapter[x], x)
+            self.py3.threshold_update(adapter, self.format_adapter)
 
             new_adapter.append(self.py3.safe_format(self.format_adapter, adapter))
 
@@ -184,9 +176,7 @@ class Py3status:
 
         bluetooth_data = {"format_adapter": format_adapter, "adapter": len(adapters)}
 
-        for x in self.thresholds_init["format"]:
-            if x in bluetooth_data:
-                self.py3.threshold_get_color(bluetooth_data[x], x)
+        self.py3.threshold_update(bluetooth_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

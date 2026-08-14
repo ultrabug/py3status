@@ -129,42 +129,6 @@ class Py3status:
         if self.security not in ["ssl", "starttls"]:
             raise ValueError("Unknown security protocol")
 
-    def imap(self):
-        # I -- acquire mail_count
-        if self.use_idle is not False:
-            if not self.idle_thread.is_alive():
-                sleep(self.read_timeout)  # rate-limit thread-restarting (when network is offline)
-                self.idle_thread = Thread(target=self._get_mail_count)
-                self.idle_thread.daemon = True
-                self.idle_thread.start()
-        else:
-            self._get_mail_count()
-        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
-        if self.mail_error is not None:
-            self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
-            self.py3.error(self.mail_error)
-            self.mail_error = None
-
-        # II -- format response
-        response["full_text"] = self.py3.safe_format(self.format, {"unseen": self.mail_count})
-
-        if self.mail_count is None:
-            response["color"] = (self.py3.COLOR_BAD,)
-            response["full_text"] = self.py3.safe_format(
-                self.format, {"unseen": STRING_UNAVAILABLE}
-            )
-        elif self.mail_count == NO_DATA_YET:
-            response["full_text"] = ""
-        elif self.mail_count == 0 and self.hide_if_zero:
-            response["full_text"] = ""
-        elif self.mail_count > 0:
-            response["color"] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
-            response["urgent"] = self.allow_urgent
-        if self.network_error is not None and self.degraded_when_stale:
-            response["color"] = self.py3.COLOR_DEGRADED
-
-        return response
-
     def _check_if_idle(self, connection):
         supports_idle = "IDLE" in connection.capabilities
 
@@ -382,6 +346,42 @@ class Py3status:
                 break
             finally:
                 self.py3.update()  # to propagate mail_error
+
+    def imap(self):
+        # I -- acquire mail_count
+        if self.use_idle is not False:
+            if not self.idle_thread.is_alive():
+                sleep(self.read_timeout)  # rate-limit thread-restarting (when network is offline)
+                self.idle_thread = Thread(target=self._get_mail_count)
+                self.idle_thread.daemon = True
+                self.idle_thread.start()
+        else:
+            self._get_mail_count()
+        response = {"cached_until": self.py3.time_in(self.cache_timeout)}
+        if self.mail_error is not None:
+            self.py3.log(self.mail_error, level=self.py3.LOG_ERROR)
+            self.py3.error(self.mail_error)
+            self.mail_error = None
+
+        # II -- format response
+        response["full_text"] = self.py3.safe_format(self.format, {"unseen": self.mail_count})
+
+        if self.mail_count is None:
+            response["color"] = (self.py3.COLOR_BAD,)
+            response["full_text"] = self.py3.safe_format(
+                self.format, {"unseen": STRING_UNAVAILABLE}
+            )
+        elif self.mail_count == NO_DATA_YET:
+            response["full_text"] = ""
+        elif self.mail_count == 0 and self.hide_if_zero:
+            response["full_text"] = ""
+        elif self.mail_count > 0:
+            response["color"] = self.py3.COLOR_NEW_MAIL or self.py3.COLOR_GOOD
+            response["urgent"] = self.allow_urgent
+        if self.network_error is not None and self.degraded_when_stale:
+            response["color"] = self.py3.COLOR_DEGRADED
+
+        return response
 
 
 if __name__ == "__main__":

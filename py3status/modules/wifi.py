@@ -254,9 +254,7 @@ class Py3status:
             "ssid": ssid,
         }
 
-        for x in self.thresholds_init:
-            if x in wifi_data:
-                self.py3.threshold_get_color(wifi_data[x], x)
+        self.py3.threshold_update(wifi_data, self.format)
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),

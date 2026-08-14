@@ -86,6 +86,9 @@ class Py3status:
     format_stopped = "Spotify stopped"
     replacements = None
 
+    def post_config_hook(self):
+        self.replacements_init = self.py3.get_replacements_list(self.format)
+
     def _spotify_cmd(self, action):
         return SPOTIFY_CMD.format(dbus_client=self.dbus_client, cmd=action)
 
@@ -137,9 +140,6 @@ class Py3status:
             return (self.py3.safe_format(self.format, spotify_data), color)
         except Exception:
             return (self.format_down, self.py3.COLOR_OFFLINE or self.py3.COLOR_BAD)
-
-    def post_config_hook(self):
-        self.replacements_init = self.py3.get_replacements_list(self.format)
 
     def spotify(self):
         """

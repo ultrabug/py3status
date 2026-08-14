@@ -119,46 +119,6 @@ class Py3status:
             ],
         }
 
-    def _trace(self, msg):
-        if not self.trace:
-            return
-        self.py3.log(msg, self.py3.LOG_INFO)
-
-    def _refresh_token(self):
-        if self._token and self._token["expires"] > time.time():
-            return
-
-        self._trace("refreshing twitch oauth token")
-        auth_endpoint = "https://id.twitch.tv/oauth2/token"
-        auth_request = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "grant_type": "client_credentials",
-        }
-
-        try:
-            response = self.py3.request(auth_endpoint, data=auth_request)
-        except self.py3.RequestException:
-            return {}
-
-        data = response.json()
-        if not data:
-            data = vars(response)
-            error = data.get("_error_message")
-            if error:
-                self.py3.error("{} {}".format(error, data["_status_code"]))
-
-        self._token = data
-        self._token["expires"] = time.time() + self._token["expires_in"] - 60
-        self.py3.storage_set("oauth_token", self._token)
-
-    def _headers(self):
-        self._refresh_token()
-        return {
-            "Authorization": "Bearer " + self._token["access_token"],
-            "Client-ID": self.client_id,
-        }
-
     def post_config_hook(self):
         for config_name in ["client_id", "client_secret", "stream_name"]:
             if not getattr(self, config_name, None):
@@ -201,6 +161,46 @@ class Py3status:
 
         if "en-us" not in self.locales:
             self.locales.append("en-us")
+
+    def _trace(self, msg):
+        if not self.trace:
+            return
+        self.py3.log(msg, self.py3.LOG_INFO)
+
+    def _refresh_token(self):
+        if self._token and self._token["expires"] > time.time():
+            return
+
+        self._trace("refreshing twitch oauth token")
+        auth_endpoint = "https://id.twitch.tv/oauth2/token"
+        auth_request = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "grant_type": "client_credentials",
+        }
+
+        try:
+            response = self.py3.request(auth_endpoint, data=auth_request)
+        except self.py3.RequestException:
+            return {}
+
+        data = response.json()
+        if not data:
+            data = vars(response)
+            error = data.get("_error_message")
+            if error:
+                self.py3.error("{} {}".format(error, data["_status_code"]))
+
+        self._token = data
+        self._token["expires"] = time.time() + self._token["expires_in"] - 60
+        self.py3.storage_set("oauth_token", self._token)
+
+    def _headers(self):
+        self._refresh_token()
+        return {
+            "Authorization": "Bearer " + self._token["access_token"],
+            "Client-ID": self.client_id,
+        }
 
     def _get_twitch_data(self, url, first=True):
         try:

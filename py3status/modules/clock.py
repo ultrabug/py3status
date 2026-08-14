@@ -205,22 +205,6 @@ class Py3status:
         timezone = self.format[self.active]
         self.py3.storage_set("timezone", timezone)
 
-    def on_click(self, event):
-        """
-        Switch the displayed module or pass the event on to the active module
-        """
-        if event["button"] == self.button_reset:
-            self._change_active(0)
-        elif event["button"] == self.button_change_time_format:
-            self.active_time_format += 1
-            if self.active_time_format >= len(self.format_time):
-                self.active_time_format = 0
-            # save the active format_time
-            time_format = self.format_time[self.active_time_format]
-            self.py3.storage_set("time_format", time_format)
-        elif event["button"] == self.button_change_format:
-            self._change_active(1)
-
     def clock(self):
         # cycling
         if self.cycle and time.time() >= self._cycle_time:
@@ -292,6 +276,22 @@ class Py3status:
             "full_text": self.py3.safe_format(self.format[self.active], times),
             "cached_until": timeout,
         }
+
+    def on_click(self, event):
+        """
+        Switch the displayed module or pass the event on to the active module
+        """
+        if event["button"] == self.button_reset:
+            self._change_active(0)
+        elif event["button"] == self.button_change_time_format:
+            self.active_time_format += 1
+            if self.active_time_format >= len(self.format_time):
+                self.active_time_format = 0
+            # save the active format_time
+            time_format = self.format_time[self.active_time_format]
+            self.py3.storage_set("time_format", time_format)
+        elif event["button"] == self.button_change_format:
+            self._change_active(1)
 
 
 if __name__ == "__main__":

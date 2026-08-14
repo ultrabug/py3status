@@ -173,14 +173,10 @@ class Py3status:
         else:
             raise Exception(STRING_ERROR.format(self.ipc))
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def scratchpad(self):
         scratchpad_data = self.backend.get_scratchpad_data()
 
-        for x in self.thresholds_init:
-            if x in scratchpad_data:
-                self.py3.threshold_get_color(scratchpad_data[x], x)
+        self.py3.threshold_update(scratchpad_data, self.format)
 
         response = {
             "cached_until": self.py3.time_in(self.cache_timeout),
