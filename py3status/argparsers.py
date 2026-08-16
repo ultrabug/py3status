@@ -2,7 +2,6 @@ import argparse
 import os
 from pathlib import Path
 from platform import python_version
-from shutil import which
 
 from py3status.version import version
 
@@ -25,7 +24,7 @@ def parse_cli_args():
 
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
-    i3status_config_file_candidates = [
+    config_file_candidates = [
         xdg_home_path / "py3status/config",
         xdg_home_path / "i3status/config",
         xdg_home_path / "i3/i3status.conf",  # custom
@@ -34,13 +33,13 @@ def parse_cli_args():
         xdg_dirs_path / "i3status/config",
         Path("/etc/i3status.conf"),
     ]
-    for path in i3status_config_file_candidates:
+    for path in config_file_candidates:
         if path.exists():
-            i3status_config_file_default = path
+            config_file_default = path
             break
     else:
-        # if files does not exists, defaults to ~/.i3/i3status.conf
-        i3status_config_file_default = i3status_config_file_candidates[3]
+        # if files does not exists, defaults to ~/.i3status.conf
+        config_file_default = config_file_candidates[3]
 
     class Parser(argparse.ArgumentParser):
         # print usages and exit on errors
@@ -61,7 +60,7 @@ def parse_cli_args():
 
     # command line options
     parser = Parser(
-        description="The agile, python-powered, i3status wrapper",
+        description="The agile, python-powered statusline generator",
         formatter_class=HelpFormatter,
     )
     parser.add_argument(
@@ -75,8 +74,8 @@ def parse_cli_args():
         "-c",
         "--config",
         action="store",
-        default=i3status_config_file_default,
-        dest="i3status_config_path",
+        default=config_file_default,
+        dest="config_path",
         help="load config",
         metavar="FILE",
         type=Path,
@@ -110,7 +109,7 @@ def parse_cli_args():
         "--standalone",
         action="store_true",
         dest="standalone",
-        help="run py3status without i3status",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "-t",
@@ -133,11 +132,11 @@ def parse_cli_args():
         "-u",
         "--i3status",
         action="store",
-        default=which("i3status") or "i3status",
+        nargs="?",
+        const=True,
         dest="i3status_path",
-        help="specify i3status path",
+        help=argparse.SUPPRESS,
         metavar="PATH",
-        type=Path,
     )
     parser.add_argument(
         "-v",
@@ -192,6 +191,8 @@ def parse_cli_args():
 
     # defaults
     del options.print_version
+    del options.standalone
+    del options.i3status_path
     options.minimum_interval = 0.1  # minimum module update interval
     options.click_events = not options.__dict__.pop("disable_click_events")
 
