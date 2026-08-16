@@ -268,6 +268,10 @@ This is useful because we just get simple placeholder without any
 formatting that may be applied to them
 eg ``'{placeholder:.2f}'`` will give ``['{placeholder}']``
 
+### get_config(name, default=None)
+
+Return a supported py3status configuration value.
+
 ### get_wm_msg()
 
 Return the control program of the current window manager.

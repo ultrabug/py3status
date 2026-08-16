@@ -476,6 +476,16 @@ class Py3:
             if module_info:
                 module_info["module"].force_update()
 
+    def get_config(self, name, default=None):
+        """Return a supported py3status configuration value."""
+        module_settings = ["markup"]
+        runtime_settings = ["testing", "wm_name"]
+        if name in module_settings:
+            return self._get_config_setting(name, default)
+        if name in runtime_settings:
+            return self._py3_wrapper.config.get(name, default)
+        raise ValueError(f"Unsupported config `{name}`")
+
     def get_wm_msg(self):
         """
         Return the control program of the current window manager.
