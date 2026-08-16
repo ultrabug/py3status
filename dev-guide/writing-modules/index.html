@@ -892,6 +892,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#method-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method order
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1397,6 +1408,28 @@ i3bar 4.12).</p>
 configuration parameters have been set. This is useful for any work a
 module must do before its output methods are run for the first time.
 <code>post_config_hook()</code> introduced in version 3.1</p>
+<h3 id="method-order">Method order</h3>
+<p>Modules submitted to py3status should define methods in this order: optional
+<code>post_config_hook()</code>, optional private helper methods, required module method named
+after the file, optional <code>kill()</code>, and optional <code>on_click()</code>.</p>
+<p>For example, a module named <code>my_module.py</code> that defines every optional method
+should use this layout:</p>
+<pre><code class="language-python">class Py3status:
+    def post_config_hook(self):
+        ...
+
+    def _get_data(self):
+        ...
+
+    def my_module(self):
+        ...
+
+    def kill(self):
+        ...
+
+    def on_click(self, event):
+        ...
+</code></pre>
 <h2 id="py3-module-helper">Py3 module helper</h2>
 <p>Py3 is a special helper object that gets injected into py3status
 modules, providing extra functionality. A module can access it via the
