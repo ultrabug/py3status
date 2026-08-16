@@ -49,37 +49,6 @@ class Py3status:
     state_open = "open"
     url = "https://status.chaospott.de/status.json"
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "open_color",
-                    "new": "color_open",
-                    "msg": "obsolete parameter use `color_open`",
-                },
-                {
-                    "param": "closed_color",
-                    "new": "color_closed",
-                    "msg": "obsolete parameter use `color_closed`",
-                },
-                {
-                    "param": "closed_text",
-                    "new": "state_closed",
-                    "msg": "obsolete parameter use `state_closed`",
-                },
-                {
-                    "param": "open_text",
-                    "new": "state_open",
-                    "msg": "obsolete parameter use `state_open`",
-                },
-                {
-                    "param": "time_text",
-                    "new": "format_lastchanged",
-                    "msg": "obsolete parameter use `format_lastchanged`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         self.button_refresh = 2
         self.color_open = self.py3.COLOR_OPEN or self.py3.COLOR_GOOD

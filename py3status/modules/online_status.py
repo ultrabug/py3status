@@ -41,22 +41,6 @@ class Py3status:
     timeout = 2
     url = "https://www.google.com"
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "format_online",
-                    "new": "icon_on",
-                    "msg": "obsolete parameter use `icon_on`",
-                },
-                {
-                    "param": "format_offline",
-                    "new": "icon_off",
-                    "msg": "obsolete parameter use `icon_off`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         self.color_on = self.py3.COLOR_ON or self.py3.COLOR_GOOD
         self.color_off = self.py3.COLOR_OFF or self.py3.COLOR_BAD

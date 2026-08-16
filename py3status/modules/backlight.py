@@ -95,17 +95,6 @@ class Py3status:
     hide_when_unavailable = False
     low_tune_threshold = 0
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "device_path",
-                    "new": "device",
-                    "msg": "obsolete parameter use `device`",
-                }
-            ]
-        }
-
     def post_config_hook(self):
         try:
             bus = dbus.SystemBus()

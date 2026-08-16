@@ -368,17 +368,6 @@ class Py3status:
     unit_wind = "mph"
 
     class Meta:
-        deprecated = {
-            "remove": [{"param": "offset_gmt", "msg": "obsolete"}],
-            "rename": [
-                {
-                    "param": "forecast_text_separator",
-                    "new": "format_forecast_separator",
-                    "msg": "obsolete parameter, use format_forecast_separator",
-                }
-            ],
-        }
-
         update_config = {
             "update_placeholder_format": [
                 {

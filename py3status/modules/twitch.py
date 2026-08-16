@@ -107,18 +107,6 @@ class Py3status:
     tag_delimiter = " "
     trace = False
 
-    class Meta:
-        deprecated = {
-            "remove": [{"param": "format_invalid", "msg": "obsolete"}],
-            "rename_placeholder": [
-                {
-                    "placeholder": "stream_name",
-                    "new": "display_name",
-                    "format_strings": ["format"],
-                }
-            ],
-        }
-
     def post_config_hook(self):
         for config_name in ["client_id", "client_secret", "stream_name"]:
             if not getattr(self, config_name, None):
@@ -262,7 +250,6 @@ class Py3status:
 
         twitch_data = {
             "user": self.user,
-            # ensure display name is still there, deprecate+remove later?
             "display_name": self.user["display_name"],
         }
         current_format = ""

@@ -27,9 +27,6 @@ class Py3status:
     # available configuration parameters
     format = "{system} {release}"
 
-    class Meta:
-        deprecated = {"remove": [{"param": "cache_timeout", "msg": "obsolete parameter"}]}
-
     def uname(self):
         keys = ["system", "node", "release", "version", "machine", "processor"]
         full_text = self.py3.safe_format(self.format, dict(zip(keys, uname())))

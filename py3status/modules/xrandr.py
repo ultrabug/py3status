@@ -162,22 +162,6 @@ class Py3status:
     on_udev_drm = "refresh_and_freeze"
     output_combinations = None
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "format_clone",
-                    "new": "icon_clone",
-                    "msg": "obsolete parameter use `icon_clone`",
-                },
-                {
-                    "param": "format_extend",
-                    "new": "icon_extend",
-                    "msg": "obsolete parameter use `icon_extend`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         """
         Initialization

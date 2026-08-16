@@ -52,44 +52,6 @@ class Py3status:
     }
 
     class Meta:
-        def deprecate_function(config):
-            return {
-                "thresholds": {
-                    "down": [
-                        (0, "bad"),
-                        (config.get("low_speed", 30), "degraded"),
-                        (config.get("med_speed", 60), "good"),
-                    ],
-                    "total": [
-                        (0, "good"),
-                        (config.get("low_traffic", 400), "degraded"),
-                        (config.get("med_traffic", 700), "bad"),
-                    ],
-                }
-            }
-
-        deprecated = {
-            "function": [{"function": deprecate_function}],
-            "remove": [
-                {
-                    "param": "low_speed",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-                {
-                    "param": "med_speed",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-                {
-                    "param": "low_traffic",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-                {
-                    "param": "med_traffic",
-                    "msg": "obsolete, set using thresholds parameter",
-                },
-            ],
-        }
-
         update_config = {
             "update_placeholder_format": [
                 {

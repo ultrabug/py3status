@@ -48,19 +48,6 @@ class Py3status:
     )
 
     def post_config_hook(self):
-        items = [
-            "icon_num_on",
-            "icon_num_off",
-            "icon_caps_on",
-            "icon_caps_off",
-            "icon_scr_on",
-            "icon_scr_off",
-        ]
-        if self.py3.format_contains(self.format, ["caps", "num", "scr"]) or (
-            any(getattr(self, v, None) is not None for v in items)
-        ):
-            raise Exception("please update the config for this module")
-        # end deprecation
         self.locks = {}
         self.keyring = {"num_lock": "Num", "caps_lock": "Caps", "scroll_lock": "Scroll"}
 

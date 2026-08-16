@@ -97,22 +97,6 @@ class Py3status:
     use_idle = None
     user = None
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "new_mail_color",
-                    "new": "color_new_mail",
-                    "msg": "obsolete parameter use `color_new_mail`",
-                },
-                {
-                    "param": "imap_server",
-                    "new": "server",
-                    "msg": "obsolete parameter use `server`",
-                },
-            ]
-        }
-
     def post_config_hook(self):
         # class variables:
         self.mail_count = NO_DATA_YET

@@ -73,21 +73,6 @@ class Py3status:
     thresholds = [(0, "bad"), (1024, "degraded"), (1024 * 1024, "good")]
     unit = "B/s"
 
-    class Meta:
-        def deprecate_function(config):
-            # support old thresholds
-            precision = config.get("precision", 1)
-            padding = 3 + 1 + precision + 1 + 5
-            format_value = r"[\?min_length={padding} {{value:.{precision}f}} {{unit}}]".format(
-                padding=padding, precision=precision
-            )
-            return {"format_value": format_value}
-
-        deprecated = {
-            "function": [{"function": deprecate_function}],
-            "remove": [{"param": "precision", "msg": "obsolete, use format_value instead"}],
-        }
-
     def post_config_hook(self):
         # parse some configuration parameters
         if not isinstance(self.interfaces, list):

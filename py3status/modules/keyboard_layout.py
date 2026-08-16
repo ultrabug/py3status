@@ -65,8 +65,6 @@ class Py3status:
     layouts = None
 
     def post_config_hook(self):
-        self.colors = getattr(self, "colors", None)  # old config
-
         avail_command = {
             "xkblayout-state": (self._set_xkblayout, self._get_xkblayout),
             "setxkbmap": (self._set_setxkbmap, self._get_setxkbmap),
@@ -81,8 +79,6 @@ class Py3status:
         # affecting the original list
         self._layouts = self.layouts[:]
         self._last_layout = None
-
-        self.colors_dict = {}
         # old compatibility: set default values
         self.defaults = {
             "fr": "#268BD2",
@@ -150,12 +146,6 @@ class Py3status:
             "full_text": self.py3.safe_format(self.format, {"layout": lang, "variant": variant}),
         }
 
-        if self.colors and not self.colors_dict:
-            self.colors_dict = {
-                k.strip(): v.strip()
-                for k, v in (layout.split("=") for layout in self.colors.split(","))
-            }
-
         # colorize languages containing spaces and/or dashes too
         language = lang.upper()
         for character in " -":
@@ -163,8 +153,6 @@ class Py3status:
                 language = language.replace(character, "_")
 
         lang_color = getattr(self.py3, f"COLOR_{language}")
-        if not lang_color:
-            lang_color = self.colors_dict.get(lang)
         if not lang_color:  # old compatibility: try default value
             lang_color = self.defaults.get(lang)
         if lang_color:
