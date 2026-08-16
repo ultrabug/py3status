@@ -137,11 +137,11 @@ class Common:
         self.none_setting = NoneSetting()
         self.config = py3_wrapper.config
 
-    def get_config_attribute(self, name, attribute):
+    def get_config_attribute(self, name, attribute, general=True):
         """
         Look for the attribute in the config.  Start with the named module and
-        then walk up through any containing group and then try the general
-        section of the config.
+        then walk up through any containing group and the py3status section.
+        Finally, try the general section unless `general` is false.
         """
 
         # A user can set a param to None in the config to prevent a param
@@ -158,7 +158,7 @@ class Common:
         if hasattr(param, "none_setting"):
             # check py3status config section
             param = config["py3status"].get(attribute, self.none_setting)
-        if hasattr(param, "none_setting"):
+        if hasattr(param, "none_setting") and general:
             # check py3status general section
             param = config["general"].get(attribute, self.none_setting)
         if param and (attribute == "color" or attribute.startswith("color_")):
@@ -776,7 +776,7 @@ class Py3statusWrapper:
             self.config["py3_config"]["general"]["output_format"]
         )
 
-        # determine the output separator, if needed
+        # configure the separator for non-i3bar output formats
         color_separator = None
         if self.config["py3_config"]["general"]["colors"]:
             color_separator = self.config["py3_config"]["general"]["color_separator"]
