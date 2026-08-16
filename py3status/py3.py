@@ -887,8 +887,9 @@ class Py3:
                         chars_left = max(0, chars_left)
             return result
         except Exception as err:
-            self._report_exception(f"Invalid format `{format_string}` ({err})")
-            return f"invalid format ({err})"
+            msg = f"Invalid format `{format_string}` ({err})"
+            self._report_exception(msg)
+            raise Exception(msg) from err
 
     def composite_update(self, item, update_dict, soft=False):
         """
