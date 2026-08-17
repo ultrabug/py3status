@@ -167,7 +167,8 @@ The following options will work on `i3`.
   is not reached. Either `left` (default), `center`, or `right`.
 - `background`: Specify a background color for py3status modules.
 - `markup`: Specify how modules should be parsed.
-- `min_width`: Specify a minimum width of pixels for modules.
+- `min_width`: Specify a minimum width in pixels, or use a string to
+  specify the minimum width using that text's rendered width.
 - `separator`: Specify a separator boolean for modules.
 - `separator_block_width`: Specify a separator block width for
   modules.

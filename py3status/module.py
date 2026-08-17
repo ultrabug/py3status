@@ -331,8 +331,8 @@ class Module:
         # i3bar
         min_width = fn(self.module_full_name, "min_width")
         if not hasattr(min_width, "none_setting"):
-            if not isinstance(min_width, int):
-                err = "Invalid `min_width` attribute, should be an int. "
+            if not isinstance(min_width, (int, str)):
+                err = "Invalid `min_width` attribute, should be an int or string. "
                 err += f"Got `{min_width}`."
                 raise TypeError(err)
             self.i3bar_module_options["min_width"] = min_width
