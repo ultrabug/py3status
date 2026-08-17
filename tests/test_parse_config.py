@@ -20,6 +20,35 @@ DETECTED_CONFIGS = [
 ]
 
 
+def test_parenthesized_string_concatenation():
+    config = '''\
+static_string {
+    format = (
+        "string1"
+        "string2"
+    )
+}
+'''
+
+    parser = parse_config.ConfigParser(config, None)
+    parser.parse()
+
+    assert parser.config["static_string"]["format"] == "string1string2"
+
+
+def test_parenthesized_tuple_unchanged():
+    config = '''\
+static_string {
+    value = ("string1", "string2")
+}
+'''
+
+    parser = parse_config.ConfigParser(config, None)
+    parser.parse()
+
+    assert parser.config["static_string"]["value"] == ("string1", "string2")
+
+
 @pytest.mark.parametrize(
     ("payload", "expected"),
     [
