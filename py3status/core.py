@@ -809,9 +809,6 @@ class Py3statusWrapper:
                 icon = f"{icon}"
         else:
             msg = f"py3status: {msg}"
-        if level != "info" and module_name == "":
-            fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
-            msg = fix_msg.format(msg)
         # Rate limiting. If rate limiting then we need to calculate the time
         # period for which the message should not be repeated.  We just use
         # A simple chunked time model where a message cannot be repeated in a
@@ -829,13 +826,20 @@ class Py3statusWrapper:
         msg_hash = hash(f"{module_name}#{limit_key}#{msg}#{title}")
         if msg_hash in self.notified_messages:
             return
+        self.notified_messages.add(msg_hash)
+
+        # log notifications
         log_level = resolve_log_level(level)
         if module_name:
             notification_logger = logging.getLogger(module_logger_name(module_name))
             notification_logger.log(log_level, "notification: '%s: %s'", title, msg)
         else:
             logger.log(log_level, msg)
-        self.notified_messages.add(msg_hash)
+
+        # terminal notifications
+        if sys.stderr.isatty():
+            print(f"\033[93m{msg}\033[0m", file=sys.stderr)
+            return
 
         try:
             if dbus:
