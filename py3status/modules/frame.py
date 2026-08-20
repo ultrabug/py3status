@@ -14,8 +14,7 @@ Configuration parameters:
     format_button_closed: Format for the button when frame open (default '+')
     format_button_open: Format for the button when frame closed (default '-')
     format_separator: Specify separator between contents.
-        If this is None then the default i3bar separator will be used
-        (default None)
+        Booleans control native separators (default True)
     open: If button then the frame can be set to be open or close
         (default True)
 
@@ -95,13 +94,16 @@ class Py3status:
     format = "{output}"
     format_button_closed = "+"
     format_button_open = "-"
-    format_separator = None
+    format_separator = True
     open = True
 
     class Meta:
         container = True
 
     def post_config_hook(self):
+        # migrate separator config
+        if self.format_separator is None:
+            self.format_separator = True
         self.urgent = False
         if not self.py3.format_contains(self.format, "button"):
             self.open = True
@@ -116,27 +118,13 @@ class Py3status:
 
         # get the child modules output.
         composites = {}
-        output = []
-        if self.format_separator:
-            format_separator = self.py3.safe_format(self.format_separator)
+        outputs = []
         for item in self.items:
-            out = self.py3.get_output(item)[:]
-            for o in out:
-                composites["output_" + o["name"]] = o["full_text"]
-            if self.format_separator is None:
-                if out and "separator" not in out[-1]:
-                    # we copy the item as we do not want to change the
-                    # original.
-                    last_item = out[-1].copy()
-                    last_item["separator"] = True
-                    out[-1] = last_item
-            elif self.format_separator:
-                out += format_separator
-            output += out
-
-        # Remove last separator
-        if self.format_separator:
-            output = output[:-1]
+            output = self.py3.get_output(item)
+            for block in output:
+                composites["output_" + block["name"]] = block["full_text"]
+            outputs.append(output)
+        output = self.py3.safe_join(self.format_separator, outputs)
         if self.open:
             urgent = False
         else:

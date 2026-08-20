@@ -313,16 +313,14 @@ class Py3status:
 
                 new_sensor.append(self.py3.safe_format(self.format_sensor, sensor))
 
-            format_sensor_separator = self.py3.safe_format(self.format_sensor_separator)
-            format_sensor = self.py3.composite_join(format_sensor_separator, new_sensor)
+            format_sensor = self.py3.safe_join(self.format_sensor_separator, new_sensor)
 
             chip["format_sensor"] = format_sensor
             del chip["sensors"]
 
             new_chip.append(self.py3.safe_format(self.format_chip, chip))
 
-        format_chip_separator = self.py3.safe_format(self.format_chip_separator)
-        format_chip = self.py3.composite_join(format_chip_separator, new_chip)
+        format_chip = self.py3.safe_join(self.format_chip_separator, new_chip)
         self.first_run = False
 
         return {

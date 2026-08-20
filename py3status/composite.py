@@ -95,7 +95,21 @@ class Composite:
             diff = item.copy()
             del diff["full_text"]
 
-            if diff == diff_last or (item["full_text"].strip() == "" and item_last):
+            can_merge = (
+                # no native separator on the previous item
+                not (item_last is not None and isinstance(item_last.get("separator"), bool))
+                and (
+                    # merge identical attributes
+                    diff == diff_last
+                    or (
+                        # merge unseparated whitespace
+                        item_last is not None
+                        and "separator" not in item
+                        and not item["full_text"].strip()
+                    )
+                )
+            )
+            if can_merge:
                 item_last["full_text"] += item["full_text"]
             else:
                 diff_last = diff
@@ -112,15 +126,19 @@ class Composite:
         The output will be a Composite.
         """
         output = Composite()
-        first_item = True
+        previous_block = None
         for item in items:
-            # skip empty items
             if not item:
                 continue
-            # skip separator on first item
-            if first_item:
-                first_item = False
-            else:
+            item = Composite(item).copy()
+            if isinstance(separator, bool):
+                for block in reversed(item):
+                    if block.get("full_text"):
+                        if previous_block is not None:
+                            previous_block.setdefault("separator", separator)
+                        previous_block = block
+                        break
+            elif output:
                 output.append(separator)
             output.append(item)
         return output
