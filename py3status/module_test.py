@@ -4,7 +4,6 @@ from ast import literal_eval
 from sys import argv
 from threading import Event
 
-from py3status.core import Common, Module
 from py3status.log import ShortnameFilter, log_message, resolve_log_level
 
 
@@ -44,6 +43,8 @@ class MockPy3statusWrapper:
             pass
 
     def __init__(self, config):
+        from py3status.core import Common
+
         self.logger = logging.getLogger(__name__)
 
         self.config = {
@@ -86,6 +87,8 @@ class MockPy3statusWrapper:
 
 
 def module_test(module_class, config=None):
+    from py3status.core import Module
+
     if not config:
         config = {}
 
