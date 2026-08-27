@@ -16,7 +16,6 @@ from py3status.constants import LOGGING_CONFIG, LOGGING_LOG_FILE_CONFIG
 from py3status.events import Events
 from py3status.formatter import expand_color
 from py3status.helpers import print_stderr
-from py3status.i3status import I3status
 from py3status.log import module_logger_name, resolve_log_level
 from py3status.module import Module
 from py3status.output import OutputFormat
@@ -31,6 +30,7 @@ CONFIG_SPECIAL_SECTIONS = [
     ".module_groups",
     "general",
     "i3s_modules",
+    "i3s_py_modules",
     "on_click",
     "order",
     "py3_modules",
@@ -434,15 +434,36 @@ class Py3statusWrapper:
     def get_discoverable_modules(self):
         """Mapping from module name to relevant objects.
 
-        There are two ways of discovery and storage:
+        There are three ways of discovery and storage:
+        `i3status_python` (bundled): include_path, f_name
         `include_paths` (no installation): include_path, f_name
         `entry_point` (from installed package): "entry_point", <Py3Status class>
 
-        Modules of the same name from entry-point packages shadow all other modules.
+        Modules of the same name from entry-point packages shadow all other modules;
+        path-included modules shadow the bundled i3status-python ones.
         """
-        discoverable_modules = self._get_path_included_modules()
+        discoverable_modules = self._get_i3status_python_modules()
+        discoverable_modules.update(self._get_path_included_modules())
         discoverable_modules.update(self._get_entry_point_based_modules())
         return discoverable_modules
+
+    def _get_i3status_python_modules(self):
+        """
+        Native reimplementations of i3status's own modules, bundled under
+        py3status/i3status/modules/ so they can be organized separately
+        from regular py3status modules while still being addressable by
+        their plain, i3status-compatible names (eg. `battery`, not
+        `battery_level`) with no configuration required.
+        """
+        i3status_python_modules = {}
+        i3status_python_path = Path(__file__).resolve().parent / "i3status" / "modules"
+        if not i3status_python_path.is_dir():
+            return i3status_python_modules
+        for f_name in i3status_python_path.iterdir():
+            if f_name.suffix != ".py" or f_name.stem.startswith("_"):
+                continue
+            i3status_python_modules[f_name.stem] = (i3status_python_path, f_name)
+        return dict(sorted(i3status_python_modules.items()))
 
     def _get_path_included_modules(self):
         """
@@ -678,6 +699,8 @@ class Py3statusWrapper:
             }
 
         # setup i3status thread
+        from py3status.i3status_wrapper import I3status
+
         self.i3status_thread = I3status(self)
 
         # If standalone or no i3status modules then use the mock i3status
@@ -688,7 +711,7 @@ class Py3statusWrapper:
             i3s_mode = "mocked"
         else:
             for module in i3s_modules:
-                logger.info("adding i3status module '%s'", module)
+                logger.info("adding i3status-wrapper module '%s'", module)
             i3s_mode = "started"
             self.i3status_thread.start()
             while not self.i3status_thread.ready:
@@ -764,6 +787,9 @@ class Py3statusWrapper:
         logger.info("path-included module paths: %s", list(map(str, self.config["include_paths"])))
         logger.debug("path-included modules: %s", list(self._get_path_included_modules()))
         logger.debug("entry-point modules: %s", self._get_entry_point_debug_modules())
+
+        for module in self.config["py3_config"]["i3s_py_modules"]:
+            logger.info("adding i3status-python module '%s'", module)
 
         # get a dict of all configured discoverable modules
         discoverable_modules = self.get_configured_discoverable_modules()

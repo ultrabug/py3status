@@ -2,10 +2,11 @@ import ast
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).resolve().parent.parent / "py3status" / "modules"
+I3STATUS_MODULE_PATH = Path(__file__).resolve().parent.parent / "py3status" / "i3status" / "modules"
 
 
-def get_module_files(skip_files):
-    for _file in sorted(MODULE_PATH.iterdir()):
+def get_module_files(skip_files, path=MODULE_PATH):
+    for _file in sorted(path.iterdir()):
         if _file.suffix == ".py" and _file.name not in skip_files:
             yield _file
 
@@ -188,10 +189,17 @@ def test_format_placeholders():
 
 
 def test_module_method_order():
+    # covers both py3status/modules/ and py3status/i3status/modules/ - the
+    # native i3status-compatible modules follow the same Py3status method
+    # ordering convention as regular bundled modules
     skip_files = ["__init__.py", "i3pystatus.py"]
     errors = []
 
-    for _file in get_module_files(skip_files):
+    module_files = list(get_module_files(skip_files)) + list(
+        get_module_files(skip_files, I3STATUS_MODULE_PATH)
+    )
+
+    for _file in module_files:
         methods = get_py3status_methods(_file)
         module_method = _file.stem
         if module_method not in methods:
@@ -199,9 +207,7 @@ def test_module_method_order():
             continue
 
         if "post_config_hook" in methods and methods[0] != "post_config_hook":
-            errors.append(
-                f"Module `{_file}` should define `post_config_hook()` first when present"
-            )
+            errors.append(f"Module `{_file}` should define `post_config_hook()` first when present")
 
         expected_tail = [module_method]
         if "kill" in methods:

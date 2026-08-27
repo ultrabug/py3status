@@ -44,7 +44,7 @@ Download = "https://github.com/ultrabug/py3status/tags"
 Homepage = "https://github.com/ultrabug/py3status"
 
 [project.scripts]
-py3status = "py3status:main"
+py3status = "py3status.cli:main"
 py3-cmd = "py3status.command:send_command"
 
 [tool.hatch.version]

@@ -18,6 +18,11 @@ from py3status.constants import (
     TIME_MODULES,
     TZTIME_FORMAT,
 )
+from py3status.i3status.helpers import (
+    WRAPPER_INVALID_KEYS,
+    instance_config_key,
+    translate_instance,
+)
 from py3status.private import PrivateBase64, PrivateHide
 
 
@@ -731,10 +736,15 @@ def process_config(config_path, py3_wrapper=None):
     config["general"] = general_defaults
 
     config["py3status"] = config_info.get("py3status", {})
+    # global default for get_module_type(): `py3status { i3status = "python" }`
+    # makes every real i3status module name resolve natively unless a
+    # section explicitly overrides it with its own `python = True`/`False`
+    i3status_python_default = str(config["py3status"].get("i3status", "")).lower() == "python"
     modules = {}
     on_click = {}
     i3s_modules = []
     py3_modules = []
+    i3s_py_modules = []
     module_groups = {}
 
     def process_onclick(key, value, group_name):
@@ -758,20 +768,42 @@ def process_config(config_path, py3_wrapper=None):
         clicks[button] = value
         return True
 
-    def get_module_type(name):
+    def get_module_type(name, module=None):
         """
         i3status or py3status?
+
+        A module's own config section can force resolution to a bundled
+        native i3status-compatible module (eg 'battery', 'disk')
+        instead of being delegated to a real i3status process, by setting
+        `python = True` in that section - or `python = False` to force
+        the opposite. Without either, `py3status { i3status = "python" }`
+        sets the default for every real i3status module name at once
+        (still unset by default: unchanged, these names always go to
+        i3status_wrapper).
+
+        `python` is only ever consulted when the module name itself is
+        one of the 16 real i3status module names (I3S_MODULE_NAMES) -
+        the same names both the real i3status wrapper and the bundled
+        i3status-python package implement. For any other module name,
+        `python` isn't a recognized directive at all: it's left
+        completely alone, even if that module happens to define its
+        own unrelated `python` config option.
         """
-        if name.split()[0] in I3S_MODULE_NAMES:
-            return "i3status"
-        return "py3status"
+        module_name = name.split()[0]
+        if module_name not in I3S_MODULE_NAMES:
+            return "py3status"
+        if module is None:
+            module = modules.get(name, {})
+        if "python" in module:
+            return "py3status" if module["python"] else "i3status"
+        return "py3status" if i3status_python_default else "i3status"
 
     def process_module(name, module, parent):
         if parent:
             modules[parent]["items"].append(name)
             mg = module_groups.setdefault(name, [])
             mg.append(parent)
-            if get_module_type(name) == "py3status":
+            if get_module_type(name, module) == "py3status":
                 module[".group"] = parent
 
         # check module content
@@ -797,15 +829,57 @@ def process_config(config_path, py3_wrapper=None):
 
     config["order"] = []
 
-    def remove_any_contained_modules(module):
+    def remove_any_contained_modules(name, module):
         """
-        takes a module definition and returns a dict without any modules that
-        may be defined with it.
+        takes a module definition and returns a dict without any modules
+        that may be defined with it. For the 16 real i3status module
+        names only:
+
+        - `python` itself is always stripped either way - it's a
+          py3status-framework directive (consumed by get_module_type),
+          never a real i3status config option, and real i3status hard-
+          errors ("no such option") parsing it if it reaches the
+          wrapper (confirmed against the real binary) - so even an
+          explicit `python = False` can't be allowed to leak through.
+        - if it resolves to a native i3status-compatible module, it's
+          filled in with the config key the section's own instance/
+          title implies (eg 'disk /home' -> path='/home'), matching
+          what real i3status derives from the section title - only for
+          keys the user hasn't already set explicitly themselves. This
+          runs regardless of whether the section has any explicit
+          config block at all, since `py3status { i3status = "python" }`
+          (see get_module_type) can resolve a bare `order += "battery 0"`
+          - with no `battery 0 { }` block anywhere - to the native module.
+        - if it resolves to the real i3status wrapper instead, that
+          same instance-only key (eg run_watch's 'title', disk's
+          'path') is stripped too, for the same "no such option"
+          reason - whether the key came from the user directly or was
+          left over from a section that used to have `python = True`.
+          So is every key in WRAPPER_INVALID_KEYS (eg 'cache_timeout'),
+          which applies across all 16 modules rather than being tied to
+          one module's own instance/title.
+
+        Every other module is left alone entirely, in case it happens
+        to define its own unrelated `python` config option.
         """
         fixed = {}
         for k, v in module.items():
             if not isinstance(v, ModuleDefinition):
                 fixed[k] = v
+        module_name = name.split()[0]
+        if module_name in I3S_MODULE_NAMES:
+            if get_module_type(name, module) == "py3status":
+                for key, value in translate_instance(name).items():
+                    fixed.setdefault(key, value)
+            else:
+                fixed.pop(instance_config_key(module_name), None)
+                for key in WRAPPER_INVALID_KEYS:
+                    fixed.pop(key, None)
+            # `python` is never a real i3status config option either -
+            # strip it regardless of which way it resolved, so an
+            # explicit `python = False` doesn't crash the wrapper the
+            # same way a leftover instance-only key would
+            fixed.pop("python", None)
         return fixed
 
     def append_modules(item):
@@ -816,6 +890,8 @@ def process_config(config_path, py3_wrapper=None):
         else:
             if item not in py3_modules:
                 py3_modules.append(item)
+            if item.split()[0] in I3S_MODULE_NAMES and item not in i3s_py_modules:
+                i3s_py_modules.append(item)
 
     def add_container_items(module_name):
         module = modules.get(module_name, {})
@@ -826,7 +902,7 @@ def process_config(config_path, py3_wrapper=None):
 
             append_modules(item)
             module = modules.get(item, {})
-            config[item] = remove_any_contained_modules(module)
+            config[item] = remove_any_contained_modules(item, module)
             # add any children
             add_container_items(item)
 
@@ -849,11 +925,12 @@ def process_config(config_path, py3_wrapper=None):
         add_container_items(name)
         append_modules(name)
 
-        config[name] = remove_any_contained_modules(module)
+        config[name] = remove_any_contained_modules(name, module)
 
     config["on_click"] = on_click
     config["i3s_modules"] = i3s_modules
     config["py3_modules"] = py3_modules
+    config["i3s_py_modules"] = i3s_py_modules
     config[".module_groups"] = module_groups
 
     # time and tztime modules need a format for correct processing
