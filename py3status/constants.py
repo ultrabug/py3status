@@ -297,6 +297,10 @@ RETIRED_MODULES = {
         "new": ["scratchpad"],
         "msg": "Module {old} has been replaced with a consolidated module {new}.",
     },
+    "screenshot": {
+        "new": [],
+        "msg": "Module {old} has been deprecated.",
+    },
     "thunderbird_todos": {
         "new": [],
         "msg": "Module {old} has been deprecated.",
