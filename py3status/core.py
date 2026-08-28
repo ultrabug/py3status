@@ -183,7 +183,7 @@ class Common:
         NOTE: msg should not end in a '.' for consistency.
         """
         # Get list of paths that our stack trace should be found in.
-        py3_paths = [Path(__file__).resolve()] + self.config["include_paths"]
+        py3_paths = [Path(__file__).resolve().parent] + self.config["include_paths"]
         traceback = None
 
         try:
@@ -209,9 +209,9 @@ class Common:
                 for item in reversed(stack):
                     filename = item[0]
                     for path in py3_paths:
-                        if filename.startswith(path):
+                        if filename.startswith(str(path)):
                             # Found a good trace
-                            filename = item[0].name
+                            filename = Path(item[0]).name
                             line_no = item[1]
                             found = True
                             break
