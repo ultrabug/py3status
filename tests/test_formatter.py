@@ -1050,19 +1050,23 @@ def test_bad_composite_color():
 
 
 def test_soft_1():
-    run_formatter({"format": r"{name}[\?soft  ]{name}", "expected": "Björk Björk"})
+    for soft_space in (r"[\?soft ]", r"[\?soft  ]"):
+        run_formatter({"format": f"{{name}}{soft_space}{{name}}", "expected": "Björk Björk"})
 
 
 def test_soft_2():
-    run_formatter({"format": r"{name}[\?soft  ]{empty}", "expected": "Björk"})
+    for soft_space in (r"[\?soft ]", r"[\?soft  ]"):
+        run_formatter({"format": f"{{name}}{soft_space}{{empty}}", "expected": "Björk"})
 
 
 def test_soft_3():
-    run_formatter({"format": r"{empty}[\?soft  ]{empty}", "expected": ""})
+    for soft_space in (r"[\?soft ]", r"[\?soft  ]"):
+        run_formatter({"format": f"{{empty}}{soft_space}{{empty}}", "expected": ""})
 
 
 def test_soft_4():
-    run_formatter({"format": r"[\?soft  ]", "expected": ""})
+    for soft_space in (r"[\?soft ]", r"[\?soft  ]"):
+        run_formatter({"format": soft_space, "expected": ""})
 
 
 def test_soft_5():

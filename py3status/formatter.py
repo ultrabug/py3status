@@ -198,6 +198,9 @@ class Formatter:
                 # and return to parent block to continue
                 if not block.parent:
                     raise Exception("Too many `]`")
+                # treat empty soft block as a soft space block
+                if block.commands.soft and not block.content:
+                    block.add(Literal(" "))
                 block = block.parent
             elif token.group("switch"):
                 # a new option has been created
