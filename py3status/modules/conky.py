@@ -381,7 +381,7 @@ class Py3status:
             )
         self.tmpfile.write(str.encode(tmp))
         self.tmpfile.close()
-        self.conky_command = f"conky -c {self.tmpfile.name}".split()
+        self.conky_command = ["conky", "-c", self.tmpfile.name]
 
         # skip invalid conky errors
         self.ignored_conky_outputs = [
@@ -442,6 +442,7 @@ class Py3status:
                 encoding="utf-8",
                 errors="replace",
             )
+            self.py3.log(f"config file: {self.tmpfile.name}")
             while self.running:
                 line = self.process.stdout.readline()
                 # check eof before processing so blank lines
