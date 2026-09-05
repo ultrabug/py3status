@@ -5,6 +5,7 @@ import logging.handlers
 import sys
 import time
 from collections import deque
+from copy import deepcopy
 from pathlib import Path
 from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
 from subprocess import Popen
@@ -565,8 +566,10 @@ class Py3statusWrapper:
                 else:
                     base[key] = value
 
-        init_logging_config = dict(LOGGING_CONFIG)
-        user_logging_config = self.config["py3_config"].get("py3status", {}).get("logging", {})
+        init_logging_config = deepcopy(LOGGING_CONFIG)
+        user_logging_config = deepcopy(
+            self.config.get("py3_config", {}).get("py3status", {}).get("logging", {})
+        )
         _deep_merge(init_logging_config, user_logging_config)
 
         if self.config.get("debug"):
@@ -637,12 +640,13 @@ class Py3statusWrapper:
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
+        # set up early to log config parsing
+        self._setup_logging()
         # process py3status config
         config_path = self.config["i3status_config_path"]
         py3_config = process_config(config_path, self)
         self.config["py3_config"] = py3_config
-
-        # setup logging
+        # set up again with custom logging
         self._setup_logging()
 
         # log py3status and python versions
