@@ -7,7 +7,7 @@ This modules allows you to handle your screens outputs directly from your bar!
     - Activate the screen or screen combination on a single click
     - It will detect any newly connected or removed screen automatically
 
-For convenience, this module also proposes some added features:
+For convenience, this module also proposes the following added features.
     - Dynamic parameters for POSITION and WORKSPACES assignment (see below)
     - Automatic fallback to a given screen or screen combination when no more
         screen is available (handy for laptops)

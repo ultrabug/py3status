@@ -31,16 +31,22 @@ Dynamic format placeholders:
     units).
 
 Examples:
-    # If blackbox exporter ran into any failures, show it. If everything
-    # is healthy this will produce 0 rows hence not shown.
+```
+# If blackbox exporter ran into any failures, show it. If everything
+# is healthy this will produce 0 rows hence not shown.
+prometheus {
     query = "probe_success == 0"
     format = "💀 {job} {instance} 💀"
     color = "bad"
+}
 
-    # Basic Prometheus stat
+# Basic Prometheus stat
+prometheus {
     query = "sum(prometheus_sd_discovered_targets)"
     format = "{__v:.0f} targets monitored"
     color = "ok"
+}
+```
 
 @author github.com/Wilm0r
 

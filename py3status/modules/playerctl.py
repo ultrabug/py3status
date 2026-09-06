@@ -36,7 +36,7 @@ Configuration parameters:
 Format placeholders:
     {format_player} format for players
 
-Format player placeholders:
+format_player placeholders:
     {album} album name
     {artist} artist name
     {duration} length of track/video in [HH:]MM:SS, e.g. 03:22

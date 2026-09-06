@@ -1,28 +1,17 @@
-# Writing custom py3status modules
+# Writing Py3status modules
 
-Writing custom modules for py3status is as easy as declaring a Python class.
-This guide will teach you how.
+Writing custom modules for Py3status is as easy as declaring a Python class.
 
 ## Importing custom modules
 
-First of all, it is important to know that py3status will try to find your
-custom modules in the following locations:
+Py3status looks for custom modules in several configuration directories, including
+the standard XDG configuration directory and locations used by i3 and i3status:
+```
+{{ module_search_paths() }}
+```
+You can include custom module path too with
+`py3status -i` in your config.
 
-- `~/.config/py3status/modules`
-- `~/.config/i3status/py3status`
-- `~/.config/i3/py3status`
-- `~/.i3/py3status`
-
-which if you are used to XDG_CONFIG paths relates to:
-
-- `XDG_CONFIG_HOME/py3status/modules`
-- `XDG_CONFIG_HOME/i3status/py3status`
-- `XDG_CONFIG_HOME/i3/py3status`
-- `~/.i3/py3status`
-
-You can also specify the modules location using
-`py3status -i <path to custom modules directory>` in your i3
-configuration file.
 
 ## Example 1: The basics - Hello World!
 
@@ -31,7 +20,7 @@ Now let's start by looking at a simple example.
 Here we start with the most basic module that just outputs a static
 string to the status bar.
 
-```python
+```
 # -*- coding: utf-8 -*-
 """
 Example module that says 'Hello World!'
@@ -51,12 +40,11 @@ class Py3status:
 
 ### Running the example
 
-Save the file as `hello_world.py` in a directory that py3status will
-check for modules. By default it will look in `$HOME/.i3/py3status/` or
-you can specify additional directories using `--include` when you run
-py3status.
+Save the file as `hello_world.py` in a directory that Py3status will
+check for modules. By default, it will look in `$XDG_CONFIG_HOME/py3status/modules`
+or you can specify additional directories using `--include` when you run Py3status.
 
-You need to tell py3status about your new module, so in your
+You need to tell Py3status about your new module, so in your
 `i3status.conf` add:
 
 ```
@@ -68,15 +56,15 @@ should now show up in the status bar.
 
 ### How does it work?
 
-The `Py3status` class tells py3status that this is a module. The module
-gets loaded. py3status then calls any public methods that the class
-contains to get a response. In our example there is a single method
-`hello_world()`. Read more here: [module methods](#module_methods).
+The `Py3status` class tells Py3status that this is a module. The module
+gets loaded. Py3status then calls any public methods that the class
+contains to get a response. In our example, there is a single method
+`hello_world()`. Read more here: [module methods](#module-methods).
 
 ### The response
 
 The response that a method returns must be a python `dict`. It should
-contain at least two key / values.
+contain at least two keys and values.
 
 #### full_text
 
@@ -84,25 +72,25 @@ This is the text that will be displayed in the status bar.
 
 #### cached_until
 
-This tells py3status how long it should consider your response valid
+This tells Py3status how long it should consider your response valid
 before it should re-run the method to get a fresh response. In our
-example our response will not need to be updated so we can use the
-special `self.py3.CACHE_FOREVER` constant. This tells py3status to
+example, our response will not need to be updated so we can use the
+special `self.py3.CACHE_FOREVER` constant. This tells Py3status to
 consider our response always valid.
 
 `cached_until` should be generated via the `self.py3.time_in()` method.
 
 #### self.py3
 
-This is a special object that gets injected into py3status modules. It
+This is a special object that gets injected into Py3status modules. It
 helps provide functionality for the module, such as the `CACHE_FOREVER`
-constant. Read more about the py3.
+constant. Read more about the [py3](/py3-reference/).
 
 ## Example 2: Configuration parameters
 
 Allow users to supply configuration to a module.
 
-```python
+```
 # -*- coding: utf-8 -*-
 """
 Example module that says 'Hello World!' that can be customised.
@@ -125,7 +113,7 @@ class Py3status:
         }
 ```
 
-This module still outputs 'Hello World' as before but now you can
+This module still outputs `'Hello World!'` as before but now you can
 customise the output using your `i3status.config` for example to show
 the text in French.
 
@@ -142,7 +130,7 @@ the config.
 
 Catch click events and perform an action.
 
-```python
+```
 # -*- coding: utf-8 -*-
 """
 Example module that handles events
@@ -187,17 +175,17 @@ we only care about the button.
 
 The `__init__()` method is called when our class is instantiated.
 
-!!! note
-    __init__ is called before any config parameters have been set.
+/// note
+__init__ is called before any config parameters have been set.
+///
 
-We use the `safe_format()` method of `py3` for formatting. Read more
-about the py3.
+We use the `safe_format()` method of `py3` for formatting. Read more about the [py3](/py3-reference/).
 
 ## Example 4: Status string placeholders
 
 Status string placeholders allow us to add information to formats.
 
-```python
+```
 # -*- coding: utf-8 -*-
 """
 Example module that demonstrates status string placeholders
@@ -257,7 +245,7 @@ click_info {
 `self.py3` in our module has color constants that we can access, these
 allow the user to set colors easily in their config.
 
-```python
+```
 # -*- coding: utf-8 -*-
 """
 Example module that uses colors.
@@ -306,7 +294,7 @@ class Py3status:
 
 The colors can be set in the config in the module or its container or in
 the general section. The following example assumes that our module has
-been saved as `number.py`. Although the constants are capitalized they
+been saved as `number.py`. Although the constants are capitalized, they
 are defined in the config in lower case.
 
 ```
@@ -328,7 +316,7 @@ Output methods should provide a response dict.
 
 Example response:
 
-```python
+```
 {
     'full_text': "This text will be displayed",
     'cached_until': 1470922537,  # Time in seconds since the epoch
@@ -343,8 +331,9 @@ The time (in seconds since the epoch) that the output will be classed as
 no longer valid and the output function will be called again.
 
 Since version 3.1, if no `cached_until` value is provided the output
-will be cached for `cache_timeout` seconds by default this is `60` and
-can be set using the `-t` or `--timeout` option when running py3status.
+will be cached for `cache_timeout` seconds by default this is
+`{{ cache_timeout_default() }}` and can be set using the `-t, --timeout`
+option when running Py3status.
 To never expire the `self.py3.CACHE_FOREVER` constant should be used.
 
 `cached_until` should be generated via the `self.py3.time_in()` method.
@@ -369,8 +358,7 @@ component of their output had an event triggered.
 
 **separator**
 
-If `False` no separator will be shown after the output block (requires
-i3bar 4.12).
+If `False` no separator will be shown after the output block.
 
 **urgent**
 
@@ -397,14 +385,14 @@ module must do before its output methods are run for the first time.
 
 ### Method order
 
-Modules submitted to py3status should define methods in this order: optional
+Modules submitted to Py3status should define methods in this order: optional
 `post_config_hook()`, optional private helper methods, required module method named
 after the file, optional `kill()`, and optional `on_click()`.
 
 For example, a module named `my_module.py` that defines every optional method
 should use this layout:
 
-```python
+```
 class Py3status:
     def post_config_hook(self):
         ...
@@ -424,15 +412,16 @@ class Py3status:
 
 ## Py3 module helper
 
-Py3 is a special helper object that gets injected into py3status
+Py3 is a special helper object that gets injected into Py3status
 modules, providing extra functionality. A module can access it via the
-self.py3 instance attribute of its py3status class. For details see py3.
+self.py3 instance attribute of its Py3status class. See the
+[Py3 API reference](/py3-reference/) for details.
 
 ## Composites
 
 Whilst most modules return a simple response eg:
 
-```python
+```
 {
     'full_text': <some text>,
     'cached_until': <cache time>,
@@ -450,7 +439,7 @@ module to the user.
 
 The format of a composite is as follows:
 
-```python
+```
 {
     'cached_until': <cache time>,
     'composite': [
@@ -478,7 +467,7 @@ storage functions of the Py3 helper.
 
 Currently bool, int, float, None, strings, dicts, lists, datetimes etc
 are supported. Basically anything that can be pickled. We do our best to
-ensure that the resulting pickles remain readable across py3status
+ensure that the resulting pickles remain readable across Py3status
 updates where practical.
 
 The following helper functions are defined in the modules py3.
@@ -489,7 +478,7 @@ modification timestamp `_mtime`.
 
 Example:
 
-```python
+```
 def module_function(self):
     # set some storage
     self.py3.storage_set('my_key', value)
@@ -526,7 +515,7 @@ The docstring of a module is used. The format is as follows:
 
 Here is an example of a docstring.
 
-```python
+```
 """
 Single line summary
 
@@ -569,7 +558,7 @@ module {
 Sometimes it is necessary to deprecate configuration parameters. Modules
 are able to specify information about deprecation so that it can be done
 automatically. Deprecation information is specified in the Meta class of
-a py3status module using the deprecated attribute. The following types
+a Py3status module using the deprecated attribute. The following types
 of deprecation are supported.
 
 The deprecation types will be performed in the order here.
@@ -579,7 +568,7 @@ The deprecation types will be performed in the order here.
 The parameter has been renamed. We will update the configuration to use
 the new name.
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -600,7 +589,7 @@ class Py3status:
 Some formats used `{}` as a placeholder this needs to be updated to a
 named placeholder eg `{value}`.
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -620,7 +609,7 @@ class Py3status:
 
 We can use this to rename placeholders in format strings
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -645,7 +634,7 @@ function will be called with the current config and must return a dict.
 If both are supplied then `placeholder_formats` will be updated using
 the dict supplied by the function.
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -667,7 +656,7 @@ class Py3status:
 
 This allows one configuration parameter to set the value of another.
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -693,7 +682,7 @@ For more complex substitutions a function can be defined that will be
 called with the config as a parameter. This function must return a dict
 of key value pairs of parameters to update
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -721,7 +710,7 @@ class Py3status:
 
 The parameters will be removed.
 
-```python
+```
 class Py3status:
 
     class Meta:
@@ -741,7 +730,7 @@ class Py3status:
 Sometimes it is necessary to update configuration parameters. Modules
 are able to specify information about updates so that it can be done
 automatically. Config updating information is specified in the Meta
-class of a py3status module using the update_config attribute. The
+class of a Py3status module using the update_config attribute. The
 following types of updates are supported.
 
 **update_placeholder_format**
@@ -769,8 +758,7 @@ the default formatting of the number they could still do format = 'CPU:
 
 So using this allows sensible defaults formatting and allows simple
 placeholders for user configurations.
-
-```python
+```
 class Py3status:
 
     class Meta:
@@ -792,8 +780,7 @@ class Py3status:
 Each module should be able to run independently for testing purposes.
 This is simply done by adding the following code to the bottom of your
 module.
-
-```python
+```
 if __name__ == "__main__":
     """
     Run module in test mode.
@@ -804,8 +791,7 @@ if __name__ == "__main__":
 
 If a specific config should be provided for the module test, this can be
 done as follows.
-
-```python
+```
 if __name__ == "__main__":
     """
     Run module in test mode.
@@ -819,7 +805,6 @@ if __name__ == "__main__":
 
 Such modules can then be tested independently by running
 `python /path/to/module.py`.
-
 ```bash
 $ python loadavg.py
 [{'full_text': 'Loadavg ', 'separator': False,
@@ -830,7 +815,6 @@ $ python loadavg.py
 
 We also can produce an output similar to i3bar output in terminal with
 `python /path/to/module.py --term`.
-
 ```bash
 $ python loadavg.py --term
 Loadavg 1.41 1.61 1.82
@@ -848,17 +832,17 @@ to syslog with `INFO` level on --log-file and with `DEBUG` level on --debug.
 
 Several modules can write to logs, with varying levels of details.
 Therefore, when debugging a specific module, it may be useful to show only the
-one you're interested in. Add a `logging` dict under the `py3status` section of
+one you're interested in. Add a `logging` dict under `py3status` section of
 your config following `logging`'s configuration schema.
 
 ## Publishing custom modules on PyPI
 
-You can share your custom modules and make them available for py3status
-users even if they are not directly part of the py3status main project!
+You can share your custom modules and make them available for Py3status
+users even if they are not directly part of Py3status main project!
 
 All you have to do is to package your module and publish it to PyPI.
 
-py3status will discover custom modules if they are installed in the same
+Py3status will discover custom modules if they are installed in the same
 host interpreter and if an entry_point in your package `setup.py` is
 defined:
 
@@ -874,13 +858,14 @@ easily:
     <https://github.com/obestwalter/py3status-pewpew/blob/master/setup.py>
 
 We will gladly add `extra_requires` pointing to your modules so that
-users can require them while installing py3status. Just open an issue to
+users can require them while installing Py3status. Just open an issue to
 request this or propose a PR.
 
-If you have installed py3status in a virtualenv (maybe because your
+If you have installed Py3status in a virtualenv (maybe because your
 custom module has dependencies that need to be available) you can also
 create an installable package from your module and publish it on PyPI.
 
-!!! note
-    To clearly identify your py3status package and for others to discover it easily
-    it is recommended to name the PyPI package `py3status-<your module name>`.
+/// note
+To clearly identify your Py3status package and for others to discover it easily,
+it is recommended to name the PyPI package `py3status-<your module name>`.
+///

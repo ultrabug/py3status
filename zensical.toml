@@ -1,0 +1,109 @@
+[project]
+site_name = "Py3status Documentation"
+site_url = "https://ultrabug.github.io/py3status"
+repo_url = "https://github.com/ultrabug/py3status"
+copyright = "Copyright &copy; 2021-2026 Alexys Jacob"
+
+nav = [
+  { "Py3status" = [
+    { "Introduction" = "index.md" },
+    { "Getting Started" = "getting-started.md" },
+    { "Available Modules" = "modules.md" },
+  ] },
+  { "User Guide" = [
+    { "Installation" = "installation.md" },
+    { "Configuration" = "configuration.md" },
+    { "Remote Control" = "remote-control.md" },
+  ] },
+  { "Developer Guide" = [
+    { "Contributing" = "contributing.md" },
+    { "Writing Modules" = "writing-modules.md" },
+    { "Py3 API Reference" = "py3-reference.md" },
+  ] },
+]
+
+extra_css = [
+  "assets/stylesheets/background.css",
+  "assets/stylesheets/nav.css",
+  "assets/stylesheets/modules.css",
+]
+
+[project.plugins.macros]
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["."]
+options.docstring_style = "sphinx"
+options.show_source = true
+options.show_root_heading = true
+options.separate_signature = true
+options.show_signature_annotations = true
+
+[project.theme]
+favicon = "assets/favicon.ico"
+logo = "assets/logomark.png"
+features = [
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "toc.follow",
+  "search.highlight",
+  "content.code.copy",
+]
+
+[project.theme.font]
+text = "Ubuntu"
+code = "Ubuntu Mono"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "blue"
+accent = "light-blue"
+toggle.icon = "material/brightness-7"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "blue"
+accent = "light-blue"
+toggle.icon = "material/brightness-4"
+toggle.name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/ultrabug/py3status"
+name = "py3status on Github"
+
+# Specifying this table at all replaces Zensical's own defaults rather
+# than extending them, so this is Zensical's own default set (see
+# DEFAULT_MARKDOWN_EXTENSIONS in its config.py) plus the two things we
+# actually need on top: a Python default for unlabeled code fences, and
+# pymdownx.blocks.admonition for our `/// note ... ///` fences.
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
+pymdownx.emoji = {}
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.highlight.default_lang = "python"
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+pymdownx.superfences = {}
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true
+pymdownx.tilde = {}
+pymdownx.blocks.admonition = {}

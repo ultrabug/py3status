@@ -116,7 +116,20 @@ lint.extend-select = ["G004"]
 
 [tool.hatch.envs.docs]
 dependencies = [
-    "mkdocs-material>=9.4.5",
-    "Pillow>=3.4.2",
-    "fonttools==4.24.4",
+    "zensical",
+    "mkdocstrings-python",
+    "mkdocs-macros-plugin",
+    "Pillow",
+    "fonttools",
+]
+
+[tool.hatch.envs.docs.scripts]
+generate = "python -m py3status.autodoc {args}"
+build = [
+    "generate",
+    "zensical build",
+]
+serve = [
+    "generate --no-screenshots",
+    "zensical serve {args}",
 ]

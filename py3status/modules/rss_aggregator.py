@@ -17,8 +17,8 @@ Format placeholders:
     {unseen} sum of numbers of unread feed elements
 
 Color options:
-    color_new_items: text color when there is new items (default color_good)
-    color_error: text color when there is an error (default color_bad)
+    color_new_items: text color when there is new items, defaults to color_good
+    color_error: text color when there is an error, defaults to color_bad
 
 Requires:
     requests: python module from pypi https://pypi.python.org/pypi/requests

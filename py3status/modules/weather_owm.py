@@ -210,7 +210,7 @@ Format placeholders:
         {gust} Wind gusts speed in the specified unit
         {speed} Wind speed
         {unit} The unit specified
-    format only:
+    format:
         {city} The name of the city where the weather is
         {country} The name of the country where the weather is
         {forecast} Output of format_forecast

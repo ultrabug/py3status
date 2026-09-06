@@ -33,7 +33,7 @@ format_input placeholders:
         {v} layout variant, eg, basic
         {e} layout variant, {v} or {s}, eg, dvorak
         {C} layout count, eg, 2
-    swaymsg:
+    swaymsg (extra):
         {alias}                   custom string or {name}
         {identifier}              eg, 162:253 USB-HID Keyboard
         {name}                    eg, Trackball, Keyboard, etc

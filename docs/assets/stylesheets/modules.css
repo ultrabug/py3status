@@ -1,0 +1,41 @@
+/* Each module's whole detail block (see autodoc.py's create_module_docs())
+   gets one continuous indent rail, not just its definition list. */
+.md-typeset .module-details {
+  margin: 0.35em 0;
+  padding-left: 1.5em;
+  border-left: 2px solid var(--md-default-fg-color--lightest);
+}
+
+/* Screenshots sit in one paragraph (autodoc.py's screenshots()) - no gap. */
+.md-typeset .module-details .module-screenshots img {
+  display: block;
+  margin: 0;
+}
+
+/* Manpage-style option reference (def_list): monospace, no own indent -
+   .module-details above already provides one rail for the whole module. */
+.md-typeset .module-details dl {
+  font-family: var(--md-code-font, monospace);
+  margin: 0.35em 0;
+}
+
+.md-typeset .module-details dd {
+  margin: 0 0 0.45em 1.5em;
+}
+
+.md-typeset .module-details dd:last-of-type {
+  margin-bottom: 0;
+}
+
+.md-typeset .module-details dd p {
+  margin: 0.1em 0;
+}
+
+.md-typeset .module-details dd em {
+  font-style: normal;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .module-details dd em code {
+  background-color: var(--md-default-fg-color--lightest);
+}

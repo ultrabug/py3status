@@ -1,40 +1,25 @@
 # Configuration
 
-py3status comes with a large range of modules.
+Py3status comes with a wide range of built-in modules and provides 100% compatibility
+with i3status modules. Py3status modules use the same configuration format as i3status,
+so you can use your existing `i3status.conf` or a dedicated `py3status.conf`.
 
-Modules in py3status are configured using your usual `i3status.conf` or
-your own `py3status.conf` which follows the exact same format.
-
-py3status will try to find its configuration file in the following
+Py3status will try to find its configuration file in the following
 locations:
 
-- `~/.config/py3status/config`
-- `~/.config/i3status/config`
-- `~/.config/i3/i3status.conf`
-- `~/.i3status.conf`
-- `~/.i3/i3status.conf`
-- `/etc/xdg/i3status/config`
-- `/etc/i3status.conf`
+```
+{{ config_search_paths() }}
+```
 
-which if you are used to XDG_CONFIG paths relates to:
+Or you can specify your config file with
+`py3status -c <path to config file>`.
 
-- `XDG_CONFIG_HOME/py3status/config`
-- `XDG_CONFIG_HOME/i3status/config`
-- `XDG_CONFIG_HOME/i3/i3status.conf`
-- `~/.i3status.conf`
-- `~/.i3/i3status.conf`
-- `XDG_CONFIG_DIRS/i3status/config`
-- `/etc/i3status.conf`
+## Loading and ordering Py3status modules
 
-You can also specify the config location using
-`py3status -c <path to config file>` in your i3 configuration file.
-
-## Loading and ordering py3status modules
-
-To load a py3status module you just have to list it like any other
+To load a Py3status module, you just have to list it like any other
 i3status module using the `order +=` parameter.
 
-Ordering your py3status modules in your i3bar is just the same as
+Ordering your Py3status modules in your i3bar is just the same as
 i3status modules, just list the order parameter where you want your
 module to be displayed.
 
@@ -47,12 +32,10 @@ order += "imap"
 order += "time"
 ```
 
-## Configuring a py3status module
+## Configuring a module
 
-Your py3status modules are configured the exact same way as i3status
-modules, directly from your `i3status.conf` (or your own configuration file),
-like this :
-
+Your Py3status modules are configured the exact same way as i3status
+modules, directly from your own configuration file, like this :
 ```
 # configure the py3status imap module
 # and run thunderbird when I left click on it
@@ -74,13 +57,15 @@ modules you use. Each module's documentation has a dedicated `Requires`
 section allowing you to know which libraries or binaries they depend
 on. It's up to you to install them on your system.
 
-## The py3status configuration section
+## Py3status configuration section
 
 This special section holds py3status specific configuration. Settings
 here will affect all py3status modules. Many settings e.g. colors can
 still be overridden by also defining in the individual module.
 
-- `stop_signal`. Specify a signal number to be used by i3bar to stop/resume the bar refresh. This is useful if you want to prevent i3bar from stopping py3status when the bar is not visible (hidden/fullscreen).
+### stop_signal
+
+Specify a signal number to be used by i3bar to stop/resume the bar refresh. This is useful if you want to prevent i3bar from stopping py3status when the bar is not visible (hidden/fullscreen).
 
 ```
 # prevent i3bar from stopping py3status when hidden/fullscreen
@@ -89,7 +74,9 @@ py3status {
 }
 ```
 
-- `nagbar_font`. Specify a font for `i3-nagbar -f <font>`.
+### nagbar_font
+
+Specify a font for `i3-nagbar -f <font>`.
 
 ```
 py3status {
@@ -97,9 +84,11 @@ py3status {
 }
 ```
 
-- `storage`: Set storage name or path.
+### storage
 
-Store cache in `$XDG_CACHE_HOME` or `~/.cache`:
+Set storage name or path.
+
+Store cache in `$XDG_CACHE_HOME` (default `~/.cache`):
 
 ```
 # default behavior
@@ -108,7 +97,7 @@ py3status {
 }
 ```
 
-Store per config cache in `$XDG_CACHE_HOME` or `~/.cache`:
+Store per config cache in `$XDG_CACHE_HOME` (default `~/.cache`):
 
 ```
 # first config
@@ -142,60 +131,98 @@ py3status {
 
 ## Generic per-module configuration
 
-You can specify the following options in module configuration.
-
--   `min_length`: Specify a minimum length of characters for modules.
--   `position`: Specify how modules should be positioned when the
-    `min_length` is not reached. Either `left` (default), `center`, or
-    `right`.
-
-```
-static_string {
-    min_length = 15
-    position = 'center'
-}
-```
-
-## Generic configuration applying to all modules
-
 You can specify the options in module or py3status configuration
 section.
 
-The following options will work on `i3`.
+### i3
 
-- `align`: Specify how modules should be aligned when the `min_width`
-  is not reached. Either `left` (default), `center`, or `right`.
-- `background`: Specify a background color for py3status modules.
-- `markup`: Specify how modules should be parsed.
-- `min_width`: Specify a minimum width of pixels for modules.
-- `separator`: Specify a separator boolean for modules.
-- `separator_block_width`: Specify a separator block width for
-  modules.
+#### align
 
-The following options will work on `i3-gaps`.
+Specify how modules should be aligned when the `min_width` is not
+reached.<br>
+One of {{ align_positions() }}.
 
-- `border`: Specify a border color for modules.
-- `border_bottom`: Specify a border width for modules
-- `border_left`: Specify a border width for modules.
-- `border_right`: Specify a border width for modules.
-- `border_top`: Specify a border width for modules.
+#### background
 
-The following options will work on `py3status`.
+Specify a background color for py3status modules.
 
-- `min_length`: Specify a minimum length of characters for modules.
-- `position`: Specify how modules should be positioned when the
-  `min_length` is not reached. Either `left` (default), `center`, or
-  `right`.
+#### border
 
+Specify a border color for modules.
+
+#### border_bottom
+
+Specify a border width for modules.
+
+#### border_left
+
+Specify a border width for modules.
+
+#### border_right
+
+Specify a border width for modules.
+
+#### border_top
+
+Specify a border width for modules.
+
+#### markup {: #markup_i3 }
+
+Specify how modules should be parsed.<br>
+Also works on `py3status`.
+
+#### min_width
+
+Specify a minimum width of pixels for modules.
+
+#### separator
+
+Specify a separator boolean for modules.
+
+#### separator_block_width
+
+Specify a separator block width for modules.
+
+#### urgent_background
+
+Specify urgent background color for modules.
+
+#### urgent_border
+
+Specify urgent border color for modules.
+
+#### urgent_border_bottom
+
+Specify urgent border width for modules.
+
+#### urgent_border_left
+
+Specify urgent border width for modules.
+
+#### urgent_border_right
+
+Specify urgent border width for modules.
+
+#### urgent_border_top
+
+Specify urgent border width for modules.
+
+#### urgent_foreground
+
+Specify urgent foreground color for modules.
+
+You lose urgent functionality too that can be sometimes utilized by
+container modules, e.g., `frame` and `group`.
 ```
-# customize a theme
 py3status {
+  # settings
    align = 'left'
    markup = 'pango'
    min_width = 20
    separator = True
    separator_block_width = 9
 
+  # customize theme
    background = '#285577'
    border = '#4c7899'
    border_bottom = 1
@@ -203,33 +230,7 @@ py3status {
    border_right = 1
    border_top = 1
 
-   min_length = 15
-   position = 'right'
-}
-```
-
-You can specify the options in module or py3status configuration
-section.
-
-The following options will work on `i3bar` and `py3status`.
-
-- `urgent_background`: Specify urgent background color for modules.
-- `urgent_foreground`: Specify urgent foreground color for modules.
-- `urgent_border`: Specify urgent border color for modules.
-
-The following options will work on `i3bar-gaps` and `py3status`.
-
-- `urgent_border_bottom`: Specify urgent border width for modules
-- `urgent_border_left`: Specify urgent border width for modules.
-- `urgent_border_right`: Specify urgent border width for modules.
-- `urgent_border_top`: Specify urgent border width for modules.
-
-You lose urgent functionality too that can be sometimes utilized by
-container modules, e.g., frame and group.
-
-```
-# customize urgent
-py3status {
+  # customize urgent
    urgent_background  = 'blue'
    urgent_foreground = 'white'
    urgent_border = 'red'
@@ -240,14 +241,40 @@ py3status {
 }
 ```
 
-You can specify the options in module or py3status configuration
-section.
+### py3status
 
-- `resources`: Specify a list of 3-tuples, e.g.,
-  `[(option, resource, fallback)]`, to import resources.
+#### markup {: #markup_py3 }
+
+Specify how modules should be parsed.<br>
+Also works on `i3`.
+
+#### min_length
+
+Specify a minimum length of characters for modules.
+
+#### position
+
+Specify how modules should be positioned when the `min_length` is not
+reached.<br>
+One of {{ align_positions() }}.
+
+#### resources
+
+Specify a list of 3-tuples, e.g., `[(option, resource, fallback)]`, to
+import resources.
+
+See [Controlling error behavior](#controlling-error-behavior) for the
+`on_error` parameter.
 
 ```
-# import resources
+# customize a theme
+py3status {
+   markup = 'pango'
+   min_length = 15
+   position = 'right'
+}
+
+# import resources - colors and font
 py3status {
    resources = [
        ('color_bad', '*color9', 'lightcoral'),
@@ -257,9 +284,8 @@ py3status {
    ]
 }
 ```
-
 ```
-# import 16 colors
+# import resources - 16 colors
 py3status {
    resources = [
        ('color_color0', '*color0', 'black'),
@@ -281,7 +307,7 @@ py3status {
    ]
 }
 
-# apply colors
+# apply specific colors
 coin_market {
     thresholds = [(-100, "color9"), (0, "color10")]
 }
@@ -297,7 +323,6 @@ base64 encoding.
 To "hide" a value you can use the `hide()` configuration function. This
 prevents the module displaying the value as a format placeholder and
 from appearing in the logs.
-
 ```
 # Example of 'hidden' configuration
 imap {
@@ -310,7 +335,6 @@ imap {
 To base64 encode a value you can use the `base64()` configuration
 function. This also prevents the module displaying the value as a format
 placeholder and from appearing in the logs.
-
 ```
 # Example of obfuscated configuration
 imap {
@@ -324,11 +348,11 @@ Since version 3.1 obfuscation options can also be added by the legacy
 method. Add `:hide` or `:base64` to the name of the parameters. You are
 advised to use the new `hide()` and `base64()` configuration functions.
 
-!!! note
-    Legacy obfuscation is only available for string:
-    parameters with `:hide` or `:base64`. If you want other types then
-    be sure to use `hide()` and `base64()` configuration functions.
-
+/// note
+Legacy obfuscation is only available for string:
+parameters with `:hide` or `:base64`. If you want other types then
+be sure to use `hide()` and `base64()` configuration functions.
+///
 ```
 # normal_parameter will be shown in log files etc as 'some value'
 # obfuscated_parameter will be shown in log files etc as '***'
@@ -343,7 +367,6 @@ text. Users may want to make it less easy to read. Py3status allows
 strings to be base64 encoded.
 
 To use an encoded string add `:base64` to the name of the parameter.
-
 ```
 # Example of obfuscated configuration
 imap {
@@ -353,14 +376,15 @@ imap {
 }
 ```
 
-!!! warning
-    Base64 encoding is very simple and should not be considered secure in
-    any way.
+/// warning
+Base64 encoding is very simple and should not be considered secure in
+any way.
+///
 
 ## Configuring colors
 
 Since version 3.1 py3status allows greater color configuration. Colors
-can be set in the general section of your `i3status.conf` or in an
+can be set in the general section of your `py3status.conf` or in an
 individual modules configuration. If a color is not in a modules
 configuration then the values from the general section will be used.
 
@@ -369,9 +393,8 @@ colors of the container will be used if they are set, before using ones
 defined in the general section.
 
 Generally colors can specified using hex values eg `#FF00FF` or `#F0F`.
-It is also possible to use css3 color names eg `red` `hotpink`.
-[Check here for al ist of available color names](https://drafts.csswg.org/css-color/#named-colors).
-
+It is also possible to use css3 color names eg `red` `hotpink`
+([reference, with swatches](https://drafts.csswg.org/css-color/#named-colors)).
 ```
 general {
     # These will be used if not supplied by a module
@@ -394,6 +417,12 @@ battery_level {
 }
 ```
 
+The `general` section's own defaults, used whenever a module doesn't
+override them:
+```
+{{ general_defaults() }}
+```
+
 ## Configuring thresholds
 
 Some modules allow you to define thresholds in a module. These are used
@@ -401,7 +430,6 @@ to determine which color to use when displaying the module. Thresholds
 are defined in the config as a list of tuples. With each tuple
 containing a value and a color. The color can either be a named color eg
 `good` referring to `color_good` or a hex value.
-
 ```
 volume_status {
     thresholds = [
@@ -416,7 +444,6 @@ If the value checked against the threshold is equal to or more than a
 threshold then that color supplied will be used.
 
 In the above example the logic would be
-
 ```
 if 0 >= value < 20 use #FF0000
 else if 20 >= value < 50 use color_degraded
@@ -426,7 +453,6 @@ else if 50 >= value use color_good
 Some modules may allow more than one threshold to be defined. If all the
 thresholds are the same they can be defined as above but if you wish to
 specify them separately you can by giving a dict of lists.
-
 ```
 my_module {
     thresholds = {
@@ -444,7 +470,6 @@ my_module {
 ```
 
 You can specify `hidden` color to hide a block.
-
 ```
 # hide a block when ``1avg`` (i.e., 12.4) is less than 20 percent
 format = "[\?color=1avg [\?color=darkgray&show 1min] {1min}]"
@@ -474,7 +499,6 @@ All modules allow you to define the format of their output. This is done
 with the format option. You can:
 
 - display static text:
-
 ```
 mpd_status {
    format = "MPD:"
@@ -486,7 +510,6 @@ mpd_status {
   "placeholders", which follow the format {placeholder_name}. The
   following example shows the state of the MPD (play/pause/stop) and
   the artist and title of the currently playing song.
-
 ```
 mpd_status {
    format = "MPD: {state} {artist} {title}"
@@ -500,7 +523,6 @@ mpd_status {
 - hide invalid (no valid data or undefined) placeholders by enclosing
   them in `[]`. The following example will show `artist - title` if
   artist is present and `title` if title but no artist is present.
-
 ```
 mpd_status {
    format = "MPD: {state} [[{artist} - ]{title}]"
@@ -510,7 +532,6 @@ mpd_status {
 -   show the first block with valid output by dividing them with a pipe
     `|`. The following example will show the filename if neither artist
     nor title are present.
-
 ```
 mpd_status {
    format = "MPD: {state} [[{artist} - ]{title}]|{file}"
@@ -520,7 +541,6 @@ mpd_status {
 -   `\?` can be used to provide extra commands to the format string.
     Multiple commands can be given using an ampersand `&` as a
     separator.
-
 ```
 my_module {
    format = "\?color=#FF00FF&show blue"
@@ -544,7 +564,6 @@ my_module {
 
 A format string using nearly all of the above options could look like
 this:
-
 ```
 mpd_status {
   format = "MPD: {state} [\?if=![stop] [[{artist} - ]{title}]|[{file}]]"
@@ -561,7 +580,6 @@ and title are present, `MPD: [state] title` if artist is missing and
 Some modules use i3bar's urgent feature to indicate that something
 important has occurred. The `allow_urgent` configuration parameter can
 be used to allow/prevent a module from setting itself as urgent.
-
 ```
 # prevent modules showing as urgent, except github
 py3status {
@@ -575,19 +593,36 @@ github {
 
 ## Controlling error behavior
 
+### on_error
+
 When a module error has occurred, it will be reported on the bar. The
 `on_error` configuration parameter allows users to choose what to do
 instead.
 
-Supported values:
+#### show
 
--   `show` (default): report the error on the bar (click to view)
--   `hide`: hide the module on the bar
+(default) Report the error on the bar (click to view).
 
 ```
-# hide errors on all modules by default (still reported on logs)
+py3status {
+    on_error = "show"
+}
+```
+
+#### hide
+
+Hide the module on the bar (still reported on logs).
+
+```
+# hide errors on all modules by default
 py3status {
     on_error = "hide"
+}
+
+# but still show them for battery_level, since a hidden error there
+# could mean you don't notice you're about to run out of power
+battery_level {
+    on_error = "show"
 }
 
 # hide errors on non-NVIDIA hardwares
@@ -601,16 +636,17 @@ xrandr {
 }
 ```
 
-## Grouping Modules
+## Grouping modules
 
-The module_group module allows you to group several modules together.
+### group
+
+The module `group` allows you to group several modules together.
 Only one of the modules are displayed at a time. The displayed module
 can either be cycled through automatically or by user action (the
 default, on mouse scroll).
 
 This module is very powerful and allows you to save a lot of space on
 your bar.
-
 ```
 order += "group tz"
 
@@ -636,14 +672,16 @@ group tz {
 }
 ```
 
-The module_frame module also allows you to group several modules
-together, however in a frame all the modules are shown. This allows you
-to have more than one module shown in a group.
+### frame
 
+The module `frame` also allows you to group several modules together,
+however in a frame module, all the modules are shown. This allows you
+to have more than one module shown in a group.
 ```
 order += "group frames"
 
-# group showing disk space or times using button to change what is shown.
+# group showing disk space or times
+# using button to change what is shown.
 group frames {
     click_mode = "button"
 
@@ -676,8 +714,7 @@ group frames {
 }
 ```
 
-Frames can also have a toggle button to hide/show the content
-
+Frames can also have a toggle button to hide/show the content.
 ```
 # A frame showing times in different cities.
 # We also have a button to hide/show the content
@@ -705,12 +742,12 @@ frame time {
 
 ## Custom click events
 
-py3status allows you to easily add click events to modules in your
-i3bar. These modules can be both i3status or py3status modules. This is
-done in your `i3status.config` using the `on_click` parameter.
+Py3status allows you to easily add click events to modules in your
+i3bar. These modules can be both i3status or Py3status modules. This is
+done in your `py3status.conf` using the `on_click` parameter.
 
 Just add a new configuration parameter named `on_click [button number]`
-to your module config and py3status will then execute the given i3
+to your module config and Py3status will then execute the given i3
 command (using i3-msg).
 
 This means you can run simple tasks like executing a program or execute
@@ -718,18 +755,12 @@ any other i3 specific command.
 
 As an added feature and in order to get your i3bar more responsive,
 every `on_click` command will also trigger a module refresh. This works
-for both py3status modules and i3status modules as described in the
+for both Py3status modules and i3status modules as described in the
 refresh command below.
-
 ```
 # button numbers
-1 = left click
-2 = middle click
-3 = right click
-4 = scroll up
-5 = scroll down
+{{ click_button_aliases() }}
 ```
-
 ```
 # reload the i3 config when I left click on the i3status time module
 # and restart i3 when I middle click on it
@@ -785,15 +816,21 @@ weather_yahoo paris {
 
 ## Special on_click commands
 
-There are two commands you can pass to the `on_click` parameter that
-have a special meaning to py3status :
+### on_click
 
-- `refresh` : This will refresh (expire the cache) of the clicked
-    module. This also works for i3status modules (it will send a SIGUSR1
-    to i3status for you).
-- `refresh_all` : This will refresh all the modules from your i3bar
-    (i3status included). This has the same effect has sending a SIGUSR1
-    to py3status.
+There are two commands you can pass to the `on_click` parameter that
+have a special meaning to Py3status:
+
+#### refresh
+
+This will refresh (expire the cache) of the clicked module. This also
+works for i3status modules (it will send a SIGUSR1 to i3status for
+you).
+
+#### refresh_all
+
+This will refresh all the modules from your i3bar (i3status included).
+This has the same effect as sending a SIGUSR1 to Py3status.
 
 ## Module data and on_click commands
 
@@ -801,7 +838,6 @@ Since version 3.3 it is possible to use the output text of a module in
 the `on_click` command. To do this `$OUTPUT` can be used in command and
 it will be substituted by the modules text output when the command is
 run.
-
 ```
 # copy module output to the clipboard using xclip
 my_module {
@@ -812,12 +848,12 @@ my_module {
 If the output of a module is a composite then the output of the part
 clicked on can be accessed using `$OUTPUT_PART`.
 
-## Environment Variables
+## Environment variables
 
 You may use the value of an environment variable in your configuration
 with the `env(...)` directive. These values are captured at startup and
-may be converted to the needed datatype (only `str`, `int`, `float`,
-`bool` and `auto` are currently supported).
+may be converted to the needed datatype (only {{ conversion_types() }}
+are currently supported).
 
 Note, the `auto` conversion will try to guess the type of the contents
 and automatically convert to that type. Without an explicit conversion
@@ -832,7 +868,6 @@ be used. Note, you cannot use the directive in place of a dictionary
 key, i.e `{..., env(KEY): 'val', ...}`.
 
 See the examples below!
-
 ```
 order += "my_module"
 order += env(ORDER_MODULE)
@@ -858,12 +893,12 @@ module {
 }
 ```
 
-## Inline Shell Code
+## Inline shell code
 
 You can use the standard output of a shell script in your configuration
 with the `shell(...)` directive. These values are captured at startup
-and may be converted to the needed datatype (only `str`, `int`, `float`,
-`bool` and `auto` (default) are currently supported).
+and may be converted to the needed datatype (only {{ conversion_types() }}
+are currently supported).
 
 The shell script executed must return a single line of text on stdout
 and then terminate. If the type is explicitly declared `bool`, the exit
@@ -872,11 +907,9 @@ interpreted falsey). In any other case if the script exits with a
 non-zero exit status an error will be thrown.
 
 The `shell(...)` expression can be used anywhere a constant or an
-`env(...)` directive can be used (see the section "Environment
-Variables").
+`env(...)` directive can be used. See [Environment variables](#environment-variables).
 
 Usage example:
-
 ```
 my_module {
     password = shell(pass show myPasswd | head -n1)
@@ -888,7 +921,6 @@ my_module {
 
 Due to the way the config is parsed you need to to escape any closing
 parenthesis `)` using a backslash `\)`.
-
 ```
 static_string {
     # note we need to explicitly cast the result to str
@@ -900,17 +932,19 @@ static_string {
 
 ## Refreshing modules on udev events with on_udev dynamic options
 
+### `on_udev_<subsystem>`
+
 Refreshing of modules can be triggered when an udev event is detected on
 a specific subsystem using the `on_udev_<subsystem>` configuration
 parameter and an associated action.
 
-Possible actions:
+#### refresh
 
-- `refresh`: immediately refresh the module and keep on updating it as
-    usual
-- `refresh_and_freeze`: module is ONLY refreshed when said udev
-    subsystem emits an event
+Immediately refresh the module and keep on updating it as usual.
 
+#### refresh_and_freeze
+
+Module is **ONLY** refreshed when said udev subsystem emits an event.
 ```
 # refresh xrandr only when udev 'drm' events are triggered
 xrandr {
@@ -918,12 +952,13 @@ xrandr {
 }
 ```
 
-!!! note
-    This feature will only activate when `pyudev` is installed on the system.
-    This is an optional dependency of py3status and is therefore not
-    enforced by all package managers.
+/// note
+This feature will only activate when `pyudev` is installed on the system.
+This is an optional dependency of Py3status and is therefore not
+enforced by all package managers.
+///
 
-## HTTP Request Settings
+## HTTP request Settings
 
 ### Handling timeouts
 
@@ -931,8 +966,7 @@ Timeouts are handled thanks to the global `request_timeout` setting.
 
 Request Timeout for URL request based modules can be specified in the
 module configuration. To find out if your module supports that, look for
-`self.py3.request` in the code. Otherwise, we will use `10`.
-
+`self.py3.request` in the code. Otherwise, we will use `{{ request_timeout_default() }}`.
 ```
 # stop waiting for a response after 10 seconds
 exchange_rate {
@@ -946,8 +980,8 @@ Retries are handled thanks to the global `request_retry_times` and
 `request_retry_wait` settings.
 
 Requests failing due to network unavailability or remote server timeouts
-are retried automatically `request_retry_times` times (default `3`) at a
-`request_retry_wait` (default `2`) seconds interval.
+are retried automatically `request_retry_times` times (default `{{ request_retry_times_default() }}`) at a
+`request_retry_wait` (default `{{ request_retry_wait_default() }}`) seconds interval.
 
 This allows to be more graceful to i3 startup when network is not up yet
 or to short network disruptions and not display an error on the bar in
@@ -955,10 +989,8 @@ that case.
 
 To find out if your module supports that, look for `self.py3.request` in
 the code.
-
 ```
-# try to contact the OWM API 10 times every 5 seconds before displaying
-# an error on the bar for the module
+# try to contact the OWM API 10 times every 5 seconds before giving up
 # that is equivalent to 50 seconds of retrying before an error occurs
 weather_owm {
     request_retry_times = 10
@@ -970,15 +1002,9 @@ weather_owm {
 
 Want Py3status in your beloved tmux? Sure!
 
-While Py3status is by default running using the `i3bar` output format,
-you can change the `output_format` of the `general` section of the
-configuration file to get your favorite status bar in the following
-programs:
-
-- i3bar (default)
-- dzen2
-- lemonbar
-- term
-- tmux
-- xmobar
-- none (no special output format)
+While Py3status uses the `i3bar` output format by default, you can change
+the `output_format` in the `general` section of the configuration file to
+get your favorite status bar in the following programs:
+```
+{{ output_formats() }}
+```

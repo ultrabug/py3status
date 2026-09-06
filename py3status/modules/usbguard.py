@@ -16,7 +16,7 @@ Format placeholders:
     {device}                  number of USB devices
     {format_device}           format for USB devices
 
-format_device:
+format_device placeholders:
     {format_button_allow}     button to allow the device
     {format_button_reject}    button to reject the device
     {id}                      eg 1, 2, 5, 6, 7, 22, 23, 33

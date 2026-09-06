@@ -3,6 +3,7 @@ Scroll modules.
 
 Configuration parameters:
     cache_timeout: refresh interval for this module (default 1)
+    format: display format for this module (default '{output}')
     length: specify a length of characters to scroll (default 25)
 
 Format placeholders:
@@ -39,6 +40,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
+    format = "{output}"
     length = 25
 
     class Meta:
@@ -47,7 +49,6 @@ class Py3status:
     def post_config_hook(self):
         if len(self.items) <= 1:
             raise Exception(STRING_ERROR)
-        self.format = "{output}"
         self.index = 0
 
     def _set_scroll(self):

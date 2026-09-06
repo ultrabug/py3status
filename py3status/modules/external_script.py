@@ -1,13 +1,7 @@
 """
 Display output of a given script.
 
-Display output of any executable script set by `script_path`. Only the first
-two lines of output will be used. The first line is used as the displayed
-text. If the output has two or more lines, the second line contains additional
-information as whitespace separated tokens.  Valid tokens are:
-    `#rrggbb`: the text color as a hex color code (eg. `#FF0000` for red)
-    `urgent`: the word `urgent` to set the urgent flag
-The script should not have any parameters, but it could work.
+Display output of any executable script set by `script_path`.
 
 Configuration parameters:
     button_show_notification: button to show notification with full output
@@ -28,6 +22,14 @@ Format placeholders:
     {lines} number of lines in the output
     {output} output of script given by "script_path"
     {composite} composite output of script given by "script_path"
+
+Notes:
+    Only the first two lines of output will be used. The first line is
+    used as the displayed text. If the output has two or more lines, the
+    second line contains additional information as whitespace separated
+    tokens, which may be a `#rrggbb` hex color code (eg `#FF0000` for red)
+    or the word `urgent` to set the urgent flag. The script should not
+    have any parameters, but it could work.
 
 Examples:
 ```

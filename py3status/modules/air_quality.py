@@ -33,11 +33,6 @@ Configuration parameters:
             (301, '#7E0023', 'Hazardous')])*
     thresholds: specify color thresholds to use (default {'aqi': True})
 
-Notes:
-    Your station may have individual scores for pollutants not listed below.
-    See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
-    for a full list of placeholders to use.
-
 Format placeholders:
     {aqi} air quality index
     {attributions_0_name} attribution name, there maybe more, change the 0
@@ -66,6 +61,11 @@ Format placeholders:
     {iaqi_so2}  individual score for pollutant sulfur dioxide
     {iaqi_t}    individual score for pollutant t (?)
     {iaqi_w}    individual score for pollutant w (?)
+
+Notes:
+    Your station may have individual scores for pollutants not listed below.
+    See https://api.waqi.info/feed/@UID/?token=TOKEN (Replace UID and TOKEN)
+    for a full list of placeholders to use.
 
     AQI denotes an air quality index. IQAI denotes an individual AQI score.
     Try https://en.wikipedia.org/wiki/Air_pollution#Pollutants for more

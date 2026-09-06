@@ -38,10 +38,11 @@ Dunst Miscellaneous:
 Mako Miscellaneous:
     Mako requires that you manually create a 'do-not-disturb' mode as shown
     in https://man.voidlinux.org/mako.5#MODES.
-    This module expects this mode to be configured by the user as suggested by
-    the mako documentation:
+    This module expects this mode to be configured by the user, as suggested by the mako documentation:
+    ```
     [mode=do-not-disturb]
     invisible=1
+    ```
 
 
 Examples:

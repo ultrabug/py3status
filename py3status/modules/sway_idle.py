@@ -11,8 +11,7 @@ Configuration parameters:
 Format placeholders:
     {inhibit_idle} Returns 'True' if idle is inhibited, 'False' else.
 
-Example:
-
+Examples:
 ```
 sway_idle {
     format = "Inhibit Idle: [\?if=inhibit_idle=True True]|False"
@@ -23,7 +22,7 @@ sway_idle {
 @license BSD
 
 SAMPLE OUTPUT
-{full_text': 'Inhibit Idle: True'}
+{'full_text': 'Inhibit Idle: True'}
 """
 
 

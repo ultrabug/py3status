@@ -1,7 +1,7 @@
 """
 Display SELinux state.
 
-This module displays the state of SELinux on your machine:
+This module displays the state of SELinux on your machine, one of
 Enforcing (good), Permissive (degraded), or Disabled (bad).
 
 Configuration parameters:

@@ -28,7 +28,7 @@ Configuration parameters:
 Format placeholders:
     {format_iface} the format_iface string.
 
-Format placeholders for format_iface:
+format_iface placeholders:
     {iface} name of the interface.
     {ip4} list of IPv4 of the interface.
     {ip6} list of IPv6 of the interface.

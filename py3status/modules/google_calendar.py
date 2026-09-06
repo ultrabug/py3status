@@ -91,7 +91,7 @@ Control placeholders:
 Format placeholders:
     {events} All the events to display.
 
-format_event and format_notification placeholders:
+format_event, format_notification placeholders:
     {description} The description for the calendar event.
     {end_date} The end date for the event.
     {end_time} The end time for the event.

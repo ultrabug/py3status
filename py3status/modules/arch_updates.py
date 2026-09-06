@@ -19,7 +19,7 @@ Requires:
     paru: feature packed AUR helper
     pikaur: pacman wrapper and AUR helper written in python
 
-Note:
+Notes:
     py3status for Arch-based distributions should include an alpm hook
     to refresh this module after packages and/or files being modified.
 
