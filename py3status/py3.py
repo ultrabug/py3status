@@ -213,7 +213,6 @@ class Py3:
 
         'module': the instance of the module,
         'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
         """
         return self._output_modules.get(module_name)
 
