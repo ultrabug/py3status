@@ -54,6 +54,7 @@ class MockPy3statusWrapper:
             "testing": True,
             "log_file": True,
             "wm": {"msg": "i3-msg", "nag": "i3-nagbar"},
+            "wm_name": "i3",
         }
         self.events_thread = self.EventThread()
         self.udev_monitor = self.UdevMonitor()
