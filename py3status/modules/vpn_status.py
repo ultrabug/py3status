@@ -200,11 +200,10 @@ class Py3status:
         color = self.py3.COLOR_GOOD if vpns else self.py3.COLOR_BAD
 
         # Format and create the response dict
-        format_vpn_separator = self.py3.safe_format(self.format_vpn_separator)
-        format_vpns = self.py3.composite_join(format_vpn_separator, vpns)
-        full_text = self.py3.safe_format(self.format, {"format_vpn": format_vpns})
+        format_vpn = self.py3.safe_join(self.format_vpn_separator, vpns)
+
         response = {
-            "full_text": full_text,
+            "full_text": self.py3.safe_format(self.format, {"format_vpn": format_vpn}),
             "color": color,
             "cached_until": self.py3.CACHE_FOREVER,
         }

@@ -167,8 +167,7 @@ class Py3status:
 
             new_device.append(self.py3.safe_format(self.format_device, device))
 
-        format_device_separator = self.py3.safe_format(self.format_device_separator)
-        format_device = self.py3.composite_join(format_device_separator, new_device)
+        format_device = self.py3.safe_join(self.format_device_separator, new_device)
 
         self.first_run = False
 

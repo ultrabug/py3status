@@ -438,6 +438,15 @@ as a parameter will return a value.
 max_width lets you to control the total max width of 'full_text' the
 module is allowed to output on the bar.
 
+### safe_join(separator, items)
+
+Join items using a format string, Composite, or native separators.
+
+String separators are processed by the formatter. Boolean separators
+control whether native separators are used between visible items.
+
+A Composite object will be returned.
+
 ### stop_sound()
 
 Stops any currently playing sounds for this module.

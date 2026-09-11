@@ -211,7 +211,7 @@ class Py3status:
     warn_timeout = 300
 
     def post_config_hook(self):
-        self.button_states = [False] * self.num_events
+        self.button_states = {}
         self.events = None
         self.no_update = False
 
@@ -365,7 +365,7 @@ class Py3status:
             "total_minutes": total_minutes,
         }
 
-    def _format_timedelta(self, index, time_delta, event_active):
+    def _format_timedelta(self, time_delta, event_active):
         """
         Formats the dict time_to containing days/hours/minutes until an
         event starts into a composite according to time_to_formatted.
@@ -396,18 +396,19 @@ class Py3status:
         Returns: A composite containing the individual response for each event.
         """
         responses = []
-        self.event_urls = []
+        self.event_urls = {}
 
-        for index, event in enumerate(self.events):
-            self.py3.threshold_get_color(index + 1, "event")
-            self.py3.threshold_get_color(index + 1, "time")
+        for index, event in enumerate(self.events, start=1):
+            event_id = f"id/{event['id']}"
+            self.py3.threshold_get_color(index, "event")
+            self.py3.threshold_get_color(index, "time")
 
             event_dict = {}
 
             event_dict["summary"] = event.get("summary")
             event_dict["location"] = event.get("location")
             event_dict["description"] = event.get("description")
-            self.event_urls.append(event.get(self.preferred_event_link, event.get("htmlLink")))
+            self.event_urls[event_id] = event.get(self.preferred_event_link, event.get("htmlLink"))
 
             if event["start"].get("date") is not None:
                 start_dt = self._gstr_to_date(event["start"].get("date"))
@@ -432,7 +433,7 @@ class Py3status:
             else:
                 event_active = False
 
-            event_dict["format_timer"] = self._format_timedelta(index, time_delta, event_active)
+            event_dict["format_timer"] = self._format_timedelta(time_delta, event_active)
 
             if self.warn_threshold > 0:
                 self._check_warn_threshold(time_delta, event_dict)
@@ -440,7 +441,7 @@ class Py3status:
             event_formatted = self.py3.safe_format(
                 self.format_event,
                 {
-                    "is_toggled": self.button_states[index],
+                    "is_toggled": self.button_states.get(event_id, False),
                     "summary": event_dict["summary"],
                     "location": event_dict["location"],
                     "description": event_dict["description"],
@@ -453,16 +454,14 @@ class Py3status:
                 },
             )
 
-            self.py3.composite_update(event_formatted, {"index": index})
+            self.py3.composite_update(event_formatted, {"index": event_id})
             responses.append(event_formatted)
 
             self.no_update = False
 
-        format_separator = self.py3.safe_format(self.format_separator)
-        self.py3.composite_update(format_separator, {"index": "sep"})
-        responses = self.py3.composite_join(format_separator, responses)
+        self.button_states = {k: v for k, v in self.button_states.items() if k in self.event_urls}
 
-        return {"events": responses}
+        return {"events": self.py3.safe_join(self.format_separator, responses)}
 
     def google_calendar(self):
         """
@@ -504,21 +503,22 @@ class Py3status:
             """
             self.no_update = True
             button = event["button"]
-            button_index = event["index"]
+            index = event["index"]
 
-            if button_index == "sep":
+            # real events are tagged "id/<event id>" (a string); an int
+            # here is the separator's own positional fallback, never real
+            if isinstance(index, int):
                 self.py3.prevent_refresh()
             elif button == self.button_refresh:
                 # wait before the next refresh
                 if time.monotonic() - self.last_update > 1:
                     self.no_update = False
             elif button == self.button_toggle:
-                self.button_states[button_index] = not self.button_states[button_index]
+                self.button_states[index] = not self.button_states.get(index, False)
             elif button == self.button_open:
-                if self.event_urls:
-                    self.py3.command_run(
-                        self.browser_invocation.format(self.event_urls[button_index])
-                    )
+                url = self.event_urls.get(index)
+                if url:
+                    self.py3.command_run(self.browser_invocation.format(url))
                 self.py3.prevent_refresh()
             else:
                 self.py3.prevent_refresh()

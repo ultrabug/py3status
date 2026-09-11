@@ -159,8 +159,7 @@ class Py3status:
 
                 new_data.append(self.py3.safe_format(self.format_row, row))
 
-            format_separator = self.py3.safe_format(self.format_separator)
-            format_row = self.py3.composite_join(format_separator, new_data)
+            format_row = self.py3.safe_join(self.format_separator, new_data)
             sql_data.update({"row": count_row, "format_row": format_row})
 
             for x in self.thresholds_init["format"]:

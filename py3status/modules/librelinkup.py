@@ -187,8 +187,7 @@ class Py3status:
 
             new_patient.append(self.py3.safe_format(self.format_patient, patient_data))
 
-        format_patient_separator = self.py3.safe_format(self.format_patient_separator)
-        format_patient = self.py3.composite_join(format_patient_separator, new_patient)
+        format_patient = self.py3.safe_join(self.format_patient_separator, new_patient)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

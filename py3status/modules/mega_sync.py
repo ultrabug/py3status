@@ -51,8 +51,7 @@ class Py3status:
                 cells = dict(zip(columns, line.split()))
                 megasync_data.append(self.py3.safe_format(self.format_sync, cells))
 
-            format_sync_separator = self.py3.safe_format(self.format_sync_separator)
-            format_sync = self.py3.composite_join(format_sync_separator, megasync_data)
+            format_sync = self.py3.safe_join(self.format_sync_separator, megasync_data)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

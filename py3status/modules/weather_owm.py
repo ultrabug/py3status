@@ -826,8 +826,7 @@ class Py3status:
             forecasts.append(self.py3.safe_format(self.format_forecast, future))
 
         # Give the final format
-        format_forecast_separator = self.py3.safe_format(self.format_forecast_separator)
-        today["forecast"] = self.py3.composite_join(format_forecast_separator, forecasts)
+        today["forecast"] = self.py3.safe_join(self.format_forecast_separator, forecasts)
 
         return self.py3.safe_format(self.format, today)
 

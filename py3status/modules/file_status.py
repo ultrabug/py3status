@@ -122,8 +122,6 @@ class Py3status:
         # format paths
         if self.init["format_path"]:
             new_data = []
-            format_path_separator = self.py3.safe_format(self.format_path_separator)
-
             for pathname in paths:
                 path = {}
                 for key in self.init["format_path"]:
@@ -136,7 +134,7 @@ class Py3status:
                     path[key] = self.py3.safe_format(value)
                 new_data.append(self.py3.safe_format(self.format_path, path))
 
-            format_path = self.py3.composite_join(format_path_separator, new_data)
+            format_path = self.py3.safe_join(self.format_path_separator, new_data)
 
         for x in self.thresholds_init:
             if x in ["path", "paths"]:

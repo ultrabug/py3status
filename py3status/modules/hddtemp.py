@@ -163,8 +163,7 @@ class Py3status:
 
             new_data.append(self.py3.safe_format(self.format_hdd, hdd))
 
-        format_separator = self.py3.safe_format(self.format_separator)
-        format_hdd = self.py3.composite_join(format_separator, new_data)
+        format_hdd = self.py3.safe_join(self.format_separator, new_data)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
