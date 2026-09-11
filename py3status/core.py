@@ -460,7 +460,7 @@ class Py3statusWrapper:
                 module_name = f_name.stem
                 # do not overwrite modules if already found
                 if module_name in path_included_modules:
-                    pass
+                    continue
                 path_included_modules[module_name] = (include_path, f_name)
         return dict(sorted(path_included_modules.items()))
 
