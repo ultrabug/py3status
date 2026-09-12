@@ -4,8 +4,9 @@ from ast import literal_eval
 from sys import argv
 from threading import Event
 
-from py3status.core import Common, Module
+from py3status.common import Common
 from py3status.log import ShortnameFilter, log_message, resolve_log_level
+from py3status.module import Module
 
 
 class ExcludeModuleFilter(logging.Filter):
@@ -55,6 +56,7 @@ class MockPy3statusWrapper:
             "log_file": True,
             "wm": {"msg": "i3-msg", "nag": "i3-nagbar"},
             "wm_name": "i3",
+            "i3status": "i3status",
         }
         self.events_thread = self.EventThread()
         self.udev_monitor = self.UdevMonitor()

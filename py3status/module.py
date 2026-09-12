@@ -12,6 +12,7 @@ from types import FunctionType
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
 from py3status.formatter import Formatter
+from py3status.helpers import get_instance_name, get_module_name
 from py3status.log import module_logger_name
 from py3status.profiling import profile
 from py3status.py3 import ModuleErrorException, Py3
@@ -78,8 +79,8 @@ class Module:
         self.methods = OrderedDict()
         self.module_class = instance
         self.module_full_name = module
-        self.module_inst = "".join(module.split(" ")[1:])
-        self.module_name = module.split(" ")[0]
+        self.module_inst = get_instance_name(module)
+        self.module_name = get_module_name(module)
         self.new_update = False
         self.nagged = False
         self.on_error = None

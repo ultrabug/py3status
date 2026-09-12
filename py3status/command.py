@@ -6,6 +6,8 @@ import socket
 import threading
 from pathlib import Path
 
+from py3status.helpers import get_module_name
+
 logger = logging.getLogger(__name__)
 
 SERVER_ADDRESS = "/tmp/py3status_uds"
@@ -153,7 +155,7 @@ class CommandRunner:
                     if requested_name == name:
                         found_modules.add(module_name)
                 else:
-                    if requested_name == name.split(" ")[0]:
+                    if requested_name == get_module_name(name):
                         found_modules.add(module_name)
 
         logger.debug("matched modules: %s", sorted(found_modules))

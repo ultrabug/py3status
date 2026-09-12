@@ -1,6 +1,8 @@
 import base64
 import inspect
 
+from py3status.helpers import get_module_name
+
 
 class Private:
     """
@@ -20,7 +22,7 @@ class Private:
     def __init__(self, encoded, module_name):
         self._decoded = False
         self._encoded = encoded
-        self._module_name = module_name.split(" ")[0]
+        self._module_name = get_module_name(module_name)
         self._private = "***"  # this is used when the user is untrusted
         self._value = "encrypted"
 

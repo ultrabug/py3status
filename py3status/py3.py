@@ -478,11 +478,15 @@ class Py3:
     def get_config(self, name):
         """
         Return a supported py3status configuration value.
-        Supported configs: `testing`, `wm_name`
+        Supported configs: `testing`, `wm_name`, `i3status`, `module_full_name`
         """
-        runtime_settings = ["testing", "wm_name"]
+        runtime_settings = ["testing", "wm_name", "i3status"]
+        identity_settings = ["module_full_name"]
         if name in runtime_settings:
-            return self._py3_wrapper.config.get(name)
+            value = self._py3_wrapper.config.get(name)
+            return str(value) if isinstance(value, Path) else value
+        if name in identity_settings:
+            return self._module_full_name
         raise ValueError(f"Unsupported config `{name}`")
 
     def get_wm_msg(self):

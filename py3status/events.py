@@ -227,7 +227,7 @@ class Events(Thread):
         # modules that have failed do not execute their config on_click
         if module.allow_config_clicks:
             button = event.get("button", 0)
-            on_click = self.on_click.get(module_name, {}).get(str(button))
+            on_click = self.on_click.get(module_name, {}).get(button)
             if on_click:
                 task = EventClickTask(module_name, event, self, on_click)
                 self.py3_wrapper.timeout_queue_add(task)

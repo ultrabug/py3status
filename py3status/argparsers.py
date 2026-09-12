@@ -2,7 +2,6 @@ import argparse
 import os
 from pathlib import Path
 from platform import python_version
-from shutil import which
 
 from py3status.version import version
 
@@ -105,12 +104,16 @@ def parse_cli_args():
         metavar="FILE",
         type=Path,
     )
+    # deprecated: i3status modules are now real py3status modules, so "run
+    # without i3status" means none should exist at all - still active
+    # (strips every i3status section/container, see strip_i3status_sections()
+    # in parse_config.py), just no longer the only way to skip i3status
     parser.add_argument(
         "-s",
         "--standalone",
         action="store_true",
         dest="standalone",
-        help="run py3status without i3status",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "-t",
@@ -129,13 +132,15 @@ def parse_cli_args():
         dest="disable_click_events",
         help="disable all click events",
     )
+    # deprecated: passed along to the i3status container module instead
+    # of being used to spawn i3status directly; kept for compatibility.
     parser.add_argument(
         "-u",
         "--i3status",
         action="store",
-        default=which("i3status") or "i3status",
-        dest="i3status_path",
-        help="specify i3status path",
+        default=None,
+        dest="i3status",
+        help=argparse.SUPPRESS,
         metavar="PATH",
         type=Path,
     )
