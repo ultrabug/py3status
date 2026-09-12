@@ -566,7 +566,9 @@ class Py3statusWrapper:
                     base[key] = value
 
         init_logging_config = dict(LOGGING_CONFIG)
-        user_logging_config = self.config["py3_config"].get("py3status", {}).get("logging", {})
+        user_logging_config = (
+            self.config.get("py3_config", {}).get("py3status", {}).get("logging", {})
+        )
         _deep_merge(init_logging_config, user_logging_config)
 
         if self.config.get("debug"):
@@ -637,12 +639,13 @@ class Py3statusWrapper:
         """
         Setup py3status and spawn i3status/events/modules threads.
         """
+        # set up early, so config-parse notify_user() calls get logged too
+        self._setup_logging()
         # process py3status config
         config_path = self.config["i3status_config_path"]
         py3_config = process_config(config_path, self)
         self.config["py3_config"] = py3_config
-
-        # setup logging
+        # re-apply: picks up any py3status logging override
         self._setup_logging()
 
         # log py3status and python versions
