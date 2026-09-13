@@ -268,6 +268,12 @@ This is useful because we just get simple placeholder without any
 formatting that may be applied to them
 eg ``'{placeholder:.2f}'`` will give ``['{placeholder}']``
 
+### get_config(name)
+
+Return a supported py3status configuration value. Supported names:
+`testing`, `wm_name`, `module_full_name` (this module's own full name,
+eg `"disk_info /"`), `i3status`. Raises `ValueError` for any other name.
+
 ### get_wm_msg()
 
 Return the control program of the current window manager.
@@ -437,6 +443,15 @@ as a parameter will return a value.
 
 max_width lets you to control the total max width of 'full_text' the
 module is allowed to output on the bar.
+
+### safe_join(separator, items)
+
+Join items using a format string, Composite, or native separators.
+
+String separators are processed by the formatter. Boolean separators
+control whether native separators are used between visible items.
+
+A Composite object will be returned.
 
 ### stop_sound()
 

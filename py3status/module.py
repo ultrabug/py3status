@@ -10,6 +10,7 @@ from types import FunctionType
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
 from py3status.formatter import Formatter
+from py3status.helpers import get_instance_name, get_module_name
 from py3status.log import module_logger_name
 from py3status.profiling import profile
 from py3status.py3 import ModuleErrorException, Py3
@@ -48,13 +49,12 @@ class Module:
         self.error_hide = False
         self.has_post_config_hook = False
         self.has_kill = False
-        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
         self.methods = OrderedDict()
         self.module_class = instance
         self.module_full_name = module
-        self.module_inst = "".join(module.split(" ")[1:])
-        self.module_name = module.split(" ")[0]
+        self.module_inst = get_instance_name(module)
+        self.module_name = get_module_name(module)
         self.new_update = False
         self.nagged = False
         self.on_error = None
@@ -933,9 +933,10 @@ class Module:
                     # new style modules
                     click_method(event)
                 else:
-                    # legacy modules had extra parameters passed
+                    # legacy modules had extra parameters passed - this was
+                    # always None (i3status_wrapper never really ran)
                     click_method(
-                        self.i3status_thread.json_list,
+                        None,
                         self.config["py3_config"]["general"],
                         event,
                     )
@@ -978,9 +979,10 @@ class Module:
                         # new style modules
                         response = method()
                     else:
-                        # legacy modules had parameters passed
+                        # legacy modules had parameters passed - always
+                        # None (i3status_wrapper never really ran)
                         response = method(
-                            self.i3status_thread.json_list,
+                            None,
                             self.config["py3_config"]["general"],
                         )
 
@@ -1108,9 +1110,10 @@ class Module:
                 if self.has_kill == self.PARAMS_NEW:
                     kill_method()
                 else:
-                    # legacy call parameters
+                    # legacy call parameters - always None (i3status_wrapper
+                    # never really ran)
                     kill_method(
-                        self.i3status_thread.json_list,
+                        None,
                         self.config["py3_config"]["general"],
                     )
             except Exception:

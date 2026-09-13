@@ -180,8 +180,7 @@ class Py3status:
 
             new_coin.append(self.py3.safe_format(self.format_coin, market))
 
-        format_coin_separator = self.py3.safe_format(self.format_coin_separator)
-        format_coin = self.py3.composite_join(format_coin_separator, new_coin)
+        format_coin = self.py3.safe_join(self.format_coin_separator, new_coin)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

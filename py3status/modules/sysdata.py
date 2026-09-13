@@ -501,8 +501,7 @@ class Py3status:
                         self.py3.threshold_get_color(cpu[x], x)
                 new_cpu.append(self.py3.safe_format(self.format_cpu, cpu))
 
-            format_cpu_separator = self.py3.safe_format(self.format_cpu_separator)
-            sys["format_cpu"] = self.py3.composite_join(format_cpu_separator, new_cpu)
+            sys["format_cpu"] = self.py3.safe_join(self.format_cpu_separator, new_cpu)
 
     def _update_cpu_temp(self, sys):
         sys["cpu_temp"], sys["cpu_temp_unit"] = self._get_cputemp(self.cpu_temp_unit)

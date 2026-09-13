@@ -52,6 +52,7 @@ missing
 {'color': '#FF0000', 'full_text': u'\u25a0'}
 """
 
+from glob import glob
 from pathlib import Path
 
 STRING_NO_PATHS = "missing paths"
@@ -115,15 +116,13 @@ class Py3status:
 
     def file_status(self):
         # init data
-        paths = sorted(files for path in self.paths for files in path.parent.glob(path.name))
+        paths = sorted(Path(files) for path in self.paths for files in glob(str(path)))
         count_path = len(paths)
         format_path = None
 
         # format paths
         if self.init["format_path"]:
             new_data = []
-            format_path_separator = self.py3.safe_format(self.format_path_separator)
-
             for pathname in paths:
                 path = {}
                 for key in self.init["format_path"]:
@@ -136,7 +135,7 @@ class Py3status:
                     path[key] = self.py3.safe_format(value)
                 new_data.append(self.py3.safe_format(self.format_path, path))
 
-            format_path = self.py3.composite_join(format_path_separator, new_data)
+            format_path = self.py3.safe_join(self.format_path_separator, new_data)
 
         for x in self.thresholds_init:
             if x in ["path", "paths"]:

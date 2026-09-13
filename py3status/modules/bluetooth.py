@@ -168,9 +168,7 @@ class Py3status:
 
                 new_device.append(self.py3.safe_format(self.format_device, device))
 
-            format_device_separator = self.py3.safe_format(self.format_device_separator)
-            format_device = self.py3.composite_join(format_device_separator, new_device)
-
+            format_device = self.py3.safe_join(self.format_device_separator, new_device)
             adapter.update({"format_device": format_device, "device": len(devices)})
 
             for x in self.thresholds_init["format_adapter"]:
@@ -179,9 +177,7 @@ class Py3status:
 
             new_adapter.append(self.py3.safe_format(self.format_adapter, adapter))
 
-        format_adapter_separator = self.py3.safe_format(self.format_adapter_separator)
-        format_adapter = self.py3.composite_join(format_adapter_separator, new_adapter)
-
+        format_adapter = self.py3.safe_join(self.format_adapter_separator, new_adapter)
         bluetooth_data = {"format_adapter": format_adapter, "adapter": len(adapters)}
 
         for x in self.thresholds_init["format"]:

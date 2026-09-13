@@ -6,8 +6,37 @@ GENERAL_DEFAULTS = {
     "color_good": "#00FF00",
     "color_separator": "#333333",
     "colors": True,
-    "interval": 5,
     "output_format": None,
+}
+
+# every option module.py's set_module_options() (and the urgent/on_error
+# block right after it) recognizes on any module - i3bar's own universal
+# options plus py3status's own additional per-module options
+MODULE_OPTIONS = {
+    "align",
+    "allow_urgent",
+    "background",
+    "border",
+    "border_bottom",
+    "border_left",
+    "border_right",
+    "border_top",
+    "color",
+    "color_error",
+    "markup",
+    "min_length",
+    "min_width",
+    "on_error",
+    "position",
+    "separator",
+    "separator_block_width",
+    "urgent_background",
+    "urgent_border",
+    "urgent_border_bottom",
+    "urgent_border_left",
+    "urgent_border_right",
+    "urgent_border_top",
+    "urgent_foreground",
 }
 
 LOGGING_CONFIG = {
@@ -56,37 +85,12 @@ LOGGING_LOG_LEVELS = {
 
 MAX_NESTING_LEVELS = 4
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-TZTIME_FORMAT = "%Y-%m-%d %H:%M:%S %Z"
-
-TIME_MODULES = ["time", "tztime"]
-
-I3S_INSTANCE_MODULES = [
-    "battery",
-    "cpu_temperature",
-    "disk",
-    "ethernet",
-    "memory",
-    "path_exists",
-    "read_file",
-    "run_watch",
-    "tztime",
-    "volume",
-    "wireless",
-]
-
-I3S_SINGLE_NAMES = ["cpu_usage", "ddate", "ipv6", "load", "time"]
-
-I3S_ALLOWED_COLORS = ["color_bad", "color_good", "color_degraded"]
-
-# i3status modules that allow colors to be passed.
-# general section also allows colors so is included.
-I3S_COLOR_MODULES = ["general", "battery", "cpu_temperature", "disk", "load"]
-
-I3S_MODULE_NAMES = I3S_SINGLE_NAMES + I3S_INSTANCE_MODULES
-
 CONFIG_FILE_SPECIAL_SECTIONS = ["general", "py3status"]
+
+# reserved instance-name marker for any module's own machine-generated
+# instance, regardless of type - i3status containers today, more module
+# families later (see parse_config.py's wipe_generated_instance_names())
+GENERATED_SLUG = "_generated"
 
 ERROR_CONFIG = """
     general {colors = true interval = 60}

@@ -6,6 +6,8 @@ import socket
 import threading
 from pathlib import Path
 
+from py3status.helpers import get_module_name
+
 logger = logging.getLogger(__name__)
 
 SERVER_ADDRESS = "/tmp/py3status_uds"
@@ -148,15 +150,12 @@ class CommandRunner:
             is_instance = " " in requested_name
 
             for module_name, module in self.py3_wrapper.output_modules.items():
-                if module["type"] == "py3status":
-                    name = module["module"].module_nice_name
-                else:
-                    name = module["module"].module_name
+                name = module["module"].module_nice_name
                 if is_instance:
                     if requested_name == name:
                         found_modules.add(module_name)
                 else:
-                    if requested_name == name.split(" ")[0]:
+                    if requested_name == get_module_name(name):
                         found_modules.add(module_name)
 
         logger.debug("matched modules: %s", sorted(found_modules))
@@ -167,17 +166,8 @@ class CommandRunner:
         refresh the module(s)
         """
         modules = data.get("module")
-        # for i3status modules we have to refresh the whole i3status output.
-        update_i3status = False
         for module_name in self.find_modules(modules):
-            module = self.py3_wrapper.output_modules[module_name]
-            logger.debug("refreshing module '%s'", module_name)
-            if module["type"] == "py3status":
-                module["module"].force_update()
-            else:
-                update_i3status = True
-        if update_i3status:
-            self.py3_wrapper.i3status_thread.refresh_i3status()
+            self.py3_wrapper.refresh_modules(module_name, exact=True)
 
     def click(self, data):
         """
@@ -186,12 +176,8 @@ class CommandRunner:
         modules = data.get("module")
         for module_name in self.find_modules(modules):
             module = self.py3_wrapper.output_modules[module_name]
-            if module["type"] == "py3status":
-                name = module["module"].module_name
-                instance = module["module"].module_inst
-            else:
-                name = module["module"].name
-                instance = module["module"].instance
+            name = module["module"].module_name
+            instance = module["module"].module_inst
             # make an event
             event = {"name": name, "instance": instance}
             for name, message in CLICK_OPTIONS:

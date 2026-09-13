@@ -172,18 +172,15 @@ class Events(Thread):
 
         # get the module that the event is for
         module_info = self.output_modules.get(module_name)
+        module = module_info["module"]
+        logger.debug("dispatching event %s", event)
+        module.click_event(event)
 
-        # if module is a py3status one call it.
-        if module_info["type"] == "py3status":
-            module = module_info["module"]
-            logger.debug("dispatching event %s", event)
-            module.click_event(event)
-
-            # to make the bar more responsive to users we refresh the module
-            # unless the on_click event called py3.prevent_refresh()
-            if not module.prevent_refresh:
-                self.py3_wrapper.refresh_modules(module_name)
-                default_event = False
+        # to make the bar more responsive to users we refresh the module
+        # unless the on_click event called py3.prevent_refresh()
+        if not module.prevent_refresh:
+            self.py3_wrapper.refresh_modules(module_name)
+            default_event = False
 
         if default_event:
             # default button 2 action is to clear this method's cache
@@ -232,7 +229,7 @@ class Events(Thread):
         # modules that have failed do not execute their config on_click
         if module.allow_config_clicks:
             button = event.get("button", 0)
-            on_click = self.on_click.get(module_name, {}).get(str(button))
+            on_click = self.on_click.get(module_name, {}).get(button)
             if on_click:
                 task = EventClickTask(module_name, event, self, on_click)
                 self.py3_wrapper.timeout_queue_add(task)

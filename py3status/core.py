@@ -9,14 +9,15 @@ from pathlib import Path
 from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
 from subprocess import Popen
 from threading import Event, Thread
-from traceback import extract_tb, format_stack, format_tb
 
 from py3status.command import CommandServer
+from py3status.common import Common
 from py3status.constants import LOGGING_CONFIG, LOGGING_LOG_FILE_CONFIG
 from py3status.events import Events
-from py3status.formatter import expand_color
-from py3status.helpers import print_stderr
-from py3status.i3status import I3status
+from py3status.helpers import get_module_name
+from py3status.i3status.constants import I3S_PROXY_TYPE
+from py3status.i3status.helpers import is_i3status_container_name, is_i3status_proxy_name
+from py3status.i3status.proxy import Py3status as I3statusProxy
 from py3status.log import module_logger_name, resolve_log_level
 from py3status.module import Module
 from py3status.output import OutputFormat
@@ -27,10 +28,8 @@ from py3status.udev_monitor import UdevMonitor
 DBUS_LEVELS = {"error": "critical", "warning": "normal", "info": "low"}
 
 CONFIG_SPECIAL_SECTIONS = [
-    ".group_extras",
     ".module_groups",
     "general",
-    "i3s_modules",
     "on_click",
     "order",
     "py3_modules",
@@ -65,22 +64,6 @@ class Runner(Thread):
             self.py3_wrapper.timeout_finished.append(self.module_name)
 
 
-class NoneSetting:
-    """
-    This class represents no setting in the config.
-    """
-
-    # this attribute is used to identify that this is a none setting
-    none_setting = True
-
-    def __len__(self):
-        return 0
-
-    def __repr__(self):
-        # this is for output via module_test
-        return "None"
-
-
 class Task:
     """
     A simple task that can be run by the scheduler.
@@ -89,28 +72,6 @@ class Task:
     def run(self):
         # F901 'raise NotImplemented' should be 'raise NotImplementedError'
         raise NotImplemented()  # noqa f901
-
-
-class CheckI3StatusThread(Task):
-    """
-    Checks that the i3status thread is alive
-    """
-
-    def __init__(self, i3status_thread, py3_wrapper):
-        self.i3status_thread = i3status_thread
-        self.timeout_queue_add = py3_wrapper.timeout_queue_add
-        self.notify_user = py3_wrapper.notify_user
-
-    def run(self):
-        # check i3status thread
-        if not self.i3status_thread.is_alive():
-            err = self.i3status_thread.error
-            if not err:
-                err = "i3status died horribly"
-            self.notify_user(err)
-        else:
-            # check again in 5 seconds
-            self.timeout_queue_add(self, int(time.monotonic()) + 5)
 
 
 class ModuleRunner(Task):
@@ -123,121 +84,6 @@ class ModuleRunner(Task):
 
     def run(self):
         self.module.start_module()
-
-
-class Common:
-    """
-    This class is used to hold core functionality so that it can be shared more
-    easily.  This allow us to run the module tests through the same code as
-    when we are running for real.
-    """
-
-    def __init__(self, py3_wrapper):
-        self.py3_wrapper = py3_wrapper
-        self.none_setting = NoneSetting()
-        self.config = py3_wrapper.config
-
-    def get_config_attribute(self, name, attribute):
-        """
-        Look for the attribute in the config.  Start with the named module and
-        then walk up through any containing group and then try the general
-        section of the config.
-        """
-
-        # A user can set a param to None in the config to prevent a param
-        # being used.  This is important when modules do something like
-        #
-        # color = self.py3.COLOR_MUTED or self.py3.COLOR_BAD
-        config = self.config["py3_config"]
-        param = config[name].get(attribute, self.none_setting)
-        if hasattr(param, "none_setting") and name in config[".module_groups"]:
-            for module in config[".module_groups"][name]:
-                if attribute in config.get(module, {}):
-                    param = config[module].get(attribute)
-                    break
-        if hasattr(param, "none_setting"):
-            # check py3status config section
-            param = config["py3status"].get(attribute, self.none_setting)
-        if hasattr(param, "none_setting"):
-            # check py3status general section
-            param = config["general"].get(attribute, self.none_setting)
-        if param and (attribute == "color" or attribute.startswith("color_")):
-            # check color value
-            param = expand_color(param.lower(), self.none_setting)
-        return param
-
-    def report_exception(self, msg, notify_user=True, level="error", error_frame=None, name=None):
-        """
-        Report details of an exception to the user.
-        This should only be called within an except: block Details of the
-        exception are reported eg filename, line number and exception type.
-
-        Because stack trace information outside of py3status or it's modules is
-        not helpful in actually finding and fixing the error, we try to locate
-        the first place that the exception affected our code.
-
-        Alternatively if the error occurs in a module via a Py3 call that
-        catches and reports the error then we receive an error_frame and use
-        that as the source of the error.
-
-        NOTE: msg should not end in a '.' for consistency.
-        """
-        # Get list of paths that our stack trace should be found in.
-        py3_paths = [Path(__file__).resolve()] + self.config["include_paths"]
-        traceback = None
-
-        try:
-            # We need to make sure to delete tb even if things go wrong.
-            exc_type, exc_obj, tb = sys.exc_info()
-            stack = extract_tb(tb)
-            error_str = f"{exc_type.__name__}: {exc_obj}\n"
-            traceback = [error_str]
-
-            if error_frame:
-                # The error occurred in a py3status module so the traceback
-                # should be made to appear correct.  We caught the exception
-                # but make it look as though we did not.
-                traceback += format_stack(error_frame, 1) + format_tb(tb)
-                filename = Path(error_frame.f_code.co_filename).name
-                line_no = error_frame.f_lineno
-            else:
-                # This is a none module based error
-                traceback += format_tb(tb)
-                # Find first relevant trace in the stack.
-                # it should be in py3status or one of it's modules.
-                found = False
-                for item in reversed(stack):
-                    filename = item[0]
-                    for path in py3_paths:
-                        if filename.startswith(path):
-                            # Found a good trace
-                            filename = item[0].name
-                            line_no = item[1]
-                            found = True
-                            break
-                    if found:
-                        break
-            # all done!  create our message.
-            msg = "{} ({}) {} line {}".format(msg, exc_type.__name__, filename, line_no)
-        except:  # noqa e722
-            # something went wrong, report msg as-is.
-            pass
-        finally:
-            # delete tb!
-            del tb
-        # log the exception and notify user
-        tmp_logger = logging.getLogger(name) if name else logger
-        tmp_logger.log(resolve_log_level(level), msg)
-        if traceback:
-            # if debug is not in the config  then we are at an early stage of
-            # running py3status and logging is not yet available so output the
-            # error to STDERR so it can be seen
-            if "debug" not in self.config:
-                print_stderr("\n".join(traceback))
-            elif self.config.get("log_file"):
-                tmp_logger.info("traceback\n%s", "".join(traceback))
-        if notify_user:
-            self.py3_wrapper.notify_user(msg, level=level)
 
 
 class Py3statusWrapper:
@@ -286,7 +132,7 @@ class Py3statusWrapper:
     def timeout_queue_add(self, item, cache_time=0):
         """
         Add a item to be run at a future time.
-        This must be a Module, I3statusModule or a Task
+        This must be a Module or a Task
         """
         # add the info to the add queue.  We do this so that actually adding
         # the module is done in the core thread.
@@ -442,6 +288,9 @@ class Py3statusWrapper:
         """
         discoverable_modules = self._get_path_included_modules()
         discoverable_modules.update(self._get_entry_point_based_modules())
+        # i3status_proxy has no file in py3status/modules/ - load it like an
+        # entry-point module, via a pre-built instance, not by import path.
+        discoverable_modules[I3S_PROXY_TYPE] = (ENTRY_POINT_KEY, I3statusProxy)
         return discoverable_modules
 
     def _get_path_included_modules(self):
@@ -460,7 +309,7 @@ class Py3statusWrapper:
                 module_name = f_name.stem
                 # do not overwrite modules if already found
                 if module_name in path_included_modules:
-                    pass
+                    continue
                 path_included_modules[module_name] = (include_path, f_name)
         return dict(sorted(path_included_modules.items()))
 
@@ -515,7 +364,7 @@ class Py3statusWrapper:
             return discoverable_modules
         for module_name, module_info in self.get_discoverable_modules().items():
             for module in self.py3_modules:
-                if module_name == module.split(" ")[0]:
+                if module_name == get_module_name(module):
                     source, item = module_info
                     discoverable_modules[module_name] = (source, item)
         return discoverable_modules
@@ -537,7 +386,7 @@ class Py3statusWrapper:
                 continue
             try:
                 instance = None
-                payload = discoverable_modules.get(module.split(" ")[0])
+                payload = discoverable_modules.get(get_module_name(module))
                 if payload:
                     kind, Klass = payload
                     if kind == ENTRY_POINT_KEY:
@@ -566,7 +415,9 @@ class Py3statusWrapper:
                     base[key] = value
 
         init_logging_config = dict(LOGGING_CONFIG)
-        user_logging_config = self.config["py3_config"].get("py3status", {}).get("logging", {})
+        user_logging_config = (
+            self.config.get("py3_config", {}).get("py3status", {}).get("logging", {})
+        )
         _deep_merge(init_logging_config, user_logging_config)
 
         if self.config.get("debug"):
@@ -635,14 +486,17 @@ class Py3statusWrapper:
 
     def setup(self):
         """
-        Setup py3status and spawn i3status/events/modules threads.
+        Setup py3status and spawn events/modules threads. i3status runs
+        as a regular module now, started the same way as any other.
         """
+        # set up early, so config-parse notify_user() calls get logged too
+        self._setup_logging()
+
         # process py3status config
-        config_path = self.config["i3status_config_path"]
+        config_path = self.config["config"]
         py3_config = process_config(config_path, self)
         self.config["py3_config"] = py3_config
-
-        # setup logging
+        # re-apply: picks up any py3status logging override
         self._setup_logging()
 
         # log py3status and python versions
@@ -654,7 +508,7 @@ class Py3statusWrapper:
         self._log_gitversion()
 
         # log config file and window manager
-        logger.info("config file: %s", self.config["i3status_config_path"])
+        logger.info("config file: %s", self.config["config"])
         logger.info("window manager: %s", self.config["wm_name"])
         logger.debug("py3status started with config %s", self.config)
 
@@ -676,38 +530,6 @@ class Py3statusWrapper:
             self.config["resources"] = {
                 k: v.strip() for k, v in (x.split(":", 1) for x in resources)
             }
-
-        # setup i3status thread
-        self.i3status_thread = I3status(self)
-
-        # If standalone or no i3status modules then use the mock i3status
-        # else start i3status thread.
-        i3s_modules = self.config["py3_config"]["i3s_modules"]
-        if self.config["standalone"] or not i3s_modules:
-            self.i3status_thread.mock()
-            i3s_mode = "mocked"
-        else:
-            for module in i3s_modules:
-                logger.info("adding i3status module '%s'", module)
-            i3s_mode = "started"
-            self.i3status_thread.start()
-            while not self.i3status_thread.ready:
-                if not self.i3status_thread.is_alive():
-                    # i3status is having a bad day, so tell the user what went
-                    # wrong and do the best we can with just py3status modules.
-                    err = self.i3status_thread.error
-                    self.notify_user(err)
-                    self.i3status_thread.mock()
-                    i3s_mode = "mocked"
-                    break
-                time.sleep(0.1)
-
-        logger.debug("i3status thread %s with config %s", i3s_mode, py3_config)
-
-        # add i3status thread monitoring task
-        if i3s_mode == "started":
-            task = CheckI3StatusThread(self.i3status_thread, self)
-            self.timeout_queue_add(task)
 
         # setup input events thread
         self.events_thread = Events(self)
@@ -883,13 +705,23 @@ class Py3statusWrapper:
         except:  # noqa e722
             pass
 
+    def i3status_containers(self):
+        """
+        Every live i3status container module (generated or configured) -
+        there can be several of these, each running its own subprocess.
+        """
+        for name, module in self.modules.items():
+            if is_i3status_container_name(name):
+                yield module.module_class
+
     def refresh_modules(self, module_string=None, exact=True):
         """
         Update modules.
         if module_string is None all modules are refreshed
         if module_string then modules with the exact name or those starting
         with the given string depending on exact parameter will be refreshed.
-        If a module is an i3status one then we refresh i3status.
+        If a module is an i3status container or proxy, its owning
+        container's subprocess is refreshed too.
         To prevent abuse, we rate limit this function to 100ms for full
         refreshes.
         """
@@ -899,21 +731,26 @@ class Py3statusWrapper:
             else:
                 # rate limiting
                 return
-        update_i3status = False
+        i3status_container_names = set()
         for name, module in self.output_modules.items():
             if (
                 module_string is None
                 or (exact and name == module_string)
                 or (not exact and name.startswith(module_string))
             ):
-                if module["type"] == "py3status":
-                    logger.debug("refreshing py3status module '%s'", name)
-                    module["module"].force_update()
-                else:
+                if is_i3status_proxy_name(name):
                     logger.debug("refreshing i3status module '%s'", name)
-                    update_i3status = True
-        if update_i3status:
-            self.i3status_thread.refresh_i3status()
+                    i3status_container_names.add(module["module"].module_class._container)
+                elif is_i3status_container_name(name):
+                    logger.debug("refreshing i3status module '%s'", name)
+                    i3status_container_names.add(name)
+                else:
+                    logger.debug("refreshing py3status module '%s'", name)
+                module["module"].force_update()
+        # send SIGUSR1 only to i3status containers owning a just-refreshed proxy/container
+        for i3status_container in self.i3status_containers():
+            if i3status_container._module_full_name in i3status_container_names:
+                i3status_container._refresh()
 
     def sig_handler(self, signum, frame):
         """
@@ -933,6 +770,10 @@ class Py3statusWrapper:
         """
         A module has been removed e.g. a module that had an error.
         We need to find any containers and remove the module from them.
+
+        No-op for an i3status container - it's not a real container
+        (its items are raw i3status.conf dicts, not module names), so
+        there's nothing here to remove it from.
         """
         containers = self.config["py3_config"][".module_groups"]
         containers_to_update = set()
@@ -983,11 +824,10 @@ class Py3statusWrapper:
 
     def create_output_modules(self):
         """
-        Setup our output modules to allow easy updating of py3modules and
-        i3status modules allows the same module to be used multiple times.
+        Setup our output modules to allow easy updating of modules, allows
+        the same module to be used multiple times.
         """
         py3_config = self.config["py3_config"]
-        i3modules = self.i3status_thread.i3modules
         output_modules = self.output_modules
         # position in the bar of the modules
         positions = {}
@@ -996,21 +836,13 @@ class Py3statusWrapper:
                 positions[name] = []
             positions[name].append(index)
 
-        # py3status modules
+        # py3status modules - includes i3status containers/proxies, which
+        # are real Modules too now, not a separate i3status module type
         for name in self.modules:
             if name not in output_modules:
                 output_modules[name] = {}
                 output_modules[name]["position"] = positions.get(name, [])
                 output_modules[name]["module"] = self.modules[name]
-                output_modules[name]["type"] = "py3status"
-                output_modules[name]["color"] = self.mappings_color.get(name)
-        # i3status modules
-        for name in i3modules:
-            if name not in output_modules:
-                output_modules[name] = {}
-                output_modules[name]["position"] = positions.get(name, [])
-                output_modules[name]["module"] = i3modules[name]
-                output_modules[name]["type"] = "i3status"
                 output_modules[name]["color"] = self.mappings_color.get(name)
 
         self.output_modules = output_modules
@@ -1054,8 +886,8 @@ class Py3statusWrapper:
         if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
             logger.info("received stop_signal %s", Signals(signum).name)
             self.i3bar_running = False
-            # i3status should be stopped
-            self.i3status_thread.suspend_i3status()
+            for i3status_container in self.i3status_containers():
+                i3status_container._suspend()
             self.sleep_modules()
             self.next_allowed_signal = SIGCONT
         else:
@@ -1066,6 +898,8 @@ class Py3statusWrapper:
         if self.next_allowed_signal == signum and time.monotonic() > self.inhibit_signal_ts:
             logger.info("received resume signal %s", Signals(signum).name)
             self.i3bar_running = True
+            for i3status_container in self.i3status_containers():
+                i3status_container._resume()
             self.wake_modules()
             self.next_allowed_signal = self.stop_signal
         else:
@@ -1075,20 +909,18 @@ class Py3statusWrapper:
     def sleep_modules(self):
         # Put all py3modules to sleep so they stop updating
         for module in self.output_modules.values():
-            if module["type"] == "py3status":
-                module["module"].sleep()
+            module["module"].sleep()
 
     def wake_modules(self):
         # Wake up all py3modules.
         for module in self.output_modules.values():
-            if module["type"] == "py3status":
-                module["module"].wake()
+            module["module"].wake()
 
     @profile
     def run(self):
         """
-        Main py3status loop, continuously read from i3status and modules
-        and output it to i3bar for displaying.
+        Main py3status loop, continuously read from modules (i3status included,
+        as a regular module) and output it to i3bar for displaying.
         """
         # SIGUSR1 forces a refresh of the bar both for py3status and i3status,
         # this mimics the USR1 signal handling of i3status (see man i3status)

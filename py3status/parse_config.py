@@ -1,22 +1,31 @@
 import os
 import re
-from collections import OrderedDict
 from importlib import util
+from itertools import count
 from pathlib import Path
 from string import Template
 from subprocess import CalledProcessError, TimeoutExpired, check_output
 
+from py3status.config_types import ModuleDefinition, validate_onclick_button
 from py3status.constants import (
     CONFIG_FILE_SPECIAL_SECTIONS,
     ERROR_CONFIG,
     GENERAL_DEFAULTS,
-    I3S_MODULE_NAMES,
-    I3S_SINGLE_NAMES,
+    GENERATED_SLUG,
     MAX_NESTING_LEVELS,
     RETIRED_MODULES,
-    TIME_FORMAT,
-    TIME_MODULES,
-    TZTIME_FORMAT,
+)
+from py3status.helpers import get_instance_name, get_module_name, next_unclaimed_name
+from py3status.i3status.helpers import (
+    is_i3status_container_name,
+    is_i3status_module_name,
+    is_i3status_proxy_name,
+    is_i3status_single_name,
+)
+from py3status.i3status.translate import (
+    resolve_bare_i3status_modules,
+    resolve_configured_i3status_containers,
+    strip_i3status_sections,
 )
 from py3status.private import PrivateBase64, PrivateHide
 
@@ -45,12 +54,6 @@ class ParseException(Exception):
         return "{}\n\nsaw `{}` at line {} position {}\n\n{}\n{}".format(
             self.error, self.token, self.line_no, self.position, self.line, marker
         )
-
-
-class ModuleDefinition(OrderedDict):
-    """Module definition in OrderedDict form"""
-
-    pass
 
 
 class ConfigParser:
@@ -176,7 +179,7 @@ class ConfigParser:
         """
         Check if a module is a container and so can have children
         """
-        name = name.split()[0]
+        name = get_module_name(name)
         if name in self.container_modules:
             return
         root = Path(__file__).resolve().parent
@@ -198,15 +201,17 @@ class ConfigParser:
 
     def check_module_name(self, name, offset=0):
         """
-        Checks a module name eg. some i3status modules cannot have an instance
-        name.
+        Some i3status modules cannot have an instance name, and no module
+        name, i3status or not, can have more than one.
         """
-        if name in ["general"]:
+        if name == "general":
             return
         split_name = name.split()
-        if len(split_name) > 1 and split_name[0] in I3S_SINGLE_NAMES:
+        # i3status-specific: some types (eg "time") can never take an instance
+        if len(split_name) > 1 and is_i3status_single_name(name):
             self.current_token -= len(split_name) - 1 - offset
             self.error("Invalid name cannot have 2 tokens")
+        # generic: no module name, i3status or not, can exceed "type instance"
         if len(split_name) > 2:
             self.current_token -= len(split_name) - 2 - offset
             self.error("Invalid name cannot have more than 2 tokens")
@@ -408,6 +413,18 @@ class ConfigParser:
         Allows base 64 encode stuff using base64() or plain hide() in the
         config
         """
+        # check we are in a module definition etc
+        if not self.current_module:
+            self.notify_user(f"{function}(..) used outside of module or section")
+            return None
+
+        module = get_module_name(self.current_module[-1])
+        if module in CONFIG_FILE_SPECIAL_SECTIONS or is_i3status_module_name(module):
+            self.notify_user(
+                f"{function}(..) cannot be used outside of py3status module configuration"
+            )
+            return None
+
         # remove quotes
         value = self.remove_quotes(value)
 
@@ -418,18 +435,6 @@ class ConfigParser:
                 value = base64.b64decode(value).decode("utf-8")
             except TypeError as e:
                 self.notify_user(f"base64(..) error {e}")
-
-        # check we are in a module definition etc
-        if not self.current_module:
-            self.notify_user(f"{function}(..) used outside of module or section")
-            return None
-
-        module = self.current_module[-1].split()[0]
-        if module in CONFIG_FILE_SPECIAL_SECTIONS + I3S_MODULE_NAMES:
-            self.notify_user(
-                f"{function}(..) cannot be used outside of py3status module configuration"
-            )
-            return None
 
         value = self.value_convert(value, value_type)
         module_name = self.current_module[-1]
@@ -559,7 +564,7 @@ class ConfigParser:
         # if we have a colon in the name of a setting then it
         # indicates that it has been encoded.
         if ":" in name:
-            if module_name.split(" ")[0] in I3S_MODULE_NAMES + ["general"]:
+            if is_i3status_module_name(module_name) or module_name == "general":
                 self.error("Only py3status modules can use obfuscated")
 
             if not isinstance(value, str):
@@ -632,9 +637,19 @@ class ConfigParser:
                     # no instance name then give it an anon one.  This allows
                     # us to have multiple non-instance named modules defined
                     # without them clashing.
-                    if self.level > 1 and " " not in name and name not in I3S_MODULE_NAMES:
-                        name = f"{name} _anon_module_{self.anon_count}"
-                        self.anon_count += 1
+                    if (
+                        self.level > 1
+                        and " " not in name
+                        and not is_i3status_module_name(name)
+                        and name not in CONFIG_FILE_SPECIAL_SECTIONS
+                    ):
+                        # a user-typed "name _anon_module_N" could otherwise
+                        # collide with (and silently clobber) this one
+                        name = next_unclaimed_name(
+                            (f"{name} _anon_module_{n}" for n in count(self.anon_count)),
+                            dictionary,
+                        )
+                        self.anon_count = int(name.rsplit("_", 1)[-1]) + 1
                     dictionary[name] = value
                 # assignment of value
                 elif t_value == "=":
@@ -651,14 +666,64 @@ class ConfigParser:
                 name = []
 
 
+def wipe_generated_instance_names(config_info):
+    """
+    No module may keep an instance starting with the reserved
+    GENERATED_SLUG marker - strips it and disambiguates per module
+    type against the whole tree, not just local siblings.
+    """
+    claimed = {}
+
+    def collect(node):
+        for name, value in node.items():
+            if not isinstance(value, ModuleDefinition):
+                continue
+            claimed.setdefault(get_module_name(name), set()).add(name)
+            collect(value)
+
+    collect(config_info)
+
+    def wipe(node):
+        for name in list(node.keys()):
+            value = node[name]
+            if not isinstance(value, ModuleDefinition):
+                continue
+            wipe(value)
+
+            instance = get_instance_name(name)
+            if not instance.startswith(GENERATED_SLUG):
+                continue
+
+            module_type = get_module_name(name)
+            type_claimed = claimed[module_type]
+            # extremely unlikely, but don't let a stripped name silently collide -
+            # try the bare stripped instance first, then "_2", "_3", ...
+            stripped_instance = instance[len(GENERATED_SLUG) :]
+
+            def candidate(index):
+                suffix = f"_{index + 1}" if index else ""
+                return f"{module_type} {stripped_instance}{suffix}".rstrip()
+
+            new_name = next_unclaimed_name((candidate(i) for i in count()), type_claimed)
+
+            type_claimed.discard(name)
+            type_claimed.add(new_name)
+            node[new_name] = node.pop(name)
+            order = node.get("order")
+            if order:
+                node["order"] = [new_name if n == name else n for n in order]
+
+    wipe(config_info)
+
+
 def process_config(config_path, py3_wrapper=None):
     """
     Parse i3status.conf so we can adapt our code to the i3status config.
     """
 
-    def notify_user(error):
+    def notify_user(error, level="error"):
         if py3_wrapper:
-            py3_wrapper.notify_user(error)
+            py3_wrapper.notify_user(error, level=level)
         else:
             print(error)
 
@@ -724,55 +789,38 @@ def process_config(config_path, py3_wrapper=None):
     # the beginning of something beautiful
     config = {}
 
-    # update general section with defaults
+    # py3status{} wins over this top-level general{} for these, same order
+    # as get_config_attribute (common.py)
+    py3status_config = config_info.get("py3status", {})
     general_defaults = GENERAL_DEFAULTS.copy()
     if "general" in config_info:
         general_defaults.update(config_info["general"])
+    general_defaults.update({k: v for k, v in py3status_config.items() if k in GENERAL_DEFAULTS})
     config["general"] = general_defaults
 
-    config["py3status"] = config_info.get("py3status", {})
+    config["py3status"] = py3status_config
     modules = {}
     on_click = {}
-    i3s_modules = []
     py3_modules = []
     module_groups = {}
 
     def process_onclick(key, value, group_name):
         """
-        Check on_click events are valid.  Store if they are good
+        Check on_click events are valid. Store if they are good.
         """
-        button_error = False
-        button = ""
         try:
-            button = key.split()[1]
-            if int(button) not in range(1, 20):
-                button_error = True
-        except (ValueError, IndexError):
-            button_error = True
-
-        if button_error:
-            err = "Invalid on_click for `{}`. Number not in range 1-20: `{}`."
-            notify_user(err.format(group_name, button))
+            button = validate_onclick_button(key)
+        except ValueError as e:
+            notify_user(f"Invalid on_click for `{group_name}`: {e}")
             return False
-        clicks = on_click.setdefault(group_name, {})
-        clicks[button] = value
+        on_click.setdefault(group_name, {})[button] = value
         return True
-
-    def get_module_type(name):
-        """
-        i3status or py3status?
-        """
-        if name.split()[0] in I3S_MODULE_NAMES:
-            return "i3status"
-        return "py3status"
 
     def process_module(name, module, parent):
         if parent:
             modules[parent]["items"].append(name)
             mg = module_groups.setdefault(name, [])
             mg.append(parent)
-            if get_module_type(name) == "py3status":
-                module[".group"] = parent
 
         # check module content
         for k, v in list(module.items()):
@@ -793,6 +841,22 @@ def process_config(config_path, py3_wrapper=None):
                 modules[k] = module
                 get_modules(v, parent=k)
 
+    wipe_generated_instance_names(config_info)
+
+    # deprecated -s/--standalone: no i3status at all, not generated-but-unfed
+    skip_i3status = bool(py3_wrapper and py3_wrapper.config.get("standalone"))
+    if skip_i3status:
+        strip_i3status_sections(config_info)
+
+    # (disabled) deprecated: disable bare i3status modules
+    # strip_bare_i3status_modules(config_info, notify_user)
+
+    resolve_bare_i3status_modules(
+        config_info, config, py3_modules, module_groups, on_click, notify_user
+    )
+    resolve_configured_i3status_containers(
+        config_info, config, py3_modules, module_groups, on_click, notify_user
+    )
     get_modules(config_info)
 
     config["order"] = []
@@ -809,15 +873,18 @@ def process_config(config_path, py3_wrapper=None):
         return fixed
 
     def append_modules(item):
-        module_type = get_module_type(item)
-        if module_type == "i3status":
-            if item not in i3s_modules:
-                i3s_modules.append(item)
-        else:
-            if item not in py3_modules:
-                py3_modules.append(item)
+        # bare i3status items no longer exist by this point - resolved
+        # into real proxies before get_modules() ever ran
+        if item not in py3_modules:
+            py3_modules.append(item)
 
     def add_container_items(module_name):
+        if is_i3status_container_name(module_name):
+            # its items are already whole dicts (resolve_configured_i3status_containers)
+            # that i3status.py reads straight off its own `items` config -
+            # unlike a group/frame's children, they aren't separate Modules
+            # and get no top-level config[item] entry
+            return
         module = modules.get(module_name, {})
         items = module.get("items", [])
         for item in items:
@@ -832,12 +899,13 @@ def process_config(config_path, py3_wrapper=None):
 
     # create config for modules in order
     for name in config_info.get("order", []):
-        if name in module_groups:
+        # an i3status proxy is deliberately in both order and module_groups
+        if name in module_groups and not is_i3status_proxy_name(name):
             msg = "Module `{}` should not be listed in the 'order' directive, use"
             msg += " its parent group instead."
             notify_user(msg.format(name))
             continue
-        module_name = name.split(" ")[0]
+        module_name = get_module_name(name)
         if module_name in RETIRED_MODULES:
             old = f"`{module_name}`"
             new = ", ".join(f"`{x}`" for x in RETIRED_MODULES[module_name]["new"])
@@ -852,17 +920,8 @@ def process_config(config_path, py3_wrapper=None):
         config[name] = remove_any_contained_modules(module)
 
     config["on_click"] = on_click
-    config["i3s_modules"] = i3s_modules
     config["py3_modules"] = py3_modules
     config[".module_groups"] = module_groups
-
-    # time and tztime modules need a format for correct processing
-    for name in config:
-        if name.split()[0] in TIME_MODULES and "format" not in config[name]:
-            if name.split()[0] == "time":
-                config[name]["format"] = TIME_FORMAT
-            else:
-                config[name]["format"] = TZTIME_FORMAT
 
     if not config["order"]:
         notify_user(
@@ -873,14 +932,14 @@ def process_config(config_path, py3_wrapper=None):
 
 
 if __name__ == "__main__":
-    # process a config file and display output
-    # file name user supplied or ~/.i3/i3status.conf
+    # process a config file and display output file name
+    # user supplied or ~/.config/py3status/config
     import pprint
     import sys
 
     if len(sys.argv) > 1:
         file_name = sys.argv[1]
     else:
-        file_name = Path.home() / ".i3/i3status.conf"
+        file_name = Path.home() / ".config/py3status/config"
     print(f"\nPARSING CONFIG FILE {file_name}\n\n")
     pprint.pprint(process_config(file_name))
