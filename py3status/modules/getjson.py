@@ -11,6 +11,7 @@ Configuration parameters:
     cache_timeout: refresh interval for this module (default 30)
     delimiter: the delimiter between parent and child objects (default '-')
     format: display format for this module (default None)
+    headers: dictionary of HTTP request headers (default None)
     password: basic auth password information (default None)
     url: specify URL to fetch JSON from (default None)
     username: basic auth user information (default None)
@@ -25,6 +26,10 @@ Format placeholders:
     Placeholders for list elements have 'delimiter' followed by the index
     (eg. {'parent': ['this', 'that']) will use placeholders {parent-0}
     for 'this' and {parent-1} for 'that'.
+
+Notes:
+    If both `username` and `password` are set, Basic authentication takes precedence
+    over an `Authorization` header supplied in `headers`.
 
 Examples:
 ```
@@ -51,6 +56,13 @@ getjson {
     url = 'https://jsonplaceholder.typicode.com/posts/1/comments'
     format = '{0-name}'
 }
+
+# authenticate using an API-key header
+getjson {
+    url = 'https://example.com/api/status'
+    headers = {'X-API-Key': 'your-api-key', 'Accept': 'application/json'}
+    format = '{status}'
+}
 ```
 
 @author vicyap
@@ -69,6 +81,7 @@ class Py3status:
     cache_timeout = 30
     delimiter = "-"
     format = None
+    headers = None
     password = None
     url = None
     username = None
@@ -95,7 +108,9 @@ class Py3status:
                 auth = (self.username, self.password)
             else:
                 auth = None
-            json_data = self.py3.request(self.url, auth=auth).json()
+            # The request helper adds headers for User-Agent and Basic auth.
+            headers = self.headers.copy() if self.headers is not None else None
+            json_data = self.py3.request(self.url, headers=headers, auth=auth).json()
             json_data = self.py3.flatten_dict(json_data, self.delimiter, True)
         except self.py3.RequestException:
             json_data = None
