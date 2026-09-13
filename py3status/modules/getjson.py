@@ -27,6 +27,10 @@ Format placeholders:
     (eg. {'parent': ['this', 'that']) will use placeholders {parent-0}
     for 'this' and {parent-1} for 'that'.
 
+Notes:
+    If both `username` and `password` are set, Basic authentication takes precedence
+    over an `Authorization` header supplied in `headers`.
+
 Examples:
 ```
 # straightforward key replacement
@@ -60,9 +64,6 @@ getjson {
     format = '{status}'
 }
 ```
-
-If both `username` and `password` are set, Basic authentication takes precedence
-over an `Authorization` header supplied in `headers`.
 
 @author vicyap
 
