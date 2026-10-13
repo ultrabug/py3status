@@ -140,15 +140,14 @@ class Module:
         """
         Return user-written class object from given path.
         """
-        class_inst = None
-        if filepath.suffix == ".py":
-            py_mod = _exec_file(filepath.stem, filepath.as_posix())
-            if hasattr(py_mod, cls.EXPECTED_CLASS):
-                class_inst = py_mod.Py3status()
-        return class_inst
+        if filepath.suffix != ".py":
+            return None
+        py_mod = _exec_file(filepath.stem, filepath.as_posix())
+        klass = getattr(py_mod, cls.EXPECTED_CLASS, None)
+        return klass() if klass is not None else None
 
-    @staticmethod
-    def load_from_namespace(module_name):
+    @classmethod
+    def load_from_namespace(cls, module_name):
         """
         Load a py3status bundled module.
         """
@@ -158,7 +157,7 @@ class Module:
         components = name.split(".")
         for comp in components[1:]:
             py_mod = getattr(py_mod, comp)
-        class_inst = py_mod.Py3status()
+        class_inst = getattr(py_mod, cls.EXPECTED_CLASS)()
         return class_inst
 
     def prepare_module(self):
