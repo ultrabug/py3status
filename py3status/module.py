@@ -1,8 +1,10 @@
 import inspect
 import logging
+import sys
 import time
 from collections import OrderedDict
-from importlib.machinery import SourceFileLoader
+from importlib import import_module
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from random import randint
 from types import FunctionType
@@ -20,6 +22,30 @@ def make_quotes(options):
     if len(x) > 2:
         x = [", ".join(x[:-1]), x[-1]]
     return " or ".join(x)
+
+
+def _exec_file(name, path):
+    """
+    Run the file at path as module `name`, as the deprecated loader.load_module()
+    did: a new module sits in sys.modules while it runs, and is taken back out if
+    running it fails; a name already in sys.modules is run again in that module.
+    """
+    spec = spec_from_file_location(name, path)
+    module = sys.modules.get(name)
+    if module is not None:
+        module.__spec__ = spec
+        module.__loader__ = spec.loader
+        module.__file__ = spec.origin
+        spec.loader.exec_module(module)
+        return module
+    module = module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        sys.modules.pop(name, None)
+        raise
+    return module
 
 
 class Module:
@@ -115,26 +141,19 @@ class Module:
         """
         Return user-written class object from given path.
         """
-        class_inst = None
-        if filepath.suffix == ".py":
-            py_mod = SourceFileLoader(filepath.stem, filepath.as_posix()).load_module()
-            if hasattr(py_mod, cls.EXPECTED_CLASS):
-                class_inst = py_mod.Py3status()
-        return class_inst
+        if filepath.suffix != ".py":
+            return None
+        py_mod = _exec_file(filepath.stem, filepath.as_posix())
+        klass = getattr(py_mod, cls.EXPECTED_CLASS, None)
+        return klass() if klass is not None else None
 
-    @staticmethod
-    def load_from_namespace(module_name):
+    @classmethod
+    def load_from_namespace(cls, module_name):
         """
         Load a py3status bundled module.
         """
-        class_inst = None
-        name = f"py3status.modules.{module_name}"
-        py_mod = __import__(name)
-        components = name.split(".")
-        for comp in components[1:]:
-            py_mod = getattr(py_mod, comp)
-        class_inst = py_mod.Py3status()
-        return class_inst
+        py_mod = import_module(f"py3status.modules.{module_name}")
+        return getattr(py_mod, cls.EXPECTED_CLASS)()
 
     def prepare_module(self):
         """
