@@ -285,6 +285,10 @@ RETIRED_MODULES = {
         "new": ["nvidia_smi"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
+    "pingdom": {
+        "new": [],
+        "msg": "Module {old} is no longer available due to retired Pingdom 2.x APIs.",
+    },
     "player_control": {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
