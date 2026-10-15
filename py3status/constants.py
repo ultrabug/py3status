@@ -265,6 +265,10 @@ ON_TRIGGER_ACTIONS = ["refresh", "refresh_and_freeze"]
 POSITIONS = ["left", "center", "right"]
 
 RETIRED_MODULES = {
+    "aws_bill": {
+        "new": [],
+        "msg": "Module {old} is no longer available due to unmaintained boto and retired AWS billing reports.",
+    },
     "bitcoin_price": {
         "new": ["coin_market"],
         "msg": "Module {old} is no longer available due to unmaintained APIs. You can try a different module {new}.",
