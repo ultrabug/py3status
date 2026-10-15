@@ -317,6 +317,10 @@ RETIRED_MODULES = {
         "new": ["weather_owm"],
         "msg": "Module {old} is no longer available due to retired Yahoo Weather APIs and new Oath requirements. You can try a different module {new}.",
     },
+    "wwan_status": {
+        "new": ["wwan"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "xkb_layouts": {
         "new": ["xkb_input"],
         "msg": "Module {old} has been replaced with a module {new} to support sway too.",
