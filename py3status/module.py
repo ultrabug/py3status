@@ -62,6 +62,7 @@ class Module:
         self.sleeping = False
         self.terminated = False
         self.testing = self.config.get("testing")
+        self.force_update_count = 0
         self.urgent = False
         self.i3bar_gaps_urgent_options = {}
 
@@ -245,6 +246,8 @@ class Module:
         """
         if self.disabled or self.terminated or not self.enabled:
             return
+        # let a running method know it must not overwrite this
+        self.force_update_count += 1
         # clear cached_until for each method to allow update
         for meth, my_method in self.methods.items():
             my_method["cached_until"] = time.monotonic()
@@ -971,6 +974,7 @@ class Module:
                         cache_time = my_method["cached_until"]
                     continue
 
+                force_update_count = self.force_update_count
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
@@ -1033,7 +1037,10 @@ class Module:
                     else:
                         # get module default cached_until
                         cached_until = self.module_class.py3.time_in()
-                    my_method["cached_until"] = cached_until
+                    # an update forced while the method ran wins, so the
+                    # queued rerun is not skipped as still cached.
+                    if force_update_count == self.force_update_count:
+                        my_method["cached_until"] = cached_until
                     if not cache_time or cached_until < cache_time:
                         cache_time = cached_until
 
