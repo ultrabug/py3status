@@ -221,8 +221,8 @@ class Py3status:
             self.color_near_crit = self.py3.COLOR_NEAR_CRIT or "lightcoral"
             self.color_crit = self.py3.COLOR_CRIT or "red"
 
-            self.thresholds_auto = self.thresholds["auto.input"]
-            del self.thresholds["auto.input"]
+            self.thresholds = dict(self.thresholds)
+            self.thresholds_auto = self.thresholds.pop("auto.input")
 
         if "auto.input" in self.thresholds_man:
             self.thresholds_man.remove("auto.input")
