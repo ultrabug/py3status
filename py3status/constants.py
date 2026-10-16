@@ -281,6 +281,10 @@ RETIRED_MODULES = {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
+    "hddtemp": {
+        "new": ["drivetemp"],
+        "msg": "Module {old} has been replaced with a module {new}.",
+    },
     "nvidia_temp": {
         "new": ["nvidia_smi"],
         "msg": "Module {old} has been replaced with a module {new}.",
