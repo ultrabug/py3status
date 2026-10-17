@@ -47,6 +47,8 @@ class Formatter:
     ]
 
     reg_ex = re.compile(TOKENS[0], re.M | re.I)
+    # characters with a meaning in format strings, see TOKENS
+    SYNTAX_CHARS = "{}[]\\|"
 
     block_cache = {}
     format_string_cache = {}
@@ -224,8 +226,9 @@ class Formatter:
 
         if block.parent:
             raise Exception("Block not closed")
-        # add to the cache
+        # add to the cache, drop tokens after parsing
         self.block_cache[format_string] = first_block
+        self.format_string_cache.pop(format_string, None)
 
     def format(
         self,
@@ -245,6 +248,9 @@ class Formatter:
 
         # if the processed format string is not in the cache then create it.
         if format_string not in self.block_cache:
+            # plain text has nothing to parse, so skip the cache
+            if format_string and not any(c in format_string for c in self.SYNTAX_CHARS):
+                return Composite([{"full_text": format_string}])
             self.build_block(format_string)
 
         first_block = self.block_cache[format_string]
