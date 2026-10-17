@@ -125,7 +125,6 @@ class Py3status:
 
     def post_config_hook(self):
         self._active_coins = []
-        self._config = None
         self._credential_cache = {}
 
     def _get_daemon_config_value(self, coin, key):
@@ -184,9 +183,7 @@ class Py3status:
         except:  # noqa e722
             return "Connection to '" + url + "' failed"
 
-    def coin_balance(self, outputs, config):
-        self._config = config
-
+    def coin_balance(self):
         self._active_coins = [e[1] for e in Formatter().parse(self.format)]
         balances = {}
         for coin in self._active_coins:

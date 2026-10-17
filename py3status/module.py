@@ -29,8 +29,6 @@ class Module:
     caching its output based on user will.
     """
 
-    PARAMS_NEW = "new"
-    PARAMS_LEGACY = "legacy"
     EXPECTED_CLASS = "Py3status"
 
     def __init__(self, module, discoverable_modules, py3_wrapper, instance=None):
@@ -48,7 +46,6 @@ class Module:
         self.error_hide = False
         self.has_post_config_hook = False
         self.has_kill = False
-        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
         self.methods = OrderedDict()
         self.module_class = instance
@@ -89,7 +86,7 @@ class Module:
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
-                "{}: Import Error, {}".format(self.module_nice_name, str(e)),
+                f"{self.module_nice_name}: {e}",
             ]
             self.error_output(self.error_messages[0])
             # log the error
@@ -557,38 +554,6 @@ class Module:
             if right:
                 response["composite"][-1]["full_text"] += right
 
-    def _params_type(self, method_name, instance):
-        """
-        Check to see if this is a legacy method or shiny new one
-
-        legacy update method:
-            def update(self, i3s_output_list, i3s_config):
-                ...
-
-        new update method:
-            def update(self):
-                ...
-
-        Returns False if the method does not exist,
-        else PARAMS_NEW or PARAMS_LEGACY
-        """
-
-        method = getattr(instance, method_name, None)
-        if not method:
-            return False
-
-        # Check the parameters we simply count the number of args and don't
-        # allow any extras like keywords.
-        arg_count = 1
-        # on_click method has extra events parameter
-        if method_name == "on_click":
-            arg_count = 2
-        args, vargs, kw, defaults, _, _, _ = inspect.getfullargspec(method)
-        if len(args) == arg_count and not vargs and not kw:
-            return self.PARAMS_NEW
-        else:
-            return self.PARAMS_LEGACY
-
     def load_methods(self, module, discoverable_modules):
         """
         Read the given user-written py3status class file and store its methods.
@@ -877,11 +842,19 @@ class Module:
                 else:
                     m_attr = inspect.getattr_static(class_inst, method)
                     if isinstance(m_attr, FunctionType):
-                        params_type = self._params_type(method, class_inst)
+                        # on_click(event) takes one argument, others take none
+                        args = ("event",) if method == "on_click" else ()
+                        sig = inspect.signature(getattr(class_inst, method))
+                        try:
+                            sig.bind(*args)
+                        except TypeError:
+                            err = f"Invalid method signature `{method}{sig}`, "
+                            err += f"expected `{method}({', '.join(args)})`."
+                            raise TypeError(err)
                         if method == "on_click":
-                            self.click_events = params_type
+                            self.click_events = True
                         elif method == "kill":
-                            self.has_kill = params_type
+                            self.has_kill = True
                         elif method == "post_config_hook":
                             self.has_post_config_hook = True
                         else:
@@ -889,7 +862,6 @@ class Module:
                             # of this module.
                             method_obj = {
                                 "cached_until": time.monotonic(),
-                                "call_type": params_type,
                                 "instance": None,
                                 "last_output": {"name": method, "full_text": ""},
                                 "method": method,
@@ -929,16 +901,7 @@ class Module:
 
             elif self.click_events:
                 click_method = getattr(self.module_class, "on_click")
-                if self.click_events == self.PARAMS_NEW:
-                    # new style modules
-                    click_method(event)
-                else:
-                    # legacy modules had extra parameters passed
-                    click_method(
-                        self.i3status_thread.json_list,
-                        self.config["py3_config"]["general"],
-                        event,
-                    )
+                click_method(event)
                 self.set_updated()
             else:
                 # nothing has happened so no need for refresh
@@ -974,15 +937,7 @@ class Module:
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
-                    if my_method["call_type"] == self.PARAMS_NEW:
-                        # new style modules
-                        response = method()
-                    else:
-                        # legacy modules had parameters passed
-                        response = method(
-                            self.i3status_thread.json_list,
-                            self.config["py3_config"]["general"],
-                        )
+                    response = method()
 
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
@@ -1105,14 +1060,7 @@ class Module:
         if self.has_kill:
             try:
                 kill_method = getattr(self.module_class, "kill")
-                if self.has_kill == self.PARAMS_NEW:
-                    kill_method()
-                else:
-                    # legacy call parameters
-                    kill_method(
-                        self.i3status_thread.json_list,
-                        self.config["py3_config"]["general"],
-                    )
+                kill_method()
             except Exception:
                 # this would be stupid to die on exit
                 pass
