@@ -167,10 +167,11 @@ class Py3:
 
     def _thresholds_init(self):
         """
-        Initiate and check any thresholds set
+        Initialize and check any thresholds set
         """
         thresholds = getattr(self._py3status_module, "thresholds", [])
         self._thresholds = {}
+        self._threshold_values = {}
         if isinstance(thresholds, list):
             try:
                 thresholds.sort()
@@ -701,14 +702,12 @@ class Py3:
         """
         if not getattr(self._py3status_module, "thresholds", None):
             return []
-        elif not format_string:
-            return []
 
-        if format_string not in self._format_color_names:
+        try:
+            names = self._format_color_names[format_string]
+        except KeyError:
             names = self._formatter.get_color_names(format_string)
             self._format_color_names[format_string] = names
-        else:
-            names = self._format_color_names[format_string]
 
         if not matches:
             return list(names)
@@ -1124,30 +1123,42 @@ class Py3:
         if self._thresholds is None:
             self._thresholds_init()
 
-        # allow name with different values
+        # allow threshold name to use per-item threshold values
         if isinstance(name, tuple):
-            name_used = "{}/{}".format(name[0], name[1])
-            if name[2]:
-                self._thresholds[name_used] = [(x[0], self._get_color(x[1])) for x in name[2]]
-            name = name[0]
+            name, key, thresholds = name
+            name_used = f"{name}/{key}"
+            # convert colors only when the thresholds change
+            if thresholds and self._threshold_values.get(name_used) != thresholds:
+                self._threshold_values[name_used] = list(thresholds)
+                self._thresholds[name_used] = [(x[0], self._get_color(x[1])) for x in thresholds]
+            thresholds = self._thresholds.get(name_used)
         else:
             # if name not in thresholds info then use defaults
             name_used = name
-            if name_used not in self._thresholds:
+            thresholds = self._thresholds.get(name_used)
+            if thresholds is None:
                 name_used = None
+                thresholds = self._thresholds.get(name_used)
 
-        # convert value to int/float
-        thresholds = self._thresholds.get(name_used)
+        # save color so it can be accessed via safe_format()
+        if name:
+            color_name = f"color_threshold_{name}"
+        else:
+            color_name = "color_threshold"
+
+        # skip empty thresholds/values before converting
+        if not thresholds or value is None or value == "":
+            setattr(self._py3status_module, color_name, None)
+            return None
+
         color = None
+        # convert numeric values to float
         try:
             value = float(value)
         except (TypeError, ValueError):
             pass
 
-        # skip on empty thresholds/values
-        if not thresholds or value in [None, ""]:
-            pass
-        elif isinstance(value, str):
+        if isinstance(value, str):
             # string
             for threshold in thresholds:
                 if value == threshold[0]:
@@ -1157,17 +1168,17 @@ class Py3:
             # int/float
             try:
                 if self._get_config_setting("gradients"):
-                    try:
-                        colors, minimum, maximum = self._threshold_gradients[name_used]
-                    except KeyError:
-                        colors = self._gradients.make_threshold_gradient(self, thresholds)
-                        minimum = min(thresholds)[0]
-                        maximum = max(thresholds)[0]
-                        self._threshold_gradients[name_used] = (
-                            colors,
-                            minimum,
-                            maximum,
+                    cached = self._threshold_gradients.get(name_used)
+                    # rebuild when the thresholds changed
+                    if cached is None or cached[0] is not thresholds:
+                        cached = (
+                            thresholds,
+                            self._gradients.make_threshold_gradient(self, thresholds),
+                            min(thresholds)[0],
+                            max(thresholds)[0],
                         )
+                        self._threshold_gradients[name_used] = cached
+                    _, colors, minimum, maximum = cached
 
                     if value < minimum:
                         color = colors[0]
@@ -1187,11 +1198,6 @@ class Py3:
             except TypeError:
                 color = None
 
-        # save color so it can be accessed via safe_format()
-        if name:
-            color_name = f"color_threshold_{name}"
-        else:
-            color_name = "color_threshold"
         setattr(self._py3status_module, color_name, color)
 
         return color
