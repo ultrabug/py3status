@@ -14,7 +14,7 @@ from traceback import extract_tb, format_stack, format_tb
 from py3status.command import CommandServer
 from py3status.constants import LOGGING_CONFIG, LOGGING_LOG_FILE_CONFIG
 from py3status.events import Events
-from py3status.formatter import expand_color
+from py3status.formatter import expand_color, is_color_option
 from py3status.helpers import print_stderr
 from py3status.i3status import I3status
 from py3status.log import module_logger_name, resolve_log_level
@@ -161,7 +161,7 @@ class Common:
         if hasattr(param, "none_setting"):
             # check py3status general section
             param = config["general"].get(attribute, self.none_setting)
-        if param and (attribute == "color" or attribute.startswith("color_")):
+        if param and is_color_option(attribute):
             # check color value
             param = expand_color(param.lower(), self.none_setting)
         return param

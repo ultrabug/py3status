@@ -1239,6 +1239,14 @@ def test_conditions_23():
     run_formatter({"format": r"[\?if=None=None cool] beans", "expected": " beans"})
 
 
+def test_module_color_names_are_expanded():
+    class ColorModule(Module):
+        color_input = "plum"
+
+    result = f.format(r"\?color=input plum", ColorModule())
+    assert result.get_content() == [{"full_text": "plum", "color": "#DDA0DD"}]
+
+
 def test_trailing_zeroes_1():
     run_formatter(
         {

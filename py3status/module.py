@@ -9,7 +9,7 @@ from types import FunctionType
 
 from py3status.composite import Composite
 from py3status.constants import MARKUP_LANGUAGES, ON_ERROR_VALUES, POSITIONS
-from py3status.formatter import Formatter
+from py3status.formatter import Formatter, expand_color, is_color_option
 from py3status.log import module_logger_name
 from py3status.profiling import profile
 from py3status.py3 import ModuleErrorException, Py3
@@ -778,6 +778,9 @@ class Module:
             for config, value in mod_config.items():
                 # names starting with '.' are private
                 if not config.startswith("."):
+                    # expand color names once, eg color_good = "plum"
+                    if is_color_option(config) and isinstance(value, str):
+                        value = expand_color(value.lower(), passthrough=True)
                     setattr(self.module_class, config, value)
 
             # process any update_config settings

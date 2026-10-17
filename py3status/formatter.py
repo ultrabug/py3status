@@ -2,10 +2,20 @@ import re
 from html import escape
 from math import ceil
 from numbers import Number
+from string import hexdigits
 from urllib.parse import parse_qsl
 
 from py3status.composite import Composite
 from py3status.constants import COLOR_NAMES, COLOR_NAMES_EXCLUDED
+
+HEX_DIGITS = frozenset(hexdigits)
+
+
+def is_color_option(name):
+    """
+    Check if a config option is a color, eg color or color_good.
+    """
+    return name == "color" or name.startswith("color_")
 
 
 def expand_color(color, default=None, passthrough=False, block=None):
@@ -15,14 +25,11 @@ def expand_color(color, default=None, passthrough=False, block=None):
     if color:
         if color[0] == "#":
             color = color[1:]
-            try:
-                int(color, 16)
-            except ValueError:
+            if not HEX_DIGITS.issuperset(color):
                 return block
-            length = len(color)
-            if length in [3, 4]:
-                color = "".join(color[x] * 2 for x in range(length))
-            elif length not in [6, 8]:
+            if len(color) in (3, 4):
+                color = "".join(x * 2 for x in color)
+            elif len(color) not in (6, 8):
                 return block
             return "#" + color.upper()
     elif block:
@@ -619,6 +626,9 @@ class Block:
             )
             if color == "hidden":
                 return False, []
+            # modules may keep color names
+            if color and color[0] != "#":
+                color = expand_color(color, passthrough=True)
 
         text = ""
         out = []
