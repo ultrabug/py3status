@@ -501,7 +501,7 @@ for creating the ``cached_until`` value for the module output.
 
 - offset: is used to alter the base time used. A timer that started at a
     certain time could set that as the offset and any synchronization would
-    then be relative to that time.
+    then be relative to that time. It is a ``time.time()`` value.
 
 ### trigger_event(module_name, event)
 

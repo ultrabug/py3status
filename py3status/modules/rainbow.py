@@ -65,7 +65,6 @@ SAMPLE OUTPUT
 ]
 """
 
-import math
 import re
 import time
 
@@ -144,21 +143,12 @@ class Py3status:
 
     def _set_cycle_time(self):
         """
-        Set next cycle update time synced to nearest second or 0.1 of second.
+        Set next cycle update time, synced with the other modules.
         """
-        now = time.monotonic()
-        try:
-            cycle_time = now - self._cycle_time
-            if cycle_time < 0:
-                cycle_time = 0
-        except AttributeError:
-            cycle_time = 0
-        cycle_time += self.cycle_time
-        if cycle_time == int(cycle_time):
-            self._cycle_time = math.ceil(now + cycle_time)
-        else:
-            self._cycle_time = math.ceil((now + cycle_time) * 10) / 10
-        self._cycle_time = now + self.cycle_time
+        # whole seconds and fractions that divide one sync with the other
+        # modules; anything else (like 1.5) would be rounded up, so it isn't
+        sync_to = None if self.cycle_time < 1 or self.cycle_time % 1 == 0 else 0
+        self._cycle_time = self.py3.time_in(self.cycle_time, sync_to=sync_to)
 
     def _get_current_output(self):
         """

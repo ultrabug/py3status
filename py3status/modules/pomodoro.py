@@ -195,6 +195,9 @@ class Py3status:
 
         cached_until = self.py3.time_in(0)
         if self._running:
+            # tick on this countdown's own seconds, not the wall clock's
+            end_time = time.time() + self._end_time - time.monotonic()
+            cached_until = self.py3.time_in(0, offset=end_time)
             self._time_left = ceil(self._end_time - time.monotonic())
             time_left = ceil(self._time_left)
         else:

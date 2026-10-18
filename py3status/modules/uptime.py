@@ -61,9 +61,7 @@ SAMPLE OUTPUT
 """
 
 import time
-from collections import OrderedDict
 from datetime import datetime
-from pathlib import Path
 
 
 class Py3status:
@@ -73,40 +71,48 @@ class Py3status:
     format = "up {days} days {hours} hours {minutes} minutes"
 
     def post_config_hook(self):
-        self.time_periods = OrderedDict()
+        periods = {
+            "decades": 315360000,
+            "years": 31536000,
+            "weeks": 604800,
+            "days": 86400,
+            "hours": 3600,
+            "minutes": 60,
+            "seconds": 1,
+        }
+        self.time_periods = {
+            unit: seconds
+            for unit, seconds in periods.items()
+            if self.py3.format_contains(self.format, unit)
+        }
+        intervals = list(self.time_periods.values())
         self.since = "%" in self.format
-        periods = [
-            ("decades", 315360000),
-            ("years", 31536000),
-            ("weeks", 604800),
-            ("days", 86400),
-            ("hours", 3600),
-            ("minutes", 60),
-            ("seconds", 1),
-        ]
-        self.seconds, self.interval = self.py3.CACHE_FOREVER, None
-        for unit, second in periods:
-            if self.py3.format_contains(self.format, unit):
-                self.time_periods[unit] = second
-                self.seconds, self.interval = None, second
+        if self.since:
+            # recheck every minute in case the clock jumped
+            intervals.append(60)
+        self.interval = min(intervals, default=None)
 
     def uptime(self):
-        with Path("/proc/uptime").open() as f:
-            up = int(float(f.readline().split()[0]))
-            offset = time.time() - up
+        up = time.clock_gettime(time.CLOCK_BOOTTIME)
+        offset = time.time() - up
+        up = int(up)
 
         uptime = {}
         for unit, interval in self.time_periods.items():
             uptime[unit], up = divmod(up, interval)
 
         if self.since:
-            since = datetime.fromtimestamp(offset)
-            new_format = datetime.strftime(since, self.format)
+            new_format = datetime.fromtimestamp(offset).strftime(self.format)
         else:
             new_format = self.format
 
+        if self.interval:
+            cached_until = self.py3.time_in(sync_to=self.interval, offset=offset)
+        else:
+            cached_until = self.py3.CACHE_FOREVER
+
         return {
-            "cached_until": self.py3.time_in(self.seconds, self.interval, offset),
+            "cached_until": cached_until,
             "full_text": self.py3.safe_format(new_format, uptime),
         }
 

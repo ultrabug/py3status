@@ -2,7 +2,6 @@ from pprint import pformat
 
 from py3status.py3 import Py3
 
-
 py3 = Py3()
 
 
@@ -254,3 +253,67 @@ def test_flatten_dict_parent_key():
     print("returned data")
     print(pformat(returned))
     assert returned == expected
+
+
+class FrozenClock:
+    """time.time() and time.monotonic() that only move when told to."""
+
+    def __init__(self):
+        self.wall = 1_700_000_000.37
+        self.mono = 50_000.37
+
+    def time(self):
+        return self.wall
+
+    def monotonic(self):
+        return self.mono
+
+    def advance(self, seconds):
+        self.wall += seconds
+        self.mono += seconds
+
+
+def time_in_with(monkeypatch, clock):
+    monkeypatch.setattr("py3status.py3.time", clock)
+    return Py3().time_in
+
+
+def wall_at(clock, due):
+    return clock.wall + due - clock.mono
+
+
+def test_time_in_lands_on_the_second(monkeypatch):
+    clock = FrozenClock()
+    time_in = time_in_with(monkeypatch, clock)
+
+    for seconds in (0, 1, 5, 10):
+        due = time_in(seconds)
+        assert due > clock.mono
+        assert round(wall_at(clock, due) % 1, 6) in (0, 1)
+    assert round(wall_at(clock, time_in(sync_to=60)) % 60, 6) in (0, 60)
+
+
+def test_time_in_offset(monkeypatch):
+    clock = FrozenClock()
+    time_in = time_in_with(monkeypatch, clock)
+    offset = clock.wall + 7.25  # e.g. when a countdown ends
+
+    due = time_in(0, offset=offset)
+    assert round((wall_at(clock, due) - offset) % 1, 6) in (0, 1)
+
+
+def test_time_in_steady_gaps(monkeypatch):
+    # a module asking again right after it ran gets exactly the gap it asked for
+    for seconds in (0.1, 0.2, 0.25, 0.5, 1, 2, 5):
+        clock = FrozenClock()
+        time_in = time_in_with(monkeypatch, clock)
+        gaps = []
+        for _ in range(8):
+            step = time_in(seconds) - clock.mono + 0.003  # runs a few ms late
+            clock.advance(step)
+            gaps.append(round(step, 2))
+        assert set(gaps[3:]) == {seconds}, seconds
+
+
+def test_time_in_cache_forever():
+    assert py3.time_in(py3.CACHE_FOREVER) is py3.CACHE_FOREVER

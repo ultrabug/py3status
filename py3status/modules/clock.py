@@ -181,7 +181,7 @@ class Py3status:
             self.active = 0
 
         # reset the cycle time
-        self._cycle_time = time.time() + self.cycle
+        self._cycle_time = self.py3.time_in(self.cycle)
 
     def _get_timezone(self, tz):
         """
@@ -200,16 +200,16 @@ class Py3status:
     def _change_active(self, diff):
         self.active = (self.active + diff) % len(self.format)
         # reset the cycle time
-        self._cycle_time = time.time() + self.cycle
+        self._cycle_time = self.py3.time_in(self.cycle)
         # save the active format
         timezone = self.format[self.active]
         self.py3.storage_set("timezone", timezone)
 
     def clock(self):
         # cycling
-        if self.cycle and time.time() >= self._cycle_time:
+        if self.cycle and time.monotonic() >= self._cycle_time:
             self._change_active(1)
-            self._cycle_time = time.time() + self.cycle
+            self._cycle_time = self.py3.time_in(self.cycle)
 
         # update our times
         times = {}
