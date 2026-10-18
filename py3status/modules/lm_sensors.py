@@ -161,7 +161,6 @@ sensor_names
 """
 
 import re
-from collections import OrderedDict
 from fnmatch import fnmatch
 from json import loads
 
@@ -197,12 +196,9 @@ class Py3status:
 
         if self.chips:
             lm_sensors_data = self._get_lm_sensors_data()
-            chips = OrderedDict()
-            for _filter in self.chips:
-                for chip_name in lm_sensors_data:
-                    if fnmatch(chip_name, _filter):
-                        chips[_filter] = None
-            self.lm_sensors_command += OrderedDict.keys(chips)
+            self.lm_sensors_command += dict.fromkeys(
+                f for f in self.chips if any(fnmatch(c, f) for c in lm_sensors_data)
+            )
 
         self.sensors = {"list": [], "name": {}, "sensors": self.sensors}
 
@@ -229,7 +225,7 @@ class Py3status:
 
     def _get_lm_sensors_data(self):
         output = self.py3.command_output(self.lm_sensors_command)
-        temporary = OrderedDict()
+        temporary = {}
 
         for chunk in self.lm_sensors_pattern.split(output):
             temporary.update(loads(chunk))

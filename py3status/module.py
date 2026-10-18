@@ -2,7 +2,6 @@ import inspect
 import logging
 import sys
 import time
-from collections import OrderedDict
 from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -76,7 +75,7 @@ class Module:
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.methods = OrderedDict()
+        self.methods = {}
         self.module_class = instance
         self.module_full_name = module
         self.module_inst = "".join(module.split(" ")[1:])
