@@ -112,7 +112,6 @@ class Py3:
         self._uid = uuid4()
 
         if module:
-            self._i3s_config = module._py3_wrapper.config["py3_config"]["general"]
             self._module_full_name = module.module_full_name
             self._output_modules = module._py3_wrapper.output_modules
             self._py3status_module = module.module_class
@@ -426,12 +425,6 @@ class Py3:
         function is a helper for this second case.
         """
         return not (color is None or hasattr(color, "none_setting"))
-
-    def i3s_config(self):
-        """
-        returns the i3s_config dict.
-        """
-        return self._i3s_config
 
     def is_my_event(self, event):
         """

@@ -275,10 +275,6 @@ Return the control program of the current window manager.
 On i3, will return "i3-msg"
 On sway, will return "swaymsg"
 
-### i3s_config()
-
-returns the i3s_config dict.
-
 ### is_color(color)
 
 Tests to see if a color is defined.
