@@ -341,8 +341,7 @@ The following functions can be registered:
 #### content_function()
 
 Called to discover what modules a container is displaying.  This is
-used to determine when updates need passing on to the container and
-also when modules can be put to sleep.
+used to determine when updates need passing on to the container.
 
 the function must return a set of module names that are being
 displayed.

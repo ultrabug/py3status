@@ -239,7 +239,6 @@ class I3status(Thread):
         self.last_output = None
         self.last_refresh_ts = time.monotonic()
         self.lock = py3_wrapper.lock
-        self.new_update = False
         self.py3_config = py3_wrapper.config["py3_config"]
         self.py3_wrapper = py3_wrapper
         self.ready = False

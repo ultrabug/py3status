@@ -55,11 +55,8 @@ class Module:
         self.module_full_name = module
         self.module_inst = "".join(module.split(" ")[1:])
         self.module_name = module.split(" ")[0]
-        self.new_update = False
-        self.nagged = False
         self.on_error = None
         self.prevent_refresh = False
-        self.sleeping = False
         self.terminated = False
         self.testing = self.config.get("testing")
         self.urgent = False
@@ -255,19 +252,7 @@ class Module:
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
-    def sleep(self):
-        self.sleeping = True
-
-    def disable_module(self):
-        # hide message
-        self.disabled = True
-        # purge from any container modules
-        self._py3_wrapper.purge_module(self.module_full_name)
-        self.error_output("")
-        self._logger.info("disabling module")
-
     def wake(self):
-        self.sleeping = False
         if self.disabled:
             # module is disabled so don't wake
             return

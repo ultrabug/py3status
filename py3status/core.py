@@ -929,21 +929,6 @@ class Py3statusWrapper:
         logger.info("received SIGTERM")
         raise KeyboardInterrupt()
 
-    def purge_module(self, module_name):
-        """
-        A module has been removed e.g. a module that had an error.
-        We need to find any containers and remove the module from them.
-        """
-        containers = self.config["py3_config"][".module_groups"]
-        containers_to_update = set()
-        if module_name in containers:
-            containers_to_update.update(set(containers[module_name]))
-        for container in containers_to_update:
-            try:
-                self.modules[container].module_class.items.remove(module_name)
-            except ValueError:
-                pass
-
     def notify_update(self, update, urgent=False):
         """
         Name or list of names of modules that have updated.
@@ -1056,7 +1041,6 @@ class Py3statusWrapper:
             self.i3bar_running = False
             # i3status should be stopped
             self.i3status_thread.suspend_i3status()
-            self.sleep_modules()
             self.next_allowed_signal = SIGCONT
         else:
             logger.warning("inhibited stop_signal %s", Signals(signum).name)
@@ -1071,12 +1055,6 @@ class Py3statusWrapper:
         else:
             logger.warning("inhibited start_signal %s", Signals(signum).name)
             self.inhibit_signal_ts = time.monotonic() + 0.1
-
-    def sleep_modules(self):
-        # Put all py3modules to sleep so they stop updating
-        for module in self.output_modules.values():
-            if module["type"] == "py3status":
-                module["module"].sleep()
 
     def wake_modules(self):
         # Wake up all py3modules.
