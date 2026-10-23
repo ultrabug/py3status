@@ -8,7 +8,35 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-SERVER_ADDRESS = "/tmp/py3status_uds"
+
+def _runtime_dir():
+    """
+    The user's private runtime directory, found also when XDG_RUNTIME_DIR
+    isn't set (eg py3-cmd from cron), so py3status and py3-cmd agree;
+    /tmp only without one
+    """
+    for path in (os.environ.get("XDG_RUNTIME_DIR"), f"/run/user/{os.getuid()}"):
+        if path and os.path.isdir(path):
+            return path
+    return "/tmp"
+
+
+SOCKET_DIR = _runtime_dir()
+SOCKET_NAME = "py3status.{}.sock"
+
+
+def _socket_paths():
+    """
+    The py3status sockets py3-cmd sends to
+    """
+    pattern = SOCKET_NAME.format("[0-9]*")
+    paths = set(Path(SOCKET_DIR).glob(pattern))
+    if os.getuid() == 0:
+        # root, eg a pacman hook, reaches every user's bar, as it did in /tmp
+        paths.update(Path("/run/user").glob(f"*/{pattern}"))
+    return paths
+
+
 MAX_SIZE = 1024
 
 CLICK_EPILOG = """
@@ -227,7 +255,7 @@ class CommandServer(threading.Thread):
         self.py3_wrapper = py3_wrapper
 
         self.command_runner = CommandRunner(py3_wrapper)
-        server_address = Path(f"{SERVER_ADDRESS}.{os.getpid()}")
+        server_address = Path(SOCKET_DIR, SOCKET_NAME.format(os.getpid()))
         self.server_address = server_address
 
         # Make sure the socket does not already exist
@@ -513,7 +541,7 @@ def send_command():
         verbose(f"Message length too long, max length ({MAX_SIZE})")
 
     # find all likely socket addresses
-    uds_list = Path(SERVER_ADDRESS).parent.glob(f"{Path(SERVER_ADDRESS).name}.[0-9]*")
+    uds_list = _socket_paths()
 
     verbose(f"message {msg!r}")
     for uds in uds_list:
