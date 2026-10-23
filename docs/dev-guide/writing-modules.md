@@ -69,9 +69,9 @@ should now show up in the status bar.
 ### How does it work?
 
 The `Py3status` class tells py3status that this is a module. The module
-gets loaded. py3status then calls any public methods that the class
-contains to get a response. In our example there is a single method
-`hello_world()`. Read more here: [module methods](#module_methods).
+gets loaded. py3status then calls the public method that the class
+contains to get a response. In our example it is `hello_world()`.
+Read more here: [module methods](#module_methods).
 
 ### The response
 
@@ -172,7 +172,7 @@ class Py3status:
         format_string = 'You pressed button {button}'
         data = {'button': button}
         self.full_text = self.py3.safe_format(format_string, data)
-        # Our modules update methods will get called automatically.
+        # Our module's update method will get called automatically.
 ```
 
 The `on_click` method of a module is special and will get called when
@@ -238,7 +238,7 @@ class Py3status:
         {'y': 13, 'x': 1737, 'button': 1, 'name': 'example', 'instance': 'first'}
         """
         self.button = event['button']
-        # Our modules update methods will get called automatically.
+        # Our module's update method will get called automatically.
 ```
 
 This works just like the previous example but we can now be customised.
@@ -321,10 +321,11 @@ number {
 Py3status will call a method in a module to provide output to the i3bar.
 Methods that have names starting with an underscore will not be used in
 this way. Any methods defined as static methods will also not be used.
+A module must have only one such update method.
 
 ### Outputs
 
-Output methods should provide a response dict.
+The update method should provide a response dict.
 
 Example response:
 
@@ -355,7 +356,7 @@ The color that the module output will be displayed in.
 
 **composite**
 
-Used to output more than one item to i3bar from a single output method.
+Used to output more than one item to i3bar from the update method.
 If this is provided then `full_text` should not be.
 
 **full_text**
@@ -392,7 +393,7 @@ Called when an event is received by a module.
 
 Called once an instance of a module has been created and the
 configuration parameters have been set. This is useful for any work a
-module must do before its output methods are run for the first time.
+module must do before its update method is run for the first time.
 `post_config_hook()` introduced in version 3.1
 
 ### Method order

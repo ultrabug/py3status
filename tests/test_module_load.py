@@ -43,4 +43,4 @@ def test_module_load():
     module = TestModule()
     m = Module("test_module", {}, mock, module)
     m.prepare_module()
-    assert list(m.methods) == ["instance_method"]
+    assert m.method["method"] == "instance_method"
