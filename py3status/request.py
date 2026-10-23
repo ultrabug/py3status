@@ -3,7 +3,7 @@ import json
 import socket
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-from urllib.request import HTTPCookieProcessor, Request, build_opener, install_opener, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 
 from py3status.exceptions import RequestInvalidJSON, RequestTimeout, RequestURLError
 
@@ -35,15 +35,16 @@ class HttpResponse:
             headers["Authorization"] = f"Basic {token}"
         if data:
             data = urlencode(data).encode()
+        open_url = urlopen
         if cookiejar is not None:
             self._cookiejar = cookiejar
-            opener = build_opener(HTTPCookieProcessor(cookiejar))
-            install_opener(opener)
+            # this jar only; install_opener() would make it global for every module's requests
+            open_url = build_opener(HTTPCookieProcessor(cookiejar)).open
 
         request = Request(url, headers=headers)
 
         try:
-            self._response = urlopen(request, data=data, timeout=timeout)
+            self._response = open_url(request, data=data, timeout=timeout)
             self._error_message = None
         except URLError as e:
             reason = e.reason
