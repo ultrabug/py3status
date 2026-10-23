@@ -1,7 +1,6 @@
 import inspect
 import logging
 import time
-from collections import OrderedDict
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from random import randint
@@ -50,7 +49,7 @@ class Module:
         self.has_kill = False
         self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
-        self.methods = OrderedDict()
+        self.method = None
         self.module_class = instance
         self.module_full_name = module
         self.module_inst = "".join(module.split(" ")[1:])
@@ -58,6 +57,7 @@ class Module:
         self.new_update = False
         self.nagged = False
         self.on_error = None
+        self.output = {}
         self.prevent_refresh = False
         self.sleeping = False
         self.terminated = False
@@ -85,7 +85,7 @@ class Module:
         except Exception as e:
             # Import failed notify user in module error output
             self.disabled = True
-            self.methods["error"] = {}
+            self.method = None
             self.error_index = 0
             self.error_messages = [
                 self.module_nice_name,
@@ -142,7 +142,7 @@ class Module:
         """
         # Modules can define a post_config_hook() method which will be run
         # after the module has had it config settings applied and before it has
-        # its main method(s) called for the first time.  This allows modules to
+        # its main method called for the first time. This allows modules to
         # perform any necessary setup.
         if self.has_post_config_hook:
             try:
@@ -185,9 +185,9 @@ class Module:
         if self.error_messages != errors:
             self.error_messages = errors
             self.error_index = 0
-        self.error_output(self.error_messages[self.error_index], method)
+        self.error_output(self.error_messages[self.error_index])
 
-    def error_output(self, message, method_affected=None):
+    def error_output(self, message):
         """
         Something is wrong with the module so we want to output the error to
         the i3bar
@@ -205,15 +205,7 @@ class Module:
             "instance": self.module_inst,
             "name": self.module_name,
         }
-        for method in self.methods.values():
-            if (
-                method_affected
-                and method["method"] != method_affected
-                and method_affected != "post_config_hook"
-            ):
-                continue
-
-            method["last_output"] = [error]
+        self.output = [error]
 
         self.allow_config_clicks = False
         self.set_updated()
@@ -222,8 +214,7 @@ class Module:
         """
         hide the module in the i3bar
         """
-        for method in self.methods.values():
-            method["last_output"] = {}
+        self.output = {}
 
         self.allow_config_clicks = False
         self.error_hide = True
@@ -235,7 +226,7 @@ class Module:
         """
         self.prepare_module()
         if not (self.disabled or self.terminated):
-            # Start the module and call its output method(s)
+            # Start the module and call its output method
             self._logger.info("starting module")
             self._py3_wrapper.timeout_queue_add(self)
 
@@ -245,13 +236,9 @@ class Module:
         """
         if self.disabled or self.terminated or not self.enabled:
             return
-        # clear cached_until for each method to allow update
-        for meth, my_method in self.methods.items():
-            my_method["cached_until"] = time.monotonic()
-            self._logger.debug(
-                "clearing cache for method '%s'",
-                meth,
-            )
+        # clear cached_until to allow update
+        self.method["cached_until"] = time.monotonic()
+        self._logger.debug("clearing cache for method '%s'", self.method["method"])
         # set module to update
         self._py3_wrapper.timeout_queue_add(self)
 
@@ -287,18 +274,18 @@ class Module:
         """
         # get latest output
         output = []
-        for method in self.methods.values():
-            data = method["last_output"]
-            if isinstance(data, list):
-                if self.testing and data:
-                    data[0]["cached_until"] = method.get("cached_until")
-                output.extend(data)
-            else:
-                # if the output is not 'valid' then don't add it.
-                if data.get("full_text") or "separator" in data:
-                    if self.testing:
-                        data["cached_until"] = method.get("cached_until")
-                    output.append(data)
+        data = self.output
+        cached_until = self.method and self.method["cached_until"]
+        if isinstance(data, list):
+            if self.testing and data:
+                data[0]["cached_until"] = cached_until
+            output.extend(data)
+        else:
+            # if the output is not 'valid' then don't add it.
+            if data.get("full_text") or "separator" in data:
+                if self.testing:
+                    data["cached_until"] = cached_until
+                output.append(data)
         # if changed store and force display update.
         if output != self.last_output:
             # has the modules output become urgent?
@@ -885,24 +872,27 @@ class Module:
                         elif method == "post_config_hook":
                             self.has_post_config_hook = True
                         else:
-                            # the method_obj stores infos about each method
-                            # of this module.
-                            method_obj = {
+                            if self.method:
+                                err = "Multiple update methods "
+                                err += f"`{self.method['method']}`, `{method}`, "
+                                err += "expected only one."
+                                raise TypeError(err)
+                            # self.method stores infos about the update
+                            # method of this module.
+                            self.method = {
                                 "cached_until": time.monotonic(),
                                 "call_type": params_type,
                                 "instance": None,
-                                "last_output": {"name": method, "full_text": ""},
                                 "method": method,
                                 "name": None,
                             }
-                            self.methods[method] = method_obj
 
         # done, log some debug info
         self._logger.debug(
-            "click_events=%s has_kill=%s methods=%s",
+            "click_events=%s has_kill=%s method=%s",
             self.click_events,
             self.has_kill,
-            list(self.methods),
+            self.method and self.method["method"],
         )
 
     def click_event(self, event):
@@ -952,25 +942,18 @@ class Module:
     @profile
     def run(self):
         """
-        On a timely fashion, execute every method found for this module.
-        We will respect and set a cache timeout for each method if the user
+        On a timely fashion, execute the update method of this module.
+        We will respect and set a cache timeout for the method if the user
         didn't already do so.
         We will execute the 'kill' method of the module when we terminate.
         """
         if self._py3_wrapper.running:
-            cache_time = None
-            # execute each method of this module
-            for meth, my_method in self.methods.items():
-                # always check py3status is running
-                if not self._py3_wrapper.running:
-                    break
-
-                # respect the cache set for this method
-                if time.monotonic() < my_method["cached_until"]:
-                    if not cache_time or my_method["cached_until"] < cache_time:
-                        cache_time = my_method["cached_until"]
-                    continue
-
+            my_method = self.method
+            meth = my_method["method"]
+            # respect the cache set for this method
+            if time.monotonic() < my_method["cached_until"]:
+                cache_time = my_method["cached_until"]
+            else:
                 try:
                     # execute method and get its output
                     method = getattr(self.module_class, meth)
@@ -987,11 +970,6 @@ class Module:
                     if isinstance(response, dict):
                         # this is a shiny new module giving a dict response
                         result = response
-                    elif isinstance(response, tuple):
-                        # this is an old school module reporting its position
-                        position, result = response
-                        if not isinstance(result, dict):
-                            raise TypeError("response should be a dict")
                     else:
                         raise TypeError("response should be a dict")
 
@@ -1034,14 +1012,13 @@ class Module:
                         # get module default cached_until
                         cached_until = self.module_class.py3.time_in()
                     my_method["cached_until"] = cached_until
-                    if not cache_time or cached_until < cache_time:
-                        cache_time = cached_until
+                    cache_time = cached_until
 
-                    # update method object output
+                    # update module output
                     if "composite" in response:
-                        my_method["last_output"] = result["composite"]
+                        self.output = result["composite"]
                     else:
-                        my_method["last_output"] = result
+                        self.output = result
 
                     # debug info
                     self._logger.debug(

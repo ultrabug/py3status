@@ -543,11 +543,12 @@ class Py3statusWrapper:
                     if kind == ENTRY_POINT_KEY:
                         instance = Klass()
                 my_m = Module(module, discoverable_modules, self, instance=instance)
-                # only handle modules with available methods
-                if my_m.methods:
+                # only handle modules with an update method, or that failed
+                # to load so their error can be shown
+                if my_m.method or my_m.disabled:
                     self.modules[module] = my_m
                 else:
-                    logger.debug("ignoring module '%s' (no methods found)", module)
+                    logger.debug("ignoring module '%s' (no update method found)", module)
             except Exception:
                 err = sys.exc_info()[1]
                 msg = f'loading module "{module}" failed ({err})'
