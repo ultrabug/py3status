@@ -890,10 +890,8 @@ class Module:
                             method_obj = {
                                 "cached_until": time.monotonic(),
                                 "call_type": params_type,
-                                "instance": None,
                                 "last_output": {"name": method, "full_text": ""},
                                 "method": method,
-                                "name": None,
                             }
                             self.methods[method] = method_obj
 
@@ -1016,14 +1014,6 @@ class Module:
 
                     result["instance"] = self.module_inst
                     result["name"] = self.module_name
-
-                    # initialize method object
-                    if my_method["name"] is None:
-                        my_method["name"] = result["name"]
-                        if "instance" in result:
-                            my_method["instance"] = result["instance"]
-                        else:
-                            my_method["instance"] = result["name"]
 
                     # update method object cache
                     if "cached_until" in result:
