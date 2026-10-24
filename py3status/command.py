@@ -3,12 +3,55 @@ import json
 import logging
 import os
 import socket
+import stat
 import threading
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-SERVER_ADDRESS = "/tmp/py3status_uds"
+
+def _runtime_dir():
+    """
+    The user's private runtime directory, found also when XDG_RUNTIME_DIR
+    isn't set (eg py3-cmd from cron), so py3status and py3-cmd agree;
+    /tmp only without one.
+    """
+    for path in (os.environ.get("XDG_RUNTIME_DIR"), f"/run/user/{os.getuid()}"):
+        if path and os.path.isdir(path):
+            return path
+    return "/tmp"
+
+
+SOCKET_NAME = "py3status.{}.sock"
+
+
+def _is_socket(path, owned=True):
+    """
+    True when path is a socket, owned by the caller unless owned=False,
+    without following symlinks.
+    """
+    try:
+        st = path.lstat()
+    except OSError:
+        return False
+    return stat.S_ISSOCK(st.st_mode) and (not owned or st.st_uid == os.getuid())
+
+
+def _get_socket_paths():
+    """
+    The py3status sockets py3-cmd sends to: the caller's own, or every
+    user's when run as root.
+    """
+    pattern = SOCKET_NAME.format("[0-9]*")
+    paths = set(Path(_runtime_dir()).glob(pattern))
+    if os.getuid() == 0:
+        # root, eg a pacman hook, reaches every user's bar, as it did in /tmp
+        paths.update(Path("/run/user").glob(f"*/{pattern}"))
+        return {path for path in paths if _is_socket(path, owned=False)}
+    # in a shared /tmp, skip other users' sockets
+    return {path for path in paths if _is_socket(path)}
+
+
 MAX_SIZE = 1024
 
 CLICK_EPILOG = """
@@ -227,34 +270,24 @@ class CommandServer(threading.Thread):
         self.py3_wrapper = py3_wrapper
 
         self.command_runner = CommandRunner(py3_wrapper)
-        server_address = Path(f"{SERVER_ADDRESS}.{os.getpid()}")
+        server_address = Path(_runtime_dir(), SOCKET_NAME.format(os.getpid()))
         self.server_address = server_address
 
-        # Make sure the socket does not already exist
-        try:
-            server_address.unlink()
-        except OSError:
-            if server_address.exists():
-                raise
+        # make sure the socket does not already exist
+        server_address.unlink(missing_ok=True)
 
-        # Create a UDS socket
+        # create uds socket and listen for incoming connections
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(server_address.as_posix())
-        logger.debug("socket listening on %s", server_address)
-
-        # Listen for incoming connections
         sock.listen(1)
+        logger.debug("socket listening on %s", server_address)
         self.sock = sock
 
     def kill(self):
         """
         Remove the socket as it is no longer needed.
         """
-        try:
-            self.server_address.unlink()
-        except OSError:
-            if self.server_address.exists():
-                raise
+        self.server_address.unlink(missing_ok=True)
 
     def run(self):
         """
@@ -273,7 +306,6 @@ class CommandServer(threading.Thread):
                         logger.debug("received payload %s", data)
                         self.command_runner.run_command(data)
                 finally:
-                    # Clean up the connection
                     connection.close()
             except Exception:
                 if data:
@@ -493,17 +525,11 @@ def parse_list_or_docstring(options, sps):
 
 def send_command():
     """
-    Run a remote command. This is called via py3-cmd utility.
-
-    We look for any uds sockets with the correct name prefix and send our
-    command to all that we find.  This allows us to communicate with multiple
-    py3status instances.
+    Send a command to every running py3status. This is called via py3-cmd.
+    Stale sockets left by a crashed py3status are deleted.
     """
 
     def verbose(msg):
-        """
-        print output if verbose is set.
-        """
         if options.verbose:
             print(msg)
 
@@ -512,28 +538,26 @@ def send_command():
     if len(msg) > MAX_SIZE:
         verbose(f"Message length too long, max length ({MAX_SIZE})")
 
-    # find all likely socket addresses
-    uds_list = Path(SERVER_ADDRESS).parent.glob(f"{Path(SERVER_ADDRESS).name}.[0-9]*")
-
     verbose(f"message {msg!r}")
-    for uds in uds_list:
-        # Create a UDS socket
+    for uds in _get_socket_paths():
+        # create socket and connect to the server
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        # Connect the socket to the port where the server is listening
         verbose(f"connecting to {uds}")
         try:
             sock.connect(uds.as_posix())
         except OSError:
-            # this is a stale socket so delete it
-            verbose("stale socket deleting")
+            # stale socket, only delete it if it is ours
+            if not _is_socket(uds):
+                verbose("leaving stale socket, not ours")
+                continue
+            verbose("deleting stale socket")
             try:
                 uds.unlink()
             except OSError:
                 pass
             continue
+        # send data
         try:
-            # Send data
             verbose("sending")
             sock.sendall(msg)
         finally:
