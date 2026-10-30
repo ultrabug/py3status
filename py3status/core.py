@@ -7,7 +7,7 @@ import time
 from collections import deque
 from pathlib import Path
 from signal import SIGCONT, SIGTERM, SIGTSTP, SIGUSR1, Signals, signal
-from subprocess import Popen
+from subprocess import Popen, run
 from threading import Event, Thread
 from traceback import extract_tb, format_stack, format_tb
 
@@ -591,47 +591,28 @@ class Py3statusWrapper:
                 handler.ident = "py3status: "
 
     def _log_gitversion(self):
-        # A git repo is detected looking for the .git directory
-
+        # running from git?
         git_path = Path(__file__).resolve().parent.parent / ".git"
         if not git_path.exists():
             return
+        logger.debug("git repo: %s", git_path.parent)
 
-        logger.info("running within git repo")
-
+        cmd = ["git", "-C", git_path.parent, "log", "-1", "--format=%D%x00%h%x00%s"]
         try:
-            import git
-        except ImportError:
-            repo = None
-        else:
-            try:
-                repo = git.Repo(git_path.parent)
-            except Exception:
-                repo = None
+            result = run(cmd, capture_output=True, text=True).stdout.strip()
+        except OSError:
+            logger.warning("git not found, unable to log git information")
+            return
+        # no commits yet, or git produced no output
+        if not result:
+            return
 
-        if not repo:
-            try:
-                with (git_path / "HEAD").open() as f:
-                    out = f.readline()
-            except OSError:
-                logger.warning(
-                    "unable to read git HEAD, use python git package for more repo information"
-                )
-                return
-            branch = "/".join(out.strip().split("/")[2:])
-            logger.info("git branch: %s", branch)
-            # last commit
-            log_path = git_path / "logs" / "refs" / "heads" / branch
-            with log_path.open() as f:
-                out = f.readlines()[-1]
-            sha = out.split(" ")[1][:7]
-            msg = ":".join(out.strip().split("\t")[-1].split(":")[1:])
-            logger.info("git commit: %s%s", sha, msg)
-        else:
-            commit = repo.head.commit
-            logger.info("git branch: %s", repo.active_branch.name)
-            logger.info("git commit: %s %s", commit.hexsha[:7], commit.summary)
-            logger.info("git clean: %s", not repo.is_dirty())
+        # branch follows "HEAD -> "; a detached HEAD has no arrow
+        refs, commit, msg = result.split("\0")
+        branch = refs.partition("HEAD -> ")[2].split(",")[0]
+        logger.debug("git branch: %s", branch or "detached HEAD")
+        logger.debug("git commit: %s", commit)
+        logger.debug("git msg: %s", msg)
 
     def setup(self):
         """
@@ -645,18 +626,16 @@ class Py3statusWrapper:
         # setup logging
         self._setup_logging()
 
-        # log py3status and python versions
+        # log versions
         logger.info("=" * 8)
-        msg = "starting py3status version {version} python {python_version}"
+        msg = "py3status {version}, python {python_version}, {wm_name} {wm_version}"
         logger.info(msg.format(**self.config))
-
-        # if running from git then log the branch and last commit
-        self._log_gitversion()
-
-        # log config file and window manager
         logger.info("config file: %s", self.config["i3status_config_path"])
-        logger.info("window manager: %s", self.config["wm_name"])
-        logger.debug("py3status started with config %s", self.config)
+
+        # log debug information
+        if logger.isEnabledFor(logging.DEBUG):
+            self._log_gitversion()
+            logger.debug("config: %s", self.config)
 
         # autodetect output_format
         output_format = self.config["py3_config"]["general"]["output_format"]

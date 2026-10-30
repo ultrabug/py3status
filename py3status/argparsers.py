@@ -1,8 +1,10 @@
 import argparse
+import json
 import os
 from pathlib import Path
 from platform import python_version
 from shutil import which
+from subprocess import run
 
 from py3status.version import version
 
@@ -173,6 +175,12 @@ def parse_cli_args():
         "i3": {"msg": "i3-msg", "nag": "i3-nagbar"},
         "sway": {"msg": "swaymsg", "nag": "swaynag"},
     }[options.wm]
+    try:
+        cmd = [options.wm["msg"], "-t", "get_version"]
+        output = run(cmd, capture_output=True, text=True).stdout
+        options.wm_version = json.loads(output)["human_readable"].split()[0]
+    except (OSError, ValueError, KeyError, IndexError):
+        options.wm_version = None
 
     # make include path to search for user modules if None
     if not options.include_paths:
