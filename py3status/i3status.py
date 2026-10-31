@@ -378,6 +378,8 @@ class I3status(Thread):
                     [self.i3status_path, "-c", tmpfile.name],
                     stdout=PIPE,
                     stderr=PIPE,
+                    encoding="utf-8",
+                    errors="replace",
                     # Ignore the SIGTSTP signal for this subprocess
                     preexec_fn=lambda: signal(SIGTSTP, SIG_IGN),
                 )
