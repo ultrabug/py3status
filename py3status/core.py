@@ -256,7 +256,7 @@ class Py3statusWrapper:
         self.lock = Event()
         self.modules = {}
         self.next_allowed_signal = SIGTSTP
-        self.notified_messages = set()
+        self.notified_messages = {}
         self.options = options
         self.output_modules = {}
         self.py3_modules = []
@@ -812,22 +812,12 @@ class Py3statusWrapper:
         if level != "info" and module_name == "":
             fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
             msg = fix_msg.format(msg)
-        # Rate limiting. If rate limiting then we need to calculate the time
-        # period for which the message should not be repeated.  We just use
-        # A simple chunked time model where a message cannot be repeated in a
-        # given time period. Messages can be repeated more frequently but must
-        # be in different time periods.
-
-        limit_key = ""
-        if rate_limit:
-            try:
-                limit_key = time.monotonic() // rate_limit
-            except TypeError:
-                pass
-        # We use a hash to see if the message is being repeated.  This is crude
-        # and imperfect but should work for our needs.
-        msg_hash = hash(f"{module_name}#{limit_key}#{msg}#{title}")
-        if msg_hash in self.notified_messages:
+        # send at most once per rate_limit seconds, or once ever without one
+        now, expiry = time.monotonic(), float("inf")
+        if isinstance(rate_limit, (int, float)) and rate_limit > 0:
+            expiry = (now // rate_limit + 1) * rate_limit
+        msg_key = (module_name, f"{title}", msg, expiry == float("inf"))
+        if self.notified_messages.get(msg_key, 0) > now:
             return
         log_level = resolve_log_level(level)
         if module_name:
@@ -835,7 +825,11 @@ class Py3statusWrapper:
             notification_logger.log(log_level, "notification: '%s: %s'", title, msg)
         else:
             logger.log(log_level, msg)
-        self.notified_messages.add(msg_hash)
+        # delete in place, so a message stored by another thread isn't lost
+        for key, expires in list(self.notified_messages.items()):
+            if expires <= now:
+                self.notified_messages.pop(key, None)
+        self.notified_messages[msg_key] = expiry
 
         try:
             if dbus:
