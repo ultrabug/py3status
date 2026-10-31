@@ -130,8 +130,7 @@ Requires:
     The first time you run the module, a browser window will open asking you
     to authorize access to your calendar. After authorization is complete,
     an access/refresh token will be saved to the path configured in
-    auth_token, and i3status will be restarted. This restart will
-    occur only once after the first time you successfully authorize.
+    auth_token.
 
 Examples:
 ```
@@ -158,6 +157,7 @@ SAMPLE OUTPUT
 
 import datetime
 import time
+from contextlib import redirect_stdout
 from pathlib import Path
 
 try:
@@ -245,10 +245,10 @@ class Py3status:
                 if not self.client_secret.exists():
                     raise Exception("missing client_secret")
                 flow = InstalledAppFlow.from_client_secrets_file(str(self.client_secret), SCOPES)
-                credentials = flow.run_local_server(port=0)
+                # the authorization url is printed to stdout (the bar) and logged
+                with redirect_stdout(None):
+                    credentials = flow.run_local_server(port=0)
                 self.auth_token.write_text(credentials.to_json())
-                # restart i3 after first authorization to prevent bad output
-                self.py3.command_run(f"{self.py3.get_wm_msg()} restart")
 
         return credentials
 
