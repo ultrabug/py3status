@@ -22,7 +22,7 @@ Format placeholders:
     {total} total number of packages that will be emerged
 
 Examples:
-```
+```py3status
 # Hide if not running
 emerge_status {
     format = "[\?if=is_running {prefix}: [\?if=!total=0 "

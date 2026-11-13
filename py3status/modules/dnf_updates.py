@@ -1,4 +1,4 @@
-"""
+r"""
 Display number of pending updates for Fedora Linux.
 
 Configuration parameters:
@@ -20,7 +20,7 @@ Color thresholds:
         `xxx`: print a color based on the value of `xxx` placeholder
 
 Examples:
-```
+```py3status
 # i3status theme
 dnf_updates {
     format = "[\?if=security&color=bad DNF: {available}"
@@ -63,7 +63,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 600
-    format = "DNF [\?if=security&color=bad {available}|\?color=available {available}]"
+    format = r"DNF [\?if=security&color=bad {available}|\?color=available {available}]"
     thresholds = [(0, "good"), (1, "degraded")]
 
     def post_config_hook(self):

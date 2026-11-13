@@ -1,5 +1,8 @@
 # This file contains various useful constants for py3status
 
+# default module cache timeout in seconds (see argparsers.py's -t/--timeout)
+CACHE_TIMEOUT_DEFAULT = 60
+
 GENERAL_DEFAULTS = {
     "color_bad": "#FF0000",
     "color_degraded": "#FFFF00",

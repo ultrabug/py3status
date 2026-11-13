@@ -1,4 +1,4 @@
-"""
+r"""
 Display song currently playing in Spotify.
 
 Configuration parameters:
@@ -35,7 +35,7 @@ Requires:
     spotify: a proprietary music streaming service
 
 Examples:
-```
+```py3status
 spotify {
     button_next = 4
     button_play_pause = 1

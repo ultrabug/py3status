@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pip install --upgrade hatch
       - name: Build site
-        run: hatch -e docs run mkdocs build
+        run: hatch -e docs run build
       - name: Deploy to gh-pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: oprypin/push-to-gh-pages@b16c4c1926875f4d9fce26ffc60a623b003231d2 # v3.7.2

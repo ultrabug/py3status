@@ -4,12 +4,47 @@ from pathlib import Path
 from platform import python_version
 from shutil import which
 
+from py3status.constants import CACHE_TIMEOUT_DEFAULT
 from py3status.version import version
 
+# Symbolic search-order templates - single source of truth for both the
+# real defaults (resolved via _resolve_path_template()) and the docs
+# (main.py's config_search_paths()/module_search_paths() macros).
+CONFIG_FILE_TEMPLATES = [
+    "$XDG_CONFIG_HOME/py3status/config",
+    "$XDG_CONFIG_HOME/i3status/config",
+    "$XDG_CONFIG_HOME/i3/i3status.conf",
+    "~/.i3status.conf",
+    "~/.i3/i3status.conf",
+    "$XDG_CONFIG_DIRS/i3status/config",
+    "/etc/i3status.conf",
+]
 
-def parse_cli_args():
+MODULE_SEARCH_PATH_TEMPLATES = [
+    "$XDG_CONFIG_HOME/py3status/modules",
+    "$XDG_CONFIG_HOME/i3status/py3status",
+    "$XDG_CONFIG_HOME/i3/py3status",
+    "~/.i3/py3status",
+]
+
+
+def _resolve_path_template(template, home_path, xdg_home_path, xdg_dirs_path):
+    if template.startswith("$XDG_CONFIG_HOME/"):
+        return xdg_home_path / template.removeprefix("$XDG_CONFIG_HOME/")
+    if template.startswith("$XDG_CONFIG_DIRS/"):
+        return xdg_dirs_path / template.removeprefix("$XDG_CONFIG_DIRS/")
+    if template.startswith("~/"):
+        return home_path / template.removeprefix("~/")
+    return Path(template)
+
+
+def build_parser():
     """
-    Parse the command line arguments
+    Build the command line argument parser, without parsing anything.
+
+    Split out from parse_cli_args() so docs can reuse the real flag
+    definitions (eg for a rendered --help) without needing sys.argv or
+    triggering the post-parse steps below.
     """
     # get config paths
     home_path = Path.home()
@@ -26,13 +61,8 @@ def parse_cli_args():
     # i3status config file default detection
     # respect i3status' file detection order wrt issue #43
     i3status_config_file_candidates = [
-        xdg_home_path / "py3status/config",
-        xdg_home_path / "i3status/config",
-        xdg_home_path / "i3/i3status.conf",  # custom
-        home_path / ".i3status.conf",
-        home_path / ".i3/i3status.conf",  # custom
-        xdg_dirs_path / "i3status/config",
-        Path("/etc/i3status.conf"),
+        _resolve_path_template(template, home_path, xdg_home_path, xdg_dirs_path)
+        for template in CONFIG_FILE_TEMPLATES
     ]
     for path in i3status_config_file_candidates:
         if path.exists():
@@ -61,6 +91,7 @@ def parse_cli_args():
 
     # command line options
     parser = Parser(
+        prog="py3status",
         description="The agile, python-powered, i3status wrapper",
         formatter_class=HelpFormatter,
     )
@@ -116,7 +147,7 @@ def parse_cli_args():
         "-t",
         "--timeout",
         action="store",
-        default=60,
+        default=CACHE_TIMEOUT_DEFAULT,
         dest="cache_timeout",
         help="default module cache timeout in seconds",
         metavar="INT",
@@ -156,6 +187,20 @@ def parse_cli_args():
         help="specify window manager i3 or sway",
     )
 
+    return parser
+
+
+def parse_cli_args():
+    """
+    Parse the command line arguments
+    """
+    parser = build_parser()
+
+    # get config paths (again - build_parser() doesn't expose these)
+    home_path = Path.home()
+    xdg_home_path = Path(os.environ.get("XDG_CONFIG_HOME", home_path / ".config"))
+    xdg_dirs_path = Path(os.environ.get("XDG_CONFIG_DIRS", "/etc/xdg"))
+
     # parse options, command, etc
     options = parser.parse_args()
 
@@ -177,10 +222,8 @@ def parse_cli_args():
     # make include path to search for user modules if None
     if not options.include_paths:
         options.include_paths = [
-            xdg_home_path / "py3status/modules",
-            xdg_home_path / "i3status/py3status",
-            xdg_home_path / "i3/py3status",
-            home_path / ".i3/py3status",
+            _resolve_path_template(template, home_path, xdg_home_path, xdg_dirs_path)
+            for template in MODULE_SEARCH_PATH_TEMPLATES
         ]
 
     include_paths = []

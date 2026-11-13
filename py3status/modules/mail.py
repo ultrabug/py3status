@@ -43,7 +43,7 @@ IMAP Subscriptions:
     and/or any regex builder on the web. Don't forget to escape characters.
 
 Examples:
-```
+```py3status
 # add multiple accounts
 mail {                                       #
     accounts = {                             #     {mail}
@@ -59,7 +59,7 @@ mail {                                       #
             },                               #      │    │
             {                                #      │    └── {mbox_3}
                 'name': 'debian',            # <----│---------└── {debian}
-                'path': '/var/mail/$USER'    #      │
+                'path': '/var/mail/$USER',   #      │
                 'urgent': False,             # <----│---- disable urgent
             },                               #      │
         ],                                   #      │
@@ -71,7 +71,7 @@ mail {                                       #
         ],                                   #      │
         'mmdf': [                            #      ├── {mmdf}
             {'path': '~/mmdf_mail'},         #      │    └── {mmdf_1}
-        ]                                    #      │
+        ],                                   #      │
         'imap': [                            #      ├── {imap}
             {                                #      │    ├── {imap_1}
                 'name': 'home',              # <----│----│----└── {home}

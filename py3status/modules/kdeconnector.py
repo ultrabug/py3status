@@ -40,7 +40,7 @@ Requires:
     PyGObject: Python bindings for GObject Introspectiom
 
 Examples:
-```
+```py3status
 kdeconnector {
     device_id = "aa0844d33ac6ca03"
     format = "{name} {charge} {bat_status}"

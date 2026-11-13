@@ -22,7 +22,7 @@ Format placeholders:
     with or without placeholders. See `man strftime` for more information.
 
 Examples:
-```
+```py3status
 # show uptime without zeroes
 uptime {
     format = 'up [\?if=weeks {weeks} weeks ][\?if=days {days} days ]

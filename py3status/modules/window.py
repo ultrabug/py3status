@@ -16,7 +16,7 @@ Requires:
     i3ipc: an improved python library to control i3wm and sway
 
 Examples:
-```
+```py3status
 # show alternative instead of empty title
 window_title {
     format = '{title}|\u2665'

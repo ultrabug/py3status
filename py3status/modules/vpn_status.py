@@ -19,7 +19,7 @@ Configuration parameters:
 Format placeholders:
     {format_vpn} format for VPNs
 
-Format VPN placeholders:
+format_vpn placeholders:
     {name} The name and/or status of the VPN.
     {ipv4} The IPv4 address of the VPN
     {ipv6} The IPv6 address of the VPN

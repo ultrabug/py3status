@@ -36,7 +36,7 @@ Color options:
     color_good: Online
 
 Examples:
-```
+```py3status
 # ip choices
 whatismyip {
     url_geo = "https://ifconfig.co/json"

@@ -28,7 +28,7 @@ Color thresholds:
         path: print a color based on the number of paths
 
 Examples:
-```
+```py3status
 # add multiple paths with wildcard or with pathnames
 file_status {
     paths = ['/tmp/test*', '~user/test1', '~/Videos/*.mp4']

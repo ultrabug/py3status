@@ -17,7 +17,7 @@ Requires:
     xsel: a command-line program to retrieve/set the X selection
 
 Examples:
-```
+```py3status
 xsel {
     max_size = 50
     command = "xsel --clipboard --output"

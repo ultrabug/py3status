@@ -14,7 +14,7 @@ Format placeholders:
     {tag_str} String-representation of the list of active tags
 
 Requires:
-    https://github.com/TailorDev/Watson: commandline time tracking tool
+    watson: https://github.com/jazzband/Watson
 
 @author Markus Sommer (https://github.com/CryptoCopter)
 @license BSD

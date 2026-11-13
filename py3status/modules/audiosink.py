@@ -18,7 +18,7 @@ Requires:
     pulseaudio: networked sound server
 
 Examples:
-```
+```py3status
 audiosink {
     display_name_mapping = {"Family 17h/19h HD Audio Controller Analog Stereo": "Int", "ThinkPad Dock USB Audio Analog Stereo": "Dock"}
     format = r"{audiosink}"

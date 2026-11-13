@@ -42,7 +42,7 @@ Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
 Examples:
-```
+```py3status
 # follow a fictional project, add an icon
 gitlab {
     auth_token = 'abcdefghijklmnopq-a4'

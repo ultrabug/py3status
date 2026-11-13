@@ -32,7 +32,7 @@ Notes:
     http://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html
 
 Examples:
-```
+```py3status
 # show load averages with static colors
 loadavg {
     format = 'Loadavg [\?color=orange {1min} ][\?color=gold {5min} {15min}]'
