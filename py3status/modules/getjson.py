@@ -27,7 +27,7 @@ Format placeholders:
     for 'this' and {parent-1} for 'that'.
 
 Examples:
-```
+```py3status
 # straightforward key replacement
 getjson {
     url = "https://ifconfig.co/json"

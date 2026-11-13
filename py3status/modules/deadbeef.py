@@ -33,7 +33,7 @@ Requires:
     deadbeef: a GTK+ audio player for GNU/Linux
 
 Examples:
-```
+```py3status
 # see 'deadbeef --help' for more buttons
 deadbeef {
     on_click 1 = 'exec deadbeef --play-pause'

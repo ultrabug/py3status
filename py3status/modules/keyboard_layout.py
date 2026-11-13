@@ -20,7 +20,7 @@ Requires:
     setxkbmap: and `xset` (works for the first two predefined layouts. overrides `XkbLayout` when switching layout.)
 
 Examples:
-```
+```py3status
 # define keyboard layouts that can be switched between
 keyboard_layout {
     layouts = ['gb', 'fr', 'dvorak']

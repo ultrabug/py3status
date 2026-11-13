@@ -52,7 +52,7 @@ Notes:
     USE A BLOOD GLUCOSE METER TO MAKE DIABETES TREATMENT DECISIONS.
 
 Examples:
-```
+```py3status
 # compact version
 librelinkup {
     format_patient = "[\?color=mg_dl {mg_dl}{trend_arrow} ][\?color=darkgrey {timestamp}]"

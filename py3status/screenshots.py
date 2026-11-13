@@ -12,8 +12,10 @@ PIL may work if installed but is not supported.
 
 import ast
 import re
+import warnings
 from hashlib import md5
 from pathlib import Path
+from subprocess import CalledProcessError, check_output
 
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
@@ -29,7 +31,7 @@ SEP_PADDING_RIGHT = SEP_PADDING_LEFT + 1
 
 SEP_BORDER = 4
 
-FONT = "DejaVuSansMono.ttf"
+FONT_FAMILY = "monospace"
 
 # Pillow does poor font rendering so we are best off creating huge text and
 # then shrinking with anti-aliasing.  SCALE is how many times bigger we render
@@ -45,6 +47,16 @@ COLOR_URGENT_BG = "#900000"
 
 FONT_SIZE = BAR_HEIGHT - (PADDING * 2)
 HEIGHT = TOP_BAR_HEIGHT + BAR_HEIGHT
+
+
+def load_font():
+    """Load the system monospace font or Pillow default."""
+    try:
+        path = check_output(["fc-match", "-f", "%{file}", FONT_FAMILY], text=True).strip()
+        return ImageFont.truetype(path, FONT_SIZE * SCALE)
+    except (CalledProcessError, OSError):
+        return ImageFont.load_default(size=FONT_SIZE * SCALE)
+
 
 SAMPLE_DATA_ERROR = dict(color="#990000", background="#FFFF00", full_text=" SAMPLE DATA ERROR ")
 
@@ -185,7 +197,7 @@ def parse_sample_data(sample_data, module_name):
     samples = {}
     for index, chunk in enumerate(sample_data.split("\n\n")):
         chunk = f"{module_name}-{index}-{chunk}"
-        name, sample = re.split("-?\n", chunk, 1)
+        name, sample = re.split("-?\n", chunk, maxsplit=1)
         try:
             samples[name] = ast.literal_eval(sample)
         except SyntaxError:
@@ -204,7 +216,10 @@ def get_samples():
         if file.suffix == ".py" and file.name != "__init__.py":
             with file.open() as f:
                 try:
-                    module = ast.parse(f.read())
+                    # see docstrings.py's core_module_docstrings()
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", SyntaxWarning)
+                        module = ast.parse(f.read())
                 except SyntaxError:
                     continue
                 raw_docstring = ast.get_docstring(module)
@@ -230,12 +245,6 @@ def process(name, path, data, module=True):
     except OSError:
         pass
 
-    global font, glyph_data
-    if font is None:
-        font = ImageFont.truetype(FONT, FONT_SIZE * SCALE)
-    if glyph_data is None:
-        glyph_data = TTFont(font.path)
-
     # make sure that the data is in list form
     if not isinstance(data, list):
         data = [data]
@@ -252,7 +261,11 @@ def create_screenshots(config):
     The screenshots directory will have all .png files deleted before new shots
     are created.
     """
-    path = Path(f"{config['docs_dir']}/user-guide/screenshots")
+    global font, glyph_data
+    font = load_font()
+    glyph_data = TTFont(font.path)
+
+    path = Path(f"{config['docs_dir']}/screenshots")
     print(f"Creating screenshots in {path}...")
     samples = get_samples()
     for name, data in sorted(samples.items()):

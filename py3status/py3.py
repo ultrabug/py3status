@@ -52,6 +52,14 @@ class NoneColor:
         return "None"
 
 
+# request()'s fallback defaults - named so docs can quote the real
+# values (see main.py's request_defaults() macro) instead of a
+# hand-typed copy.
+REQUEST_TIMEOUT_DEFAULT = 10
+REQUEST_RETRY_TIMES_DEFAULT = 3
+REQUEST_RETRY_WAIT_DEFAULT = 2
+
+
 class Py3:
     """
     Helper object that gets injected as ``self.py3`` into Py3status
@@ -268,44 +276,44 @@ class Py3:
 
         example:
 
-        .. code-block:: python
+        ```python
+        {
+            'fish_facts': {
+                'sharks': 'Most will drown if they stop moving',
+                'skates': 'More than 200 species',
+            },
+            'fruits': ['apple', 'peach', 'watermelon'],
+            'number': 52
+        }
 
-            {
-                'fish_facts': {
-                    'sharks': 'Most will drown if they stop moving',
-                    'skates': 'More than 200 species',
-                },
-                'fruits': ['apple', 'peach', 'watermelon'],
-                'number': 52
-            }
+        # becomes
 
-            # becomes
+        {
+            'fish_facts-sharks': 'Most will drown if they stop moving',
+            'fish_facts-skates': 'More than 200 species',
+            'fruits-0': 'apple',
+            'fruits-1': 'peach',
+            'fruits-2': 'watermelon',
+            'number': 52
+        }
 
-            {
-                'fish_facts-sharks': 'Most will drown if they stop moving',
-                'fish_facts-skates': 'More than 200 species',
-                'fruits-0': 'apple',
-                'fruits-1': 'peach',
-                'fruits-2': 'watermelon',
-                'number': 52
-            }
+        # if intermediates is True then we also get unflattened elements
+        # as well as the flattened ones.
 
-            # if intermediates is True then we also get unflattened elements
-            # as well as the flattened ones.
-
-            {
-                'fish_facts': {
-                    'sharks': 'Most will drown if they stop moving',
-                    'skates': 'More than 200 species',
-                },
-                'fish_facts-sharks': 'Most will drown if they stop moving',
-                'fish_facts-skates': 'More than 200 species',
-                'fruits': ['apple', 'peach', 'watermelon'],
-                'fruits-0': 'apple',
-                'fruits-1': 'peach',
-                'fruits-2': 'watermelon',
-                'number': 52
-            }
+        {
+            'fish_facts': {
+                'sharks': 'Most will drown if they stop moving',
+                'skates': 'More than 200 species',
+            },
+            'fish_facts-sharks': 'Most will drown if they stop moving',
+            'fish_facts-skates': 'More than 200 species',
+            'fruits': ['apple', 'peach', 'watermelon'],
+            'fruits-0': 'apple',
+            'fruits-1': 'peach',
+            'fruits-2': 'watermelon',
+            'number': 52
+        }
+        ```
         """
         items = []
         if isinstance(d, list):
@@ -451,7 +459,8 @@ class Py3:
     def log(self, message, level=LOG_INFO, name=None):
         """
         Log the message.
-        The `level` can be any valid logging module level name or int.
+        The `level` can be any valid logging module level name (eg
+        `"error"`, `"info"`, `"warning"`) or int (eg `10` -> `logging.DEBUG`).
         Constants LOG_ERROR, LOG_INFO, and LOG_WARNING are also supported.
         Specifying `name` uses a logger with a given name or module_name if None.
         """
@@ -541,33 +550,32 @@ class Py3:
         """
         Register a function for the module.
 
-        The following functions can be registered
+        The following functions can be registered:
 
+        **`content_function()`**
 
-            ..  py:function:: content_function()
+        Called to discover what modules a container is displaying. This is
+        used to determine when updates need passing on to the container and
+        also when modules can be put to sleep.
 
-            Called to discover what modules a container is displaying.  This is
-            used to determine when updates need passing on to the container and
-            also when modules can be put to sleep.
+        The function must return a set of module names that are being
+        displayed.
 
-            the function must return a set of module names that are being
-            displayed.
+        /// note
+        This function should only be used by containers.
+        ///
 
-            .. note::
+        **`urgent_function(module_names)`**
 
-                This function should only be used by containers.
+        This function will be called when one of the contents of a
+        container has changed from a non-urgent to an urgent state. It is
+        used by the group module to switch to displaying the urgent module.
 
-            ..  py:function:: urgent_function(module_names)
+        `module_names` is a list of modules that have become urgent.
 
-            This function will be called when one of the contents of a container
-            has changed from a non-urgent to an urgent state.  It is used by the
-            group module to switch to displaying the urgent module.
-
-            ``module_names`` is a list of modules that have become urgent
-
-            .. note::
-
-                This function should only be used by containers.
+        /// note
+        This function should only be used by containers.
+        ///
         """
         my_info = self._get_module_info(self._module.module_full_name)
         my_info[function_name] = function
@@ -577,11 +585,11 @@ class Py3:
         Returns the time a given number of seconds into the future.  Helpful
         for creating the ``cached_until`` value for the module output.
 
-        .. note::
-
-            from version 3.1 modules no longer need to explicitly set a
-            ``cached_until`` in their response unless they wish to directly control
-            it.
+        /// note
+        from version 3.1 modules no longer need to explicitly set a
+        ``cached_until`` in their response unless they wish to directly control
+        it.
+        ///
 
         :param seconds: specifies the number of seconds that should occur before the
             update is required.  Passing a value of ``CACHE_FOREVER`` returns
@@ -639,15 +647,9 @@ class Py3:
         Determines if ``format_string`` contains a placeholder string ``names``
         or a list of placeholders ``names``.
 
-        ``names`` is tested against placeholders using fnmatch so the following
-        patterns can be used:
-
-        .. code-block:: none
-
-            * 	    matches everything
-            ? 	    matches any single character
-            [seq] 	matches any character in seq
-            [!seq] 	matches any character not in seq
+        ``names`` is tested against placeholders using fnmatch, so `*` matches
+        everything, `?` matches any single character, `[seq]` matches any
+        character in seq, and `[!seq]` matches any character not in seq.
 
         This is useful because a simple test like
         ``'{placeholder}' in format_string``
@@ -688,16 +690,10 @@ class Py3:
 
         :param format_string: Accepts a format string.
         :param matches: Filter results with a string or a list of strings.
-
-        If ``matches`` is provided then it is used to filter the result
-        using fnmatch so the following patterns can be used:
-
-        .. code-block:: none
-
-            * 	    matches everything
-            ? 	    matches any single character
-            [seq] 	matches any character in seq
-            [!seq] 	matches any character not in seq
+            If provided, it is used to filter the result using fnmatch, so
+            `*` matches everything, `?` matches any single character,
+            `[seq]` matches any character in seq, and `[!seq]` matches any
+            character not in seq.
         """
         if not getattr(self._py3status_module, "thresholds", None):
             return []
@@ -954,7 +950,7 @@ class Py3:
         Runs a command and returns the exit code.
         The command can either be supplied as a sequence or string.
 
-        An Exception is raised if an error occurs
+        :raises Exception: if an error occurs
         """
         # convert the command to sequence if a string
         if isinstance(command, str):
@@ -979,8 +975,7 @@ class Py3:
         :param shell: if `True` then command is run through the shell
         :param capture_stderr: if `True` then STDERR is piped to STDOUT
         :param localized: if `False` then command is forced to use its default (English) locale
-
-        A CommandError is raised if an error occurs
+        :raises CommandError: if an error occurs
         """
         # make a pretty command for error loggings and...
         if isinstance(command, str):
@@ -1120,7 +1115,7 @@ class Py3:
             accepts 3-tuples to allow name with different
             values eg ('name', 'key', 'thresholds')
         """
-        # If first run then process the threshold data.
+        # If first run, then process the threshold data.
         if self._thresholds is None:
             self._thresholds_init()
 
@@ -1250,6 +1245,17 @@ class Py3:
         :param retry_wait: how long to wait between retries in seconds
 
         :returns: HttpResponse
+
+        If `timeout`/`retry_times`/`retry_wait` are not supplied, each
+        falls back to a `request_timeout`/`request_retry_times`/
+        `request_retry_wait` attribute on the calling module if it sets
+        one, otherwise to a built-in default (currently 10 seconds, 3
+        retries, 2 seconds between retries).
+
+        Raises a `py3status.exceptions.RequestException` subclass on
+        failure - `RequestTimeout`, `RequestURLError`, or
+        `RequestInvalidJSON` - which can be caught individually or as
+        `RequestException` to catch any of them.
         """
 
         # The aim of this function is to be a limited lightweight replacement
@@ -1265,13 +1271,17 @@ class Py3:
             headers = {}
 
         if timeout is None:
-            timeout = getattr(self._py3status_module, "request_timeout", 10)
+            timeout = getattr(self._py3status_module, "request_timeout", REQUEST_TIMEOUT_DEFAULT)
 
         if retry_times is None:
-            retry_times = getattr(self._py3status_module, "request_retry_times", 3)
+            retry_times = getattr(
+                self._py3status_module, "request_retry_times", REQUEST_RETRY_TIMES_DEFAULT
+            )
 
         if retry_wait is None:
-            retry_wait = getattr(self._py3status_module, "request_retry_wait", 2)
+            retry_wait = getattr(
+                self._py3status_module, "request_retry_wait", REQUEST_RETRY_WAIT_DEFAULT
+            )
 
         if "User-Agent" not in headers:
             headers["User-Agent"] = f"py3status/{version} {self._uid}"

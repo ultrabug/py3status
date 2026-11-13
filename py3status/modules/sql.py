@@ -31,7 +31,7 @@ Requires:
     sqlite: a c library that implements an sql database engine
 
 Examples:
-```
+```py3status
 # specify database name to import
 sql {
     database = 'sqlite3'  # from sqlite3 import connect

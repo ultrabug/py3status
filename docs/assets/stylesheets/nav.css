@@ -1,0 +1,17 @@
+/* Always show the full left nav, no collapse arrows - force every
+   section open (matching the theme's :checked styling) and hide the
+   now-useless toggle. */
+.md-nav__toggle ~ .md-nav {
+  grid-template-rows: minmax(0.4rem, 1fr) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.md-nav__icon {
+  display: none !important;
+}
+
+/* Bold the top-level nav groups explicitly, independent of theme features. */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  font-weight: 700 !important;
+}

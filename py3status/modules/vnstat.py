@@ -27,7 +27,7 @@ Requires:
     vnstat: a console-based network traffic monitor
 
 Examples:
-```
+```py3status
 # colorize thresholds
 vnstat {
     format = '[\?color=total {total}]'

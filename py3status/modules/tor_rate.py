@@ -33,7 +33,7 @@ Requires:
     stem: python controller library for tor https://pypi.org/project/stem
 
 Examples:
-```
+```py3status
 tor_rate {
     cache_timeout = 10
     format = "IN: {down} | OUT: {up}"

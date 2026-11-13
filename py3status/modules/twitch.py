@@ -23,7 +23,7 @@ Configuration parameters:
     trace: enable trace level debugging
         (default False)
 
-Stream format placeholders:
+format, format_offline placeholders:
     {display_name} User's display name., eg Ultrabug
     {is_streaming} (bool) True if streaming, fields prefixed with stream_ are available.
     {tags} List of tags
@@ -49,7 +49,7 @@ Stream format placeholders:
     {stream_runtime} (string) Stream runtime as a human readable, non-localized string. eg "3h 5m"
     {stream_runtime_seconds} (int) Stream runtime in seconds.
 
-Tag format placeholders: (see locales)
+format_tag placeholders (see locales):
     {name} The tag name
     {desc} The tag description
 

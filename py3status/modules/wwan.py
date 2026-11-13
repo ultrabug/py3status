@@ -77,7 +77,7 @@ Requires:
     dbus-python: Python bindings for dbus
 
 Examples:
-```
+```py3status
 # show state names, eg initializing, searching, registered, connecting.
 wwan {
     format = '\?color=state WWAN: {state_name}'

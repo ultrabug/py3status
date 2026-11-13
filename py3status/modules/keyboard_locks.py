@@ -18,7 +18,7 @@ Color options:
     color_bad: Lock off
 
 Examples:
-```
+```py3status
 # hide NUM, CAPS, SCR
 keyboard_locks {
     format = '\?color=good [\?if=num_lock NUM][\?soft  ]'

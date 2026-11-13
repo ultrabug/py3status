@@ -20,6 +20,16 @@ from py3status.constants import (
 )
 from py3status.private import PrivateBase64, PrivateHide
 
+# stateless env()/shell() conversions; value_convert() handles "auto"
+# separately (needs self.make_value)
+CONVERSION_FUNCTIONS = {
+    "str": str,
+    "int": int,
+    "float": float,
+    # Treat booleans specially
+    "bool": (lambda val: val.lower() in ("true", "1")),
+}
+
 
 class ParseException(Exception):
     """
@@ -350,18 +360,10 @@ class ConfigParser:
         """
         convert string into type used by `config functions`
         """
-        CONVERSION_OPTIONS = {
-            "str": str,
-            "int": int,
-            "float": float,
-            # Treat booleans specially
-            "bool": (lambda val: val.lower() in ("true", "1")),
-            # Auto-guess the type
-            "auto": self.make_value,
-        }
-
         try:
-            return CONVERSION_OPTIONS[value_type](value)
+            if value_type == "auto":
+                return self.make_value(value)
+            return CONVERSION_FUNCTIONS[value_type](value)
         except (TypeError, ValueError):
             self.notify_user("Bad type conversion")
             return None

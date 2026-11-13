@@ -18,15 +18,15 @@ Color thresholds:
          Replace spaces with periods.
 
 Examples:
-```
+```py3status
 # add conky config options
 # See `man -P "less -p 'CONFIGURATION SETTINGS'" conky` for a full list
 # of Conky configuration options. Not all of Conky configuration options
 # will be supported or usable.
 conky {
     config = {
-        'update_interval': 10             # update interval for conky
-        'update_interval_on_battery': 60  # update interval when on battery
+        'update_interval': 10,            # update interval for conky
+        'update_interval_on_battery': 60, # update interval when on battery
         'format_human_readable': True,    # if False, print in bytes
         'short_units': True,              # shortens units, eg kiB->k, GiB->G
         'uppercase': True,                # upper placeholders
@@ -80,7 +80,7 @@ conky proc {
 }
 
 # display top 3 cpu (+mem_res) processes
-order += "conky top_cpu" {
+order += "conky top_cpu"
 conky top_cpu {
     format = 'Top [\?color=darkgray '
     format += '{top name 1} '

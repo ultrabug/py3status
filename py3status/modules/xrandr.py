@@ -7,7 +7,7 @@ This modules allows you to handle your screens outputs directly from your bar!
     - Activate the screen or screen combination on a single click
     - It will detect any newly connected or removed screen automatically
 
-For convenience, this module also proposes some added features:
+For convenience, this module also proposes the following added features.
     - Dynamic parameters for POSITION and WORKSPACES assignment (see below)
     - Automatic fallback to a given screen or screen combination when no more
         screen is available (handy for laptops)
@@ -36,7 +36,7 @@ Configuration parameters:
             So whenever we plug at our desk, we want the second monitor to be
             used, and whenever we go away we want everything back on the laptop
             screen automatically:
-            ```
+            ```py3status
             force_on_change = ["eDP1+DP1", "eDP1"]
             ```
         NOTES:
@@ -73,7 +73,7 @@ Configuration parameters:
             are used, and assuming you have two screens 'eDP1' and 'DP1', the
             following setup will reduce the number of output combinations
             from four (every possible one) down to two.
-            ```
+            ```py3status
             output_combinations = "eDP1|eDP1+DP1"
             ```
         (default None)
@@ -116,7 +116,7 @@ Notes:
     or `-1` (runs once) can be used to remedy this issue. See issue #580.
 
 Examples:
-```
+```py3status
 # start with a preferable setup
 xrandr {
     force_on_start = "eDP1+DP1"

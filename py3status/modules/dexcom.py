@@ -42,7 +42,7 @@ Notes:
     USE A BLOOD GLUCOSE METER TO MAKE DIABETES TREATMENT DECISIONS.
 
 Examples:
-```
+```py3status
 # compact
 dexcom {
     format = "[\?color=mg_dl {mg_dl} {trend_arrow}][\?color=darkgrey {datetime}]"

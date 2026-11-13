@@ -52,7 +52,7 @@ Requires:
         using defaults or to compile a list of kernel modules
 
 Examples:
-```
+```text
 # identify possible chips, sensors, placeholders, etc
     [user@py3status ~] $ sensors -u
     ----------------------------- # ──────────────────────────────────────
@@ -86,7 +86,9 @@ Examples:
     Solid lines denotes chips. Dashed lines denotes sensors.
     Sensor names are lowercased and its spaces replaced with underscores.
     The numbered prefixes, eg `temp1_*` are removed to keep names clean.
+```
 
+```py3status
 # specify chips to use
 lm_sensors {
     chips = ['coretemp-isa-0000']  # full

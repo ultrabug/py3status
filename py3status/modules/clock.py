@@ -54,7 +54,7 @@ Format placeholders:
         but is empty if only one timezone is provided
 
 Examples:
-```
+```py3status
 # cycling through London, Warsaw, Tokyo
 clock {
     cycle = 30

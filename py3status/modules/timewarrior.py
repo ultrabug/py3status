@@ -60,7 +60,7 @@ Recommendations:
     We can refresh a module using `py3-cmd` command.
     An excellent example of using this command in a function.
 
-    ```
+    ```bash
     ~/.{bash,zsh}{rc,_profile}
     ---------------------------
     function timew () {
@@ -72,14 +72,14 @@ Recommendations:
     eg 3600 (an hour), so the module does not need to be updated that often.
 
 Examples:
-```
+```py3status
 # show times matching the filter, see documentation for more filters
 timewarrior {
     filter = ':day'           # filter times not in 24 hours of current day
     filter = '12hours'        # filter times not in 12 hours of current time
     filter = '5min'           # filter times not in 5 minutes of current time
     filter = '1sec'           # filter times not in 1 second of current time
-    filter = '5pm to 11:59pm  # filter times not in 5pm to 11:59pm range
+    filter = '5pm to 11:59pm' # filter times not in 5pm to 11:59pm range
 }
 
 # intervals

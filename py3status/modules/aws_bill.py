@@ -1,9 +1,6 @@
 """
 Display bill for Amazon Web Services.
 
-**WARNING: This module generate some costs on the AWS bill.
-Take care about the cache_timeout to limit these fees!**
-
 Configuration parameters:
     aws_access_key_id: Your AWS access key (default '')
     aws_account_id: The root ID of the AWS account
@@ -28,6 +25,10 @@ Color options:
 
 Requires:
     boto: a python interface to amazon web services (aws)
+
+Warnings:
+    This module generate some costs on the AWS bill.
+    Take care about the cache_timeout to limit these fees!
 
 @author nawadanp
 
