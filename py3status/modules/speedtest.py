@@ -54,7 +54,7 @@ Requires:
     speedtest-cli: Command line interface for testing Internet bandwidth
 
 Examples:
-```
+```py3status
 # show detailed elapsed_time|download/upload
 speedtest {
     format = "speedtest[\?soft  ][\?if=elapsed [\?color=darkgray [time "

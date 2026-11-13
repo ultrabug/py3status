@@ -34,7 +34,7 @@ Format placeholders:
     {output} rainbow output
 
 Examples:
-```
+```py3status
 # show time colorfully
 order += "rainbow time"
 rainbow time {

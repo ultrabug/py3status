@@ -61,7 +61,7 @@ Requires:
     lm_sensors: a tool to read cpu temperature
 
 Examples:
-```
+```py3status
 # specify a list of cpus to use. see "grep cpu /proc/stat"
 sysdata {
     cpus = []                # avg + all CPUs

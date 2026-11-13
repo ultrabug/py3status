@@ -60,7 +60,7 @@ Color thresholds:
     xxx: print a color based on the value of `xxx` placeholder
 
 Examples:
-```
+```py3status
 # view coins in GBP and EUR
 coin_market {
     format_coin = "{name} £{gbp_price:.2f} €{eur_price:.2f}"

@@ -144,7 +144,7 @@ def _reformat_docstring(doc, format_fn, code_newline=""):
             if line.strip() == "":
                 continue
         # check for start/end of code block
-        if line.strip() == "```":
+        if line.strip().startswith("```"):
             code = not code
             out.append(line + code_newline)
             continue

@@ -129,6 +129,16 @@ DOCSTRING_OPTIONS = [
     ("update", "update docstrings"),
 ]
 REFRESH_OPTIONS = [("all", "refresh all modules")]
+# i3bar mouse button numbers (on_click, py3-cmd click)
+BUTTON_NUMBERS = {
+    "left click": 1,
+    "middle click": 2,
+    "right click": 3,
+    "scroll up": 4,
+    "scroll down": 5,
+}
+# ALIAS_DEPRECATION: click aliases, eg leftclick
+ALIAS_BUTTONS = {name.replace(" ", ""): number for name, number in BUTTON_NUMBERS.items()}
 
 
 class CommandRunner:
@@ -281,9 +291,10 @@ class CommandServer(threading.Thread):
                 self.py3_wrapper.report_exception("command failed")
 
 
-def command_parser():
+def build_command_parser():
     """
-    build and return our command parser
+    build our command parser without parsing anything
+    returns the parser and a dict of its subparsers
     """
 
     class Parser(argparse.ArgumentParser):
@@ -299,7 +310,7 @@ def command_parser():
                 raise argparse.ArgumentError(action, f"invalid choice: '{value}'")
 
     # make parser
-    parser = Parser(formatter_class=argparse.RawTextHelpFormatter)
+    parser = Parser(prog="py3-cmd", formatter_class=argparse.RawTextHelpFormatter)
 
     # parser: add verbose, version
     for short, name, msg in INFORMATION:
@@ -321,14 +332,7 @@ def command_parser():
         sps[name].add_argument(nargs=nargs, dest="module", help="module name")
 
     # ALIAS_DEPRECATION: subparsers: add click (aliases)
-    buttons = {
-        "leftclick": 1,
-        "middleclick": 2,
-        "rightclick": 3,
-        "scrollup": 4,
-        "scrolldown": 5,
-    }
-    for name in sorted(buttons):
+    for name in sorted(ALIAS_BUTTONS):
         sps[name] = subparsers.add_parser(name)
         sps[name].add_argument(nargs="+", dest="module", help="module name")
 
@@ -366,6 +370,15 @@ def command_parser():
             sp.add_argument(short, name, action="store_true", help=msg)
         else:
             sp.add_argument(name, action="store_true", help=msg)
+
+    return parser, sps
+
+
+def command_parser():
+    """
+    build our command parser and parse the args
+    """
+    parser, sps = build_command_parser()
 
     # parse args, post-processing
     options = parser.parse_args()
@@ -414,7 +427,7 @@ def command_parser():
         parser.error("too few arguments")
 
     # ALIAS_DEPRECATION
-    alias = options.command in buttons
+    alias = options.command in ALIAS_BUTTONS
 
     # py3-cmd click 3 dpms ==> py3-cmd click --button 3 dpms
     new_modules = []
@@ -429,7 +442,7 @@ def command_parser():
 
     # ALIAS_DEPRECATION: Convert (click) aliases to buttons
     if alias:
-        options.button = buttons[options.command]
+        options.button = ALIAS_BUTTONS[options.command]
         options.command = "click"
 
     if options.command == "click" and not new_modules:

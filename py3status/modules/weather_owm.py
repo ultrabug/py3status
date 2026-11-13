@@ -210,7 +210,7 @@ Format placeholders:
         {gust} Wind gusts speed in the specified unit
         {speed} Wind speed
         {unit} The unit specified
-    format only:
+    format:
         {city} The name of the city where the weather is
         {country} The name of the country where the weather is
         {forecast} Output of format_forecast
@@ -227,12 +227,12 @@ Format placeholders:
         {wind} Output of format_wind
 
 Examples:
-```
+```py3status
 # change icons
 weather_owm {
     api_key = <my api key>
     icons = {
-        '200': "☔"
+        '200': "☔",
         '230_232': "🌧"
     }
 }

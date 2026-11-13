@@ -71,7 +71,7 @@ Tested players:
     vlc: multi-platform mpeg, vcd/dvd, and divx player
 
 Examples:
-```
+```py3status
 mpris {
     format = "{previous}{play}{next} {player}: {state} [[{artist} - {title}]|[{title}]]"
     format_none = "no player"

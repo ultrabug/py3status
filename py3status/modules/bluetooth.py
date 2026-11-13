@@ -58,7 +58,7 @@ Requires:
     pygobject: Python bindings for GObject Introspection
 
 Examples:
-```
+```py3status
 # always display devices
 bluetooth {
     format_device = "\?color=connected {alias}"

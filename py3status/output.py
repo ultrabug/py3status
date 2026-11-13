@@ -13,20 +13,10 @@ class OutputFormat:
         """
         A factory for OutputFormat objects
         """
-        supported_output_formats = {
-            "dzen2": Dzen2OutputFormat,
-            "i3bar": I3barOutputFormat,
-            "lemonbar": LemonbarOutputFormat,
-            "none": NoneOutputFormat,
-            "term": TermOutputFormat,
-            "tmux": TmuxOutputFormat,
-            "xmobar": XmobarOutputFormat,
-        }
-
-        if output_format in supported_output_formats:
-            return supported_output_formats[output_format]()
+        if output_format in SUPPORTED_OUTPUT_FORMATS:
+            return SUPPORTED_OUTPUT_FORMATS[output_format]()
         raise ValueError(
-            f"Invalid `output_format` attribute, should be one of `{'`, `'.join(supported_output_formats.keys())}`. Got `{output_format}`."
+            f"Invalid `output_format` attribute, should be one of `{'`, `'.join(SUPPORTED_OUTPUT_FORMATS.keys())}`. Got `{output_format}`."
         )
 
     def __init__(self):
@@ -265,3 +255,15 @@ class NoneOutputFormat(SeparatedOutputFormat):
 
     def end_color(self):
         return ""
+
+
+# source of truth for instance_for() and docs' output_formats() macro
+SUPPORTED_OUTPUT_FORMATS = {
+    "dzen2": Dzen2OutputFormat,
+    "i3bar": I3barOutputFormat,
+    "lemonbar": LemonbarOutputFormat,
+    "none": NoneOutputFormat,
+    "term": TermOutputFormat,
+    "tmux": TmuxOutputFormat,
+    "xmobar": XmobarOutputFormat,
+}

@@ -19,7 +19,7 @@ Optional:
     i3ipc: an improved python library to control i3wm and sway
 
 Examples:
-```
+```py3status
 # hide zero scratchpad
 scratchpad {
     format = '[\\?not_zero \u232b [\\?color=scratchpad {scratchpad}]]'

@@ -27,7 +27,7 @@ Format placeholders:
         toggled off).
 
 Examples:
-```
+```py3status
 # A frame showing times in different cities.
 # We also have a button to hide/show the content
 frame time {

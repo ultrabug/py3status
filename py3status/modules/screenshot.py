@@ -16,7 +16,7 @@ Format placeholders:
     {basename} generated basename, eg qs60.jpg
 
 Examples:
-```
+```py3status
 # push screenshots to a server
 screenshot {
     save_path = "~/Pictures/"
