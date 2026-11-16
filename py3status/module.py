@@ -1,8 +1,9 @@
 import inspect
 import logging
+import sys
 import time
 from collections import OrderedDict
-from importlib.machinery import SourceFileLoader
+import importlib.util
 from pathlib import Path
 from random import randint
 from types import FunctionType
@@ -117,7 +118,11 @@ class Module:
         """
         class_inst = None
         if filepath.suffix == ".py":
-            py_mod = SourceFileLoader(filepath.stem, filepath.as_posix()).load_module()
+            module_name = filepath.stem
+            spec = importlib.util.spec_from_file_location(module_name, filepath.as_posix())
+            py_mod = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = py_mod
+            spec.loader.exec_module(py_mod)
             if hasattr(py_mod, cls.EXPECTED_CLASS):
                 class_inst = py_mod.Py3status()
         return class_inst
