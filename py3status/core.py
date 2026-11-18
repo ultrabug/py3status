@@ -813,9 +813,7 @@ class Py3statusWrapper:
                 icon = f"{icon}"
         else:
             msg = f"py3status: {msg}"
-        if level != "info" and module_name == "":
-            fix_msg = "{} Please try to fix this and reload i3wm (Mod+Shift+R)"
-            msg = fix_msg.format(msg)
+
         # send at most once per rate_limit seconds, or once ever without one
         now, expiry = time.monotonic(), float("inf")
         if isinstance(rate_limit, (int, float)) and rate_limit > 0:
@@ -823,17 +821,25 @@ class Py3statusWrapper:
         msg_key = (module_name, f"{title}", msg, expiry == float("inf"))
         if self.notified_messages.get(msg_key, 0) > now:
             return
+
+        # log notifications
         log_level = resolve_log_level(level)
         if module_name:
             notification_logger = logging.getLogger(module_logger_name(module_name))
             notification_logger.log(log_level, "notification: '%s: %s'", title, msg)
         else:
             logger.log(log_level, msg)
+
         # delete in place, so a message stored by another thread isn't lost
         for key, expires in list(self.notified_messages.items()):
             if expires <= now:
                 self.notified_messages.pop(key, None)
         self.notified_messages[msg_key] = expiry
+
+        # print notifications to terminal
+        if sys.stderr.isatty():
+            print(f"\033[93m{msg}\033[0m", file=sys.stderr)
+            return
 
         try:
             if dbus:
