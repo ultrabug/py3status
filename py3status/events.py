@@ -27,22 +27,20 @@ class IOPoller:
 
     def readline(self, timeout=500):
         """
-        Try to read our I/O for 'timeout' milliseconds, return None otherwise.
+        Try to read our I/O for 'timeout' milliseconds, return None
+        on timeout or when the I/O is closed.
         This makes calling and reading I/O non blocking !
         """
         poll_result = self.poller.poll(timeout)
         if poll_result:
-            line = self.io.readline().strip()
-            # when using pydev.debugger sys.stdin gets overwritten and placed
-            # into sys.stdin.original_stdin issue #2090
-            if self.io == getattr(sys.stdin, "original_stdin", sys.stdin) and line == "[":
-                # skip first event line wrt issue #19
+            line = self.io.readline()
+            if not line:
+                # closed, don't poll again
+                return None
+            line = line.strip()
+            if line == "[":
+                # skip opening "[" - fix #19, #2090
                 line = self.io.readline().strip()
-            try:
-                # decode bytes input when needed
-                line = line.decode()
-            except (AttributeError, UnicodeDecodeError):
-                pass
             return line
         else:
             return None
@@ -260,6 +258,9 @@ class Events(Thread):
         try:
             while self.py3_wrapper.running:
                 event_str = self.poller_inp.readline(timeout=None)
+                if event_str is None:
+                    logger.info("stdin closed, click events from the bar are disabled")
+                    break
                 if not event_str:
                     continue
                 try:
