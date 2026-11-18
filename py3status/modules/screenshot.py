@@ -81,7 +81,7 @@ class Py3status:
         pathname = self.save_path / basename
         self.shot_data["basename"] = basename
 
-        self.py3.command_run(" ".join(self.screenshot_command, pathname))
+        self.py3.command_run(" ".join([self.screenshot_command, str(pathname)]))
 
         if self.upload_server and self.upload_user and self.upload_path:
             self.py3.command_run(

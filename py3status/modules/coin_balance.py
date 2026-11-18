@@ -130,7 +130,7 @@ class Py3status:
 
     def _get_daemon_config_value(self, coin, key):
         try:
-            with (Path.home() / f".{coin}" / coin).open() as cfg:
+            with (Path.home() / f".{coin}" / f"{coin}.conf").open() as cfg:
                 for line in cfg.readlines():
                     line = line.strip()
                     if line.startswith("#"):

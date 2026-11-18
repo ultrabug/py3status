@@ -148,7 +148,7 @@ class Py3status:
         if self._logind_proxy:
             brightness_max = int(Path(f"{self.device}/max_brightness").read_text())
             brightness = brightness_max * level / 100
-            self._logind_proxy.SetBrightness("backlight", self.device.name, brightness)
+            self._logind_proxy.SetBrightness("backlight", Path(self.device).name, brightness)
 
     def _get_backlight_level(self):
         if self.command_available:
