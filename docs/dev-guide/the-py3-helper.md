@@ -85,6 +85,7 @@ A CommandError is raised if an error occurs
 
 Runs a command and returns the exit code.
 The command can either be supplied as a sequence or string.
+Its output is discarded, use ``command_output()`` to get it.
 
 An Exception is raised if an error occurs
 

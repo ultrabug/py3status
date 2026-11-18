@@ -10,7 +10,7 @@ from fnmatch import fnmatch
 from math import log10
 from pathlib import Path
 from shutil import which
-from subprocess import PIPE, STDOUT, Popen
+from subprocess import DEVNULL, PIPE, STDOUT, Popen
 from time import sleep
 from uuid import uuid4
 
@@ -953,6 +953,7 @@ class Py3:
         """
         Runs a command and returns the exit code.
         The command can either be supplied as a sequence or string.
+        Its output is discarded, use ``command_output()`` to get it.
 
         An Exception is raised if an error occurs
         """
@@ -960,7 +961,7 @@ class Py3:
         if isinstance(command, str):
             command = shlex.split(command)
         try:
-            return Popen(command, stdout=PIPE, stderr=PIPE, close_fds=True).wait()
+            return Popen(command, stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL).wait()
         except Exception as e:
             # make a pretty command for error loggings and...
             if isinstance(command, str):
