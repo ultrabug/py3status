@@ -88,13 +88,8 @@ london
 import locale
 import re
 import time
+import zoneinfo
 from datetime import datetime
-
-try:
-    import zoneinfo
-# Fall back for python 3.7 and python 3.8
-except ImportError:
-    from backports import zoneinfo
 
 CLOCK_BLOCKS = "🕛🕧🕐🕜🕑🕝🕒🕞🕓🕟🕔🕠🕕🕡🕖🕢🕗🕣🕘🕤🕙🕥🕚🕦"
 
