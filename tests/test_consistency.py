@@ -1,4 +1,5 @@
 import ast
+import warnings
 from pathlib import Path
 
 MODULE_PATH = Path(__file__).resolve().parent.parent / "py3status" / "modules"
@@ -224,6 +225,26 @@ def test_module_method_order():
 
     if errors:
         line = "Module method ordering error(s) detected!\n\n"
+        line += "\n".join(errors)
+        print(line)
+        assert False
+
+
+def test_no_syntax_warnings():
+    skip_files = ["__init__.py"]
+    errors = []
+
+    for _file in get_module_files(skip_files):
+        source = _file.read_text()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", SyntaxWarning)
+            try:
+                compile(source, str(_file), "exec")
+            except SyntaxWarning as e:
+                errors.append(f"`{_file}`: {e}")
+
+    if errors:
+        line = "Syntax warning(s) detected!\n\n"
         line += "\n".join(errors)
         print(line)
         assert False

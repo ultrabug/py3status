@@ -209,19 +209,17 @@ class Py3status:
         """
         since imaplib doesn't support IMAP4r1 IDLE, we'll do it by hand
         """
-        socket = None
+        # build a new command tag (Xnnn) as bytes:
+        self.command_tag = (self.command_tag + 1) % 1000
+        command_tag = b"X" + bytes(str(self.command_tag).zfill(3), "ascii")
+
+        # make sure we have selected anything before idling:
+        directories = self.mailbox.split(",")
+        self.connection.select(directories[0])
+
+        socket = self.connection.socket()
 
         try:
-            # build a new command tag (Xnnn) as bytes:
-            self.command_tag = (self.command_tag + 1) % 1000
-            command_tag = b"X" + bytes(str(self.command_tag).zfill(3), "ascii")
-
-            # make sure we have selected anything before idling:
-            directories = self.mailbox.split(",")
-            self.connection.select(directories[0])
-
-            socket = self.connection.socket()
-
             # send IDLE command and check response:
             socket.write(command_tag + b" IDLE\r\n")
             try:
@@ -246,9 +244,6 @@ class Py3status:
                     break
 
         finally:  # terminate IDLE command gracefully
-            if socket is None:
-                return
-
             socket.settimeout(self.read_timeout)
             socket.write(b"DONE\r\n")  # important! Can't query IMAP again otherwise
             try:

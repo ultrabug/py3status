@@ -1,4 +1,4 @@
-"""
+r"""
 Display number of pending updates for Fedora Linux.
 
 Configuration parameters:
@@ -63,7 +63,7 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 600
-    format = "DNF [\?if=security&color=bad {available}|\?color=available {available}]"
+    format = r"DNF [\?if=security&color=bad {available}|\?color=available {available}]"
     thresholds = [(0, "good"), (1, "degraded")]
 
     def post_config_hook(self):

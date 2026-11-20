@@ -1,4 +1,4 @@
-"""
+r"""
 Display song currently playing in Spotify.
 
 Configuration parameters:
