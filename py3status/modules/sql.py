@@ -5,7 +5,7 @@ Configuration parameters:
     cache_timeout: refresh cache_timeout for this module (default 10)
     database: specify database name to import (default None)
     format: display format for this module (default '{format_row}')
-    format_row: display format for SQL rows (default None)
+    format_row: display format for SQL rows (default '')
     format_separator: show separator if more than one (default ' ')
     parameters: specify connection parameters to use (default None)
     query: specify command to query a database (default None)
@@ -102,7 +102,7 @@ class Py3status:
     cache_timeout = 10
     database = None
     format = "{format_row}"
-    format_row = None
+    format_row = ""
     format_separator = " "
     parameters = None
     query = None
