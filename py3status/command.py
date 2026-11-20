@@ -4,6 +4,7 @@ import logging
 import os
 import socket
 import stat
+import sys
 import threading
 from pathlib import Path
 
@@ -536,7 +537,8 @@ def send_command():
     options = command_parser()
     msg = json.dumps(vars(options)).encode("utf-8")
     if len(msg) > MAX_SIZE:
-        verbose(f"Message length too long, max length ({MAX_SIZE})")
+        # py3status reads at most MAX_SIZE bytes, so a longer message can't work
+        sys.exit(f"py3-cmd: message too long ({len(msg)} bytes, max {MAX_SIZE})")
 
     verbose(f"message {msg!r}")
     for uds in _get_socket_paths():
