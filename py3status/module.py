@@ -74,7 +74,6 @@ class Module:
         self.error_hide = False
         self.has_post_config_hook = False
         self.has_kill = False
-        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
         self.methods = OrderedDict()
         self.module_class = instance
@@ -955,9 +954,10 @@ class Module:
                     # new style modules
                     click_method(event)
                 else:
-                    # legacy modules had extra parameters passed
+                    # legacy modules had extra parameters passed - this was
+                    # always None (i3status_wrapper never really ran)
                     click_method(
-                        self.i3status_thread.json_list,
+                        None,
                         self.config["py3_config"]["general"],
                         event,
                     )
@@ -1001,9 +1001,10 @@ class Module:
                         # new style modules
                         response = method()
                     else:
-                        # legacy modules had parameters passed
+                        # legacy modules had parameters passed - always
+                        # None (i3status_wrapper never really ran)
                         response = method(
-                            self.i3status_thread.json_list,
+                            None,
                             self.config["py3_config"]["general"],
                         )
 
@@ -1134,9 +1135,10 @@ class Module:
                 if self.has_kill == self.PARAMS_NEW:
                     kill_method()
                 else:
-                    # legacy call parameters
+                    # legacy call parameters - always None (i3status_wrapper
+                    # never really ran)
                     kill_method(
-                        self.i3status_thread.json_list,
+                        None,
                         self.config["py3_config"]["general"],
                     )
             except Exception:
