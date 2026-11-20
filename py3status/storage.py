@@ -17,9 +17,6 @@ class Storage:
         self.config = py3_wrapper.config
         py3_config = self.config.get("py3_config", {})
 
-        # check for legacy storage cache
-        legacy_storage_path = self.get_legacy_storage_path()
-
         # cutting edge storage cache
         storage_config = py3_config.get("py3status", {}).get("storage")
         if storage_config:
@@ -36,11 +33,6 @@ class Storage:
             storage_dir = Path("~/.cache").expanduser()
         self.storage_path = Path(storage_dir, storage_file)
 
-        # move legacy storage cache to new desired / default location
-        if legacy_storage_path:
-            logger.info("moving legacy path %s to %s", legacy_storage_path, self.storage_path)
-            legacy_storage_path.rename(self.storage_path)
-
         try:
             with self.storage_path.open("rb") as f:
                 self.data = load(f, encoding="bytes")
@@ -54,17 +46,6 @@ class Storage:
                 {module_name: list(module_data) for module_name, module_data in self.data.items()},
             )
         self.initialized = True
-
-    def get_legacy_storage_path(self):
-        """
-        Detect and return existing legacy storage path.
-        """
-        config_dir = Path(self.py3_wrapper.config.get("i3status_config_path", "/tmp")).parent
-        storage_path = config_dir / "py3status.data"
-        if storage_path.exists():
-            return storage_path
-        else:
-            return None
 
     def save(self):
         """
