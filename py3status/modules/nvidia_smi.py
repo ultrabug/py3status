@@ -116,8 +116,6 @@ class Py3status:
         self.memory_unit = self.memory_unit or "B"
         self.nvidia_command = command + ",".join(self.properties)
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format_gpu)
-
     def _get_nvidia_data(self):
         return self.py3.command_output(self.nvidia_command)
 
@@ -136,9 +134,7 @@ class Py3status:
                 value, unit_value = self.py3.format_units(value, self.memory_unit)
                 gpu.update({key: value, unit_key: unit_value})
 
-            for x in self.thresholds_init:
-                if x in gpu:
-                    self.py3.threshold_get_color(gpu[x], x)
+            self.py3.threshold_update(gpu, self.format_gpu)
 
             new_gpu.append(self.py3.safe_format(self.format_gpu, gpu))
 

@@ -146,8 +146,6 @@ class Py3status:
         self.url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes"
         self.url += f"/latest?convert={convert}&symbol={markets}"
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format_coin)
-
     def _get_coin_data(self):
         try:
             response = self.py3.request(self.url, headers=self.headers)
@@ -174,9 +172,7 @@ class Py3status:
         new_coin = []
 
         for market in coin_data:
-            for x in self.thresholds_init:
-                if x in market:
-                    self.py3.threshold_get_color(market[x], x)
+            self.py3.threshold_update(market, self.format_coin)
 
             new_coin.append(self.py3.safe_format(self.format_coin, market))
 

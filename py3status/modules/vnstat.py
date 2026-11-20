@@ -86,8 +86,6 @@ class Py3status:
         if self.coloring and not self.thresholds:
             self.thresholds = [(num * 1024**2, col) for num, col in self.coloring.items()]
 
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
-
     def _divide_and_format(self, value):
         # Divide a value and return formatted string
         value /= self.initial_multi
@@ -107,9 +105,7 @@ class Py3status:
         if self.coloring:
             response["color"] = self.py3.threshold_get_color(stat["total"])
 
-        for x in self.thresholds_init:
-            if x in stat:
-                self.py3.threshold_get_color(stat[x], x)
+        self.py3.threshold_update(stat, self.format)
 
         response["full_text"] = self.py3.safe_format(
             self.format,

@@ -123,10 +123,6 @@ class Py3status:
         if not self.is_parameters_a_dict:
             self.parameters = Path(self.parameters).expanduser()
 
-        self.thresholds_init = {}
-        for name in ("format", "format_row"):
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _get_sql_data(self):
         if self.is_parameters_a_dict:
             connection = self.connect(**self.parameters)
@@ -153,9 +149,7 @@ class Py3status:
             new_data = []
             count_row = len(data)
             for row in data:
-                for x in self.thresholds_init["format_row"]:
-                    if x in row:
-                        self.py3.threshold_get_color(row[x], x)
+                self.py3.threshold_update(row, self.format_row)
 
                 new_data.append(self.py3.safe_format(self.format_row, row))
 
@@ -163,9 +157,7 @@ class Py3status:
             format_row = self.py3.composite_join(format_separator, new_data)
             sql_data.update({"row": count_row, "format_row": format_row})
 
-            for x in self.thresholds_init["format"]:
-                if x in sql_data:
-                    self.py3.threshold_get_color(sql_data[x], x)
+            self.py3.threshold_update(sql_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

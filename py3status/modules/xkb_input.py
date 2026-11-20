@@ -426,10 +426,6 @@ class Py3status:
         if getattr(self, "listener", True):
             self.listener_backend = Listener(self)
 
-        self.thresholds_init = {}
-        for name in ["format", "format_input"]:
-            self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
-
     def _stop_on_errors(self):
         if self.error:
             self.kill()
@@ -442,9 +438,7 @@ class Py3status:
 
         for _input in xkb_inputs:
             _input = self.input_backend.add_libinput(_input) or _input
-            for x in self.thresholds_init["format_input"]:
-                if x in _input:
-                    self.py3.threshold_get_color(_input[x], x)
+            self.py3.threshold_update(_input, self.format_input)
             new_input.append(self.py3.safe_format(self.format_input, _input))
 
         format_input_separator = self.py3.safe_format(self.format_input_separator)
@@ -456,9 +450,7 @@ class Py3status:
             "switcher": self.switcher,
         }
 
-        for x in self.thresholds_init["format"]:
-            if x in input_data:
-                self.py3.threshold_get_color(input_data[x], x)
+        self.py3.threshold_update(input_data, self.format)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),
