@@ -212,14 +212,14 @@ class Py3status:
             all("auto.input" in x for x in [self.thresholds, self.thresholds_man])
             and "input" in placeholders
         ):
-            self.color_zero = self.py3.COLOR_ZERO or "red"
-            self.color_input = self.py3.COLOR_INPUT or "lime"
-            self.color_min = self.py3.COLOR_MIN or "lightgreen"
+            self.color_zero = self.py3.COLOR_ZERO or "#FF0000"  # red
+            self.color_input = self.py3.COLOR_INPUT or "#00FF00"  # lime
+            self.color_min = self.py3.COLOR_MIN or "#90EE90"  # lightgreen
             self.color_excl_input = self.py3.COLOR_EXCL_INPUT or None
-            self.color_near_max = self.py3.COLOR_NEAR_MAX or "yellow"
-            self.color_max = self.py3.COLOR_MAX or "orange"
-            self.color_near_crit = self.py3.COLOR_NEAR_CRIT or "lightcoral"
-            self.color_crit = self.py3.COLOR_CRIT or "red"
+            self.color_near_max = self.py3.COLOR_NEAR_MAX or "#FFFF00"  # yellow
+            self.color_max = self.py3.COLOR_MAX or "#FFA500"  # orange
+            self.color_near_crit = self.py3.COLOR_NEAR_CRIT or "#F08080"  # lightcoral
+            self.color_crit = self.py3.COLOR_CRIT or "#FF0000"  # red
 
             self.thresholds_auto = self.thresholds["auto.input"]
             del self.thresholds["auto.input"]
