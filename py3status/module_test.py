@@ -134,7 +134,6 @@ def module_test(module_class, config=None):
 
     module = module_class()
     m = Module("test_module", {}, mock, module)
-    m.sleeping = True
     m.prepare_module()
 
     while not m.error_messages:
