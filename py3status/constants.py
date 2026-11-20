@@ -281,6 +281,10 @@ RETIRED_MODULES = {
         "new": ["playerctl"],
         "msg": "Module {old} has been replaced with a module {new}.",
     },
+    "hddtemp": {
+        "new": ["lm_sensors"],
+        "msg": "Module {old} is no longer available due to unmaintained hddtemp. You can try a different module {new} with the drivetemp kernel driver.",
+    },
     "nvidia_temp": {
         "new": ["nvidia_smi"],
         "msg": "Module {old} has been replaced with a module {new}.",
