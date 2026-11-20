@@ -50,6 +50,8 @@ from importlib import import_module
 from pathlib import Path
 from threading import Timer
 
+from py3status.constants import MODULE_OPTIONS
+
 try:
     import i3pystatus
 except ImportError:
@@ -190,32 +192,13 @@ class ClickTimer:
 STRING_NOT_SUPPORTED = "python2 not supported"
 STRING_NOT_INSTALLED = "not installed"
 STRING_MISSING_MODULE = "missing module"
-SKIP_ATTRS = [
-    "align",
-    "allow_urgent",
-    "background",
-    "border",
-    "border_bottom",
-    "border_left",
-    "border_right",
-    "border_top",
-    "markup",
-    "min_length",
-    "min_width",
+SKIP_ATTRS = MODULE_OPTIONS | {
     "module",
     "on_click",
-    "position",
     "post_config_hook",
     "py3",
     "run",
-    "separator",
-    "separator_block_width",
-    "urgent_border",
-    "urgent_border_bottom",
-    "urgent_border_left",
-    "urgent_border_right",
-    "urgent_border_top",
-]
+}
 
 
 class Py3status:

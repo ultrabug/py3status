@@ -227,8 +227,7 @@ class Py3status:
                         self.py3.threshold_get_color(tag_data[x], x)
                 new_tag.append(self.py3.safe_format(self.format_tag, tag_data))
 
-            format_tag_separator = self.py3.safe_format(self.format_tag_separator)
-            format_tag = self.py3.composite_join(format_tag_separator, new_tag)
+            format_tag = self.py3.safe_join(self.format_tag_separator, new_tag)
 
             time["format_tag"] = format_tag
             del time["tags"]
@@ -270,8 +269,7 @@ class Py3status:
 
             new_time.append(self.py3.safe_format(self.format_time, time))
 
-        format_time_separator = self.py3.safe_format(self.format_time_separator)
-        format_time = self.py3.composite_join(format_time_separator, new_time)
+        format_time = self.py3.safe_join(self.format_time_separator, new_time)
         return format_time
 
     def timewarrior(self):

@@ -142,8 +142,7 @@ class Py3status:
 
             new_gpu.append(self.py3.safe_format(self.format_gpu, gpu))
 
-        format_gpu_separator = self.py3.safe_format(self.format_gpu_separator)
-        format_gpu = self.py3.composite_join(format_gpu_separator, new_gpu)
+        format_gpu = self.py3.safe_join(self.format_gpu_separator, new_gpu)
 
         return {
             "cached_until": self.py3.time_in(self.cache_timeout),

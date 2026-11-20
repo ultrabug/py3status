@@ -70,32 +70,31 @@ your *status_command*:
 
 Usually you have your own i3status configuration, just point to it:
 
-    status_command py3status -c ~/.i3/i3status.conf
+    status_command py3status -c ~/.config/py3status/config
 
 ## Options
 
 You can see the help of py3status by issuing \`py3status -h\`:
 
-    usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
-                     [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
+    usage: py3status [-h] [-b] [-c FILE] [-d] [-i PATH] [-l FILE] [-t INT] [-m]
+                     [-v] [--wm WINDOW_MANAGER]
 
     The agile, python-powered, i3status wrapper
 
-    optional arguments:
+    options:
       -h, --help            show this help message and exit
       -b, --dbus-notify     send notifications via dbus instead of i3-nagbar
                             (default: False)
-      -c, --config FILE     load config (default: /home/alexys/.i3/i3status.conf)
-      -d, --debug           enable debug logging in syslog and --log-file
-                            (default: False)
+      -c, --config FILE     load config (default: ~/.config/py3status/config)
+      -d, --debug           enable debug logging in syslog or log file if
+                            --log-file option is passed (default: False)
       -i, --include PATH    append additional user-defined module paths (default:
                             None)
-      -l, --log-file FILE   enable logging to FILE (default: None)
-      -s, --standalone      run py3status without i3status (default: False)
+      -l, --log-file FILE   enable logging to FILE (this option is not set by
+                            default) (default: None)
       -t, --timeout INT     default module cache timeout in seconds (default: 60)
       -m, --disable-click-events
                             disable all click events (default: False)
-      -u, --i3status PATH   specify i3status path (default: /usr/bin/i3status)
       -v, --version         show py3status version and exit (default: False)
       --wm WINDOW_MANAGER   specify window manager i3 or sway (default: i3)
 
@@ -110,8 +109,7 @@ to see all the configuration options.
 ## Control from CLI
 
 Just like i3status, you can force an update of your i3bar by sending a
-SIGUSR1 signal to py3status. Note that this will also send a SIGUSR1
-signal to i3status:
+SIGUSR1 signal to py3status:
 
     killall -USR1 py3status
 

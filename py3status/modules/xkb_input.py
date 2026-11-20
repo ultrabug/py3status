@@ -447,8 +447,7 @@ class Py3status:
                     self.py3.threshold_get_color(_input[x], x)
             new_input.append(self.py3.safe_format(self.format_input, _input))
 
-        format_input_separator = self.py3.safe_format(self.format_input_separator)
-        format_input = self.py3.composite_join(format_input_separator, new_input)
+        format_input = self.py3.safe_join(self.format_input_separator, new_input)
 
         input_data = {
             "format_input": format_input,

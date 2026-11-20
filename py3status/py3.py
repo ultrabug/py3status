@@ -213,7 +213,6 @@ class Py3:
 
         'module': the instance of the module,
         'position': list of places in i3bar, usually only one item
-        'type': module type py3status/i3status
         """
         return self._output_modules.get(module_name)
 
@@ -475,6 +474,20 @@ class Py3:
             module_info = self._get_module_info(module_name)
             if module_info:
                 module_info["module"].force_update()
+
+    def get_config(self, name):
+        """
+        Return a supported py3status configuration value.
+        Supported configs: `testing`, `wm_name`, `i3status`, `module_full_name`
+        """
+        runtime_settings = ["testing", "wm_name", "i3status"]
+        identity_settings = ["module_full_name"]
+        if name in runtime_settings:
+            value = self._py3_wrapper.config.get(name)
+            return str(value) if isinstance(value, Path) else value
+        if name in identity_settings:
+            return self._module_full_name
+        raise ValueError(f"Unsupported config `{name}`")
 
     def get_wm_msg(self):
         """
@@ -908,6 +921,23 @@ class Py3:
 
         A Composite object will be returned.
         """
+        return Composite.composite_join(separator, items)
+
+    def safe_join(self, separator, items):
+        """
+        Join items using a format string, Composite, or native separators.
+
+        String separators are processed by the formatter. Boolean separators
+        control whether native separators are used between visible items.
+
+        A Composite object will be returned.
+        """
+        if isinstance(separator, str):
+            try:
+                separator = self._formatter.format(separator, self._py3status_module)
+            except Exception as err:
+                self._report_exception(f"Invalid format `{separator}` ({err})")
+                return f"invalid format ({err})"
         return Composite.composite_join(separator, items)
 
     def composite_create(self, item):

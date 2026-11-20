@@ -139,8 +139,7 @@ class Py3status:
 
             device_info.append(self.py3.safe_format(self.format_device, device))
 
-        format_device_separator = self.py3.safe_format(self.format_device_separator)
-        format_device = self.py3.composite_join(format_device_separator, device_info)
+        format_device = self.py3.safe_join(self.format_device_separator, device_info)
 
         return format_device
 
