@@ -98,7 +98,7 @@ class Py3status:
         self._control.add_event_listener(lambda e: self._handle_event(e), EventType.BW)
         self._handler_active = True
 
-    def tor_rate(self, outputs, config):
+    def tor_rate(self):
         text = ""
         if not self._handler_active and not self._auth_failure:
             try:
