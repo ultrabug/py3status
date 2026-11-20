@@ -29,7 +29,7 @@ Requires:
     pygobject: which in turn requires libcairo2-dev, libgirepository1.0-dev
 
 Examples:
-```
+```py3status
 # show the status of vpn service
 # left click to start, right click to stop
 systemd vpn {

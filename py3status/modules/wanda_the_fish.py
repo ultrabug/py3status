@@ -21,7 +21,7 @@ Optional:
     fortune-mod: the fortune cookie program from bsd games
 
 Examples:
-```
+```py3status
 # disable motions when not in use
 wanda_the_fish {
     format = '[\\?if=fortune {nomotion}][{fortune} ]'

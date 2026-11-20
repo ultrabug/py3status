@@ -42,7 +42,7 @@ Color options:
     color_good: Pomodoro active
 
 Examples:
-```
+```py3status
 pomodoro {
     format = "{mmss} {bar}"
 }

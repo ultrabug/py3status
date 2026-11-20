@@ -49,7 +49,7 @@ Requires:
         At least version 2.4.2 is required.
 
 Examples:
-```
+```py3status
 # Get your Bitcoin balance using automatic credential detection
 coin_balance {
     cache_timeout = 45

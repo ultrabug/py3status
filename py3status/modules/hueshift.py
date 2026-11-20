@@ -42,7 +42,7 @@ Notes:
     redshift shifts more than one, ideal for multi-monitors setups.
 
 Examples:
-```
+```py3status
 # different theme
 hueshift {
     format = '\\?color=color_temperature \u263c {color_temperature}K'

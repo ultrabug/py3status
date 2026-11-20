@@ -1,0 +1,51 @@
+/* Custom blue body tint (Zensical has no theme option for this).
+   Set directly on background-color, not --md-default-bg-color, which
+   didn't reliably win. data-md-color-scheme lives on <body> itself, so
+   the dark selector is body[data-md-color-scheme="slate"] (same
+   element), not a descendant combinator. */
+body {
+  /* was hsl(210, 45%, 92%) - bumped saturation for a more perceptible blue */
+  background-color: hsl(210, 58%, 92%) !important;
+}
+
+body[data-md-color-scheme="slate"] {
+  /* was hsl(212, 70%, 20%) - now the mirror of light's hsl(210, 58%, 92%):
+     same hue/saturation, lightness flipped around the midpoint */
+  background-color: hsl(210, 58%, 8%) !important;
+
+  /* theme's own dark code-bg (225/20%/10%) barely stood out against our
+     body (8%) - match our hue, raise saturation partway, lift lightness
+     so code blocks read as elevated. */
+  --md-code-bg-color: hsla(210, 45%, 14%, 1);
+  --md-code-bg-color--light: hsla(210, 45%, 14%, 0.9);
+  --md-code-bg-color--lighter: hsla(210, 45%, 14%, 0.54);
+}
+
+/* Warning admonition's default is semi-transparent orange, tuned for a
+   white page - looks dull/muddy on our blue body. Opaque peach instead -
+   light mode only: applied unscoped, this pale peach was also winning in
+   dark mode, where the theme's light warning text became unreadable
+   against it. */
+body:not([data-md-color-scheme="slate"]) .admonition.warning,
+body:not([data-md-color-scheme="slate"]) .md-typeset details.warning {
+  background-color: #fff3e0 !important;
+}
+
+/* dark-mode counterpart: same hue as the light peach (~37deg), darkened
+   and moderately saturated so it reads as a warm, elevated card (like
+   the code-block treatment above) rather than colliding with the
+   theme's light warning text. */
+body[data-md-color-scheme="slate"] .admonition.warning,
+body[data-md-color-scheme="slate"] .md-typeset details.warning {
+  background-color: hsl(37, 55%, 16%) !important;
+}
+
+/* Tighter bullet spacing site-wide; dim the marker only, text stays full-strength. */
+.md-typeset ul li,
+.md-typeset ol li {
+  margin: 0.15em 0;
+}
+
+.md-typeset li::marker {
+  color: var(--md-default-fg-color--light);
+}

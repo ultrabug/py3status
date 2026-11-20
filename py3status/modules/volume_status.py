@@ -53,7 +53,7 @@ Notes:
     Example: killall -s USR1 py3status
 
 Examples:
-```
+```py3status
 # Set thresholds to rainbow colors
 volume_status {
     thresholds = [

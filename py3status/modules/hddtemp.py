@@ -61,7 +61,7 @@ Backblaze:
     https://www.backblaze.com/blog/hard-drive-temperature-does-it-matter/
 
 Examples:
-```
+```py3status
 # compact the format
 hddtemp {
     format = 'HDD {format_hdd}'

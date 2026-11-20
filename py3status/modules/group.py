@@ -50,7 +50,7 @@ Format placeholders:
     {output} Output of current active module
 
 Examples:
-```
+```py3status
 # default formats
 group {
     format = '{output}'           # if click_mode is 'all'

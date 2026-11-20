@@ -40,7 +40,7 @@ Notes:
     in the standard i3blocks manner of one line per value (not as json).
 
 Examples:
-```
+```ini
 # i3blocks config
 [time]
 command=date '+%D %T'

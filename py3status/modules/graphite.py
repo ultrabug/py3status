@@ -44,7 +44,7 @@ Dynamic format placeholders:
     For example if your target is `"carbon.agents.localhost-a.memUsage"`,
     you'd get a JSON result like this:
 
-        ```
+        ```json
         {
             "target": "carbon.agents.localhost-a.memUsage",
             "datapoints": [[19693568.0, 1463663040]]
@@ -55,7 +55,7 @@ Dynamic format placeholders:
         `format = "{carbon.agents.localhost-a.memUsage}"`
 
     TIP: use aliases !
-        ```
+        ```py3status
         targets = "alias(carbon.agents.localhost-a.memUsage, 'local_memuse')"
         format = "local carbon mem usage: {local_memuse} bytes"
         ```

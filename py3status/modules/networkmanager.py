@@ -39,7 +39,7 @@ Requires:
     nmcli: cli configuration utility for NetworkManager
 
 Examples:
-```
+```py3status
 # specify devices to use
 networkmanager {
     devices = ['e*']    # ethernet only

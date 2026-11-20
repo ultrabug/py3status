@@ -54,7 +54,7 @@ Requires:
     moc: a console audio player with simple ncurses interface
 
 Examples:
-```
+```py3status
 # see 'man mocp' for more buttons
 moc {
     on_click 9 = 'exec mocp --example'

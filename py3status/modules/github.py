@@ -49,7 +49,7 @@ Format placeholders:
     {repo_full} full name of the repository being checked. eg ultrabug/py3status
 
 Examples:
-```
+```py3status
 # default formats
 github {
     # with username and auth_token, this will be used

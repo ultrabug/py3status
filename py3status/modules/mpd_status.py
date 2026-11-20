@@ -44,7 +44,7 @@ Requires:
     python-mpd2: (NOT python2-mpd2)
 
 Examples:
-```
+```py3status
 # Show state and (artist -) title, if no title fallback to file:
 {state} [[[{artist} - ]{title}]|[{file}]]
 

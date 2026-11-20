@@ -12,7 +12,7 @@ Requires:
     i3pystatus: i3status replacement written in python
 
 Examples:
-```
+```py3status
 # the modules parameters are provided as such
 i3pystatus clock {
     module = 'clock'

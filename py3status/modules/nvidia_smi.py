@@ -46,7 +46,7 @@ Requires:
     nvidia-smi: command line interface to query NVIDIA devices
 
 Examples:
-```
+```py3status
 # display nvidia properties
 nvidia_smi {
     format_gpu = '{gpu_name} [\?color=temperature.gpu {temperature.gpu}°C] '
