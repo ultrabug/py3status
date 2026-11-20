@@ -541,6 +541,7 @@ def send_command():
         sys.exit(f"py3-cmd: message too long ({len(msg)} bytes, max {MAX_SIZE})")
 
     verbose(f"message {msg!r}")
+    sent = 0
     for uds in _get_socket_paths():
         # create socket and connect to the server
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -562,6 +563,9 @@ def send_command():
         try:
             verbose("sending")
             sock.sendall(msg)
+            sent += 1
         finally:
             verbose("closing socket")
             sock.close()
+    if not sent:
+        sys.exit("py3-cmd: no running py3status found")
