@@ -168,7 +168,6 @@ def test_format_placeholders():
         "keyboard_locks.py",
         "screenshot.py",
         "static_string.py",
-        "wwan_status.py",
         "yubikey.py",
     ]
     errors = []
