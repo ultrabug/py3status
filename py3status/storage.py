@@ -59,7 +59,7 @@ class Storage:
         """
         Detect and return existing legacy storage path.
         """
-        config_dir = Path(self.py3_wrapper.config.get("i3status_config_path", "/tmp")).parent
+        config_dir = Path(self.py3_wrapper.config.get("config_path", "/tmp")).parent
         storage_path = config_dir / "py3status.data"
         if storage_path.exists():
             return storage_path

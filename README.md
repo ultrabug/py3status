@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/ultrabug/py3status/workflows/CI/badge.svg)
 
-**py3status** is an extensible i3status wrapper written in Python.
+**py3status** is an agile, python-powered statusline generator.
 
 Using py3status, you can take control of your i3bar easily by:
 
@@ -68,18 +68,18 @@ your *status_command*:
 
     status_command py3status
 
-Usually you have your own i3status configuration, just point to it:
+Usually you have your own i3status configuration, just point or move:
 
-    status_command py3status -c ~/.i3/i3status.conf
+    status_command py3status -c ~/.config/py3status/config
 
 ## Options
 
 You can see the help of py3status by issuing \`py3status -h\`:
 
-    usage: py3status [-h] [-b] [-c FILE] [-d] [-g] [-i PATH] [-l FILE] [-s]
-                     [-t INT] [-m] [-u PATH] [-v] [--wm WINDOW_MANAGER]
+    usage: py3status [-h] [-b] [-c FILE] [-d] [-i PATH] [-l FILE]
+                     [-t INT] [-m] [-v] [--wm WINDOW_MANAGER]
 
-    The agile, python-powered, i3status wrapper
+    The agile, python-powered statusline generator
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -91,11 +91,9 @@ You can see the help of py3status by issuing \`py3status -h\`:
       -i, --include PATH    append additional user-defined module paths (default:
                             None)
       -l, --log-file FILE   enable logging to FILE (default: None)
-      -s, --standalone      run py3status without i3status (default: False)
       -t, --timeout INT     default module cache timeout in seconds (default: 60)
       -m, --disable-click-events
                             disable all click events (default: False)
-      -u, --i3status PATH   specify i3status path (default: /usr/bin/i3status)
       -v, --version         show py3status version and exit (default: False)
       --wm WINDOW_MANAGER   specify window manager i3 or sway (default: i3)
 
@@ -110,8 +108,7 @@ to see all the configuration options.
 ## Control from CLI
 
 Just like i3status, you can force an update of your i3bar by sending a
-SIGUSR1 signal to py3status. Note that this will also send a SIGUSR1
-signal to i3status:
+SIGUSR1 signal to py3status.
 
     killall -USR1 py3status
 

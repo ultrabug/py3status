@@ -74,7 +74,6 @@ class Module:
         self.error_hide = False
         self.has_post_config_hook = False
         self.has_kill = False
-        self.i3status_thread = py3_wrapper.i3status_thread
         self.last_output = []
         self.methods = OrderedDict()
         self.module_class = instance
@@ -957,7 +956,7 @@ class Module:
                 else:
                     # legacy modules had extra parameters passed
                     click_method(
-                        self.i3status_thread.json_list,
+                        self._py3_wrapper.json_list,
                         self.config["py3_config"]["general"],
                         event,
                     )
@@ -1003,7 +1002,7 @@ class Module:
                     else:
                         # legacy modules had parameters passed
                         response = method(
-                            self.i3status_thread.json_list,
+                            self._py3_wrapper.json_list,
                             self.config["py3_config"]["general"],
                         )
 
@@ -1136,7 +1135,7 @@ class Module:
                 else:
                     # legacy call parameters
                     kill_method(
-                        self.i3status_thread.json_list,
+                        self._py3_wrapper.json_list,
                         self.config["py3_config"]["general"],
                     )
             except Exception:

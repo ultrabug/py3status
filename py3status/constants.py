@@ -56,35 +56,15 @@ LOGGING_LOG_LEVELS = {
 
 MAX_NESTING_LEVELS = 4
 
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-TZTIME_FORMAT = "%Y-%m-%d %H:%M:%S %Z"
-
-TIME_MODULES = ["time", "tztime"]
-
-I3S_INSTANCE_MODULES = [
-    "battery",
-    "cpu_temperature",
-    "disk",
-    "ethernet",
-    "memory",
-    "path_exists",
-    "read_file",
-    "run_watch",
-    "tztime",
-    "volume",
-    "wireless",
+CONFIG_RESERVED_SECTIONS = [
+    "general",
+    "py3status",
+    "order",
+    "on_click",
+    "py3_modules",
+    ".module_groups",
+    ".group_extras",
 ]
-
-I3S_SINGLE_NAMES = ["cpu_usage", "ddate", "ipv6", "load", "time"]
-
-I3S_ALLOWED_COLORS = ["color_bad", "color_good", "color_degraded"]
-
-# i3status modules that allow colors to be passed.
-# general section also allows colors so is included.
-I3S_COLOR_MODULES = ["general", "battery", "cpu_temperature", "disk", "load"]
-
-I3S_MODULE_NAMES = I3S_SINGLE_NAMES + I3S_INSTANCE_MODULES
 
 CONFIG_FILE_SPECIAL_SECTIONS = ["general", "py3status"]
 
