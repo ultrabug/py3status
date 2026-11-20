@@ -73,17 +73,6 @@ class Py3status:
     url = None
     username = None
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "timeout",
-                    "new": "request_timeout",
-                    "msg": "obsolete parameter use `request_timeout`",
-                }
-            ]
-        }
-
     def post_config_hook(self):
         if not self.url:
             raise Exception(STRING_ERROR)

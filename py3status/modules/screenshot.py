@@ -54,14 +54,6 @@ class Py3status:
     upload_server = None
     upload_user = None
 
-    class Meta:
-        deprecated = {
-            "remove": [
-                {"param": "push", "msg": "obsolete"},
-                {"param": "cache_timeout", "msg": "obsolete"},
-            ]
-        }
-
     def post_config_hook(self):
         self.shot_data = {}
         self.save_path = Path(self.save_path).expanduser()

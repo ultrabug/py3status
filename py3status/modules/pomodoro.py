@@ -85,17 +85,6 @@ class Py3status:
     timer_long_break = 15 * 60
     timer_pomodoro = 25 * 60
 
-    class Meta:
-        deprecated = {
-            "rename": [
-                {
-                    "param": "max_breaks",
-                    "new": "pomodoros",
-                    "msg": "obsolete parameter use `pomodoros`",
-                }
-            ]
-        }
-
     def post_config_hook(self):
         self._initialized = False
 

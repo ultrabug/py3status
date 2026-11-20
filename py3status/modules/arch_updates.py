@@ -44,9 +44,6 @@ class Py3status:
     format = None
     hide_if_zero = False
 
-    class Meta:
-        deprecated = {"remove": [{"param": "include_aur", "msg": "obsolete"}]}
-
     def post_config_hook(self):
         helper = {
             "pacman": self.py3.check_commands(["checkupdates"]),

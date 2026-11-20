@@ -394,16 +394,6 @@ class Py3status:
     state_play = "\u25b7"
     state_stop = "\u25a1"
 
-    class Meta:
-        deprecated = {
-            'remove': [
-                {
-                    'param': 'player_hide_non_canplay',
-                    'msg': 'obsolete because we now hide all non canplay players',
-                },
-            ],
-        }
-
     def post_config_hook(self):
         self.replacements_init = self.py3.get_replacements_list(self.format)
         self._name_owner_change_match = None

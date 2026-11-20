@@ -60,9 +60,6 @@ mode
 
 import time
 
-URL_GEO_OLD_DEFAULT = "http://ip-api.com/json"
-URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
-
 
 class Py3status:
     """ """
@@ -77,43 +74,11 @@ class Py3status:
     icon_off = "■"
     icon_on = "●"
     mode = "ip"
-    url_geo = URL_GEO_NEW_DEFAULT
-
-    class Meta:
-        deprecated = {
-            "remove": [
-                {"param": "url", "msg": "obsolete parameter, use `url_geo` instead"},
-                {"param": "negative_cache_timeout", "msg": "obsolete parameter"},
-            ],
-            "rename": [
-                {
-                    "param": "format_online",
-                    "new": "icon_on",
-                    "msg": "obsolete parameter, use `icon_on` instead",
-                },
-                {
-                    "param": "format_offline",
-                    "new": "icon_off",
-                    "msg": "obsolete parameter, use `icon_off` instead",
-                },
-                {
-                    "param": "timeout",
-                    "new": "request_timeout",
-                    "msg": "obsolete parameter use `request_timeout`",
-                },
-            ],
-        }
+    url_geo = "https://ifconfig.co/json"
 
     def post_config_hook(self):
         if self.expected is None:
             self.expected = {}
-
-        # Backwards compatibility
-        self.substitutions = {}
-        if self.url_geo == URL_GEO_NEW_DEFAULT:
-            self.substitutions["country_code"] = "country_iso"
-        elif self.url_geo == URL_GEO_OLD_DEFAULT:
-            self.substitutions["ip"] = "query"
 
         self.ip_data = {}
         self.toggled = False
@@ -122,8 +87,6 @@ class Py3status:
     def _get_my_ip_info(self):
         try:
             info = self.py3.request(self.url_geo).json()
-            for old, new in self.substitutions.items():
-                info[old] = info.get(new)
             return info
         except self.py3.RequestException:
             return None
