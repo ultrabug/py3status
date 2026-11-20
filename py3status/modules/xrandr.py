@@ -140,7 +140,7 @@ single_2
 {'full_text': 'DP1'}
 """
 
-from collections import OrderedDict, deque
+from collections import deque
 from itertools import combinations
 from time import sleep
 
@@ -198,7 +198,7 @@ class Py3status:
         connected = list()
         active_layout = list()
         disconnected = list()
-        layout = OrderedDict({"connected": OrderedDict(), "disconnected": OrderedDict()})
+        layout = {"connected": {}, "disconnected": {}}
         self.old_layout = self.layout or layout
 
         current = self.py3.command_output("xrandr")

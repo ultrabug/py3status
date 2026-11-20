@@ -61,7 +61,6 @@ SAMPLE OUTPUT
 """
 
 import time
-from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
@@ -73,7 +72,7 @@ class Py3status:
     format = "up {days} days {hours} hours {minutes} minutes"
 
     def post_config_hook(self):
-        self.time_periods = OrderedDict()
+        self.time_periods = {}
         self.since = "%" in self.format
         periods = [
             ("decades", 315360000),

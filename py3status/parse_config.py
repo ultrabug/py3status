@@ -1,6 +1,5 @@
 import os
 import re
-from collections import OrderedDict
 from importlib import util
 from pathlib import Path
 from string import Template
@@ -47,8 +46,8 @@ class ParseException(Exception):
         )
 
 
-class ModuleDefinition(OrderedDict):
-    """Module definition in OrderedDict form"""
+class ModuleDefinition(dict):
+    """Module definition in dict form"""
 
     pass
 
