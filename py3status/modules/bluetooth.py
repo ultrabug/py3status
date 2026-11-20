@@ -2,7 +2,6 @@ r"""
 Display bluetooth status.
 
 Configuration parameters:
-    cache_timeout: refresh interval for this module (default 10)
     format: display format for this module (default "{format_adapter}")
     format_adapter: display format for adapters (default "{format_device}")
     format_adapter_separator: show separator if more than one (default " ")
@@ -89,6 +88,8 @@ SAMPLE OUTPUT
 {'color': '#00FF00', 'full_text': u'Microsoft Bluetooth Notebook Mouse 5000'}
 """
 
+from threading import Thread
+
 from gi.repository import Gio, GLib
 
 
@@ -96,7 +97,6 @@ class Py3status:
     """ """
 
     # available configuration parameters
-    cache_timeout = 10
     format = "{format_adapter}"
     format_adapter = "{format_device}"
     format_adapter_separator = " "
@@ -105,7 +105,7 @@ class Py3status:
     thresholds = [(False, "bad"), (True, "good")]
 
     def post_config_hook(self):
-        self._dbus_init()
+        self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
         self.names_and_matches = [
             ("adapters", "org.bluez.Adapter1"),
             ("devices", "org.bluez.Device1"),
@@ -115,22 +115,62 @@ class Py3status:
         for name in ["format", "format_adapter", "format_device"]:
             self.thresholds_init[name] = self.py3.get_color_names_list(getattr(self, name))
 
-    def _dbus_init(self):
-        bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
-        iface = "org.freedesktop.DBus.ObjectManager"
-        self.bluez_manager = Gio.DBusProxy.new_sync(
-            bus, Gio.DBusProxyFlags.NONE, None, "org.bluez", "/", iface, None
-        )
+        self.update_pending = False
+        self._dbus_subscribe()
+        thread = Thread(target=lambda: GLib.MainLoop().run())
+        thread.daemon = True
+        thread.start()
+
+    def _dbus_subscribe(self):
+        # subscribing by well-known name survives bluetoothd restarts
+        bluez, dbus = "org.bluez", "org.freedesktop.DBus"
+        manager, props = f"{dbus}.ObjectManager", f"{dbus}.Properties"
+        for sender, iface, signal, arg0 in [
+            (bluez, manager, "InterfacesAdded", None),
+            (bluez, manager, "InterfacesRemoved", None),
+            (bluez, props, "PropertiesChanged", f"{bluez}.Adapter1"),
+            (bluez, props, "PropertiesChanged", f"{bluez}.Device1"),
+            (bluez, props, "PropertiesChanged", f"{bluez}.Battery1"),
+            # a crashed bluetoothd emits no InterfacesRemoved
+            (dbus, dbus, "NameOwnerChanged", bluez),
+        ]:
+            self.bus.signal_subscribe(
+                sender, iface, signal, None, arg0, Gio.DBusSignalFlags.NONE, self._on_signal
+            )
+
+    def _on_signal(self, bus, sender, path, iface, signal, params, *args):
+        if signal == "PropertiesChanged":
+            changed = params.unpack()[1]
+            # discovery spams these; they are not displayed
+            if set(changed) <= {"RSSI", "TxPower", "ManufacturerData", "ServiceData"}:
+                return
+        # coalesce bursts, eg during discovery
+        if not self.update_pending:
+            self.update_pending = True
+            GLib.timeout_add(1000, self._on_timeout)
+
+    def _on_timeout(self):
+        self.update_pending = False
+        self.py3.update()
+        return False
 
     def _get_bluez_data(self):
         try:
-            objects = self.bluez_manager.GetManagedObjects()
+            objects = self.bus.call_sync(
+                "org.bluez",
+                "/",
+                "org.freedesktop.DBus.ObjectManager",
+                "GetManagedObjects",
+                None,
+                None,
+                Gio.DBusCallFlags.NO_AUTO_START,
+                -1,
+                None,
+            ).unpack()[0]
         except GLib.Error as err:
-            if err.matches(Gio.dbus_error_quark(), Gio.DBusError.SERVICE_UNKNOWN):
-                self._dbus_init()
-                objects = self.bluez_manager.GetManagedObjects()
-            else:
+            if not err.matches(Gio.dbus_error_quark(), Gio.DBusError.NAME_HAS_NO_OWNER):
                 raise
+            objects = {}
 
         temporary = {}
 
@@ -145,9 +185,9 @@ class Py3status:
                     break
 
         for device in temporary.pop("devices", []):
-            for index, adapter in enumerate(temporary["adapters"]):
+            for adapter in temporary["adapters"]:
                 if device["adapter"] == adapter["path"]:
-                    temporary["adapters"][index].setdefault("devices", []).append(device)
+                    adapter.setdefault("devices", []).append(device)
                     break
 
         return temporary
@@ -189,7 +229,7 @@ class Py3status:
                 self.py3.threshold_get_color(bluetooth_data[x], x)
 
         return {
-            "cached_until": self.py3.time_in(self.cache_timeout),
+            "cached_until": self.py3.CACHE_FOREVER,
             "full_text": self.py3.safe_format(self.format, bluetooth_data),
         }
 
