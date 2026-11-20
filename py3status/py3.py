@@ -910,6 +910,23 @@ class Py3:
         """
         return Composite.composite_join(separator, items)
 
+    def safe_join(self, separator, items):
+        """
+        Join items using a format string, Composite, or native separators.
+
+        String separators are processed by the formatter. Boolean separators
+        control whether native separators are used between visible items.
+
+        A Composite object will be returned.
+        """
+        if isinstance(separator, str):
+            try:
+                separator = self._formatter.format(separator, self._py3status_module)
+            except Exception as err:
+                self._report_exception(f"Invalid format `{separator}` ({err})")
+                return f"invalid format ({err})"
+        return Composite.composite_join(separator, items)
+
     def composite_create(self, item):
         """
         Create and return a Composite.
