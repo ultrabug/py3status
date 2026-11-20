@@ -85,24 +85,29 @@ class UdevMonitor:
         """
         Refresh all modules which subscribed to the given subsystem.
         """
-        resolution = datetime.now().strftime("%S")[0]
-        for py3_module, trigger_action in self.udev_consumers[subsystem]:
-            if trigger_action in ON_TRIGGER_ACTIONS:
-                event_key = f"{subsystem}.{action}"
-                occurences = self.throttle[event_key][resolution]
-                # we allow at most 5 events per 10 seconds window
-                if occurences >= 5:
-                    py3_module._logger.warning(
-                        "event '%s' throttled after %s occurrences",
-                        event_key,
-                        occurences,
-                    )
-                    continue
-                py3_module._logger.info(
-                    "event '%s' refreshing consumer",
+        consumers = self.udev_consumers.get(subsystem)
+        if not consumers:
+            return
+        resolution = int(datetime.now().timestamp()) // 10
+        event_key = f"{subsystem}.{action}"
+        occurences = self.throttle[event_key][resolution]
+        # we allow at most 5 events per 10 seconds window, counted once per
+        # event so every consumer gets the same events
+        throttled = occurences >= 5
+        if not throttled:
+            self.throttle[event_key].clear()
+            self.throttle[event_key][resolution] = occurences + 1
+            sleep(0.1)
+        for py3_module, _ in consumers:
+            if throttled:
+                py3_module._logger.warning(
+                    "event '%s' throttled after %s occurrences",
                     event_key,
+                    occurences,
                 )
-                sleep(0.1)
-                py3_module.force_update()
-                self.throttle[event_key].clear()
-                self.throttle[event_key][resolution] = occurences + 1
+                continue
+            py3_module._logger.info(
+                "event '%s' refreshing consumer",
+                event_key,
+            )
+            py3_module.force_update()
