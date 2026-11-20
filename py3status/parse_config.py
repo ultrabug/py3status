@@ -497,6 +497,33 @@ class ConfigParser:
             except self.ParseEnd:
                 return out
 
+    def make_parenthesized_value(self):
+        """
+        Concatenate adjacent quoted strings, otherwise parse a tuple.
+        """
+        start = self.current_token
+        has_string = False
+        for token in self.tokens[start:]:
+            value = token["value"]
+            if value == ")":
+                break
+            if value == "\n":
+                continue
+            if token["type"] != "literal" or value[0] not in ['"', "'"]:
+                return tuple(self.make_list(end_token=")"))
+            has_string = True
+
+        if not has_string:
+            return tuple(self.make_list(end_token=")"))
+
+        parts = []
+        while True:
+            token = self.next()
+            if token["value"] == ")":
+                return "".join(parts)
+            if token["value"] != "\n":
+                parts.append(self.make_value(token["value"]))
+
     def value_assign(self, end_token=None):
         """
         We are expecting a value (literal, list, dict, tuple).
@@ -520,7 +547,7 @@ class ConfigParser:
             elif t_value == "{":
                 return self.make_dict()
             elif t_value == "(":
-                return tuple(self.make_list(end_token=")"))
+                return self.make_parenthesized_value()
             else:
                 self.error("Value expected", previous=not end_token)
 
