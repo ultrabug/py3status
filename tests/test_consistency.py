@@ -166,7 +166,6 @@ def test_format_placeholders():
         "__init__.py",
         "i3pystatus.py",
         "keyboard_locks.py",
-        "screenshot.py",
         "static_string.py",
         "wwan_status.py",
         "yubikey.py",
