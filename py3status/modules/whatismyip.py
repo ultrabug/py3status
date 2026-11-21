@@ -41,6 +41,7 @@ Examples:
 whatismyip {
     url_geo = "https://ifconfig.co/json"
     # url_geo = "https://api.ip2location.io"
+    # url_geo = "https://api.internetdata.io/myip"
     # url_geo = "https://ipinfo.io/json"
     # url_geo = "http://ip-api.com/json"
 }
@@ -62,6 +63,7 @@ import time
 
 URL_GEO_OLD_DEFAULT = "http://ip-api.com/json"
 URL_GEO_NEW_DEFAULT = "https://ifconfig.co/json"
+URL_GEO_INTERNETDATA = "https://api.internetdata.io/myip"
 
 
 class Py3status:
@@ -114,6 +116,9 @@ class Py3status:
             self.substitutions["country_code"] = "country_iso"
         elif self.url_geo == URL_GEO_OLD_DEFAULT:
             self.substitutions["ip"] = "query"
+        elif self.url_geo == URL_GEO_INTERNETDATA:
+            self.substitutions["country"] = "location.country_name"
+            self.substitutions["country_iso"] = "location.country"
 
         self.ip_data = {}
         self.toggled = False
@@ -123,7 +128,10 @@ class Py3status:
         try:
             info = self.py3.request(self.url_geo).json()
             for old, new in self.substitutions.items():
-                info[old] = info.get(new)
+                value = info
+                for key in new.split("."):
+                    value = value.get(key) if isinstance(value, dict) else None
+                info[old] = value
             return info
         except self.py3.RequestException:
             return None
